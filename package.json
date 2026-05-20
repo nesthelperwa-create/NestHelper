@@ -11,13 +11,16 @@
   },
   "dependencies": {
     "@stripe/stripe-js": "latest",
+    "@tailwindcss/postcss": "^4.3.0",
     "clsx": "latest",
     "firebase": "latest",
+    "firebase-admin": "^13.10.0",
     "framer-motion": "latest",
     "lucide-react": "latest",
     "next": "latest",
     "react": "latest",
     "react-dom": "latest",
+    "resend": "^6.12.3",
     "stripe": "latest"
   },
   "devDependencies": {

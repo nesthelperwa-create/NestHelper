@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 "use client";
 
 import { signInWithEmailAndPassword } from "firebase/auth";
@@ -52,3 +54,4 @@ export default function AdminLoginPage() {
     </main>
   );
 }
+
