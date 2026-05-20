@@ -1,0 +1,22 @@
+# Asset Manifest
+
+- `assets/brand/gold-star-checked-badge-original.png`
+- `assets/brand/nesthelper-logo-original.png`
+- `assets/brand/nesthelper-hero-banner.png`
+- `assets/brand/gold-star-checked-badge.png`
+- `assets/brand/nesthelper-logo.png`
+- `assets/brand/nesthelper-icon.png`
+- `assets/brand/apple-touch-icon.png`
+- `assets/services/service-parent-reset.png`
+- `assets/services/service-family-reset.png`
+- `assets/services/service-helper-block.png`
+- `assets/services/service-errand-helper.png`
+- `assets/services/service-laundry-rescue.png`
+- `assets/backgrounds/warm-mint-gradient.png`
+- `assets/icons/icon-shield.png`
+- `assets/icons/icon-check.png`
+- `assets/icons/icon-heart.png`
+- `assets/icons/icon-calendar.png`
+- `assets/icons/icon-sparkle.png`
+- `assets/icons/icon-scale.png`
+- `assets/social/og-nesthelper.png`

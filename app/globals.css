@@ -1,0 +1,79 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --teal: #005d56;
+  --teal2: #127e74;
+  --gold: #c18f37;
+  --cream: #fff8ee;
+  --ink: #1f2d2b;
+}
+
+html { scroll-behavior: smooth; }
+body {
+  background: #fff8ee;
+  color: #1f2d2b;
+  text-rendering: optimizeLegibility;
+}
+
+::selection { background: rgba(193, 143, 55, 0.28); }
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.76);
+  border: 1px solid rgba(193, 143, 55, 0.18);
+  backdrop-filter: blur(18px);
+}
+
+.gold-gradient {
+  background: linear-gradient(135deg, #b07b22, #f0cf78, #c18f37);
+}
+
+.teal-gradient {
+  background: radial-gradient(circle at 30% 20%, #1ea89a, #005d56 48%, #003a36 100%);
+}
+
+.text-balance { text-wrap: balance; }
+
+.focus-ring:focus-visible {
+  outline: 3px solid rgba(193, 143, 55, 0.55);
+  outline-offset: 3px;
+}
+
+.card-hover {
+  transition: transform 250ms ease, box-shadow 250ms ease, border-color 250ms ease;
+}
+.card-hover:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 24px 80px rgba(0, 93, 86, 0.18);
+  border-color: rgba(193, 143, 55, 0.42);
+}
+
+.input {
+  width: 100%;
+  border-radius: 1rem;
+  border: 1px solid rgba(0, 93, 86, 0.18);
+  background: rgba(255,255,255,0.86);
+  padding: 0.85rem 1rem;
+  font-size: 1rem;
+  color: #1f2d2b;
+  box-shadow: 0 8px 24px rgba(0, 93, 86, 0.04);
+}
+.input:focus {
+  outline: 3px solid rgba(193, 143, 55, 0.24);
+  border-color: rgba(193, 143, 55, 0.75);
+}
+.label {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #005d56;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
