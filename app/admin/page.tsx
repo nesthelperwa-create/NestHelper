@@ -1,5 +1,3 @@
-export const dynamic = "force-dynamic";
-
 "use client";
 
 import { collection, onSnapshot, query, where } from "firebase/firestore";
@@ -47,4 +45,6 @@ export default function AdminOverviewPage() {
     </AdminShell>
   );
 }
+
+
 
