@@ -11,12 +11,12 @@ export default function AdminPartnersPage() {
         title="Partner / Contractor Applications"
         columns={[
           { key: "businessName", label: "Business" },
-          { key: "contactName", label: "Contact" },
+          { key: "ownerName", label: "Contact" },
           { key: "phone", label: "Phone" },
           { key: "email", label: "Email" },
-          { key: "servicesOffered", label: "Services" },
+          { key: "serviceType", label: "Services" },
           { key: "serviceArea", label: "Service Area" },
-          { key: "insured", label: "Insured" },
+          { key: "insuranceInfo", label: "Insurance" },
         ]}
         statuses={["New", "Reviewing", "Need Documents", "Approved Partner", "Rejected", "On Hold"]}
       />

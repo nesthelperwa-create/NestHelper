@@ -10,12 +10,12 @@ export default function AdminHelpersPage() {
         collectionName="helperApplications"
         title="Helper Applications"
         columns={[
-          { key: "name", label: "Name" },
+          { key: "fullName", label: "Name" },
           { key: "phone", label: "Phone" },
           { key: "email", label: "Email" },
           { key: "city", label: "City" },
           { key: "availability", label: "Availability" },
-          { key: "hasTransportation", label: "Transport" },
+          { key: "transportation", label: "Transport" },
           { key: "experience", label: "Experience" },
         ]}
         statuses={["New", "Reviewing", "Interview", "Background Check Needed", "Approved", "Rejected", "On Hold"]}

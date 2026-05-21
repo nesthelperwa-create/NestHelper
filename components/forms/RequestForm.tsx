@@ -4,7 +4,6 @@ import { useSearchParams } from "next/navigation";
 import type { FormEvent, ReactNode } from "react";
 import { useMemo, useState } from "react";
 import { CheckCircle2, Clock, CreditCard, MapPin, ShieldCheck } from "lucide-react";
-import { saveForm } from "@/lib/formHelpers";
 import { services, laundryAddOns } from "@/lib/services";
 
 const defaultState = {
@@ -80,11 +79,21 @@ export function RequestForm() {
     setMessage("");
 
     try {
-      await saveForm("customerRequests", {
-        ...form,
-        selectedServiceTitle: selectedService?.title || "",
-        requestedAt: new Date().toISOString()
+      const response = await fetch("/api/submit-request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...form,
+          selectedServiceTitle: selectedService?.title || "",
+          requestedAt: new Date().toISOString()
+        })
       });
+
+      const result = await response.json().catch(() => null);
+      if (!response.ok || !result?.ok) {
+        throw new Error(result?.error || "Request submission failed");
+      }
+
       setStatus("success");
       setMessage("Request received. We’ll review your service area, timing, scope, safety notes, and pricing before sending a secure checkout link.");
       setForm({ ...defaultState, service: requestedService });

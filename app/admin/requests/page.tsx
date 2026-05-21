@@ -10,7 +10,7 @@ export default function AdminRequestsPage() {
         collectionName="serviceRequests"
         title="Service Requests"
         columns={[
-          { key: "name", label: "Name" },
+          { key: "fullName", label: "Name" },
           { key: "service", label: "Service" },
           { key: "phone", label: "Phone" },
           { key: "email", label: "Email" },

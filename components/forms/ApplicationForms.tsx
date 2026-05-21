@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { saveForm } from "@/lib/formHelpers";
 
 type Status = "idle" | "loading" | "success" | "error";
 
@@ -12,7 +11,19 @@ export function HelperApplicationForm() {
   const update = (name:string, value:unknown) => setForm(prev=>({...prev,[name]:value}));
   async function submit(e:React.FormEvent){
     e.preventDefault(); setStatus("loading"); setMessage("");
-    try { await saveForm("helperApplications", form); setStatus("success"); setMessage("Application received. We’ll review it and follow up about next steps. Sensitive ID/background-check steps happen through secure providers, not this form."); }
+    try {
+      const response = await fetch("/api/submit-helper-application", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      const result = await response.json().catch(() => null);
+      if (!response.ok || !result?.ok) throw new Error(result?.error || "Helper application failed");
+
+      setStatus("success");
+      setMessage("Application received. We’ll review it and follow up about next steps. Sensitive ID/background-check steps happen through secure providers, not this form.");
+      setForm({ fullName:"", email:"", phone:"", city:"", availability:"", services:"", experience:"", transportation:"", backgroundConsent:false, references:"", notes:"" });
+    }
     catch(err){ console.error(err); setStatus("error"); setMessage("Something went wrong. Please try again."); }
   }
   return (
@@ -45,7 +56,19 @@ export function PartnerApplicationForm() {
   const update = (name:string, value:unknown) => setForm(prev=>({...prev,[name]:value}));
   async function submit(e:React.FormEvent){
     e.preventDefault(); setStatus("loading"); setMessage("");
-    try { await saveForm("partnerApplications", form); setStatus("success"); setMessage("Partner application received. We’ll review service fit, standards, insurance/business information, and availability before next steps."); }
+    try {
+      const response = await fetch("/api/submit-partner-application", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      const result = await response.json().catch(() => null);
+      if (!response.ok || !result?.ok) throw new Error(result?.error || "Partner application failed");
+
+      setStatus("success");
+      setMessage("Partner application received. We’ll review service fit, standards, insurance/business information, and availability before next steps.");
+      setForm({ businessName:"", ownerName:"", email:"", phone:"", serviceType:"", website:"", serviceArea:"", licenseInfo:"", insuranceInfo:"", capacity:"", notes:"", consent:false });
+    }
     catch(err){ console.error(err); setStatus("error"); setMessage("Something went wrong. Please try again."); }
   }
   return (
