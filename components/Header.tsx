@@ -57,7 +57,7 @@ export function Header() {
               </Link>
             ))}
             <Link onClick={() => setOpen(false)} href="/request" className="mt-2 rounded-2xl bg-nest-teal px-5 py-4 text-center font-black text-white shadow-soft">
-              Request Beta Help
+              Request Help
             </Link>
           </nav>
         </div>

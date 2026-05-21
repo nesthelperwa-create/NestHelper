@@ -1,7 +1,6 @@
 import { PageHero } from "@/components/PageHero";
 import { ServiceCard } from "@/components/ServiceCard";
 import { services, laundryAddOns } from "@/lib/services";
-import { siteConfig } from "@/lib/siteConfig";
 
 export default function ServicesPage() {
   return <>
@@ -20,10 +19,12 @@ export default function ServicesPage() {
         <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {laundryAddOns.map((x)=><div key={x} className="rounded-2xl bg-white p-4 font-bold text-nest-ink/75">{x}</div>)}
         </div>
-      </div>
-      <div id="founding" className="mt-10 rounded-[2rem] border border-nest-gold/25 bg-nest-gold/10 p-8 text-center">
-        <h2 className="text-3xl font-black text-nest-teal">Founding Family Beta Credit</h2>
-        <p className="mx-auto mt-3 max-w-3xl text-nest-ink/75">To honor the original beta pricing, early families can use code <strong>{siteConfig.foundingCode}</strong> for their first approved request. Promo availability may be limited. Prices shown before applicable tax and fees.</p>
+        <div className="mt-6 rounded-3xl border border-nest-gold/20 bg-white p-6 shadow-sm">
+          <h3 className="text-2xl font-black text-nest-teal">Reusable return bags</h3>
+          <p className="mt-3 leading-7 text-nest-ink/72">
+            Clean laundry may be returned in NestHelper reusable bags or totes. Please empty and return them at your next Laundry Rescue pickup, scheduled drop-off, or another approved return method. Missing or damaged bags may be billed a reasonable replacement fee.
+          </p>
+        </div>
       </div>
     </section>
   </>

@@ -4,7 +4,6 @@ import { useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import { saveForm } from "@/lib/formHelpers";
 import { services, laundryAddOns } from "@/lib/services";
-import { siteConfig } from "@/lib/siteConfig";
 
 const defaultState = {
   fullName: "", email: "", phone: "", address: "", city: "", zip: "", service: "", preferredDate: "", preferredWindow: "", promoCode: "", pets: "", parkingAccess: "", requestDetails: "", detergent: "Standard detergent", dryPreference: "Standard dry", laundryAddOns: [] as string[], consent: false, textConsent: false
@@ -47,7 +46,7 @@ export function RequestForm() {
         <Field label="Full name"><input className="input" required value={form.fullName} onChange={(e)=>update('fullName', e.target.value)} /></Field>
         <Field label="Phone"><input className="input" required value={form.phone} onChange={(e)=>update('phone', e.target.value)} /></Field>
         <Field label="Email"><input type="email" className="input" required value={form.email} onChange={(e)=>update('email', e.target.value)} /></Field>
-        <Field label="Promo code"><input className="input" placeholder={siteConfig.foundingCode} value={form.promoCode} onChange={(e)=>update('promoCode', e.target.value.toUpperCase())} /></Field>
+        <Field label="Promo/referral code (optional)"><input className="input" placeholder="Optional code" value={form.promoCode} onChange={(e)=>update('promoCode', e.target.value.toUpperCase())} /></Field>
       </div>
 
       <Field label="Service address"><input className="input" required value={form.address} onChange={(e)=>update('address', e.target.value)} /></Field>

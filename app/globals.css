@@ -1,6 +1,24 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@theme {
+  --color-nest-teal: #005d56;
+  --color-nest-teal2: #127e74;
+  --color-nest-mint: #c4e2d6;
+  --color-nest-cream: #fff8ee;
+  --color-nest-cream2: #f4efe6;
+  --color-nest-gold: #c18f37;
+  --color-nest-gold2: #e6be5a;
+  --color-nest-ink: #1f2d2b;
+  --shadow-soft: 0 20px 60px rgba(0, 93, 86, 0.14);
+  --shadow-glow: 0 0 0 1px rgba(193, 143, 55, 0.18), 0 24px 80px rgba(0, 93, 86, 0.2);
+  --radius-xxl: 2rem;
+  --animate-float: float 6s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
 
 :root {
   --teal: #005d56;

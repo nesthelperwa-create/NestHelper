@@ -24,7 +24,7 @@ export default function HomePage() {
               Trusted local help for busy parents — home resets, laundry rescue, errands, and family support without the awkward guessing game.
             </p>
             <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-              <ButtonLink href="/request">Request Beta Help</ButtonLink>
+              <ButtonLink href="/request">Request Help</ButtonLink>
               <ButtonLink href="/services" variant="secondary">View Services</ButtonLink>
             </div>
             <div className="mt-7 grid gap-3 sm:grid-cols-3">
@@ -54,14 +54,10 @@ export default function HomePage() {
           <div className="mx-auto max-w-3xl text-center">
             <p className="font-black uppercase tracking-[0.22em] text-nest-gold">Services</p>
             <h2 className="mt-3 text-4xl font-black text-nest-teal sm:text-5xl">Extra hands for busy parents.</h2>
-            <p className="mt-4 text-lg text-nest-ink/70">Clear packages, simple request flow, and Founding Family pricing for early beta families.</p>
+            <p className="mt-4 text-lg text-nest-ink/70">Clear packages, simple request flow, and pricing reviewed before checkout.</p>
           </div>
           <div className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {services.map((service) => <ServiceCard key={service.id} service={service} />)}
-          </div>
-          <div id="founding" className="mt-8 rounded-[2rem] border border-nest-gold/25 bg-nest-gold/10 p-6 text-center">
-            <h3 className="text-2xl font-black text-nest-teal">Founding Family Beta Credit</h3>
-            <p className="mx-auto mt-2 max-w-3xl text-nest-ink/75">Use code <strong>{siteConfig.foundingCode}</strong> on your first approved service request to receive the original beta pricing. Prices shown before applicable tax.</p>
           </div>
         </div>
       </AnimatedSection>

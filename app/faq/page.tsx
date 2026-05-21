@@ -4,8 +4,9 @@ const faqs = [
   ["Is this childcare?", "No. NestHelper provides household support and parent reset services. We do not provide licensed childcare, unsupervised babysitting, medical care, elder care, or emergency services."],
   ["Why request-first instead of instant booking?", "We review location, scope, availability, safety, pets, access, and pricing first so customers are not charged for a job we cannot safely or reliably fulfill."],
   ["How does laundry pricing work?", "Laundry Rescue starts with a minimum deposit. Laundry is weighed dry at pickup, add-ons are applied, and final balance is sent through Stripe invoice/payment link."],
+  ["Do I return the laundry bags?", "Yes. If NestHelper returns clean laundry in reusable NestHelper bags or totes, please empty and return them at your next Laundry Rescue pickup, scheduled drop-off, or another approved return method. Missing or damaged reusable bags may be billed a reasonable replacement fee."],
   ["Does checkout include Washington sales tax?", "The checkout and invoicing setup is designed to calculate applicable Washington sales tax through Stripe based on the service address or customer address."],
-  ["Can I use the Founding Family price?", "Early beta customers can enter FOUNDINGFAMILY on the request form. If approved and spots remain, we will honor the original beta price for the first approved service."],
+  ["Can I use a promo code?", "Yes. If NestHelper gave you a promo or referral code, enter it on the request form. We will review the code before sending your checkout link."],
   ["Are helpers background checked?", "Gold Star Checked helpers complete screening steps such as identity review, third-party background screening, reference review, and service standards. Partner providers are vetted as businesses."],
   ["What if something is missed?", "Contact us within 24 hours. If something within the agreed scope was missed, we’ll review and may offer a correction, credit, partial refund, or other resolution when appropriate."]
 ];
