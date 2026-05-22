@@ -47,7 +47,6 @@ export function Footer() {
           links={[
             { href: "/request", label: "Request Help" },
             { href: "/services#laundry", label: "Laundry Rescue" },
-            { href: "/policies", label: "All Policies" },
           ]}
         />
 
