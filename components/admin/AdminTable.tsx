@@ -14,6 +14,11 @@ function formatDate(value: unknown) {
   return String(value);
 }
 
+function formatMoney(value: number) {
+  if (!Number.isFinite(value)) return "$0.00";
+  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(value);
+}
+
 function formatValue(key: string, value: unknown) {
   if (Array.isArray(value)) return value.filter(Boolean).join(", ") || "—";
   if (typeof value === "boolean") return value ? "Yes" : "No";
@@ -22,9 +27,30 @@ function formatValue(key: string, value: unknown) {
   return String(value);
 }
 
+function toNumber(value: unknown) {
+  const next = typeof value === "string" ? Number(value.replace(/[^0-9.-]/g, "")) : Number(value);
+  return Number.isFinite(next) ? next : 0;
+}
+
+function centsToDollars(value: unknown) {
+  const cents = toNumber(value);
+  return cents > 0 ? cents / 100 : 0;
+}
+
 function guessCheckoutMode(item: AdminDoc | null): CheckoutMode {
   const promo = String(item?.promoCode || "").toUpperCase();
-  return promo.includes("FOUNDING") || promo.includes("BETA") ? "founding" : "standard";
+  const paymentMode = String(item?.paymentMode || "").toLowerCase();
+  return promo.includes("FOUNDING") || promo.includes("BETA") || paymentMode === "founding" ? "founding" : "standard";
+}
+
+function getLaundryDefaultDepositCredit(item: AdminDoc | null, mode: CheckoutMode) {
+  if (!item || item.service !== "laundry-rescue") return 0;
+  if (toNumber(item.laundryDepositCredit) > 0) return toNumber(item.laundryDepositCredit);
+  if (toNumber(item.laundryDepositCreditCents) > 0) return centsToDollars(item.laundryDepositCreditCents);
+  if (toNumber(item.laundryDepositAmountTotal) > 0) return centsToDollars(item.laundryDepositAmountTotal);
+  if (toNumber(item.depositPaidAmountTotal) > 0) return centsToDollars(item.depositPaidAmountTotal);
+  if (toNumber(item.amountTotal) > 0 && ["Deposit Paid", "Paid"].includes(String(item.paymentStatus || item.status || ""))) return centsToDollars(item.amountTotal);
+  return mode === "founding" ? 49 : 59;
 }
 
 function shouldNotifyByDefault(status: string) {
@@ -66,6 +92,14 @@ export default function AdminTable({
   const [statusBusy, setStatusBusy] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
   const [statusError, setStatusError] = useState("");
+  const [laundryDryWeightLbs, setLaundryDryWeightLbs] = useState("");
+  const [laundryRatePerLb, setLaundryRatePerLb] = useState("2.99");
+  const [laundryAddOnsAmount, setLaundryAddOnsAmount] = useState("0");
+  const [laundryDepositCredit, setLaundryDepositCredit] = useState("59");
+  const [laundryFinalNote, setLaundryFinalNote] = useState("");
+  const [laundryFinalBusy, setLaundryFinalBusy] = useState(false);
+  const [laundryFinalMessage, setLaundryFinalMessage] = useState("");
+  const [laundryFinalError, setLaundryFinalError] = useState("");
 
   useEffect(() => {
     const q = query(collection(firestoreDb, collectionName), orderBy("createdAt", "desc"));
@@ -75,7 +109,8 @@ export default function AdminTable({
 
   useEffect(() => {
     const nextStatus = selected?.status || "New";
-    setCheckoutMode(guessCheckoutMode(selected));
+    const nextMode = guessCheckoutMode(selected);
+    setCheckoutMode(nextMode);
     setCheckoutMessage("");
     setCheckoutError("");
     setStatusValue(nextStatus);
@@ -83,6 +118,13 @@ export default function AdminTable({
     setNotifyCustomer(shouldNotifyByDefault(nextStatus));
     setStatusMessage("");
     setStatusError("");
+    setLaundryDryWeightLbs(selected?.laundryDryWeightLbs ? String(selected.laundryDryWeightLbs) : "");
+    setLaundryRatePerLb(selected?.laundryRatePerLb ? String(selected.laundryRatePerLb) : nextMode === "founding" ? "2.49" : "2.99");
+    setLaundryAddOnsAmount(selected?.laundryAddOnsAmount ? String(selected.laundryAddOnsAmount) : "0");
+    setLaundryDepositCredit(String(getLaundryDefaultDepositCredit(selected, nextMode) || 0));
+    setLaundryFinalNote("");
+    setLaundryFinalMessage("");
+    setLaundryFinalError("");
   }, [selected?.id]);
 
   const filtered = useMemo(() => {
@@ -90,6 +132,9 @@ export default function AdminTable({
     if (!term) return items;
     return items.filter((item) => JSON.stringify(item).toLowerCase().includes(term));
   }, [items, filter]);
+
+  const laundrySubtotal = Math.max(0, toNumber(laundryDryWeightLbs) * toNumber(laundryRatePerLb) + toNumber(laundryAddOnsAmount));
+  const laundryBalanceDue = Math.max(0, laundrySubtotal - toNumber(laundryDepositCredit));
 
   async function updateStatus(item: AdminDoc, status: string, options?: { notifyCustomer?: boolean; customerNote?: string }) {
     const token = await firebaseAuth.currentUser?.getIdToken();
@@ -140,6 +185,11 @@ export default function AdminTable({
     setCheckoutMessage("Checkout link copied.");
   }
 
+  async function copyLaundryLink(text: string) {
+    await navigator.clipboard.writeText(text);
+    setLaundryFinalMessage("Final balance checkout link copied.");
+  }
+
   async function createPaymentLink(sendEmail: boolean) {
     if (!selected) return;
     setCheckoutBusy(true);
@@ -159,7 +209,7 @@ export default function AdminTable({
         throw new Error(data.error || "Unable to create checkout link.");
       }
 
-      setSelected((prev) => prev ? { ...prev, checkoutUrl: data.url, checkoutSessionId: data.sessionId, status: "Checkout Sent", paymentStatus: "Checkout Sent" } : prev);
+      setSelected((prev) => prev ? { ...prev, checkoutUrl: data.url, checkoutSessionId: data.sessionId, status: "Checkout Sent", paymentStatus: selected.service === "laundry-rescue" ? "Deposit Checkout Sent" : "Checkout Sent" } : prev);
       setStatusValue("Checkout Sent");
       setCheckoutMessage(data.emailError || (data.emailSent ? "Checkout link created and emailed to the customer." : "Checkout link created. Copy it and send it manually."));
     } catch (error) {
@@ -169,8 +219,59 @@ export default function AdminTable({
     }
   }
 
+  async function createLaundryFinalBalance(sendEmail: boolean) {
+    if (!selected) return;
+    setLaundryFinalBusy(true);
+    setLaundryFinalMessage("");
+    setLaundryFinalError("");
+
+    try {
+      const token = await firebaseAuth.currentUser?.getIdToken();
+      const res = await fetch("/api/admin/create-laundry-final-balance", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          requestId: selected.id,
+          dryWeightLbs: toNumber(laundryDryWeightLbs),
+          ratePerLb: toNumber(laundryRatePerLb),
+          addOnsAmount: toNumber(laundryAddOnsAmount),
+          depositCredit: toNumber(laundryDepositCredit),
+          finalBalanceNote: laundryFinalNote,
+          sendEmail,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok || !data.ok) {
+        throw new Error(data.error || "Unable to create laundry final balance link.");
+      }
+
+      setSelected((prev) => prev ? {
+        ...prev,
+        status: data.noBalanceDue ? "Fully Paid" : "Final Balance Sent",
+        paymentStatus: data.noBalanceDue ? "Fully Paid" : "Final Balance Sent",
+        laundryPaymentStatus: data.noBalanceDue ? "Fully Paid" : "Final Balance Sent",
+        laundryFinalCheckoutUrl: data.url || prev.laundryFinalCheckoutUrl,
+        laundryFinalCheckoutSessionId: data.sessionId || prev.laundryFinalCheckoutSessionId,
+        laundryDryWeightLbs: toNumber(laundryDryWeightLbs),
+        laundryRatePerLb: toNumber(laundryRatePerLb),
+        laundryAddOnsAmount: toNumber(laundryAddOnsAmount),
+        laundryDepositCredit: toNumber(laundryDepositCredit),
+        laundrySubtotal,
+        laundryBalanceDue,
+      } : prev);
+      setStatusValue(data.noBalanceDue ? "Fully Paid" : "Final Balance Sent");
+      setLaundryFinalMessage(data.emailError || data.message || (data.emailSent ? "Final balance link created and emailed to the customer." : "Final balance link created. Copy it and send it manually."));
+    } catch (error) {
+      setLaundryFinalError(error instanceof Error ? error.message : "Unable to create laundry final balance link.");
+    } finally {
+      setLaundryFinalBusy(false);
+    }
+  }
+
   const showPaymentActions = enablePaymentActions && collectionName === "serviceRequests" && selected;
   const showCustomerStatusActions = collectionName === "serviceRequests" && selected;
+  const showLaundryFinalBalance = showPaymentActions && selected?.service === "laundry-rescue";
 
   return (
     <section className="space-y-5">
@@ -322,6 +423,11 @@ export default function AdminTable({
                     <p className="mt-2 text-sm leading-6 text-slate-700">
                       This creates a Stripe Checkout Session tied to this request. Public checkout stays off; only admin can send payment after reviewing scope, service area, and availability.
                     </p>
+                    {selected.service === "laundry-rescue" && (
+                      <p className="mt-2 rounded-2xl bg-white px-4 py-3 text-sm font-bold text-[#075c58]">
+                        Laundry Rescue first checkout is the deposit/minimum only. After dry weigh-in, use the final balance section below.
+                      </p>
+                    )}
                   </div>
                   <div className="grid min-w-72 gap-2">
                     <label className="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Price mode</label>
@@ -343,7 +449,7 @@ export default function AdminTable({
                     onClick={() => createPaymentLink(true)}
                     className="rounded-2xl bg-[#075c58] px-5 py-3 text-sm font-black text-white shadow-lg shadow-[#075c58]/15 transition hover:-translate-y-0.5 hover:bg-[#064b48] disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    {checkoutBusy ? "Creating..." : "Create + email checkout link"}
+                    {checkoutBusy ? "Creating..." : selected.service === "laundry-rescue" ? "Create + email deposit link" : "Create + email checkout link"}
                   </button>
                   <button
                     type="button"
@@ -351,7 +457,7 @@ export default function AdminTable({
                     onClick={() => createPaymentLink(false)}
                     className="rounded-2xl border-2 border-[#075c58] bg-white px-5 py-3 text-sm font-black text-[#075c58] transition hover:-translate-y-0.5 hover:bg-[#f4ecdc] disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    Create link only
+                    {selected.service === "laundry-rescue" ? "Create deposit link only" : "Create link only"}
                   </button>
                 </div>
 
@@ -368,6 +474,121 @@ export default function AdminTable({
 
                 {checkoutMessage && <p className="mt-3 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">{checkoutMessage}</p>}
                 {checkoutError && <p className="mt-3 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{checkoutError}</p>}
+              </div>
+            )}
+
+            {showLaundryFinalBalance && (
+              <div className="mb-5 rounded-3xl border border-[#d8c18f] bg-white p-5 shadow-sm">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="max-w-2xl">
+                    <p className="text-xs font-black uppercase tracking-[0.2em] text-[#b98a2f]">Laundry final balance</p>
+                    <h4 className="mt-1 text-xl font-black text-[#075c58]">Bill the remaining balance after dry weigh-in</h4>
+                    <p className="mt-2 text-sm leading-6 text-slate-700">
+                      Enter the dry weight, rate, add-ons, and deposit credit. NestHelper calculates the balance and creates a Stripe checkout link for the remaining amount only.
+                    </p>
+                  </div>
+                  <StatusBadge status={String(selected.laundryPaymentStatus || selected.paymentStatus || selected.status || "New")} />
+                </div>
+
+                <div className="mt-4 grid gap-3 md:grid-cols-4">
+                  <label className="grid gap-2 text-sm font-bold text-slate-700">
+                    Dry weight lbs
+                    <input
+                      value={laundryDryWeightLbs}
+                      onChange={(e) => setLaundryDryWeightLbs(e.target.value)}
+                      inputMode="decimal"
+                      placeholder="24"
+                      className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]"
+                    />
+                  </label>
+                  <label className="grid gap-2 text-sm font-bold text-slate-700">
+                    Rate per lb
+                    <input
+                      value={laundryRatePerLb}
+                      onChange={(e) => setLaundryRatePerLb(e.target.value)}
+                      inputMode="decimal"
+                      className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]"
+                    />
+                  </label>
+                  <label className="grid gap-2 text-sm font-bold text-slate-700">
+                    Add-ons / bulky
+                    <input
+                      value={laundryAddOnsAmount}
+                      onChange={(e) => setLaundryAddOnsAmount(e.target.value)}
+                      inputMode="decimal"
+                      placeholder="0"
+                      className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]"
+                    />
+                  </label>
+                  <label className="grid gap-2 text-sm font-bold text-slate-700">
+                    Deposit credit
+                    <input
+                      value={laundryDepositCredit}
+                      onChange={(e) => setLaundryDepositCredit(e.target.value)}
+                      inputMode="decimal"
+                      className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]"
+                    />
+                  </label>
+                </div>
+
+                <div className="mt-4 grid gap-3 rounded-2xl bg-[#fbf6ea] p-4 text-sm md:grid-cols-3">
+                  <div>
+                    <p className="font-black uppercase tracking-[0.14em] text-[#b98a2f]">Laundry total</p>
+                    <p className="mt-1 text-xl font-black text-[#075c58]">{formatMoney(laundrySubtotal)}</p>
+                  </div>
+                  <div>
+                    <p className="font-black uppercase tracking-[0.14em] text-[#b98a2f]">Deposit credit</p>
+                    <p className="mt-1 text-xl font-black text-[#075c58]">-{formatMoney(toNumber(laundryDepositCredit))}</p>
+                  </div>
+                  <div>
+                    <p className="font-black uppercase tracking-[0.14em] text-[#b98a2f]">Balance due</p>
+                    <p className="mt-1 text-xl font-black text-[#075c58]">{formatMoney(laundryBalanceDue)}</p>
+                  </div>
+                </div>
+
+                <label className="mt-4 grid gap-2 text-sm font-bold text-slate-700">
+                  Optional final balance note
+                  <textarea
+                    value={laundryFinalNote}
+                    onChange={(e) => setLaundryFinalNote(e.target.value)}
+                    placeholder="Example: 24 lbs dry weight, fragrance-free detergent, low heat dry. Deposit has already been credited."
+                    rows={3}
+                    className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
+                  />
+                </label>
+
+                <div className="mt-4 grid gap-3 md:grid-cols-2">
+                  <button
+                    type="button"
+                    disabled={laundryFinalBusy}
+                    onClick={() => createLaundryFinalBalance(true)}
+                    className="rounded-2xl bg-[#075c58] px-5 py-3 text-sm font-black text-white shadow-lg shadow-[#075c58]/15 transition hover:-translate-y-0.5 hover:bg-[#064b48] disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {laundryFinalBusy ? "Creating..." : "Create + email final balance link"}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={laundryFinalBusy}
+                    onClick={() => createLaundryFinalBalance(false)}
+                    className="rounded-2xl border-2 border-[#075c58] bg-white px-5 py-3 text-sm font-black text-[#075c58] transition hover:-translate-y-0.5 hover:bg-[#f4ecdc] disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    Create final balance link only
+                  </button>
+                </div>
+
+                {selected.laundryFinalCheckoutUrl && (
+                  <div className="mt-4 rounded-2xl border border-[#eadfc8] bg-[#fbf6ea] p-4">
+                    <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Current final balance checkout link</p>
+                    <p className="mt-2 break-all text-sm text-[#075c58]">{selected.laundryFinalCheckoutUrl}</p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <a href={selected.laundryFinalCheckoutUrl} target="_blank" rel="noreferrer" className="rounded-full bg-[#075c58] px-4 py-2 text-xs font-black text-white">Open final balance checkout</a>
+                      <button type="button" onClick={() => copyLaundryLink(selected.laundryFinalCheckoutUrl || "")} className="rounded-full border border-[#075c58] px-4 py-2 text-xs font-black text-[#075c58]">Copy link</button>
+                    </div>
+                  </div>
+                )}
+
+                {laundryFinalMessage && <p className="mt-3 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">{laundryFinalMessage}</p>}
+                {laundryFinalError && <p className="mt-3 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{laundryFinalError}</p>}
               </div>
             )}
 

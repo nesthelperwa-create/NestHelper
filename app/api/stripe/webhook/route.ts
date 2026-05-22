@@ -55,10 +55,16 @@ export async function POST(request: Request) {
         const requestRef = db.collection("serviceRequests").doc(requestId);
         const requestSnap = await requestRef.get();
         const existingData = requestSnap.exists ? requestSnap.data() || {} : {};
+        const serviceId = getString(session.metadata?.serviceId) || getString(existingData.service);
+        const paymentType = getString(session.metadata?.paymentType);
+        const isLaundryFinalBalance = paymentType === "laundry_final_balance";
+        const isLaundryDeposit = serviceId === "laundry-rescue" && !isLaundryFinalBalance;
+        const status = isLaundryFinalBalance ? "Fully Paid" : isLaundryDeposit ? "Deposit Paid" : "Paid";
+        const paymentStatus = isLaundryFinalBalance ? "Final Balance Paid" : isLaundryDeposit ? "Deposit Paid" : "Paid";
 
-        await requestRef.update({
-          status: "Paid",
-          paymentStatus: "Paid",
+        const updatePayload: Record<string, unknown> = {
+          status,
+          paymentStatus,
           checkoutSessionId: session.id,
           paymentIntentId: typeof session.payment_intent === "string" ? session.payment_intent : "",
           stripeCustomerId: typeof session.customer === "string" ? session.customer : "",
@@ -68,10 +74,43 @@ export async function POST(request: Request) {
           paidAt: FieldValue.serverTimestamp(),
           updatedAt: FieldValue.serverTimestamp(),
           updatedBy: "stripe-webhook",
-        });
+        };
+
+        if (isLaundryDeposit) {
+          updatePayload.laundryPaymentStatus = "Deposit Paid";
+          updatePayload.depositPaidAmountTotal = session.amount_total ?? null;
+          updatePayload.depositPaidAt = FieldValue.serverTimestamp();
+          updatePayload.laundryDepositAmountTotal = session.amount_total ?? null;
+          updatePayload.laundryDepositPaidAt = FieldValue.serverTimestamp();
+        }
+
+        if (isLaundryFinalBalance) {
+          updatePayload.laundryPaymentStatus = "Final Balance Paid";
+          updatePayload.laundryFinalBalancePaidAt = FieldValue.serverTimestamp();
+          updatePayload.laundryFinalBalancePaidAmountTotal = session.amount_total ?? null;
+          updatePayload.laundryFinalPaymentIntentId = typeof session.payment_intent === "string" ? session.payment_intent : "";
+          updatePayload.laundryFinalCheckoutSessionId = session.id;
+        }
+
+        await requestRef.update(updatePayload);
 
         const email = getString(existingData.email) || getString(session.customer_details?.email) || getString(session.customer_email);
-        const alreadySent = Boolean(existingData.paymentConfirmationEmailSent);
+        const confirmationFlag = isLaundryFinalBalance
+          ? "laundryFinalConfirmationEmailSent"
+          : isLaundryDeposit
+            ? "laundryDepositConfirmationEmailSent"
+            : "paymentConfirmationEmailSent";
+        const confirmationAt = isLaundryFinalBalance
+          ? "laundryFinalConfirmationEmailSentAt"
+          : isLaundryDeposit
+            ? "laundryDepositConfirmationEmailSentAt"
+            : "paymentConfirmationEmailSentAt";
+        const confirmationError = isLaundryFinalBalance
+          ? "laundryFinalConfirmationEmailError"
+          : isLaundryDeposit
+            ? "laundryDepositConfirmationEmailError"
+            : "paymentConfirmationEmailError";
+        const alreadySent = Boolean(existingData[confirmationFlag]);
 
         if (email && !alreadySent) {
           try {
@@ -79,21 +118,22 @@ export async function POST(request: Request) {
               to: email,
               customerName: getString(existingData.fullName) || getString(session.customer_details?.name),
               requestId,
-              serviceTitle: getServiceTitle(existingData, session.metadata?.serviceTitle),
+              serviceTitle: isLaundryFinalBalance ? "Laundry Rescue final balance" : isLaundryDeposit ? "Laundry Rescue deposit/minimum" : getServiceTitle(existingData, session.metadata?.serviceTitle),
               amountTotal: session.amount_total,
               currency: session.currency,
+              paymentStatus,
             });
 
             await requestRef.update({
-              paymentConfirmationEmailSent: true,
-              paymentConfirmationEmailSentAt: FieldValue.serverTimestamp(),
-              paymentConfirmationEmailError: "",
+              [confirmationFlag]: true,
+              [confirmationAt]: FieldValue.serverTimestamp(),
+              [confirmationError]: "",
             });
           } catch (error) {
             console.error("Payment received email failed", error);
             await requestRef.update({
-              paymentConfirmationEmailSent: false,
-              paymentConfirmationEmailError: "Payment was marked paid, but the NestHelper payment confirmation email failed.",
+              [confirmationFlag]: false,
+              [confirmationError]: "Payment was recorded, but the NestHelper payment confirmation email failed.",
             });
           }
         }

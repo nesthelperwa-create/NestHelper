@@ -60,3 +60,35 @@ Thanks — we received your NestHelper payment. I’ll confirm the final arrival
 ## Sandbox tax note
 
 For sandbox testing, `ENABLE_STRIPE_AUTOMATIC_TAX=false` lets checkout links work before the Stripe head office/tax profile is fully completed. Before real customer payments, complete Stripe business/tax setup and set `ENABLE_STRIPE_AUTOMATIC_TAX=true` if you want Stripe Checkout to calculate tax automatically.
+
+## Laundry Rescue deposit + final balance flow
+
+Laundry Rescue is now treated differently from flat-price services.
+
+1. Admin reviews the Laundry Rescue request.
+2. Admin sends the normal Stripe checkout link. For Laundry Rescue, this is the deposit/minimum only.
+3. When the deposit checkout succeeds, the webhook marks the request as `Deposit Paid` instead of fully `Paid`.
+4. After pickup, admin dry-weighs the laundry.
+5. In the admin request detail view, use the **Laundry final balance** section:
+   - Dry weight lbs
+   - Rate per lb
+   - Add-ons / bulky items
+   - Deposit credit
+6. NestHelper calculates:
+
+```text
+Final laundry total = dry weight × rate per lb + add-ons
+Final balance due = final laundry total - deposit credit
+```
+
+7. Admin sends the final balance Stripe checkout link.
+8. When final balance checkout succeeds, the webhook marks the request as `Fully Paid` and `Final Balance Paid`.
+
+Use standard Laundry Rescue values unless you intentionally honor a beta/founding rate:
+
+```text
+Standard rate: $2.99/lb
+Standard deposit/minimum credit: $59
+Founding/Beta rate: $2.49/lb
+Founding/Beta deposit/minimum credit: $49
+```

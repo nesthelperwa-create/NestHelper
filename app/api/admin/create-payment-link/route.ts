@@ -87,6 +87,7 @@ export async function POST(request: Request) {
         serviceId,
         serviceTitle,
         paymentMode: mode,
+        paymentType: serviceId === "laundry-rescue" ? "laundry_deposit" : "service_payment",
         customerName: fullName,
         customerEmail: email,
         customerPhone: phone,
@@ -117,9 +118,12 @@ export async function POST(request: Request) {
       }
     }
 
+    const isLaundryRescue = serviceId === "laundry-rescue";
+
     await requestRef.update({
       status: "Checkout Sent",
-      paymentStatus: "Checkout Sent",
+      paymentStatus: isLaundryRescue ? "Deposit Checkout Sent" : "Checkout Sent",
+      laundryPaymentStatus: isLaundryRescue ? "Deposit Checkout Sent" : data.laundryPaymentStatus || null,
       paymentMode: mode,
       checkoutUrl,
       checkoutSessionId: session.id,
