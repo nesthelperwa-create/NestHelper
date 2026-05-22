@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { AlertTriangle, CheckCircle2, HeartHandshake, ShieldCheck, Sparkles, Users } from "lucide-react";
+import { AlertTriangle, HeartHandshake, ShieldCheck, Sparkles, Users } from "lucide-react";
 import { PageHero } from "@/components/PageHero";
 import { ButtonLink } from "@/components/ui/ButtonLink";
 import { siteConfig } from "@/lib/siteConfig";
@@ -49,7 +49,7 @@ export default function TrustPage() {
           <div className="grid gap-4 sm:grid-cols-2">
             {standards.map((item) => (
               <div key={item} className="flex gap-3 rounded-2xl border border-nest-gold/12 bg-white p-5 font-black text-nest-ink/78 shadow-sm">
-                <CheckCircle2 className="shrink-0 text-nest-teal" /> {item}
+                <ShieldCheck className="shrink-0 text-nest-teal" /> {item}
               </div>
             ))}
           </div>
