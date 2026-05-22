@@ -1,6 +1,7 @@
 import { FieldValue } from "firebase-admin/firestore";
 import { getFirebaseAdminDb } from "./firebaseAdmin";
 import { sendAdminEmail } from "./sendAdminEmail";
+import { sendCustomerConfirmationEmail } from "./sendCustomerConfirmationEmail";
 
 export type SaveSubmissionInput = {
   collection: "serviceRequests" | "helperApplications" | "partnerApplications" | "contactMessages";
@@ -32,9 +33,21 @@ export async function saveSubmission({ collection, payload, emailSubject, emailT
       adminPath,
     });
   } catch (error) {
-    // Form submissions should still succeed even if email notifications fail.
+    // Form submissions should still succeed even if admin email notifications fail.
     // Check Vercel runtime logs to debug notification issues.
     console.error("Admin notification email failed", error);
+  }
+
+  try {
+    await sendCustomerConfirmationEmail({
+      collection,
+      payload: cleaned,
+      submissionId: doc.id,
+    });
+  } catch (error) {
+    // Form submissions should still succeed even if the customer confirmation email fails.
+    // Check Vercel runtime logs to debug notification issues.
+    console.error("Customer confirmation email failed", error);
   }
 
   return { id: doc.id };
