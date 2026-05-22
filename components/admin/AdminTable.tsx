@@ -70,41 +70,41 @@ function getStatusNotePlaceholder(status: string) {
 const SERVICE_LOOKS: Record<string, { label: string; badge: string; row: string; dot: string }> = {
   "parent-reset-2hr": {
     label: "Parent Reset",
-    badge: "border-teal-200 bg-teal-50 text-teal-800",
-    row: "border-l-4 border-l-teal-400 hover:bg-teal-50/50",
-    dot: "bg-teal-500",
+    badge: "border-emerald-700 bg-emerald-600 text-white shadow-sm shadow-emerald-900/25",
+    row: "border-l-8 border-l-emerald-600 bg-emerald-50/40 hover:bg-emerald-100/80",
+    dot: "bg-white ring-2 ring-emerald-100",
   },
   "family-reset-3hr": {
     label: "Family Reset",
-    badge: "border-sky-200 bg-sky-50 text-sky-800",
-    row: "border-l-4 border-l-sky-400 hover:bg-sky-50/50",
-    dot: "bg-sky-500",
+    badge: "border-blue-700 bg-blue-600 text-white shadow-sm shadow-blue-900/25",
+    row: "border-l-8 border-l-blue-600 bg-blue-50/40 hover:bg-blue-100/80",
+    dot: "bg-white ring-2 ring-blue-100",
   },
   "helper-block-4hr": {
     label: "Helper Block",
-    badge: "border-purple-200 bg-purple-50 text-purple-800",
-    row: "border-l-4 border-l-purple-400 hover:bg-purple-50/50",
-    dot: "bg-purple-500",
+    badge: "border-violet-700 bg-violet-600 text-white shadow-sm shadow-violet-900/25",
+    row: "border-l-8 border-l-violet-600 bg-violet-50/40 hover:bg-violet-100/80",
+    dot: "bg-white ring-2 ring-violet-100",
   },
   "errand-helper": {
     label: "Errand Helper",
-    badge: "border-orange-200 bg-orange-50 text-orange-800",
-    row: "border-l-4 border-l-orange-400 hover:bg-orange-50/50",
-    dot: "bg-orange-500",
+    badge: "border-amber-600 bg-amber-400 text-slate-950 shadow-sm shadow-amber-900/20",
+    row: "border-l-8 border-l-amber-500 bg-amber-50/60 hover:bg-amber-100/90",
+    dot: "bg-slate-950 ring-2 ring-white",
   },
   "laundry-rescue": {
     label: "Laundry Rescue",
-    badge: "border-rose-200 bg-rose-50 text-rose-800",
-    row: "border-l-4 border-l-rose-400 hover:bg-rose-50/50",
-    dot: "bg-rose-500",
+    badge: "border-rose-700 bg-rose-600 text-white shadow-sm shadow-rose-900/25",
+    row: "border-l-8 border-l-rose-600 bg-rose-50/40 hover:bg-rose-100/80",
+    dot: "bg-white ring-2 ring-rose-100",
   },
 };
 
 const DEFAULT_SERVICE_LOOK = {
   label: "Unselected",
-  badge: "border-slate-200 bg-slate-50 text-slate-700",
-  row: "border-l-4 border-l-slate-200 hover:bg-[#fbf6ea]",
-  dot: "bg-slate-400",
+  badge: "border-slate-500 bg-slate-600 text-white shadow-sm shadow-slate-900/20",
+  row: "border-l-8 border-l-slate-400 bg-slate-50/60 hover:bg-slate-100",
+  dot: "bg-white ring-2 ring-slate-100",
 };
 
 function getServiceKey(item: AdminDoc | null | undefined) {
@@ -126,7 +126,7 @@ function ServicePill({ item }: { item: AdminDoc }) {
   const look = getServiceLook(item);
   const rawService = String(item.service || "");
   return (
-    <span className={`inline-flex min-w-max items-center gap-2 rounded-full border px-3 py-1 text-xs font-black ${look.badge}`}>
+    <span className={`inline-flex min-w-[132px] items-center justify-center gap-2 rounded-full border px-3 py-1.5 text-[11px] font-black uppercase tracking-wide ${look.badge}`}>
       <span className={`h-2.5 w-2.5 rounded-full ${look.dot}`} />
       {look.label}
       {rawService && !rawService.toLowerCase().includes(look.label.toLowerCase().split(" ")[0]) && (
@@ -140,7 +140,7 @@ function ServiceLegend() {
   return (
     <div className="mt-3 flex flex-wrap gap-2">
       {Object.entries(SERVICE_LOOKS).map(([key, look]) => (
-        <span key={key} className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[11px] font-black ${look.badge}`}>
+        <span key={key} className={`inline-flex min-w-[128px] items-center justify-center gap-2 rounded-full border px-3 py-1.5 text-[11px] font-black uppercase tracking-wide ${look.badge}`}>
           <span className={`h-2 w-2 rounded-full ${look.dot}`} />
           {look.label}
         </span>
