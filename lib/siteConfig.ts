@@ -5,7 +5,8 @@ export const siteConfig = {
   slogan: "Reset the home. Reclaim the day.",
   domain: "NestHelperWA.com",
   email: process.env.NEXT_PUBLIC_CONTACT_EMAIL || "hello@nesthelperwa.com",
-  phone: process.env.NEXT_PUBLIC_CONTACT_PHONE || "(425) 000-0000",
+  phone: "(916) 807-4373",
+  phoneHref: "tel:+19168074373",
   serviceArea: "Woodinville, Bothell, Kirkland, Redmond & nearby Eastside communities",
   foundingCode: "FOUNDINGFAMILY",
   assets: {
