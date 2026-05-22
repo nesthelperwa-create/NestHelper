@@ -62,17 +62,16 @@ export default function HomePage() {
                   priority
                   className="aspect-[16/9] w-full rounded-[2rem] object-cover"
                 />
-                <div className="absolute bottom-6 left-6 hidden max-w-[15rem] rounded-[1.6rem] border border-white/70 bg-white/90 p-4 shadow-soft backdrop-blur sm:block">
-                  <p className="text-xs font-black uppercase tracking-[0.2em] text-nest-gold">Parent Reset</p>
-                  <p className="mt-1 text-2xl font-black leading-tight text-nest-teal">Help that feels coordinated.</p>
-                </div>
-                <div className="absolute right-5 top-5 hidden rounded-full border border-white/70 bg-white/90 px-4 py-2 text-sm font-black text-nest-teal shadow-sm backdrop-blur sm:inline-flex">
-                  <Heart size={16} className="text-nest-gold" /> Built for busy parents
-                </div>
               </div>
-              <div className="absolute -bottom-6 right-6 hidden rounded-[1.6rem] border border-nest-gold/18 bg-nest-cream p-4 shadow-soft lg:block">
-                <p className="text-xs font-black uppercase tracking-[0.2em] text-nest-gold">No booking chaos</p>
-                <p className="mt-1 max-w-[13rem] text-sm font-bold leading-5 text-nest-ink/72">Request first. We review before payment.</p>
+              <div className="relative mt-4 grid gap-3 sm:grid-cols-2">
+                <div className="rounded-[1.4rem] border border-white/70 bg-white/90 p-4 shadow-soft backdrop-blur">
+                  <p className="text-xs font-black uppercase tracking-[0.18em] text-nest-gold">Parent Reset</p>
+                  <p className="mt-1 text-lg font-black leading-tight text-nest-teal">Help that feels coordinated.</p>
+                </div>
+                <div className="rounded-[1.4rem] border border-nest-gold/18 bg-nest-cream/95 p-4 shadow-soft backdrop-blur">
+                  <p className="text-xs font-black uppercase tracking-[0.18em] text-nest-gold">No booking chaos</p>
+                  <p className="mt-1 text-sm font-bold leading-5 text-nest-ink/72">Request first. We review before payment.</p>
+                </div>
               </div>
             </div>
           </AnimatedSection>
