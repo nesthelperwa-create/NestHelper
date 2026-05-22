@@ -24,12 +24,18 @@ export async function saveSubmission({ collection, payload, emailSubject, emailT
     updatedAt: FieldValue.serverTimestamp(),
   });
 
-  await sendAdminEmail({
-    subject: emailSubject,
-    title: emailTitle,
-    rows: { "Dashboard ID": doc.id, ...cleaned },
-    adminPath,
-  });
+  try {
+    await sendAdminEmail({
+      subject: emailSubject,
+      title: emailTitle,
+      rows: { "Dashboard ID": doc.id, ...cleaned },
+      adminPath,
+    });
+  } catch (error) {
+    // Form submissions should still succeed even if email notifications fail.
+    // Check Vercel runtime logs to debug notification issues.
+    console.error("Admin notification email failed", error);
+  }
 
   return { id: doc.id };
 }
