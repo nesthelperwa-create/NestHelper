@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, Mail, MapPin, Phone } from "lucide-react";
+import { ArrowRight, BookOpen, Mail, MapPin, Phone } from "lucide-react";
 import { siteConfig } from "@/lib/siteConfig";
 import { policies } from "@/lib/policies";
 
@@ -23,6 +23,14 @@ export function Footer() {
           <p className="mt-5 max-w-sm text-white/80">
             Reset the home. Reclaim the day. Parent-focused household support coordinated with care, clear standards, and follow-up.
           </p>
+          <div className="mt-5 max-w-sm rounded-3xl border border-white/12 bg-white/8 p-4 text-sm leading-6 text-white/82 shadow-sm backdrop-blur">
+            <div className="mb-2 flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-nest-gold2">
+              <BookOpen size={15} /> Colossians 3:23
+            </div>
+            <p className="font-medium italic">
+              “Whatever you do, work at it with all your heart, as working for the Lord, not for human masters.”
+            </p>
+          </div>
           <Link
             href="/request"
             className="focus-ring mt-6 inline-flex items-center justify-center gap-2 rounded-full bg-white px-5 py-3 font-black text-nest-teal shadow-soft transition hover:-translate-y-0.5 hover:bg-nest-cream"
