@@ -156,7 +156,7 @@ export function ServiceCard({ service }: { service: Service }) {
       ref={cardRef}
       onClick={handleCardClick}
       className={`group relative flex cursor-pointer flex-col overflow-hidden rounded-[2rem] border bg-white/95 shadow-sm backdrop-blur transition duration-300 hover:-translate-y-1 hover:shadow-lift ${
-        open ? `border-nest-gold/35 ring-4 ${theme.ring}` : "h-[548px] border-nest-gold/16 sm:h-[565px]"
+        open ? `border-nest-gold/35 ring-4 ${theme.ring}` : "min-h-[620px] border-nest-gold/16"
       }`}
     >
       {featured && (
@@ -165,15 +165,15 @@ export function ServiceCard({ service }: { service: Service }) {
         </div>
       )}
 
-      <div className={`relative h-36 shrink-0 overflow-hidden bg-gradient-to-br sm:h-40 ${theme.accent}`}>
+      <div className={`relative h-44 shrink-0 overflow-hidden bg-gradient-to-br sm:h-48 ${theme.accent}`}>
         <Image
           src={service.image}
           alt={service.title}
           fill
-          className="object-cover object-top opacity-95 transition duration-700 group-hover:scale-105"
+          className="object-contain p-5 opacity-100 transition duration-700 group-hover:scale-[1.03] sm:p-6"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/34 via-black/4 to-white/0" />
-        <div className={`absolute left-4 top-4 rounded-full border px-3 py-1.5 text-xs font-black uppercase tracking-[0.16em] shadow-sm ${theme.chip}`}>
+        <div className="absolute inset-0 bg-gradient-to-t from-white/45 via-transparent to-white/0" />
+        <div className={`absolute left-4 top-4 max-w-[70%] rounded-full border px-3 py-1.5 text-[0.68rem] font-black uppercase leading-tight tracking-[0.12em] shadow-sm ${theme.chip}`}>
           {theme.eyebrow}
         </div>
       </div>
@@ -201,7 +201,7 @@ export function ServiceCard({ service }: { service: Service }) {
           <div className="grid min-h-[7.4rem] gap-0 sm:grid-cols-[1fr_auto]">
             <div className="flex flex-col justify-center p-5">
               <div className="text-xs font-black uppercase tracking-[0.16em] text-nest-ink/55">Starting at</div>
-              <div className={`mt-1 font-black leading-tight text-nest-teal ${service.id === "laundry-rescue" ? "text-[1.65rem] sm:text-3xl" : "text-3xl"}`}>
+              <div className={`mt-1 break-words font-black leading-tight text-nest-teal ${service.id === "laundry-rescue" ? "text-[1.45rem] sm:text-2xl" : "text-3xl"}`}>
                 {service.standardPrice}
               </div>
               {service.foundingPrice && (
@@ -210,7 +210,7 @@ export function ServiceCard({ service }: { service: Service }) {
                 </div>
               )}
             </div>
-            <div className={`flex min-h-[3rem] items-center justify-center px-4 py-3 text-center text-[0.68rem] font-black uppercase tracking-[0.12em] sm:min-w-[8.2rem] ${theme.price}`}>
+            <div className={`flex min-h-[3rem] items-center justify-center px-4 py-3 text-center text-[0.62rem] font-black uppercase leading-5 tracking-[0.08em] sm:min-w-[9rem] sm:text-[0.68rem] ${theme.price}`}>
               {service.priceNote}
             </div>
           </div>

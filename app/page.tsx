@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 import Image from "next/image";
 import {
-  ArrowRight,
   CheckCircle2,
   ClipboardCheck,
   CreditCard,
@@ -12,7 +11,6 @@ import {
   ShieldCheck,
   Sparkles,
   Star,
-  Users,
 } from "lucide-react";
 import { AnimatedSection } from "@/components/AnimatedSection";
 import { ButtonLink } from "@/components/ui/ButtonLink";
@@ -44,7 +42,7 @@ export default function HomePage() {
               <ButtonLink href="/request">Request Help</ButtonLink>
               <ButtonLink href="/services" variant="secondary">View Services</ButtonLink>
             </div>
-            <div className="mt-6 inline-flex max-w-full items-center gap-2 rounded-full border border-nest-gold/18 bg-white/75 px-4 py-2 text-sm font-black text-nest-teal shadow-sm backdrop-blur">
+            <div id="service-area" className="mt-6 inline-flex max-w-full scroll-mt-24 items-center gap-2 rounded-full border border-nest-gold/18 bg-white/75 px-4 py-2 text-sm font-black text-nest-teal shadow-sm backdrop-blur">
               <MapPin size={16} className="shrink-0 text-nest-gold" />
               <span className="truncate">Serving {siteConfig.serviceArea}</span>
             </div>
@@ -164,37 +162,22 @@ export default function HomePage() {
         </div>
       </AnimatedSection>
 
-      <AnimatedSection className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-        <div className="relative overflow-hidden rounded-[2.7rem] bg-white p-8 shadow-glow md:p-12">
-          <div className="absolute -right-20 -top-24 h-72 w-72 rounded-full bg-nest-gold/16 blur-3xl" />
-          <div className="absolute -bottom-20 -left-20 h-72 w-72 rounded-full bg-nest-mint/70 blur-3xl" />
-          <div className="relative grid gap-8 lg:grid-cols-[1fr_0.75fr] lg:items-center">
-            <div>
-              <p className="pill-label w-fit"><Users size={15} /> Ready when you need a reset</p>
-              <h2 className="text-balance mt-4 text-4xl font-black text-nest-teal sm:text-5xl">Need help this week?</h2>
-              <p className="mt-4 text-lg font-medium leading-8 text-nest-ink/72">
-                Submit a request and we’ll review the details before sending your secure payment link. Laundry requests use a deposit first, then a final balance after dry weigh-in.
-              </p>
-              <div className="mt-7 flex flex-col gap-3 sm:flex-row"><ButtonLink href="/request">Request Help</ButtonLink><ButtonLink href="/contact" variant="secondary">Ask a Question</ButtonLink></div>
-            </div>
-            <div id="service-area" className="scroll-mt-24 rounded-[2rem] border border-nest-gold/18 bg-nest-cream p-6">
-              <div className="flex items-center gap-2 text-nest-teal"><MapPin /> <strong>Serving</strong></div>
-              <p className="mt-3 text-2xl font-black text-nest-ink">{siteConfig.serviceArea}</p>
-              <p className="mt-3 text-sm font-semibold leading-6 text-nest-ink/65">Requests outside the core service area may include a travel fee or have limited availability.</p>
-            </div>
-          </div>
-        </div>
-      </AnimatedSection>
     </>
   );
 }
 
 function LifestyleImage({ src, label }: { src: string; label: string }) {
   return (
-    <div className="relative overflow-hidden rounded-[1.8rem] bg-nest-cream shadow-sm">
-      <Image src={src} alt={label} width={500} height={500} className="aspect-[4/5] w-full object-cover object-top transition duration-700 hover:scale-105" />
-      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/45 to-transparent p-4">
-        <span className="rounded-full bg-white/90 px-3 py-1.5 text-xs font-black uppercase tracking-[0.16em] text-nest-teal shadow-sm">{label}</span>
+    <div className="rounded-[1.8rem] border border-nest-gold/12 bg-gradient-to-br from-nest-cream via-white to-nest-mint/25 p-3 shadow-sm">
+      <Image
+        src={src}
+        alt={label}
+        width={500}
+        height={500}
+        className="aspect-[4/3] w-full rounded-[1.35rem] object-contain transition duration-700 hover:scale-[1.03]"
+      />
+      <div className="mt-3 rounded-full bg-white/90 px-3 py-2 text-center text-[0.68rem] font-black uppercase leading-tight tracking-[0.11em] text-nest-teal shadow-sm">
+        {label}
       </div>
     </div>
   );
