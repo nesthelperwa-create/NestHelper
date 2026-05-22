@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+
 
 type Status = "idle" | "loading" | "success" | "error";
 
@@ -44,7 +46,7 @@ export function ApplicationFormChooser() {
           <p className="text-sm font-black uppercase tracking-[0.22em] text-nest-gold">Choose your application path</p>
           <h2 className="mt-3 text-3xl font-black tracking-tight text-nest-teal sm:text-4xl">Which best describes you?</h2>
           <p className="mt-3 text-nest-ink/70">
-            Select one of the two cards below. The whole card is clickable and the correct application will open underneath.
+            Select one of the two cards below. The selected card will animate and the correct application will open underneath.
           </p>
           <div className="mx-auto mt-5 inline-flex items-center gap-2 rounded-full border border-nest-gold/25 bg-nest-cream px-4 py-2 text-sm font-black text-nest-teal shadow-sm">
             <span className="flex h-2.5 w-2.5 rounded-full bg-nest-gold motion-safe:animate-pulse" />
@@ -52,80 +54,124 @@ export function ApplicationFormChooser() {
           </div>
         </div>
 
-        <div className="mt-8 grid items-stretch gap-5 lg:grid-cols-2">
+        <div className="mt-8 grid items-start gap-5 lg:grid-cols-2">
           {applicationOptions.map((option) => {
             const isSelected = selected === option.key;
             return (
-              <button
+              <motion.button
                 key={option.key}
                 type="button"
+                layout
+                whileHover={{ y: -6, scale: 1.01 }}
+                whileTap={{ scale: 0.975 }}
+                transition={{ type: "spring", stiffness: 420, damping: 28 }}
                 onClick={() => setSelected(option.key)}
-                className={`group relative flex h-full min-h-[390px] cursor-pointer flex-col overflow-hidden rounded-[1.75rem] border-2 p-5 text-left shadow-soft outline-none transition duration-200 ease-out hover:-translate-y-1 hover:shadow-xl focus-visible:ring-4 focus-visible:ring-nest-gold/25 active:translate-y-0 active:scale-[0.99] sm:p-6 ${
+                className={`group relative flex min-h-[330px] cursor-pointer flex-col overflow-hidden rounded-[1.75rem] border-2 p-5 text-left shadow-soft outline-none transition-colors duration-200 ease-out focus-visible:ring-4 focus-visible:ring-nest-gold/25 sm:p-6 ${
                   isSelected
                     ? "border-nest-gold bg-nest-cream ring-4 ring-nest-gold/15"
                     : "border-nest-gold/20 bg-white hover:border-nest-gold/70 hover:bg-nest-cream/45"
                 }`}
                 aria-pressed={isSelected}
               >
-                <div className="absolute right-5 top-5 flex h-11 w-11 items-center justify-center rounded-full border border-nest-gold/25 bg-white text-lg font-black text-nest-teal transition group-hover:scale-110 group-hover:border-nest-gold group-hover:bg-nest-gold group-hover:text-white">
-                  {isSelected ? "✓" : "→"}
-                </div>
+                {isSelected && (
+                  <motion.div
+                    layoutId="application-selected-glow"
+                    className="pointer-events-none absolute inset-0 rounded-[1.65rem] bg-gradient-to-br from-nest-gold/18 via-white/20 to-nest-mint/35"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.22 }}
+                  />
+                )}
 
-                <div className="flex flex-1 flex-col pr-8">
+                <motion.div
+                  animate={isSelected ? { rotate: 360, scale: 1.08 } : { rotate: 0, scale: 1 }}
+                  transition={{ type: "spring", stiffness: 360, damping: 18 }}
+                  className={`absolute right-5 top-5 z-10 flex h-11 w-11 items-center justify-center rounded-full border text-lg font-black transition-colors ${
+                    isSelected
+                      ? "border-nest-gold bg-nest-gold text-white shadow-soft"
+                      : "border-nest-gold/25 bg-white text-nest-teal group-hover:border-nest-gold group-hover:bg-nest-gold group-hover:text-white"
+                  }`}
+                >
+                  {isSelected ? "✓" : "→"}
+                </motion.div>
+
+                <div className="relative z-10 flex flex-1 flex-col pr-8">
                   <span className="w-fit rounded-full bg-nest-mint/55 px-3 py-1 text-xs font-black uppercase tracking-[0.18em] text-nest-teal">
                     {option.eyebrow}
                   </span>
 
                   <h3 className="mt-5 text-2xl font-black leading-tight text-nest-teal">{option.title}</h3>
-                  <p className="mt-3 min-h-[112px] leading-7 text-nest-ink/72">{option.text}</p>
+                  <p className="mt-3 leading-7 text-nest-ink/72">{option.text}</p>
 
-                  <ul className="mt-4 grid min-h-[92px] gap-2 text-sm font-semibold text-nest-ink/75">
-                    {option.bullets.map((bullet) => (
-                      <li key={bullet} className="flex gap-2">
+                  <ul className="mt-4 grid gap-2 text-sm font-semibold text-nest-ink/75">
+                    {option.bullets.map((bullet, index) => (
+                      <motion.li
+                        key={bullet}
+                        className="flex gap-2"
+                        animate={isSelected ? { x: [0, 4, 0] } : { x: 0 }}
+                        transition={{ delay: index * 0.04, duration: 0.26 }}
+                      >
                         <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-nest-gold/15 text-xs font-black text-nest-gold">✓</span>
                         <span>{bullet}</span>
-                      </li>
+                      </motion.li>
                     ))}
                   </ul>
                 </div>
 
-                <div
-                  className={`mt-6 flex w-full items-center justify-center rounded-full px-5 py-4 text-sm font-black shadow-soft transition ${
+                <motion.div
+                  layout
+                  className={`relative z-10 mt-6 flex w-full items-center justify-center rounded-full px-5 py-4 text-sm font-black shadow-soft transition-colors ${
                     isSelected
                       ? "bg-nest-gold text-white"
                       : "bg-nest-teal text-white group-hover:bg-nest-teal2 group-hover:tracking-wide"
                   }`}
                 >
                   {isSelected ? "Selected — form shown below" : option.button}
-                </div>
-              </button>
+                </motion.div>
+              </motion.button>
             );
           })}
         </div>
       </div>
 
-      {selectedOption ? (
-        <div className="mt-8">
-          <div className="mb-4 flex flex-col gap-3 rounded-[1.5rem] border border-nest-gold/20 bg-nest-cream p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-sm font-black uppercase tracking-[0.18em] text-nest-gold">Now showing</p>
-              <p className="text-xl font-black text-nest-teal">{selectedOption.title}</p>
+      <AnimatePresence mode="wait">
+        {selectedOption ? (
+          <motion.div
+            key={selectedOption.key}
+            className="mt-8"
+            initial={{ opacity: 0, y: 18, scale: 0.985 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -10, scale: 0.985 }}
+            transition={{ type: "spring", stiffness: 260, damping: 24 }}
+          >
+            <div className="mb-4 flex flex-col gap-3 rounded-[1.5rem] border border-nest-gold/20 bg-nest-cream p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm font-black uppercase tracking-[0.18em] text-nest-gold">Now showing</p>
+                <p className="text-xl font-black text-nest-teal">{selectedOption.title}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelected(null)}
+                className="rounded-full border border-nest-teal/20 bg-white px-5 py-3 text-sm font-black text-nest-teal shadow-sm transition hover:-translate-y-0.5 hover:border-nest-gold hover:text-nest-gold focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-nest-gold/20"
+              >
+                Change selection
+              </button>
             </div>
-            <button
-              type="button"
-              onClick={() => setSelected(null)}
-              className="rounded-full border border-nest-teal/20 bg-white px-5 py-3 text-sm font-black text-nest-teal shadow-sm transition hover:-translate-y-0.5 hover:border-nest-gold hover:text-nest-gold focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-nest-gold/20"
-            >
-              Change selection
-            </button>
-          </div>
-          {selected === "helper" ? <HelperApplicationForm /> : <PartnerApplicationForm />}
-        </div>
-      ) : (
-        <div className="mt-8 rounded-[1.5rem] border border-dashed border-nest-gold/45 bg-white/70 p-6 text-center text-sm font-semibold text-nest-ink/70">
-          Select one of the two clickable cards above to open the correct application form.
-        </div>
-      )}
+            {selected === "helper" ? <HelperApplicationForm /> : <PartnerApplicationForm />}
+          </motion.div>
+        ) : (
+          <motion.div
+            key="empty-selection"
+            className="mt-8 rounded-[1.5rem] border border-dashed border-nest-gold/45 bg-white/70 p-6 text-center text-sm font-semibold text-nest-ink/70"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2 }}
+          >
+            Select one of the two animated cards above to open the correct application form.
+          </motion.div>
+        )}
+      </AnimatePresence>
     </section>
   );
 }
