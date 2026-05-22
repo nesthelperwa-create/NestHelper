@@ -19,6 +19,7 @@ export default function AdminRequestsPage() {
           { key: "promoCode", label: "Promo" },
         ]}
         statuses={["New", "Reviewed", "Approved", "Checkout Sent", "Paid", "Scheduled", "Completed", "Declined", "Follow-Up Needed"]}
+        enablePaymentActions
       />
     </AdminShell>
   );
