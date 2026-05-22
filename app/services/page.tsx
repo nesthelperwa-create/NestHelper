@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { CheckCircle2, ClipboardCheck, CreditCard, Scale, ShieldCheck, Sparkles } from "lucide-react";
 import { PageHero } from "@/components/PageHero";
 import { ServiceCard } from "@/components/ServiceCard";
@@ -19,11 +20,15 @@ export default function ServicesPage() {
             <h2 className="text-balance mt-4 text-4xl font-black text-nest-teal sm:text-5xl">Designed for the moments when the house feels like too much.</h2>
           </div>
           <div className="pro-card rounded-[2rem] p-6">
-            <h3 className="text-xl font-black text-nest-teal">What the price covers</h3>
+            <h3 className="text-xl font-black text-nest-teal">Simple at first glance. Details when you need them.</h3>
             <p className="mt-3 font-medium leading-7 text-nest-ink/70">
-              Pricing is not just helper time. It includes coordination, request review, service standards, clear communication, payment handling, and follow-up so parents are not managing everything themselves.
+              Each card shows the essentials first. Open a package to see what is included, then request the one that fits your family best.
             </p>
           </div>
+        </div>
+
+        <div className="mb-5 rounded-3xl border border-nest-gold/16 bg-white/80 p-4 text-sm font-bold text-nest-ink/65 shadow-sm sm:px-5">
+          Tap or click a card to open details. Opening another package closes the previous one.
         </div>
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -86,7 +91,7 @@ export default function ServicesPage() {
   );
 }
 
-function LaundryStep({ icon, title, text }: { icon: React.ReactNode; title: string; text: string }) {
+function LaundryStep({ icon, title, text }: { icon: ReactNode; title: string; text: string }) {
   return (
     <div className="rounded-[2rem] border border-rose-100 bg-rose-50/65 p-6">
       <div className="mb-4 inline-flex rounded-2xl bg-white p-3 text-rose-700 shadow-sm">{icon}</div>

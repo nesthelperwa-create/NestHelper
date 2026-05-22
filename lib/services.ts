@@ -34,7 +34,7 @@ export const services: Service[] = [
     travelInfo: "Core Eastside service area",
     image: "/assets/services/service-parent-reset.png",
     stripeStandardEnv: "STRIPE_PRICE_PARENT_RESET_STANDARD",
-    foundingPrice: "$89",
+    foundingPrice: "$99",
     stripeFoundingEnv: "STRIPE_PRICE_PARENT_RESET_FOUNDING"
   },
   {
@@ -55,7 +55,7 @@ export const services: Service[] = [
     travelInfo: "Core Eastside service area",
     image: "/assets/services/service-family-reset.png",
     stripeStandardEnv: "STRIPE_PRICE_FAMILY_RESET_STANDARD",
-    foundingPrice: "$139",
+    foundingPrice: "$149",
     stripeFoundingEnv: "STRIPE_PRICE_FAMILY_RESET_FOUNDING"
   },
   {
@@ -76,7 +76,7 @@ export const services: Service[] = [
     travelInfo: "Core Eastside service area",
     image: "/assets/services/service-helper-block.png",
     stripeStandardEnv: "STRIPE_PRICE_HELPER_BLOCK_STANDARD",
-    foundingPrice: "$179",
+    foundingPrice: "$199",
     stripeFoundingEnv: "STRIPE_PRICE_HELPER_BLOCK_FOUNDING"
   },
   {
@@ -97,7 +97,7 @@ export const services: Service[] = [
     travelInfo: "Up to 15 driving miles included",
     image: "/assets/services/service-errand-helper.png",
     stripeStandardEnv: "STRIPE_PRICE_ERRAND_STANDARD",
-    foundingPrice: "$79",
+    foundingPrice: "$89",
     stripeFoundingEnv: "STRIPE_PRICE_ERRAND_FOUNDING",
     note: "Best for nearby errands in and around Woodinville, Bothell, Kirkland, Redmond, and nearby Eastside communities. Longer routes can be reviewed before checkout."
   },
@@ -121,7 +121,7 @@ export const services: Service[] = [
     stripeStandardEnv: "STRIPE_PRICE_LAUNDRY_DEPOSIT_STANDARD",
     foundingPrice: "$49 minimum + $2.49/lb",
     stripeFoundingEnv: "STRIPE_PRICE_LAUNDRY_DEPOSIT_FOUNDING",
-    note: "Laundry is billed by dry weight. Deposit applies to final total. Final balance is sent through Stripe invoice/payment link after pickup weigh-in."
+    note: "Laundry is billed by dry weight. The deposit applies to the final total, and any remaining balance is sent after pickup weigh-in."
   }
 ];
 
