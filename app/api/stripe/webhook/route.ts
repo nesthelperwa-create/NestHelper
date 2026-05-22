@@ -4,6 +4,7 @@ import { FieldValue } from "firebase-admin/firestore";
 import Stripe from "stripe";
 import { getFirebaseAdminDb } from "@/lib/firebaseAdmin";
 import { services } from "@/lib/services";
+import { sendAdminEmail } from "@/lib/sendAdminEmail";
 import { sendPaymentReceivedEmail } from "@/lib/sendPaymentReceivedEmail";
 
 export const runtime = "nodejs";
@@ -17,6 +18,50 @@ function getString(value: unknown) {
 function getServiceTitle(data: Record<string, unknown>, fallback?: string) {
   const serviceId = getString(data.service);
   return getString(data.selectedServiceTitle) || fallback || services.find((item) => item.id === serviceId)?.title || serviceId || "NestHelper service";
+}
+
+function formatMoney(amountTotal?: number | null, currency?: string | null) {
+  if (typeof amountTotal !== "number") return "";
+
+  try {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: (currency || "usd").toUpperCase(),
+    }).format(amountTotal / 100);
+  } catch {
+    return `$${(amountTotal / 100).toFixed(2)}`;
+  }
+}
+
+function getAdminAlertFields(isLaundryDeposit: boolean, isLaundryFinalBalance: boolean) {
+  if (isLaundryFinalBalance) {
+    return {
+      sentFlag: "laundryFinalAdminPaymentEmailSent",
+      sentAt: "laundryFinalAdminPaymentEmailSentAt",
+      errorField: "laundryFinalAdminPaymentEmailError",
+      paymentLabel: "Laundry Rescue final balance",
+    };
+  }
+
+  if (isLaundryDeposit) {
+    return {
+      sentFlag: "laundryDepositAdminPaymentEmailSent",
+      sentAt: "laundryDepositAdminPaymentEmailSentAt",
+      errorField: "laundryDepositAdminPaymentEmailError",
+      paymentLabel: "Laundry Rescue deposit/minimum",
+    };
+  }
+
+  return {
+    sentFlag: "paymentAdminEmailSent",
+    sentAt: "paymentAdminEmailSentAt",
+    errorField: "paymentAdminEmailError",
+    paymentLabel: "Service payment",
+  };
+}
+
+function buildAddress(data: Record<string, unknown>) {
+  return [getString(data.address), getString(data.city), getString(data.zip)].filter(Boolean).join(", ");
 }
 
 export async function POST(request: Request) {
@@ -95,6 +140,13 @@ export async function POST(request: Request) {
         await requestRef.update(updatePayload);
 
         const email = getString(existingData.email) || getString(session.customer_details?.email) || getString(session.customer_email);
+        const customerName = getString(existingData.fullName) || getString(session.customer_details?.name) || getString(session.metadata?.customerName);
+        const serviceTitle = isLaundryFinalBalance
+          ? "Laundry Rescue final balance"
+          : isLaundryDeposit
+            ? "Laundry Rescue deposit/minimum"
+            : getServiceTitle(existingData, session.metadata?.serviceTitle);
+
         const confirmationFlag = isLaundryFinalBalance
           ? "laundryFinalConfirmationEmailSent"
           : isLaundryDeposit
@@ -116,9 +168,9 @@ export async function POST(request: Request) {
           try {
             await sendPaymentReceivedEmail({
               to: email,
-              customerName: getString(existingData.fullName) || getString(session.customer_details?.name),
+              customerName,
               requestId,
-              serviceTitle: isLaundryFinalBalance ? "Laundry Rescue final balance" : isLaundryDeposit ? "Laundry Rescue deposit/minimum" : getServiceTitle(existingData, session.metadata?.serviceTitle),
+              serviceTitle,
               amountTotal: session.amount_total,
               currency: session.currency,
               paymentStatus,
@@ -134,6 +186,55 @@ export async function POST(request: Request) {
             await requestRef.update({
               [confirmationFlag]: false,
               [confirmationError]: "Payment was recorded, but the NestHelper payment confirmation email failed.",
+            });
+          }
+        }
+
+        const adminAlert = getAdminAlertFields(isLaundryDeposit, isLaundryFinalBalance);
+        const adminAlreadySent = Boolean(existingData[adminAlert.sentFlag]);
+
+        if (!adminAlreadySent) {
+          try {
+            const result = await sendAdminEmail({
+              subject: `Stripe Payment Received: ${serviceTitle}`,
+              title: "Payment received — ready to schedule",
+              intro: "A customer completed Stripe checkout. The request is now marked paid in the admin dashboard and is ready for scheduling follow-up.",
+              adminPath: "/admin/requests",
+              rows: {
+                "Dashboard ID": requestId,
+                Customer: customerName,
+                Email: email,
+                Phone: getString(existingData.phone) || getString(session.customer_details?.phone) || getString(session.metadata?.customerPhone),
+                Service: serviceTitle,
+                "Payment type": adminAlert.paymentLabel,
+                "Payment status": paymentStatus,
+                "Amount paid": formatMoney(session.amount_total, session.currency),
+                "Preferred date": getString(existingData.preferredDate),
+                "Preferred window": getString(existingData.preferredWindow),
+                Address: buildAddress(existingData),
+                "Urgency / timing": getString(existingData.urgency),
+                "Request details": getString(existingData.requestDetails),
+                "Laundry estimate": getString(existingData.laundryBagEstimate),
+                "Laundry pickup spot": getString(existingData.laundryPickupSpot),
+                "Parking/access notes": getString(existingData.parkingAccess),
+                "Stripe checkout session": session.id,
+              },
+            });
+
+            if ((result as { skipped?: boolean })?.skipped) {
+              throw new Error("Admin payment alert skipped because RESEND_API_KEY is missing.");
+            }
+
+            await requestRef.update({
+              [adminAlert.sentFlag]: true,
+              [adminAlert.sentAt]: FieldValue.serverTimestamp(),
+              [adminAlert.errorField]: "",
+            });
+          } catch (error) {
+            console.error("Admin payment notification email failed", error);
+            await requestRef.update({
+              [adminAlert.sentFlag]: false,
+              [adminAlert.errorField]: "Payment was recorded, but the admin payment notification email failed.",
             });
           }
         }

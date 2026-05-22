@@ -5,6 +5,7 @@ type AdminEmailInput = {
   title: string;
   rows: Record<string, unknown>;
   adminPath?: string;
+  intro?: string;
 };
 
 function escapeHtml(value: unknown) {
@@ -25,21 +26,16 @@ function formatValue(value: unknown) {
 }
 
 function getAdminEmail() {
-  return (
-    process.env.ADMIN_NOTIFICATION_EMAIL ||
-    process.env.CUSTOMER_SUPPORT_EMAIL ||
-    process.env.NEXT_PUBLIC_CONTACT_EMAIL ||
-    "hello@nesthelperwa.com"
-  );
+  return process.env.ADMIN_NOTIFICATION_EMAIL || "nesthelperwa@gmail.com";
 }
 
 function getReplyTo(rows: Record<string, unknown>) {
-  const possibleEmail = rows.email || rows.customerEmail || rows.contactEmail;
+  const possibleEmail = rows.email || rows.Email || rows.customerEmail || rows["Customer email"] || rows.contactEmail;
   const email = typeof possibleEmail === "string" ? possibleEmail.trim() : "";
   return email.includes("@") ? email : undefined;
 }
 
-export async function sendAdminEmail({ subject, title, rows, adminPath = "/admin" }: AdminEmailInput) {
+export async function sendAdminEmail({ subject, title, rows, adminPath = "/admin", intro }: AdminEmailInput) {
   const apiKey = process.env.RESEND_API_KEY;
   const to = getAdminEmail();
   const from = process.env.NOTIFICATION_FROM_EMAIL || "NestHelper <onboarding@resend.dev>";
@@ -73,7 +69,7 @@ export async function sendAdminEmail({ subject, title, rows, adminPath = "/admin
           <h1 style="margin:6px 0 0;font-size:24px;">${escapeHtml(title)}</h1>
         </div>
         <div style="padding:22px 26px;">
-          <p style="margin:0 0 16px 0;color:#233;line-height:1.6;">A new public NestHelper form was submitted. Review it in the admin dashboard.</p>
+          <p style="margin:0 0 16px 0;color:#233;line-height:1.6;">${escapeHtml(intro || "A new public NestHelper form was submitted. Review it in the admin dashboard.")}</p>
           <table style="width:100%;border-collapse:collapse;">${rowsHtml}</table>
           <p style="margin-top:22px;"><a href="${siteUrl}${adminPath}" style="display:inline-block;background:#075c58;color:#fff;text-decoration:none;padding:12px 18px;border-radius:999px;font-weight:700;">Open Admin Dashboard</a></p>
           <p style="font-size:12px;color:#667;line-height:1.5;">Sent to ${escapeHtml(to)}. ${replyTo ? `Replying to this email should reply to ${escapeHtml(replyTo)}.` : ""}</p>
@@ -81,7 +77,7 @@ export async function sendAdminEmail({ subject, title, rows, adminPath = "/admin
       </div>
     </div>`;
 
-  const text = `${title}\n\nA new public NestHelper form was submitted.\n\n${textRows}\n\nOpen admin dashboard: ${siteUrl}${adminPath}`;
+  const text = `${title}\n\n${intro || "A new public NestHelper form was submitted."}\n\n${textRows}\n\nOpen admin dashboard: ${siteUrl}${adminPath}`;
 
   return resend.emails.send({ from, to, subject, html, text, replyTo });
 }

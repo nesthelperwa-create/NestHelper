@@ -1,18 +1,13 @@
 # Admin email notifications
 
-New public form submissions call `sendAdminEmail()` after the Firestore document is saved.
+New public form submissions and paid Stripe checkouts call `sendAdminEmail()` so NestHelper gets an admin alert after important customer actions.
 
-Notification recipient order:
-
-1. `ADMIN_NOTIFICATION_EMAIL`
-2. `CUSTOMER_SUPPORT_EMAIL`
-3. `NEXT_PUBLIC_CONTACT_EMAIL`
-4. `hello@nesthelperwa.com`
+Admin alerts are sent to `ADMIN_NOTIFICATION_EMAIL`. If that is missing, this site falls back to `nesthelperwa@gmail.com`.
 
 Recommended Vercel Production env vars:
 
 ```env
-ADMIN_NOTIFICATION_EMAIL=hello@nesthelperwa.com
+ADMIN_NOTIFICATION_EMAIL=nesthelperwa@gmail.com
 CUSTOMER_SUPPORT_EMAIL=hello@nesthelperwa.com
 NOTIFICATION_FROM_EMAIL=NestHelper <notifications@nesthelperwa.com>
 ```
@@ -23,6 +18,6 @@ To test:
 
 1. Submit `/contact`
 2. Submit `/request?service=parent-reset-2hr`
-3. Check `hello@nesthelperwa.com` inbox and spam/promotions
-4. Check Vercel logs for `sendAdminEmail` or Resend errors if no email arrives
-5. Check Resend logs for delivery status
+3. Check `nesthelperwa@gmail.com` inbox and spam/promotions
+4. Complete a Stripe test checkout and confirm the admin payment alert arrives at `nesthelperwa@gmail.com`
+5. Check Vercel logs for `sendAdminEmail` / `Admin payment notification email failed`, then check Resend logs for delivery status
