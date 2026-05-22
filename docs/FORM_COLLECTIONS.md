@@ -1,6 +1,6 @@
 # Form Collections
 
-## customerRequests
+## serviceRequests
 
 Used by `/request`.
 

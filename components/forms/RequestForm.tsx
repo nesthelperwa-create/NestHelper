@@ -4,7 +4,6 @@ import { useSearchParams } from "next/navigation";
 import type { FormEvent, ReactNode } from "react";
 import { useMemo, useState } from "react";
 import { CheckCircle2, Clock, CreditCard, MapPin, ShieldCheck } from "lucide-react";
-import { saveForm } from "@/lib/formHelpers";
 import { services, laundryAddOns } from "@/lib/services";
 
 const defaultState = {
@@ -35,8 +34,11 @@ const defaultState = {
   laundryAddOns: [] as string[],
   reusableBagAck: false,
   consent: false,
-  textConsent: false
+  textConsent: false,
 };
+
+type RequestFormState = typeof defaultState;
+type Status = "idle" | "loading" | "success" | "error";
 
 const priorityOptions = [
   "Kitchen reset",
@@ -45,23 +47,111 @@ const priorityOptions = [
   "Laundry folding / put-away",
   "Pantry, entry, or kids area reset",
   "Trash / quick pickup",
-  "Errands or pickup help",
-  "I am not sure — help me prioritize"
+  "I am not sure — help me prioritize",
 ];
+
+function getServiceCategory(serviceId: string) {
+  if (serviceId === "laundry-rescue") return "laundry";
+  if (serviceId === "errand-helper") return "errand";
+  if (serviceId) return "home";
+  return "none";
+}
+
+function cleanForSelectedService(form: RequestFormState) {
+  const category = getServiceCategory(form.service);
+  const base = {
+    fullName: form.fullName,
+    email: form.email,
+    phone: form.phone,
+    address: form.address,
+    city: form.city,
+    zip: form.zip,
+    service: form.service,
+    preferredDate: form.preferredDate,
+    preferredWindow: form.preferredWindow,
+    alternateDate: form.alternateDate,
+    urgency: form.urgency,
+    promoCode: form.promoCode,
+    selectedServiceTitle: services.find((service) => service.id === form.service)?.title || "",
+    pets: category === "home" ? form.pets : "",
+    parkingAccess: form.parkingAccess,
+    consent: form.consent,
+    textConsent: form.textConsent,
+    requestedAt: new Date().toISOString(),
+  };
+
+  if (category === "home") {
+    return {
+      ...base,
+      packageType: "Home reset",
+      homePriorities: form.homePriorities,
+      roomsAreas: form.roomsAreas,
+      requestDetails: form.requestDetails,
+    };
+  }
+
+  if (category === "errand") {
+    return {
+      ...base,
+      packageType: "Errand Helper",
+      errandStops: form.errandStops,
+      errandStartArea: form.errandStartArea,
+      errandMileageAck: form.errandMileageAck,
+    };
+  }
+
+  if (category === "laundry") {
+    return {
+      ...base,
+      packageType: "Laundry Rescue",
+      laundryBagEstimate: form.laundryBagEstimate,
+      laundryPickupSpot: form.laundryPickupSpot,
+      detergent: form.detergent,
+      dryPreference: form.dryPreference,
+      laundryAddOns: form.laundryAddOns,
+      reusableBagAck: form.reusableBagAck,
+    };
+  }
+
+  return base;
+}
 
 export function RequestForm() {
   const params = useSearchParams();
   const requestedService = params.get("service") || "";
   const [form, setForm] = useState({ ...defaultState, service: requestedService });
-  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [status, setStatus] = useState<Status>("idle");
   const [message, setMessage] = useState("");
 
   const selectedService = useMemo(() => services.find((service) => service.id === form.service), [form.service]);
-  const isLaundry = form.service === "laundry-rescue";
-  const isErrand = form.service === "errand-helper";
+  const serviceCategory = getServiceCategory(form.service);
+  const isHomeReset = serviceCategory === "home";
+  const isErrand = serviceCategory === "errand";
+  const isLaundry = serviceCategory === "laundry";
 
-  function update(name: string, value: unknown) {
-    setForm((prev) => ({ ...prev, [name]: value }));
+  function update(name: keyof RequestFormState, value: unknown) {
+    setForm((prev) => ({ ...prev, [name]: value }) as RequestFormState);
+  }
+
+  function handleServiceChange(service: string) {
+    const nextCategory = getServiceCategory(service);
+    setForm((prev) => ({
+      ...prev,
+      service,
+      homePriorities: nextCategory === "home" ? prev.homePriorities : [],
+      requestDetails: nextCategory === "home" ? prev.requestDetails : "",
+      roomsAreas: nextCategory === "home" ? prev.roomsAreas : "",
+      pets: nextCategory === "home" ? prev.pets : "",
+      errandStops: nextCategory === "errand" ? prev.errandStops : "",
+      errandStartArea: nextCategory === "errand" ? prev.errandStartArea : "",
+      errandMileageAck: nextCategory === "errand" ? prev.errandMileageAck : false,
+      laundryBagEstimate: nextCategory === "laundry" ? prev.laundryBagEstimate : "",
+      laundryPickupSpot: nextCategory === "laundry" ? prev.laundryPickupSpot : "",
+      detergent: nextCategory === "laundry" ? prev.detergent : "Standard detergent",
+      dryPreference: nextCategory === "laundry" ? prev.dryPreference : "Standard dry",
+      laundryAddOns: nextCategory === "laundry" ? prev.laundryAddOns : [],
+      reusableBagAck: nextCategory === "laundry" ? prev.reusableBagAck : false,
+    }));
   }
 
   function toggleList(name: "homePriorities" | "laundryAddOns", item: string, checked: boolean) {
@@ -69,7 +159,7 @@ export function RequestForm() {
       const current = prev[name];
       return {
         ...prev,
-        [name]: checked ? [...current, item] : current.filter((value) => value !== item)
+        [name]: checked ? [...current, item] : current.filter((value) => value !== item),
       };
     });
   }
@@ -80,13 +170,16 @@ export function RequestForm() {
     setMessage("");
 
     try {
-      await saveForm("customerRequests", {
-        ...form,
-        selectedServiceTitle: selectedService?.title || "",
-        requestedAt: new Date().toISOString()
+      const response = await fetch("/api/submit-request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(cleanForSelectedService(form)),
       });
+      const result = await response.json().catch(() => null);
+      if (!response.ok || !result?.ok) throw new Error(result?.error || "Request submission failed");
+
       setStatus("success");
-      setMessage("Request received. We’ll review your service area, timing, scope, safety notes, and pricing before sending a secure checkout link.");
+      setMessage("Request received. We’ll review your service area, timing, scope, safety notes, and pricing before sending a secure checkout link. A confirmation email is on its way.");
       setForm({ ...defaultState, service: requestedService });
     } catch (err) {
       console.error(err);
@@ -127,10 +220,10 @@ export function RequestForm() {
         </div>
       </Section>
 
-      <Section title="3. Service and timing" description="Choose the closest fit. If you are not sure, choose the best match and explain below.">
+      <Section title="3. Service and timing" description="Choose the package first. The next section changes based on the package selected.">
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Service requested">
-            <select className="input" required value={form.service} onChange={(e) => update("service", e.target.value)}>
+            <select className="input" required value={form.service} onChange={(e) => handleServiceChange(e.target.value)}>
               <option value="">Choose a service</option>
               {services.map((service) => <option key={service.id} value={service.id}>{service.title}</option>)}
             </select>
@@ -170,8 +263,16 @@ export function RequestForm() {
         )}
       </Section>
 
-      <Section title="4. What do you need help with?" description="This helps us plan the visit and avoid overpromising. Pick the main priorities and add details.">
-        {!isLaundry && (
+      {serviceCategory === "none" && (
+        <Section title="4. Package-specific questions" description="Choose a service above and this section will only show questions that match that package.">
+          <div className="rounded-3xl border border-nest-gold/20 bg-nest-cream p-5 text-sm font-semibold leading-6 text-nest-ink/76">
+            Select 2-Hour Parent Reset, 3-Hour Family Reset, 4-Hour Helper Block, Errand Helper, or Laundry Rescue to continue.
+          </div>
+        </Section>
+      )}
+
+      {isHomeReset && (
+        <Section title="4. Home reset priorities" description="These questions are only for Parent Reset, Family Reset, and Helper Block packages.">
           <div>
             <div className="label mb-3">Main priorities</div>
             <div className="grid gap-2 sm:grid-cols-2">
@@ -180,18 +281,18 @@ export function RequestForm() {
               ))}
             </div>
           </div>
-        )}
-        <Field label="Rooms/areas involved (optional)"><input className="input" placeholder="Example: kitchen, living room, kids room, entry, laundry area" value={form.roomsAreas} onChange={(e) => update("roomsAreas", e.target.value)} /></Field>
-        <Field label="Tell us what is piling up"><textarea className="input min-h-36" required placeholder="Example: dishes are backed up, toys everywhere, laundry needs folding, pantry needs a reset, or I need help catching up before guests arrive." value={form.requestDetails} onChange={(e) => update("requestDetails", e.target.value)} /></Field>
-      </Section>
+          <Field label="Rooms/areas involved"><input className="input" required placeholder="Example: kitchen, living room, kids room, entry, laundry area" value={form.roomsAreas} onChange={(e) => update("roomsAreas", e.target.value)} /></Field>
+          <Field label="Tell us what is piling up"><textarea className="input min-h-36" required placeholder="Example: dishes are backed up, toys everywhere, laundry needs folding, pantry needs a reset, or I need help catching up before guests arrive." value={form.requestDetails} onChange={(e) => update("requestDetails", e.target.value)} /></Field>
+        </Section>
+      )}
 
       {isErrand && (
-        <Section title="Errand Helper details" description="Errand Helper is designed for a local errand block: up to 2 hours and up to 15 driving miles included. Extra distance or complex stops are reviewed before checkout.">
+        <Section title="4. Errand Helper details" description="These questions are only for Errand Helper. This package is for a local errand block: up to 2 hours and up to 15 driving miles included.">
           <div className="rounded-3xl border border-nest-gold/20 bg-nest-cream p-5 text-sm leading-6 text-nest-ink/76">
             <strong className="text-nest-teal">Good fit:</strong> grocery pickup, returns, approved pickup/drop-off tasks, and family logistics. <strong className="text-nest-teal">Not allowed:</strong> alcohol, weapons, controlled substances, unsafe requests, or anything that requires legal/medical judgment.
           </div>
-          <Field label="Errand stops or task list"><textarea className="input min-h-28" placeholder="Example: Target return, grocery pickup at QFC, pharmacy pickup if legally allowed, package drop-off." value={form.errandStops} onChange={(e) => update("errandStops", e.target.value)} /></Field>
-          <Field label="Starting area / stores / drop-off area"><input className="input" placeholder="Example: Woodinville QFC to my home, or Bothell return drop-off" value={form.errandStartArea} onChange={(e) => update("errandStartArea", e.target.value)} /></Field>
+          <Field label="Errand stops or task list"><textarea className="input min-h-28" required placeholder="Example: Target return, grocery pickup at QFC, package drop-off." value={form.errandStops} onChange={(e) => update("errandStops", e.target.value)} /></Field>
+          <Field label="Starting area / stores / drop-off area"><input className="input" required placeholder="Example: Woodinville QFC to my home, or Bothell return drop-off" value={form.errandStartArea} onChange={(e) => update("errandStartArea", e.target.value)} /></Field>
           <label className="flex gap-3 rounded-2xl bg-white p-4 text-sm font-semibold text-nest-ink/82 shadow-sm">
             <input type="checkbox" required checked={form.errandMileageAck} onChange={(e) => update("errandMileageAck", e.target.checked)} className="mt-1 h-4 w-4" />
             <span>I understand Errand Helper includes up to 2 hours and up to 15 driving miles. NestHelper will quote extra distance, complex stops, or special handling before checkout.</span>
@@ -200,10 +301,10 @@ export function RequestForm() {
       )}
 
       {isLaundry && (
-        <Section title="Laundry Rescue preferences" description="Laundry is billed by dry weight at pickup. Deposit applies to your final total, then the final balance is sent after weigh-in.">
+        <Section title="4. Laundry Rescue preferences" description="These questions are only for Laundry Rescue. Laundry is billed by dry weight at pickup, then the final balance is sent after weigh-in.">
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Estimated laundry amount"><input className="input" placeholder="Example: 2 bags, 3 hampers, towels + kids clothes" value={form.laundryBagEstimate} onChange={(e) => update("laundryBagEstimate", e.target.value)} /></Field>
-            <Field label="Pickup spot / access"><input className="input" placeholder="Example: front porch, garage, apartment door" value={form.laundryPickupSpot} onChange={(e) => update("laundryPickupSpot", e.target.value)} /></Field>
+            <Field label="Estimated laundry amount"><input className="input" required placeholder="Example: 2 bags, 3 hampers, towels + kids clothes" value={form.laundryBagEstimate} onChange={(e) => update("laundryBagEstimate", e.target.value)} /></Field>
+            <Field label="Pickup spot / access"><input className="input" required placeholder="Example: front porch, garage, apartment door" value={form.laundryPickupSpot} onChange={(e) => update("laundryPickupSpot", e.target.value)} /></Field>
             <Field label="Detergent preference">
               <select className="input" value={form.detergent} onChange={(e) => update("detergent", e.target.value)}>
                 <option>Standard detergent</option>
@@ -243,10 +344,24 @@ export function RequestForm() {
         </Section>
       )}
 
-      <Section title="5. Home, pets, and access" description="Clear access notes help us avoid delays and make sure the request is safe for everyone.">
-        <Field label="Pets in home"><input className="input" placeholder="Example: 1 friendly dog, 2 cats, no pets" value={form.pets} onChange={(e) => update("pets", e.target.value)} /></Field>
-        <Field label="Parking/access notes"><input className="input" placeholder="Door code, parking, apartment info, stairs, elevator, gate, where to enter, etc." value={form.parkingAccess} onChange={(e) => update("parkingAccess", e.target.value)} /></Field>
-      </Section>
+      {isHomeReset && (
+        <Section title="5. Home, pets, and access" description="Clear access notes help us avoid delays and make sure the request is safe for everyone.">
+          <Field label="Pets in home"><input className="input" placeholder="Example: 1 friendly dog, 2 cats, no pets" value={form.pets} onChange={(e) => update("pets", e.target.value)} /></Field>
+          <Field label="Parking/access notes"><input className="input" placeholder="Door code, parking, apartment info, stairs, elevator, gate, where to enter, etc." value={form.parkingAccess} onChange={(e) => update("parkingAccess", e.target.value)} /></Field>
+        </Section>
+      )}
+
+      {isErrand && (
+        <Section title="5. Errand access notes" description="Only include the access details needed to complete the errand or pickup/drop-off safely.">
+          <Field label="Pickup/drop-off, parking, or access notes"><input className="input" placeholder="Example: leave groceries at front porch, apartment gate code, package pickup desk, parking notes" value={form.parkingAccess} onChange={(e) => update("parkingAccess", e.target.value)} /></Field>
+        </Section>
+      )}
+
+      {isLaundry && (
+        <Section title="5. Laundry pickup and return notes" description="Only include the access details needed for laundry pickup and return.">
+          <Field label="Pickup/return, parking, or access notes"><input className="input" placeholder="Example: porch pickup, apartment gate code, text on arrival, leave clean bags by front door" value={form.parkingAccess} onChange={(e) => update("parkingAccess", e.target.value)} /></Field>
+        </Section>
+      )}
 
       <div className="grid gap-4 rounded-[1.75rem] border border-nest-teal/15 bg-nest-mint/20 p-5">
         <h3 className="text-xl font-black text-nest-teal">Before you submit</h3>

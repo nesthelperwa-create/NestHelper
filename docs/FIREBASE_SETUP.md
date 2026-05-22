@@ -2,7 +2,7 @@
 
 ## Collections used
 
-- `customerRequests`
+- `serviceRequests`
 - `helperApplications`
 - `partnerApplications`
 - `contactMessages`
