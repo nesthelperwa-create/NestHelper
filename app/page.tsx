@@ -22,44 +22,44 @@ import { siteConfig } from "@/lib/siteConfig";
 export default function HomePage() {
   return (
     <>
-      <section className="relative isolate overflow-hidden px-4 py-10 sm:px-6 lg:px-8 lg:py-16">
+      <section className="relative isolate overflow-hidden px-4 pb-10 pt-7 sm:px-6 sm:py-12 lg:px-8 lg:py-16">
         <div className="absolute inset-0 -z-10 bg-[url('/assets/backgrounds/warm-mint-gradient.png')] bg-cover opacity-80" />
         <div className="absolute inset-0 -z-10 bg-white/44" />
         <div className="absolute -left-24 top-20 -z-10 h-80 w-80 rounded-full bg-nest-mint/70 blur-3xl" />
         <div className="absolute -right-20 bottom-10 -z-10 h-80 w-80 rounded-full bg-nest-gold/20 blur-3xl" />
 
-        <div className="relative mx-auto grid max-w-7xl items-center gap-10 lg:grid-cols-[0.92fr_1.08fr]">
-          <AnimatedSection className="order-2 lg:order-1">
-            <div className="pill-label">
+        <div className="relative mx-auto grid max-w-7xl items-center gap-8 lg:grid-cols-[0.92fr_1.08fr] lg:gap-10">
+          <AnimatedSection className="order-1 min-w-0 text-center lg:text-left">
+            <div className="pill-label mx-auto max-w-full lg:mx-0">
               <Sparkles size={16} /> Parent Reset Concierge
             </div>
-            <h1 className="text-balance mt-5 max-w-3xl text-4xl font-black tracking-tight text-nest-teal sm:text-6xl lg:text-7xl">
+            <h1 className="text-balance mx-auto mt-4 max-w-3xl text-[2.55rem] font-black leading-[0.95] tracking-tight text-nest-teal sm:text-6xl sm:leading-[0.96] lg:mx-0 lg:text-7xl">
               Reset the home. Reclaim the day.
             </h1>
-            <p className="mt-5 max-w-2xl text-base font-semibold leading-7 text-nest-ink/74 sm:text-xl sm:leading-8">
+            <p className="mx-auto mt-5 max-w-2xl text-base font-semibold leading-7 text-nest-ink/74 sm:text-xl sm:leading-8 lg:mx-0">
               Trusted local help for busy parents — home resets, laundry rescue, errands, and family support without the awkward marketplace guessing game.
             </p>
-            <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+            <div className="mx-auto mt-7 flex max-w-sm flex-col gap-3 sm:max-w-none sm:flex-row lg:mx-0">
               <ButtonLink href="/request">Request Help</ButtonLink>
               <ButtonLink href="/services" variant="secondary">View Services</ButtonLink>
             </div>
-            <div id="service-area" className="mt-6 inline-flex max-w-full scroll-mt-24 items-center gap-2 rounded-full border border-nest-gold/18 bg-white/78 px-4 py-2 text-sm font-black text-nest-teal shadow-sm backdrop-blur">
+            <div id="service-area" className="mx-auto mt-6 inline-flex max-w-full scroll-mt-24 items-start gap-2 rounded-3xl border border-nest-gold/18 bg-white/78 px-4 py-2 text-left text-sm font-black leading-5 text-nest-teal shadow-sm backdrop-blur sm:items-center sm:rounded-full lg:mx-0">
               <MapPin size={16} className="shrink-0 text-nest-gold" />
-              <span className="truncate">Serving {siteConfig.serviceArea}</span>
+              <span>Serving {siteConfig.serviceArea}</span>
             </div>
           </AnimatedSection>
 
-          <AnimatedSection className="order-1 lg:order-2">
-            <div className="relative mx-auto max-w-2xl lg:max-w-none">
-              <div className="absolute -inset-5 rounded-[2.8rem] bg-nest-gold/16 blur-2xl" />
-              <div className="relative overflow-hidden rounded-[2.5rem] border border-white/80 bg-white/60 p-3 shadow-glow backdrop-blur">
+          <AnimatedSection className="order-2 min-w-0 lg:order-2">
+            <div className="relative mx-auto w-full max-w-[24rem] sm:max-w-2xl lg:max-w-none">
+              <div className="absolute -inset-3 rounded-[2rem] bg-nest-gold/16 blur-2xl sm:-inset-5 sm:rounded-[2.8rem]" />
+              <div className="relative overflow-hidden rounded-[1.9rem] border border-white/80 bg-white/60 p-2 shadow-glow backdrop-blur sm:rounded-[2.5rem] sm:p-3">
                 <Image
                   src={siteConfig.assets.hero}
                   alt="NestHelper Parent Reset banner"
                   width={1792}
                   height={768}
                   priority
-                  className="aspect-[16/9] w-full rounded-[2rem] object-cover"
+                  className="h-auto w-full rounded-[1.45rem] object-contain sm:aspect-[16/9] sm:rounded-[2rem] sm:object-cover"
                 />
               </div>
             </div>
@@ -67,7 +67,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <AnimatedSection className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
+      <AnimatedSection className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8 lg:py-16">
         <SectionShell>
           <SectionIntro
             label="What NestHelper is"
@@ -85,7 +85,7 @@ export default function HomePage() {
         </SectionShell>
       </AnimatedSection>
 
-      <AnimatedSection className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+      <AnimatedSection className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
         <SectionShell>
           <SectionIntro
             label="Why families choose NestHelper"
@@ -104,7 +104,7 @@ export default function HomePage() {
         </SectionShell>
       </AnimatedSection>
 
-      <AnimatedSection className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+      <AnimatedSection className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
         <SectionShell>
           <SectionIntro
             label="How it works"
@@ -127,9 +127,9 @@ export default function HomePage() {
           <div className="grid gap-8 lg:grid-cols-[0.75fr_1.25fr] lg:items-end">
             <div>
               <p className="pill-label w-fit"><Star size={15} /> Services</p>
-              <h2 className="text-balance mt-4 text-4xl font-black text-nest-teal sm:text-5xl">Extra hands for busy parents.</h2>
+              <h2 className="text-balance mt-4 text-3xl font-black leading-tight text-nest-teal sm:text-5xl">Extra hands for busy parents.</h2>
             </div>
-            <p className="text-lg font-medium leading-8 text-nest-ink/70">
+            <p className="text-base font-medium leading-7 text-nest-ink/70 sm:text-lg sm:leading-8">
               Choose a package, submit details, and NestHelper reviews the request before payment. Each card shows the price first, then expands for more detail when needed.
             </p>
           </div>
@@ -148,8 +148,8 @@ export default function HomePage() {
         </div>
         <div className="self-center">
           <p className="pill-label w-fit"><ShieldCheck size={15} /> Trust & Safety</p>
-          <h2 className="text-balance mt-4 text-4xl font-black text-nest-teal sm:text-5xl">Not a random helper board.</h2>
-          <p className="mt-5 text-lg font-medium leading-8 text-nest-ink/72">
+          <h2 className="text-balance mt-4 text-3xl font-black leading-tight text-nest-teal sm:text-5xl">Not a random helper board.</h2>
+          <p className="mt-5 text-base font-medium leading-7 text-nest-ink/72 sm:text-lg sm:leading-8">
             NestHelper is being built as a managed local parent-help service. We coordinate the request, set expectations, use checked helpers or vetted partner providers, and follow up after service.
           </p>
           <div className="mt-7 grid gap-3 sm:grid-cols-2">
@@ -175,7 +175,7 @@ export default function HomePage() {
 
 function SectionShell({ children }: { children: ReactNode }) {
   return (
-    <div className="rounded-[2.75rem] border border-nest-gold/12 bg-white/78 p-6 shadow-soft backdrop-blur sm:p-8 lg:p-10">
+    <div className="rounded-[2rem] border border-nest-gold/12 bg-white/78 p-5 shadow-soft backdrop-blur sm:rounded-[2.75rem] sm:p-8 lg:p-10">
       {children}
     </div>
   );
@@ -193,14 +193,14 @@ function SectionIntro({
   description: string;
 }) {
   return (
-    <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr] lg:items-end">
+    <div className="grid gap-5 lg:grid-cols-[0.95fr_1.05fr] lg:items-end">
       <div>
         <p className="pill-label w-fit">{icon} {label}</p>
-        <h2 className="text-balance mt-4 text-4xl font-black text-nest-teal sm:text-5xl">
+        <h2 className="text-balance mt-4 text-3xl font-black leading-tight text-nest-teal sm:text-5xl">
           {title}
         </h2>
       </div>
-      <p className="text-lg font-medium leading-8 text-nest-ink/70">
+      <p className="text-base font-medium leading-7 text-nest-ink/70 sm:text-lg sm:leading-8">
         {description}
       </p>
     </div>
