@@ -105,7 +105,7 @@ export function ServiceCard({ service }: { service: Service }) {
   const [open, setOpen] = useState(false);
   const cardRef = useRef<HTMLElement | null>(null);
   const returnScrollYRef = useRef<number | null>(null);
-  const returnTimerRef = useRef<ReturnType<typeof window.setTimeout> | null>(null);
+  const returnTimerRef = useRef<number | null>(null);
   const theme = serviceStyles[service.id] || serviceStyles["parent-reset-2hr"];
   const extra = serviceExtras[service.id];
   const detailsId = `service-details-${service.id}`;
