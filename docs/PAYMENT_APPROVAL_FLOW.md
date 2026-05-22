@@ -55,3 +55,8 @@ Thanks — we received your NestHelper payment. I’ll confirm the final arrival
 - `Completed`: job finished
 - `Declined`: not a fit
 - `Follow-Up Needed`: questions before approval
+
+
+## Sandbox tax note
+
+For sandbox testing, `ENABLE_STRIPE_AUTOMATIC_TAX=false` lets checkout links work before the Stripe head office/tax profile is fully completed. Before real customer payments, complete Stripe business/tax setup and set `ENABLE_STRIPE_AUTOMATIC_TAX=true` if you want Stripe Checkout to calculate tax automatically.

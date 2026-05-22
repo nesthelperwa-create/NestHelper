@@ -5,6 +5,7 @@ import { getStripePriceId, normalizeStripePriceMode } from "@/lib/stripePriceMap
 export const runtime = "nodejs";
 
 const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
+const enableAutomaticTax = process.env.ENABLE_STRIPE_AUTOMATIC_TAX === "true";
 
 export async function POST(req: Request) {
   if (process.env.ENABLE_PUBLIC_CHECKOUT !== "true") {
@@ -23,7 +24,7 @@ export async function POST(req: Request) {
   const session = await stripe.checkout.sessions.create({
     mode: "payment",
     line_items: [{ price: priceId, quantity: 1 }],
-    automatic_tax: { enabled: true },
+    automatic_tax: { enabled: enableAutomaticTax },
     billing_address_collection: "required",
     phone_number_collection: { enabled: true },
     allow_promotion_codes: true,
