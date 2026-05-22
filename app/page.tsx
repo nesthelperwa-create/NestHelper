@@ -73,7 +73,7 @@ export default function HomePage() {
             label="What NestHelper is"
             icon={<Heart size={15} />}
             title="Parent Reset help, coordinated for busy families."
-            description="NestHelper is a managed local parent-help service for families who need extra hands at home, but do not want to search through random posts, message strangers, or negotiate every detail alone. Families send one clear request, and NestHelper reviews the scope, timing, location, safety notes, and best-fit package before checkout so expectations are clearer from the start."
+            description="NestHelper is a managed local parent-help service for families who need extra hands at home without random group posts, stranger DMs, or awkward negotiation. Send one request and we review the scope, timing, location, safety notes, and best-fit package before checkout."
           />
 
           <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -91,7 +91,7 @@ export default function HomePage() {
             label="Why families choose NestHelper"
             icon={<ShieldCheck size={15} />}
             title="A better choice than random unvetted help."
-            description="Facebook groups and marketplace listings can be useful, but parents are often left sorting through strangers, unclear pricing, and loose promises. NestHelper gives families a more professional, insured, and coordinated way to get household help."
+            description="Instead of sorting through strangers, unclear pricing, and loose promises, families get an insured service with checked helpers, vetted partners, clear packages, request review, and follow-up."
           />
 
           <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
@@ -110,7 +110,7 @@ export default function HomePage() {
             label="How it works"
             icon={<Star size={15} />}
             title="Simple request. Reviewed first. Then we get to work."
-            description="The process is built to feel controlled and clear, so families know what happens before payment and what to expect next."
+            description="We review the details before payment so each visit starts with clearer expectations, safer boundaries, and a plan that makes sense for the family."
           />
 
           <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -130,7 +130,7 @@ export default function HomePage() {
               <h2 className="text-balance mt-4 text-3xl font-black leading-tight text-nest-teal sm:text-5xl">Extra hands for busy parents.</h2>
             </div>
             <p className="text-base font-medium leading-7 text-nest-ink/70 sm:text-lg sm:leading-8">
-              Choose a package, submit details, and NestHelper reviews the request before payment. Each card shows the price first, then expands for more detail when needed.
+              Choose a package, submit the details, and NestHelper reviews the request before payment. Open each card for what fits, pricing notes, and next steps.
             </p>
           </div>
           <div className="mt-10 grid items-start gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -150,7 +150,7 @@ export default function HomePage() {
           <p className="pill-label w-fit"><ShieldCheck size={15} /> Trust & Safety</p>
           <h2 className="text-balance mt-4 text-3xl font-black leading-tight text-nest-teal sm:text-5xl">Not a random helper board.</h2>
           <p className="mt-5 text-base font-medium leading-7 text-nest-ink/72 sm:text-lg sm:leading-8">
-            NestHelper is being built as a managed local parent-help service. We coordinate the request, set expectations, use checked helpers or vetted partner providers, and follow up after service.
+            NestHelper is a managed local parent-help service. We coordinate requests, set expectations, use checked helpers or vetted partner providers, and follow up after service.
           </p>
           <div className="mt-7 grid gap-3 sm:grid-cols-2">
             {[

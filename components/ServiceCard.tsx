@@ -188,7 +188,7 @@ export function ServiceCard({ service }: { service: Service }) {
       ref={cardRef}
       onClick={handleCardClick}
       className={`group relative flex cursor-pointer flex-col overflow-hidden rounded-[2rem] border bg-white/95 shadow-sm backdrop-blur transition duration-300 hover:-translate-y-1 hover:shadow-lift ${
-        open ? `border-nest-gold/35 ring-4 ${theme.ring}` : "min-h-[640px] border-nest-gold/16 md:h-[675px]"
+        open ? `border-nest-gold/35 ring-4 ${theme.ring}` : "min-h-[610px] border-nest-gold/16 md:h-[650px]"
       }`}
     >
       {featured && (
