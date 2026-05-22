@@ -1,5 +1,5 @@
 export const siteConfig = {
-  name: "NestHelper LLC",
+  name: "NestHelper",
   brand: "NestHelper",
   subheading: "Parent Reset",
   slogan: "Reset the home. Reclaim the day.",

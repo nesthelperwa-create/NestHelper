@@ -189,7 +189,7 @@ export function RequestForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} className="grid gap-6 rounded-[2rem] border border-nest-gold/20 bg-white p-5 shadow-soft sm:p-8">
+    <form onSubmit={onSubmit} className="grid gap-6 rounded-[2.5rem] border border-nest-gold/18 bg-white/90 p-5 shadow-soft backdrop-blur sm:p-8">
       <div className="rounded-[1.75rem] bg-gradient-to-br from-nest-cream via-white to-nest-mint/35 p-5 sm:p-6">
         <p className="text-xs font-black uppercase tracking-[0.22em] text-nest-gold">No payment due yet</p>
         <h2 className="mt-2 text-2xl font-black text-nest-teal sm:text-3xl">Request a Parent Reset</h2>

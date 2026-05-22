@@ -38,7 +38,7 @@ export function ContactForm() {
   }
 
   return (
-    <form onSubmit={submit} className="grid gap-4 rounded-[2rem] border border-nest-gold/20 bg-white p-6 shadow-soft">
+    <form onSubmit={submit} className="grid gap-4 rounded-[2.5rem] border border-nest-gold/18 bg-white/90 p-6 shadow-soft backdrop-blur sm:p-8">
       <h2 className="text-2xl font-black text-nest-teal">Send a message</h2>
       <input className="input" required placeholder="Name" value={form.name} onChange={(e) => update("name", e.target.value)} />
       <input className="input" required type="email" placeholder="Email" value={form.email} onChange={(e) => update("email", e.target.value)} />

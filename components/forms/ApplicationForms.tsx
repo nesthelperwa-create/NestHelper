@@ -39,7 +39,7 @@ export function ApplicationFormChooser() {
 
   return (
     <section className="mx-auto max-w-5xl px-4 py-14 sm:px-6 lg:px-8">
-      <div className="rounded-[2rem] border border-nest-gold/20 bg-white/80 p-4 shadow-soft sm:p-6 lg:p-8">
+      <div className="rounded-[2.5rem] border border-nest-gold/18 bg-white/90 p-4 shadow-soft backdrop-blur sm:p-6 lg:p-8">
         <div className="mx-auto max-w-3xl text-center">
           <p className="text-sm font-black uppercase tracking-[0.22em] text-nest-gold">Choose your application path</p>
           <h2 className="mt-3 text-3xl font-black tracking-tight text-nest-teal sm:text-4xl">Which best describes you?</h2>
@@ -153,7 +153,7 @@ export function HelperApplicationForm() {
     catch(err){ console.error(err); setStatus("error"); setMessage("Something went wrong. Please try again."); }
   }
   return (
-    <form onSubmit={submit} className="grid gap-4 rounded-[2rem] border border-nest-gold/20 bg-white p-5 shadow-soft sm:p-8">
+    <form onSubmit={submit} className="grid gap-4 rounded-[2.5rem] border border-nest-gold/18 bg-white/90 p-5 shadow-soft backdrop-blur sm:p-8">
       <h2 className="text-2xl font-black text-nest-teal">Part-Time Helper Application</h2>
       <p className="text-nest-ink/70">For individuals interested in becoming a NestHelper Gold Star Checked helper.</p>
       <Grid>
@@ -198,7 +198,7 @@ export function PartnerApplicationForm() {
     catch(err){ console.error(err); setStatus("error"); setMessage("Something went wrong. Please try again."); }
   }
   return (
-    <form onSubmit={submit} className="grid gap-4 rounded-[2rem] border border-nest-gold/20 bg-white p-5 shadow-soft sm:p-8">
+    <form onSubmit={submit} className="grid gap-4 rounded-[2.5rem] border border-nest-gold/18 bg-white/90 p-5 shadow-soft backdrop-blur sm:p-8">
       <h2 className="text-2xl font-black text-nest-teal">Independent Contractor / Partner Provider Application</h2>
       <p className="text-nest-ink/70">For cleaners, laundromats, errand providers, and local businesses interested in partnering with NestHelper.</p>
       <Grid>

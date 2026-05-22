@@ -3,14 +3,17 @@
 @theme {
   --color-nest-teal: #005d56;
   --color-nest-teal2: #127e74;
+  --color-nest-teal3: #003f3b;
   --color-nest-mint: #c4e2d6;
+  --color-nest-mint2: #e9f7f1;
   --color-nest-cream: #fff8ee;
   --color-nest-cream2: #f4efe6;
   --color-nest-gold: #c18f37;
   --color-nest-gold2: #e6be5a;
   --color-nest-ink: #1f2d2b;
-  --shadow-soft: 0 20px 60px rgba(0, 93, 86, 0.14);
-  --shadow-glow: 0 0 0 1px rgba(193, 143, 55, 0.18), 0 24px 80px rgba(0, 93, 86, 0.2);
+  --shadow-soft: 0 22px 70px rgba(0, 93, 86, 0.13);
+  --shadow-glow: 0 0 0 1px rgba(193, 143, 55, 0.18), 0 28px 90px rgba(0, 93, 86, 0.18);
+  --shadow-lift: 0 28px 90px rgba(0, 93, 86, 0.19);
   --radius-xxl: 2rem;
   --animate-float: float 6s ease-in-out infinite;
 }
@@ -23,35 +26,60 @@
 :root {
   --teal: #005d56;
   --teal2: #127e74;
+  --teal3: #003f3b;
   --gold: #c18f37;
   --cream: #fff8ee;
   --ink: #1f2d2b;
 }
 
+* { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
 body {
-  background: #fff8ee;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 8% 4%, rgba(196, 226, 214, 0.78), transparent 30rem),
+    radial-gradient(circle at 94% 18%, rgba(230, 190, 90, 0.20), transparent 28rem),
+    linear-gradient(180deg, #fffaf1 0%, #fff8ee 42%, #f8f2e8 100%);
   color: #1f2d2b;
   text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
 }
 
+a { text-underline-offset: 4px; }
 ::selection { background: rgba(193, 143, 55, 0.28); }
 
+.text-balance { text-wrap: balance; }
+
 .glass-card {
-  background: rgba(255, 255, 255, 0.76);
+  background: rgba(255, 255, 255, 0.78);
   border: 1px solid rgba(193, 143, 55, 0.18);
+  backdrop-filter: blur(20px);
+}
+
+.pro-card {
+  border: 1px solid rgba(193, 143, 55, 0.18);
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: 0 18px 55px rgba(0, 93, 86, 0.10);
   backdrop-filter: blur(18px);
 }
 
 .gold-gradient {
-  background: linear-gradient(135deg, #b07b22, #f0cf78, #c18f37);
+  background: linear-gradient(135deg, #a86f16 0%, #f0cf78 52%, #c18f37 100%);
 }
 
 .teal-gradient {
-  background: radial-gradient(circle at 30% 20%, #1ea89a, #005d56 48%, #003a36 100%);
+  background:
+    radial-gradient(circle at 18% 15%, rgba(61, 199, 185, 0.60), transparent 24rem),
+    radial-gradient(circle at 86% 20%, rgba(230, 190, 90, 0.20), transparent 22rem),
+    linear-gradient(135deg, #005d56 0%, #064a45 52%, #022d2a 100%);
 }
 
-.text-balance { text-wrap: balance; }
+.soft-section {
+  background:
+    radial-gradient(circle at 10% 10%, rgba(196, 226, 214, 0.58), transparent 24rem),
+    radial-gradient(circle at 86% 18%, rgba(230, 190, 90, 0.16), transparent 22rem),
+    rgba(255, 255, 255, 0.55);
+}
 
 .focus-ring:focus-visible {
   outline: 3px solid rgba(193, 143, 55, 0.55);
@@ -59,31 +87,51 @@ body {
 }
 
 .card-hover {
-  transition: transform 250ms ease, box-shadow 250ms ease, border-color 250ms ease;
+  transition: transform 250ms ease, box-shadow 250ms ease, border-color 250ms ease, background-color 250ms ease;
 }
 .card-hover:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 24px 80px rgba(0, 93, 86, 0.18);
+  transform: translateY(-6px);
+  box-shadow: 0 28px 90px rgba(0, 93, 86, 0.17);
   border-color: rgba(193, 143, 55, 0.42);
+}
+
+.pill-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(193, 143, 55, 0.22);
+  background: rgba(255, 255, 255, 0.80);
+  padding: 0.45rem 0.9rem;
+  font-size: 0.74rem;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #a67624;
+  box-shadow: 0 10px 30px rgba(0, 93, 86, 0.06);
 }
 
 .input {
   width: 100%;
-  border-radius: 1rem;
-  border: 1px solid rgba(0, 93, 86, 0.18);
-  background: rgba(255,255,255,0.86);
-  padding: 0.85rem 1rem;
+  border-radius: 1.05rem;
+  border: 1px solid rgba(0, 93, 86, 0.16);
+  background: rgba(255,255,255,0.92);
+  padding: 0.9rem 1rem;
   font-size: 1rem;
   color: #1f2d2b;
-  box-shadow: 0 8px 24px rgba(0, 93, 86, 0.04);
+  box-shadow: 0 9px 24px rgba(0, 93, 86, 0.04);
+  transition: border-color 180ms ease, box-shadow 180ms ease, background-color 180ms ease;
 }
 .input:focus {
-  outline: 3px solid rgba(193, 143, 55, 0.24);
-  border-color: rgba(193, 143, 55, 0.75);
+  outline: 3px solid rgba(193, 143, 55, 0.22);
+  border-color: rgba(193, 143, 55, 0.72);
+  background: #fff;
+  box-shadow: 0 16px 36px rgba(0, 93, 86, 0.08);
 }
+.input::placeholder { color: rgba(31, 45, 43, 0.42); }
 .label {
-  font-size: 0.88rem;
-  font-weight: 700;
+  font-size: 0.86rem;
+  font-weight: 900;
   color: #005d56;
 }
 
