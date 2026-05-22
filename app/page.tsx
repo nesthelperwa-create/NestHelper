@@ -121,7 +121,7 @@ export default function HomePage() {
       </AnimatedSection>
 
       <AnimatedSection className="teal-gradient px-4 py-16 text-white sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-7xl">
+        <div id="how-it-works" className="mx-auto max-w-7xl scroll-mt-24">
           <div className="mx-auto max-w-3xl text-center">
             <p className="font-black uppercase tracking-[0.22em] text-nest-gold2">How it works</p>
             <h2 className="text-balance mt-3 text-4xl font-black sm:text-5xl">Smooth for families. Controlled for quality.</h2>
@@ -148,7 +148,7 @@ export default function HomePage() {
               </p>
               <div className="mt-7 flex flex-col gap-3 sm:flex-row"><ButtonLink href="/request">Request Help</ButtonLink><ButtonLink href="/contact" variant="secondary">Ask a Question</ButtonLink></div>
             </div>
-            <div className="rounded-[2rem] border border-nest-gold/18 bg-nest-cream p-6">
+            <div id="service-area" className="scroll-mt-24 rounded-[2rem] border border-nest-gold/18 bg-nest-cream p-6">
               <div className="flex items-center gap-2 text-nest-teal"><MapPin /> <strong>Serving</strong></div>
               <p className="mt-3 text-2xl font-black text-nest-ink">{siteConfig.serviceArea}</p>
               <p className="mt-3 text-sm font-semibold leading-6 text-nest-ink/65">Requests outside the core service area may include a travel fee or have limited availability.</p>

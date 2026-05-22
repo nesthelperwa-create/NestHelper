@@ -38,15 +38,17 @@ export function Footer() {
             { href: "/trust", label: "Trust & Safety" },
             { href: "/faq", label: "FAQ" },
             { href: "/contact", label: "Contact" },
-            { href: "/helpers", label: "For Helpers" },
+            { href: "/helpers", label: "Helpers & Partners" },
           ]}
         />
 
         <FooterColumn
-          title="For Families"
+          title="Start Here"
           links={[
             { href: "/request", label: "Request Help" },
-            { href: "/services#laundry", label: "Laundry Rescue" },
+            { href: "/#how-it-works", label: "How It Works" },
+            { href: "/#service-area", label: "Service Area" },
+            { href: "/faq", label: "FAQ" },
           ]}
         />
 
