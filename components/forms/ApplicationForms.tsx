@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { formatPhoneNumber } from "@/lib/formatPhoneNumber";
 
 
 type Status = "idle" | "loading" | "success" | "error";
@@ -204,7 +205,7 @@ export function HelperApplicationForm() {
       <p className="text-nest-ink/70">For individuals interested in becoming a NestHelper Gold Star Checked helper.</p>
       <Grid>
         <Input label="Full name" value={form.fullName} onChange={(v)=>update('fullName',v)} required />
-        <Input label="Phone" value={form.phone} onChange={(v)=>update('phone',v)} required />
+        <Input label="Phone" value={form.phone} onChange={(v)=>update('phone',formatPhoneNumber(v))} required autoComplete="tel" inputMode="tel" />
         <Input label="Email" type="email" value={form.email} onChange={(v)=>update('email',v)} required />
         <Input label="City" value={form.city} onChange={(v)=>update('city',v)} required />
       </Grid>
@@ -250,7 +251,7 @@ export function PartnerApplicationForm() {
       <Grid>
         <Input label="Business name" value={form.businessName} onChange={(v)=>update('businessName',v)} required />
         <Input label="Owner/contact name" value={form.ownerName} onChange={(v)=>update('ownerName',v)} required />
-        <Input label="Phone" value={form.phone} onChange={(v)=>update('phone',v)} required />
+        <Input label="Phone" value={form.phone} onChange={(v)=>update('phone',formatPhoneNumber(v))} required autoComplete="tel" inputMode="tel" />
         <Input label="Email" type="email" value={form.email} onChange={(v)=>update('email',v)} required />
       </Grid>
       <Input label="Service type" value={form.serviceType} onChange={(v)=>update('serviceType',v)} placeholder="Cleaning, laundromat, errands, organizing, etc." required />
@@ -267,7 +268,7 @@ export function PartnerApplicationForm() {
   );
 }
 
-function Input({label,value,onChange,type="text",required=false,placeholder=""}:{label:string;value:string;onChange:(v:string)=>void;type?:string;required?:boolean;placeholder?:string}){return <label className="grid gap-2"><span className="label">{label}</span><input type={type} required={required} value={value} placeholder={placeholder} onChange={(e)=>onChange(e.target.value)} className="input" /></label>}
+function Input({label,value,onChange,type="text",required=false,placeholder="",autoComplete,inputMode}:{label:string;value:string;onChange:(v:string)=>void;type?:string;required?:boolean;placeholder?:string;autoComplete?:string;inputMode?:React.HTMLAttributes<HTMLInputElement>["inputMode"]}){return <label className="grid gap-2"><span className="label">{label}</span><input type={type} required={required} value={value} placeholder={placeholder} autoComplete={autoComplete} inputMode={inputMode} onChange={(e)=>onChange(e.target.value)} className="input" /></label>}
 function Textarea({label,value,onChange,placeholder=""}:{label:string;value:string;onChange:(v:string)=>void;placeholder?:string}){return <label className="grid gap-2"><span className="label">{label}</span><textarea value={value} placeholder={placeholder} onChange={(e)=>onChange(e.target.value)} className="input min-h-28" /></label>}
 function Grid({children}:{children:React.ReactNode}){return <div className="grid gap-4 sm:grid-cols-2">{children}</div>}
 function Submit({status,children}:{status:Status;children:React.ReactNode}){return <button disabled={status==="loading"} className="rounded-full bg-nest-teal px-6 py-4 font-black text-white shadow-soft transition hover:bg-nest-teal2 disabled:opacity-60">{status==="loading"?"Submitting...":children}</button>}

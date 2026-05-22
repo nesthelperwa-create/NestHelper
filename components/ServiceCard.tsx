@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import type { MouseEvent } from "react";
+import type { MouseEvent, PointerEvent } from "react";
 import { ArrowRight, CheckCircle2, ChevronDown, Clock, Info, MapPin, MousePointerClick, Sparkles } from "lucide-react";
 import type { Service } from "@/lib/services";
 
@@ -104,17 +104,12 @@ type CardOpenEvent = CustomEvent<{ id: string }>;
 export function ServiceCard({ service }: { service: Service }) {
   const [open, setOpen] = useState(false);
   const cardRef = useRef<HTMLElement | null>(null);
+  const pointerStartRef = useRef<{ x: number; y: number } | null>(null);
   const theme = serviceStyles[service.id] || serviceStyles["parent-reset-2hr"];
   const extra = serviceExtras[service.id];
   const detailsId = `service-details-${service.id}`;
 
   useEffect(() => {
-    function handlePointerDown(event: PointerEvent) {
-      if (!cardRef.current?.contains(event.target as Node)) {
-        setOpen(false);
-      }
-    }
-
     function handleOtherCard(event: Event) {
       const customEvent = event as CardOpenEvent;
       if (customEvent.detail?.id !== service.id) {
@@ -122,11 +117,9 @@ export function ServiceCard({ service }: { service: Service }) {
       }
     }
 
-    document.addEventListener("pointerdown", handlePointerDown);
     window.addEventListener("nesthelper-service-card-open", handleOtherCard);
 
     return () => {
-      document.removeEventListener("pointerdown", handlePointerDown);
       window.removeEventListener("nesthelper-service-card-open", handleOtherCard);
     };
   }, [service.id]);
@@ -150,10 +143,29 @@ export function ServiceCard({ service }: { service: Service }) {
     }
   }
 
+  function handleCardPointerDown(event: PointerEvent<HTMLElement>) {
+    pointerStartRef.current = { x: event.clientX, y: event.clientY };
+  }
+
+  function handleCardClick(event: MouseEvent<HTMLElement>) {
+    const clickedInteractiveElement = (event.target as HTMLElement).closest("a, button");
+    if (clickedInteractiveElement) return;
+
+    const start = pointerStartRef.current;
+    if (start) {
+      const movedX = Math.abs(event.clientX - start.x);
+      const movedY = Math.abs(event.clientY - start.y);
+      if (movedX > 10 || movedY > 10) return;
+    }
+
+    toggleCard();
+  }
+
   return (
     <article
       ref={cardRef}
-      onClick={toggleCard}
+      onPointerDown={handleCardPointerDown}
+      onClick={handleCardClick}
       className={`group flex cursor-pointer flex-col overflow-hidden rounded-[2rem] border border-nest-gold/18 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-lift ${open ? `ring-4 ${theme.ring}` : "h-[590px] sm:h-[610px]"}`}
     >
       <div className={`relative h-40 shrink-0 overflow-hidden bg-gradient-to-br sm:h-44 ${theme.accent}`}>

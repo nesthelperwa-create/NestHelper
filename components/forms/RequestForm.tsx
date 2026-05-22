@@ -5,6 +5,7 @@ import type { FormEvent, ReactNode } from "react";
 import { useMemo, useState } from "react";
 import { CheckCircle2, Clock, CreditCard, MapPin, ShieldCheck } from "lucide-react";
 import { services, laundryAddOns } from "@/lib/services";
+import { formatPhoneNumber } from "@/lib/formatPhoneNumber";
 
 const defaultState = {
   fullName: "",
@@ -206,7 +207,7 @@ export function RequestForm() {
       <Section title="1. Contact information" description="We use this to confirm the request, send prep notes, and share the checkout link if approved.">
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Full name"><input className="input" required autoComplete="name" value={form.fullName} onChange={(e) => update("fullName", e.target.value)} /></Field>
-          <Field label="Phone"><input className="input" required autoComplete="tel" inputMode="tel" value={form.phone} onChange={(e) => update("phone", e.target.value)} /></Field>
+          <Field label="Phone"><input className="input" required autoComplete="tel" inputMode="tel" value={form.phone} onChange={(e) => update("phone", formatPhoneNumber(e.target.value))} /></Field>
           <Field label="Email"><input type="email" className="input" required autoComplete="email" value={form.email} onChange={(e) => update("email", e.target.value)} /></Field>
           <Field label="Promo/referral code (optional)"><input className="input" placeholder="Optional code" value={form.promoCode} onChange={(e) => update("promoCode", e.target.value.toUpperCase())} /></Field>
         </div>
