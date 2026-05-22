@@ -93,28 +93,20 @@ export default function HomePage() {
             </div>
 
             <div className="rounded-[2rem] border border-nest-gold/14 bg-nest-cream p-5 shadow-sm sm:p-6">
-              <p className="text-xs font-black uppercase tracking-[0.22em] text-nest-gold2">Why it feels different</p>
-              <h3 className="mt-3 text-2xl font-black text-nest-teal sm:text-3xl">Less random searching. More guided support.</h3>
-              <div className="mt-5 grid gap-4">
-                <ComparisonBlock
-                  title="Random Facebook group or marketplace search"
-                  items={[
-                    "Unknown helper standards",
-                    "Lots of back-and-forth messages",
-                    "Loose pricing and unclear scope",
-                    "Little structure or follow-up",
-                  ]}
-                />
-                <ComparisonBlock
-                  title="NestHelper"
-                  highlight
-                  items={[
-                    "Clear request review before checkout",
-                    "Checked helpers or vetted partner providers",
-                    "Business and insurance info reviewed where applicable",
-                    "Better boundaries, coordination, and follow-up",
-                  ]}
-                />
+              <p className="text-xs font-black uppercase tracking-[0.22em] text-nest-gold2">Why families choose NestHelper</p>
+              <h3 className="mt-3 text-2xl font-black text-nest-teal sm:text-3xl">
+                Safer than guessing. Easier than hiring alone.
+              </h3>
+              <p className="mt-3 text-sm font-semibold leading-6 text-nest-ink/68">
+                Random posts can leave parents sorting through strangers, loose promises, and unclear expectations. NestHelper gives families a more professional way to get trusted help.
+              </p>
+
+              <div className="mt-5 grid gap-3">
+                <ChoiceItem title="Insured local service" text="NestHelper is insured, so families are not relying on a handshake with a random helper." />
+                <ChoiceItem title="Checked helpers and vetted partners" text="We review who may enter a home or handle family tasks before matching them to requests." />
+                <ChoiceItem title="Clear packages and pricing" text="Parents see the service, scope, and starting price before the job moves forward." />
+                <ChoiceItem title="Request reviewed before payment" text="We check timing, location, pets, access, safety notes, and whether the package fits." />
+                <ChoiceItem title="Coordinated from start to finish" text="NestHelper helps set expectations, reduce awkward back-and-forth, and follow up after service." />
               </div>
             </div>
           </div>
@@ -200,18 +192,16 @@ function WhyPoint({ icon, title, text }: { icon: ReactNode; title: string; text:
   );
 }
 
-function ComparisonBlock({ title, items, highlight = false }: { title: string; items: string[]; highlight?: boolean }) {
+function ChoiceItem({ title, text }: { title: string; text: string }) {
   return (
-    <div className={`rounded-[1.6rem] border p-4 ${highlight ? "border-nest-gold/20 bg-white shadow-sm" : "border-nest-gold/10 bg-white/65"}`}>
-      <h4 className="text-base font-black text-nest-teal">{title}</h4>
-      <ul className="mt-3 grid gap-2 text-sm font-semibold leading-6 text-nest-ink/70">
-        {items.map((item) => (
-          <li key={item} className="flex gap-2">
-            <CheckCircle2 className="mt-0.5 shrink-0 text-nest-teal" size={16} />
-            <span>{item}</span>
-          </li>
-        ))}
-      </ul>
+    <div className="grid grid-cols-[2rem_1fr] gap-3 rounded-[1.4rem] border border-nest-gold/12 bg-white/88 p-4 shadow-sm">
+      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-nest-mint/45 text-nest-teal">
+        <CheckCircle2 size={18} />
+      </div>
+      <div>
+        <h4 className="text-sm font-black uppercase tracking-[0.08em] text-nest-teal">{title}</h4>
+        <p className="mt-1 text-sm font-medium leading-6 text-nest-ink/68">{text}</p>
+      </div>
     </div>
   );
 }
