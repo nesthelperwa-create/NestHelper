@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import type { MouseEvent } from "react";
-import { ArrowRight, CheckCircle2, ChevronDown, Clock, Info, MapPin, Sparkles } from "lucide-react";
+import { ArrowRight, CheckCircle2, ChevronDown, Clock, Info, MapPin, MousePointerClick, Sparkles } from "lucide-react";
 import type { Service } from "@/lib/services";
 
 const serviceStyles: Record<string, { eyebrow: string; accent: string; chip: string; price: string; ring: string }> = {
@@ -131,9 +131,14 @@ export function ServiceCard({ service }: { service: Service }) {
     };
   }, [service.id]);
 
-  function openCard() {
-    setOpen(true);
-    window.dispatchEvent(new CustomEvent("nesthelper-service-card-open", { detail: { id: service.id } }));
+  function toggleCard() {
+    setOpen((currentOpen) => {
+      const nextOpen = !currentOpen;
+      if (nextOpen) {
+        window.dispatchEvent(new CustomEvent("nesthelper-service-card-open", { detail: { id: service.id } }));
+      }
+      return nextOpen;
+    });
   }
 
   function toggleDetails(event: MouseEvent<HTMLButtonElement>) {
@@ -148,7 +153,7 @@ export function ServiceCard({ service }: { service: Service }) {
   return (
     <article
       ref={cardRef}
-      onClick={openCard}
+      onClick={toggleCard}
       className={`group flex cursor-pointer flex-col overflow-hidden rounded-[2rem] border border-nest-gold/18 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-lift ${open ? `ring-4 ${theme.ring}` : "h-[590px] sm:h-[610px]"}`}
     >
       <div className={`relative h-40 shrink-0 overflow-hidden bg-gradient-to-br sm:h-44 ${theme.accent}`}>
@@ -161,6 +166,10 @@ export function ServiceCard({ service }: { service: Service }) {
         <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/32 to-transparent" />
         <div className={`absolute left-4 top-4 rounded-full border px-3 py-1.5 text-xs font-black uppercase tracking-[0.16em] shadow-sm ${theme.chip}`}>
           {theme.eyebrow}
+        </div>
+        <div className="absolute bottom-4 right-4 inline-flex items-center gap-1.5 rounded-full border border-white/70 bg-white/92 px-3 py-1.5 text-xs font-black text-nest-teal shadow-sm backdrop-blur transition group-hover:-translate-y-0.5">
+          <MousePointerClick size={14} />
+          {open ? "Click again to hide" : "Click for details"}
         </div>
       </div>
 
@@ -194,8 +203,15 @@ export function ServiceCard({ service }: { service: Service }) {
           </div>
         </div>
 
-        <div className={`mt-4 rounded-3xl border border-dashed border-nest-gold/25 bg-white/75 p-4 text-sm font-bold leading-6 text-nest-ink/62 ${open ? "" : "line-clamp-2 min-h-[4.4rem]"}`}>
-          Tap to see what is included, best-fit notes, timing, and important details.
+        <div className={`mt-4 rounded-3xl border border-dashed border-nest-gold/25 bg-white/75 p-4 text-sm font-bold leading-6 text-nest-ink/62 ${open ? "" : "min-h-[4.4rem]"}`}>
+          {open ? (
+            "Details are open. Click the card again or use Hide details to collapse this package."
+          ) : (
+            <span className="flex items-center gap-2 text-nest-teal">
+              <MousePointerClick className="shrink-0" size={18} />
+              Click this card for what is included and good-to-know details.
+            </span>
+          )}
         </div>
 
         <div
@@ -266,7 +282,7 @@ export function ServiceCard({ service }: { service: Service }) {
             aria-controls={detailsId}
             className="focus-ring mb-3 inline-flex w-full items-center justify-center gap-2 rounded-full border border-nest-teal/20 bg-white px-5 py-3 font-black text-nest-teal shadow-sm transition hover:-translate-y-0.5 hover:bg-nest-mint/25"
           >
-            {open ? "Hide details" : "View details"}
+            {open ? "Hide details" : "Click for more info"}
             <ChevronDown size={18} className={`transition ${open ? "rotate-180" : ""}`} />
           </button>
 
