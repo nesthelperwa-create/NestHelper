@@ -30,7 +30,7 @@ function getEmail(payload: Record<string, unknown>) {
 }
 
 function getConfirmationContent(collection: SubmissionCollection, payload: Record<string, unknown>, submissionId: string) {
-  const contactEmail = process.env.ADMIN_NOTIFICATION_EMAIL || process.env.NEXT_PUBLIC_CONTACT_EMAIL || "hello@nesthelperwa.com";
+  const customerSupportEmail = process.env.CUSTOMER_SUPPORT_EMAIL || process.env.NEXT_PUBLIC_CONTACT_EMAIL || "hello@nesthelperwa.com";
 
   if (collection === "serviceRequests") {
     const service = formatValue(payload.selectedServiceTitle || payload.service || "Service request");
@@ -52,7 +52,7 @@ function getConfirmationContent(collection: SubmissionCollection, payload: Recor
         "Preferred time window": formatValue(payload.preferredWindow),
         City: formatValue(payload.city),
       },
-      closing: `If anything changes, reply to this email or contact us at ${contactEmail}.`,
+      closing: `If anything changes, reply to this email or contact us at ${customerSupportEmail}.`,
     };
   }
 
@@ -67,7 +67,7 @@ function getConfirmationContent(collection: SubmissionCollection, payload: Recor
         "Message ID": submissionId,
         Subject: formatValue(payload.subject || "Contact message"),
       },
-      closing: `Need to add anything? You can reply to this email or contact us at ${contactEmail}.`,
+      closing: `Need to add anything? You can reply to this email or contact us at ${customerSupportEmail}.`,
     };
   }
 
@@ -88,7 +88,7 @@ function getConfirmationContent(collection: SubmissionCollection, payload: Recor
         City: formatValue(payload.city),
         Availability: formatValue(payload.availability),
       },
-      closing: `Questions? Reply to this email or contact us at ${contactEmail}.`,
+      closing: `Questions? Reply to this email or contact us at ${customerSupportEmail}.`,
     };
   }
 
@@ -108,7 +108,7 @@ function getConfirmationContent(collection: SubmissionCollection, payload: Recor
       "Service type": formatValue(payload.serviceType),
       "Service area": formatValue(payload.serviceArea),
     },
-    closing: `Questions? Reply to this email or contact us at ${contactEmail}.`,
+    closing: `Questions? Reply to this email or contact us at ${customerSupportEmail}.`,
   };
 }
 
@@ -116,7 +116,7 @@ export async function sendCustomerConfirmationEmail({ collection, payload, submi
   const apiKey = process.env.RESEND_API_KEY;
   const to = getEmail(payload);
   const from = process.env.NOTIFICATION_FROM_EMAIL || "NestHelper <onboarding@resend.dev>";
-  const replyTo = process.env.ADMIN_NOTIFICATION_EMAIL || process.env.NEXT_PUBLIC_CONTACT_EMAIL || undefined;
+  const replyTo = process.env.CUSTOMER_SUPPORT_EMAIL || process.env.NEXT_PUBLIC_CONTACT_EMAIL || "hello@nesthelperwa.com";
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
   if (!apiKey || !to) {
