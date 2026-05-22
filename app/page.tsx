@@ -162,7 +162,7 @@ export default function HomePage() {
               "Follow-up after service",
             ].map((item) => (
               <div key={item} className="flex gap-3 rounded-2xl border border-nest-gold/12 bg-white p-4 font-black text-nest-ink/78 shadow-sm">
-                <CheckCircle2 className="shrink-0 text-nest-teal" /> {item}
+                <ShieldCheck className="shrink-0 text-nest-teal" /> {item}
               </div>
             ))}
           </div>
