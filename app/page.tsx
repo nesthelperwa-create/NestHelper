@@ -11,6 +11,7 @@ import {
   ShieldCheck,
   Sparkles,
   Star,
+  UserCheck,
 } from "lucide-react";
 import { AnimatedSection } from "@/components/AnimatedSection";
 import { ButtonLink } from "@/components/ui/ButtonLink";
@@ -23,7 +24,7 @@ export default function HomePage() {
     <>
       <section className="relative isolate overflow-hidden px-4 py-10 sm:px-6 lg:px-8 lg:py-16">
         <div className="absolute inset-0 -z-10 bg-[url('/assets/backgrounds/warm-mint-gradient.png')] bg-cover opacity-80" />
-        <div className="absolute inset-0 -z-10 bg-white/42" />
+        <div className="absolute inset-0 -z-10 bg-white/44" />
         <div className="absolute -left-24 top-20 -z-10 h-80 w-80 rounded-full bg-nest-mint/70 blur-3xl" />
         <div className="absolute -right-20 bottom-10 -z-10 h-80 w-80 rounded-full bg-nest-gold/20 blur-3xl" />
 
@@ -42,7 +43,7 @@ export default function HomePage() {
               <ButtonLink href="/request">Request Help</ButtonLink>
               <ButtonLink href="/services" variant="secondary">View Services</ButtonLink>
             </div>
-            <div id="service-area" className="mt-6 inline-flex max-w-full scroll-mt-24 items-center gap-2 rounded-full border border-nest-gold/18 bg-white/75 px-4 py-2 text-sm font-black text-nest-teal shadow-sm backdrop-blur">
+            <div id="service-area" className="mt-6 inline-flex max-w-full scroll-mt-24 items-center gap-2 rounded-full border border-nest-gold/18 bg-white/78 px-4 py-2 text-sm font-black text-nest-teal shadow-sm backdrop-blur">
               <MapPin size={16} className="shrink-0 text-nest-gold" />
               <span className="truncate">Serving {siteConfig.serviceArea}</span>
             </div>
@@ -51,7 +52,7 @@ export default function HomePage() {
           <AnimatedSection className="order-1 lg:order-2">
             <div className="relative mx-auto max-w-2xl lg:max-w-none">
               <div className="absolute -inset-5 rounded-[2.8rem] bg-nest-gold/16 blur-2xl" />
-              <div className="relative overflow-hidden rounded-[2.5rem] border border-white/80 bg-white/55 p-3 shadow-glow backdrop-blur">
+              <div className="relative overflow-hidden rounded-[2.5rem] border border-white/80 bg-white/60 p-3 shadow-glow backdrop-blur">
                 <Image
                   src={siteConfig.assets.hero}
                   alt="NestHelper Parent Reset banner"
@@ -61,39 +62,62 @@ export default function HomePage() {
                   className="aspect-[16/9] w-full rounded-[2rem] object-cover"
                 />
               </div>
-              <div className="relative mt-4 grid gap-3 sm:grid-cols-2">
-                <div className="rounded-[1.4rem] border border-white/70 bg-white/90 p-4 shadow-soft backdrop-blur">
-                  <p className="text-xs font-black uppercase tracking-[0.18em] text-nest-gold">Parent Reset</p>
-                  <p className="mt-1 text-lg font-black leading-tight text-nest-teal">Help that feels coordinated.</p>
-                </div>
-                <div className="rounded-[1.4rem] border border-nest-gold/18 bg-nest-cream/95 p-4 shadow-soft backdrop-blur">
-                  <p className="text-xs font-black uppercase tracking-[0.18em] text-nest-gold">No booking chaos</p>
-                  <p className="mt-1 text-sm font-bold leading-5 text-nest-ink/72">Request first. We review before payment.</p>
-                </div>
-              </div>
             </div>
           </AnimatedSection>
         </div>
       </section>
 
-      <AnimatedSection className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        <div className="grid gap-5 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
-          <div className="overflow-hidden rounded-[2.5rem] border border-nest-gold/16 bg-white/90 p-5 shadow-soft backdrop-blur sm:p-6">
-            <div className="grid gap-4 sm:grid-cols-3">
-              <LifestyleImage src="/assets/services/service-parent-reset.png" label="Home reset" />
-              <LifestyleImage src="/assets/services/service-laundry-rescue.png" label="Laundry rescue" />
-              <LifestyleImage src="/assets/services/service-family-reset.png" label="Family catch-up" />
+      <AnimatedSection className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
+        <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr] lg:items-stretch">
+          <div className="pro-card rounded-[2.5rem] p-6 sm:p-8 lg:p-10">
+            <p className="pill-label w-fit"><Heart size={15} /> What NestHelper is</p>
+            <h2 className="text-balance mt-4 text-4xl font-black text-nest-teal sm:text-5xl">
+              Managed parent-help, not a stranger search.
+            </h2>
+            <p className="mt-5 text-lg font-medium leading-8 text-nest-ink/72">
+              NestHelper is a local parent-reset service for families who need help catching up at home, but do not want to post in random groups, message strangers, compare loose quotes, or negotiate every detail themselves.
+            </p>
+            <p className="mt-4 text-lg font-medium leading-8 text-nest-ink/72">
+              Families submit one clear request. We review the scope, timing, service area, safety notes, and best-fit package before checkout so the work starts with clearer expectations.
+            </p>
+            <div className="mt-7 grid gap-3 sm:grid-cols-2">
+              <WhyPoint icon={<UserCheck />} title="Checked helper model" text="Helpers and partners are reviewed before being matched to family requests." />
+              <WhyPoint icon={<ShieldCheck />} title="Vetting + standards" text="Identity, background, references, service standards, and partner review matter more than a quick post." />
+              <WhyPoint icon={<ClipboardCheck />} title="Clear scope first" text="Requests are reviewed before payment so the helper is not walking into a vague job." />
+              <WhyPoint icon={<CheckCircle2 />} title="Follow-up after service" text="NestHelper coordinates details and follows up so families are not left guessing." />
             </div>
           </div>
-          <div>
-            <p className="pill-label w-fit"><Heart size={15} /> What NestHelper is</p>
-            <h2 className="text-balance mt-4 text-4xl font-black text-nest-teal sm:text-5xl">A calmer way to ask for household help.</h2>
-            <p className="mt-4 text-lg font-medium leading-8 text-nest-ink/70">
-              Instead of posting in a random group, comparing strangers, and negotiating the scope yourself, families submit one clear request and NestHelper coordinates the details.
-            </p>
-            <div className="mt-6 grid gap-3 sm:grid-cols-2">
-              <MiniPoint icon={<MessageCircle />} title="Less back-and-forth" text="Clear request details before checkout." />
-              <MiniPoint icon={<ShieldCheck />} title="More controlled" text="Scope and safety reviewed first." />
+
+          <div className="grid gap-4">
+            <div className="rounded-[2.25rem] border border-nest-gold/14 bg-nest-teal p-6 text-white shadow-soft sm:p-8">
+              <p className="text-xs font-black uppercase tracking-[0.22em] text-nest-gold2">Why it feels different</p>
+              <h3 className="mt-3 text-3xl font-black leading-tight sm:text-4xl">Less marketplace chaos. More managed support.</h3>
+              <p className="mt-4 max-w-2xl font-medium leading-7 text-white/82">
+                The goal is simple: make household help feel safer, clearer, and easier for busy parents.
+              </p>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <ComparisonCard
+                title="Random group search"
+                tone="plain"
+                items={[
+                  "Unknown helper standards",
+                  "Back-and-forth messages",
+                  "Awkward price negotiation",
+                  "No clear service boundary",
+                ]}
+              />
+              <ComparisonCard
+                title="NestHelper"
+                tone="brand"
+                items={[
+                  "Checked helpers or vetted partners",
+                  "Clear packages and request review",
+                  "Business and insurance info reviewed where applicable",
+                  "Follow-up and documented standards",
+                ]}
+              />
             </div>
           </div>
         </div>
@@ -147,58 +171,60 @@ export default function HomePage() {
         </div>
       </AnimatedSection>
 
-      <AnimatedSection className="teal-gradient px-4 py-16 text-white sm:px-6 lg:px-8">
-        <div id="how-it-works" className="mx-auto max-w-7xl scroll-mt-24">
+      <AnimatedSection className="px-4 py-12 sm:px-6 lg:px-8">
+        <div id="how-it-works" className="mx-auto max-w-7xl scroll-mt-24 rounded-[2.5rem] border border-nest-gold/14 bg-white/86 p-6 shadow-soft backdrop-blur sm:p-8 lg:p-10">
           <div className="mx-auto max-w-3xl text-center">
-            <p className="font-black uppercase tracking-[0.22em] text-nest-gold2">How it works</p>
-            <h2 className="text-balance mt-3 text-4xl font-black sm:text-5xl">Smooth for families. Controlled for quality.</h2>
+            <p className="pill-label mx-auto w-fit">How it works</p>
+            <h2 className="text-balance mt-4 text-3xl font-black text-nest-teal sm:text-4xl">Simple request. Reviewed first. Then we get to work.</h2>
+            <p className="mt-4 font-medium leading-7 text-nest-ink/68">
+              The process stays controlled so families know what happens before payment.
+            </p>
           </div>
-          <div className="mt-10 grid gap-5 md:grid-cols-4">
-            <Step icon={<ClipboardCheck />} title="1. Request help" text="Tell us what is piling up, your location, timing, pets, access, and promo code." />
+          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <Step icon={<MessageCircle />} title="1. Request help" text="Tell us what is piling up, your location, timing, pets, access, and promo code." />
             <Step icon={<ShieldCheck />} title="2. We review" text="We check service area, availability, safety, scope, and whether the package fits." />
             <Step icon={<CreditCard />} title="3. Secure checkout" text="After approval, we send a secure payment link or invoice." />
             <Step icon={<Home />} title="4. We get to work" text="A checked helper or vetted partner completes the job, then we follow up." />
           </div>
         </div>
       </AnimatedSection>
-
     </>
   );
 }
 
-function LifestyleImage({ src, label }: { src: string; label: string }) {
+function WhyPoint({ icon, title, text }: { icon: ReactNode; title: string; text: string }) {
   return (
-    <div className="rounded-[1.8rem] border border-nest-gold/12 bg-gradient-to-br from-nest-cream via-white to-nest-mint/25 p-3 shadow-sm">
-      <Image
-        src={src}
-        alt={label}
-        width={500}
-        height={500}
-        className="aspect-[4/3] w-full rounded-[1.35rem] object-contain transition duration-700 hover:scale-[1.03]"
-      />
-      <div className="mt-3 rounded-full bg-white/90 px-3 py-2 text-center text-[0.68rem] font-black uppercase leading-tight tracking-[0.11em] text-nest-teal shadow-sm">
-        {label}
-      </div>
+    <div className="rounded-3xl border border-nest-gold/12 bg-white/78 p-4 shadow-sm">
+      <div className="mb-3 inline-flex rounded-2xl bg-nest-mint/40 p-3 text-nest-teal">{icon}</div>
+      <h3 className="font-black text-nest-teal">{title}</h3>
+      <p className="mt-2 text-sm font-semibold leading-6 text-nest-ink/68">{text}</p>
     </div>
   );
 }
 
-function MiniPoint({ icon, title, text }: { icon: ReactNode; title: string; text: string }) {
+function ComparisonCard({ title, items, tone }: { title: string; items: string[]; tone: "plain" | "brand" }) {
+  const isBrand = tone === "brand";
   return (
-    <div className="rounded-[1.5rem] border border-nest-gold/14 bg-white/90 p-4 shadow-sm">
-      <div className="mb-3 inline-flex rounded-2xl bg-nest-mint/35 p-3 text-nest-teal">{icon}</div>
-      <h3 className="font-black text-nest-teal">{title}</h3>
-      <p className="mt-1 text-sm font-medium leading-6 text-nest-ink/68">{text}</p>
+    <div className={`rounded-[2rem] border p-5 shadow-sm ${isBrand ? "border-nest-gold/20 bg-nest-cream" : "border-nest-gold/12 bg-white"}`}>
+      <h3 className="text-lg font-black text-nest-teal">{title}</h3>
+      <ul className="mt-4 grid gap-3 text-sm font-semibold leading-6 text-nest-ink/70">
+        {items.map((item) => (
+          <li key={item} className="flex gap-2">
+            <CheckCircle2 className="mt-0.5 shrink-0 text-nest-teal" size={17} />
+            <span>{item}</span>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
 
 function Step({ icon, title, text }: { icon: ReactNode; title: string; text: string }) {
   return (
-    <div className="rounded-[2rem] border border-white/12 bg-white/10 p-6 backdrop-blur transition hover:-translate-y-1 hover:bg-white/14">
-      <div className="mb-4 inline-flex rounded-2xl bg-white/12 p-3 text-nest-gold2">{icon}</div>
-      <h3 className="text-xl font-black">{title}</h3>
-      <p className="mt-2 text-sm font-medium leading-6 text-white/78">{text}</p>
+    <div className="rounded-[1.7rem] border border-nest-gold/12 bg-nest-cream/55 p-5 transition hover:-translate-y-1 hover:bg-white">
+      <div className="mb-4 inline-flex rounded-2xl bg-white p-3 text-nest-teal shadow-sm">{icon}</div>
+      <h3 className="text-lg font-black text-nest-teal">{title}</h3>
+      <p className="mt-2 text-sm font-medium leading-6 text-nest-ink/68">{text}</p>
     </div>
   );
 }

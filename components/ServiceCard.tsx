@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import type { MouseEvent } from "react";
-import { ArrowRight, CheckCircle2, ChevronDown, Clock, Info, MapPin, MousePointerClick, Sparkles, Star } from "lucide-react";
+import { ArrowRight, CheckCircle2, ChevronDown, Clock, Info, MapPin, Star } from "lucide-react";
 import type { Service } from "@/lib/services";
 
 const serviceStyles: Record<string, { eyebrow: string; accent: string; chip: string; price: string; ring: string }> = {
@@ -110,6 +110,7 @@ export function ServiceCard({ service }: { service: Service }) {
   const extra = serviceExtras[service.id];
   const detailsId = `service-details-${service.id}`;
   const featured = service.id === "family-reset-3hr";
+  const isLaundry = service.id === "laundry-rescue";
 
   useEffect(() => {
     function handleOtherCard(event: Event) {
@@ -144,12 +145,6 @@ export function ServiceCard({ service }: { service: Service }) {
       returnScrollYRef.current = null;
       returnTimerRef.current = null;
     }, 120);
-  }
-
-  function openCard() {
-    rememberReturnPosition();
-    window.dispatchEvent(new CustomEvent("nesthelper-service-card-open", { detail: { id: service.id } }));
-    setOpen(true);
   }
 
   function closeCardAndReturn() {
@@ -193,7 +188,7 @@ export function ServiceCard({ service }: { service: Service }) {
       ref={cardRef}
       onClick={handleCardClick}
       className={`group relative flex cursor-pointer flex-col overflow-hidden rounded-[2rem] border bg-white/95 shadow-sm backdrop-blur transition duration-300 hover:-translate-y-1 hover:shadow-lift ${
-        open ? `border-nest-gold/35 ring-4 ${theme.ring}` : "min-h-[620px] border-nest-gold/16"
+        open ? `border-nest-gold/35 ring-4 ${theme.ring}` : "min-h-[640px] border-nest-gold/16 md:h-[675px]"
       }`}
     >
       {featured && (
@@ -202,15 +197,15 @@ export function ServiceCard({ service }: { service: Service }) {
         </div>
       )}
 
-      <div className={`relative h-44 shrink-0 overflow-hidden bg-gradient-to-br sm:h-48 ${theme.accent}`}>
+      <div className={`relative h-40 shrink-0 overflow-hidden bg-gradient-to-br sm:h-44 ${theme.accent}`}>
         <Image
           src={service.image}
           alt={service.title}
           fill
           className="object-contain p-5 opacity-100 transition duration-700 group-hover:scale-[1.03] sm:p-6"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-white/45 via-transparent to-white/0" />
-        <div className={`absolute left-4 top-4 max-w-[70%] rounded-full border px-3 py-1.5 text-[0.68rem] font-black uppercase leading-tight tracking-[0.12em] shadow-sm ${theme.chip}`}>
+        <div className="absolute inset-0 bg-gradient-to-t from-white/40 via-transparent to-white/0" />
+        <div className={`absolute left-4 top-4 max-w-[72%] rounded-full border px-3 py-1.5 text-[0.68rem] font-black uppercase leading-tight tracking-[0.12em] shadow-sm ${theme.chip}`}>
           {theme.eyebrow}
         </div>
       </div>
@@ -218,7 +213,7 @@ export function ServiceCard({ service }: { service: Service }) {
       <div className="flex flex-1 flex-col p-5 sm:p-6">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
-            <h3 className={`text-2xl font-black leading-tight text-nest-teal ${open ? "" : "min-h-[3.5rem]"}`}>{service.title}</h3>
+            <h3 className={`text-2xl font-black leading-tight text-nest-teal ${open ? "" : "min-h-[3.1rem]"}`}>{service.title}</h3>
             <p className={`mt-2 text-sm font-semibold leading-6 text-nest-ink/68 ${open ? "" : "line-clamp-2 min-h-[3rem]"}`}>
               {service.description}
             </p>
@@ -235,35 +230,30 @@ export function ServiceCard({ service }: { service: Service }) {
         </div>
 
         <div className="mt-5 overflow-hidden rounded-3xl border border-nest-gold/14 bg-gradient-to-br from-nest-cream via-white to-nest-mint/20 shadow-sm">
-          <div className="grid min-h-[7.4rem] gap-0 sm:grid-cols-[1fr_auto]">
-            <div className="flex flex-col justify-center p-5">
+          <div className="grid min-h-[8.4rem] gap-0 sm:grid-cols-[1fr_8.4rem]">
+            <div className="flex flex-col justify-center p-4 sm:p-5">
               <div className="text-xs font-black uppercase tracking-[0.16em] text-nest-ink/55">Starting at</div>
-              <div className={`mt-1 break-words font-black leading-tight text-nest-teal ${service.id === "laundry-rescue" ? "text-[1.45rem] sm:text-2xl" : "text-3xl"}`}>
-                {service.standardPrice}
+              <div className={`mt-1 break-words font-black leading-tight text-nest-teal ${isLaundry ? "text-[1.55rem] sm:text-[1.62rem]" : "text-3xl"}`}>
+                {isLaundry ? (
+                  <>
+                    <span>$59 minimum</span>
+                    <span className="block">+ $2.99/lb</span>
+                  </>
+                ) : (
+                  service.standardPrice
+                )}
               </div>
               {service.foundingPrice && (
-                <div className={`mt-2 font-bold text-nest-ink/60 ${service.id === "laundry-rescue" ? "text-xs leading-5 sm:text-sm" : "text-sm"}`}>
-                  Founding/Beta: <span className="text-nest-teal">{service.foundingPrice}</span>
+                <div className={`mt-2 font-bold text-nest-ink/60 ${isLaundry ? "text-[0.72rem] leading-4 sm:text-xs" : "text-sm"}`}>
+                  Founding/Beta: <span className="text-nest-teal">{isLaundry ? "$49 min + $2.49/lb" : service.foundingPrice}</span>
                 </div>
               )}
             </div>
-            <div className={`flex min-h-[3rem] items-center justify-center px-4 py-3 text-center text-[0.62rem] font-black uppercase leading-5 tracking-[0.08em] sm:min-w-[9rem] sm:text-[0.68rem] ${theme.price}`}>
+            <div className={`flex min-h-[3.5rem] items-center justify-center px-3 py-3 text-center text-[0.58rem] font-black uppercase leading-5 tracking-[0.075em] sm:text-[0.62rem] ${theme.price}`}>
               {service.priceNote}
             </div>
           </div>
         </div>
-
-        {!open && (
-          <div className="mt-4 grid gap-2 rounded-3xl border border-dashed border-nest-gold/25 bg-white/80 p-4 text-sm font-bold leading-6 text-nest-ink/72">
-            <span className="flex items-center gap-2 text-nest-teal">
-              <MousePointerClick className="shrink-0" size={17} />
-              Tap for details
-            </span>
-            <span className="line-clamp-2 text-nest-ink/62">
-              Open this package to see best fit, what may fit in the visit, and good-to-know details.
-            </span>
-          </div>
-        )}
 
         <div
           id={detailsId}
