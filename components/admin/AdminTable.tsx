@@ -1,17 +1,16 @@
 "use client";
 
-import { collection, onSnapshot, orderBy, query, Timestamp } from "firebase/firestore";
+import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
 import { useEffect, useMemo, useState } from "react";
 import { firebaseAuth, firestoreDb } from "@/lib/firebaseClient";
 import StatusBadge from "./StatusBadge";
 
-type AdminDoc = { id: string; status?: string; createdAt?: Timestamp; checkoutUrl?: string; promoCode?: string; [key: string]: any };
+type AdminDoc = { id: string; status?: string; createdAt?: unknown; checkoutUrl?: string; promoCode?: string; [key: string]: any };
 type CheckoutMode = "standard" | "founding";
 
 function formatDate(value: unknown) {
   if (!value) return "—";
-  if (value instanceof Timestamp) return value.toDate().toLocaleString();
-  if (typeof value === "object" && value && "toDate" in value) return (value as Timestamp).toDate().toLocaleString();
+  if (typeof value === "object" && value && "toDate" in value && typeof value.toDate === "function") return value.toDate().toLocaleString();
   return String(value);
 }
 
@@ -26,6 +25,19 @@ function formatValue(key: string, value: unknown) {
 function guessCheckoutMode(item: AdminDoc | null): CheckoutMode {
   const promo = String(item?.promoCode || "").toUpperCase();
   return promo.includes("FOUNDING") || promo.includes("BETA") ? "founding" : "standard";
+}
+
+function shouldNotifyByDefault(status: string) {
+  return ["Approved", "Scheduled", "Declined", "Follow-Up Needed", "Needs Info", "Canceled", "Cancelled"].includes(status);
+}
+
+function getStatusNotePlaceholder(status: string) {
+  if (status === "Declined") return "Example: Sorry, we are not servicing that area yet, or this request is outside our current service scope.";
+  if (status === "Scheduled") return "Example: You are scheduled for Tuesday between 10am-12pm. Please have parking/access details ready.";
+  if (status === "Follow-Up Needed" || status === "Needs Info") return "Example: Can you confirm parking, pets, access instructions, and which rooms/tasks matter most?";
+  if (status === "Approved") return "Example: Your request looks like a good fit. We’ll send the secure checkout link next.";
+  if (status === "Canceled" || status === "Cancelled") return "Example: This request has been canceled. Reply if this was unexpected.";
+  return "Optional note to include in the customer email.";
 }
 
 export default function AdminTable({
@@ -48,6 +60,12 @@ export default function AdminTable({
   const [checkoutBusy, setCheckoutBusy] = useState(false);
   const [checkoutMessage, setCheckoutMessage] = useState("");
   const [checkoutError, setCheckoutError] = useState("");
+  const [statusValue, setStatusValue] = useState("New");
+  const [statusNote, setStatusNote] = useState("");
+  const [notifyCustomer, setNotifyCustomer] = useState(false);
+  const [statusBusy, setStatusBusy] = useState(false);
+  const [statusMessage, setStatusMessage] = useState("");
+  const [statusError, setStatusError] = useState("");
 
   useEffect(() => {
     const q = query(collection(firestoreDb, collectionName), orderBy("createdAt", "desc"));
@@ -56,9 +74,15 @@ export default function AdminTable({
   }, [collectionName]);
 
   useEffect(() => {
+    const nextStatus = selected?.status || "New";
     setCheckoutMode(guessCheckoutMode(selected));
     setCheckoutMessage("");
     setCheckoutError("");
+    setStatusValue(nextStatus);
+    setStatusNote("");
+    setNotifyCustomer(shouldNotifyByDefault(nextStatus));
+    setStatusMessage("");
+    setStatusError("");
   }, [selected?.id]);
 
   const filtered = useMemo(() => {
@@ -67,13 +91,48 @@ export default function AdminTable({
     return items.filter((item) => JSON.stringify(item).toLowerCase().includes(term));
   }, [items, filter]);
 
-  async function updateStatus(item: AdminDoc, status: string) {
+  async function updateStatus(item: AdminDoc, status: string, options?: { notifyCustomer?: boolean; customerNote?: string }) {
     const token = await firebaseAuth.currentUser?.getIdToken();
-    await fetch("/api/admin/update-status", {
+    const res = await fetch("/api/admin/update-status", {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ collection: collectionName, id: item.id, status }),
+      body: JSON.stringify({
+        collection: collectionName,
+        id: item.id,
+        status,
+        notifyCustomer: Boolean(options?.notifyCustomer),
+        customerNote: options?.customerNote || "",
+      }),
     });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.ok) throw new Error(data.error || "Unable to update status.");
+    return data as { ok: boolean; emailSent?: boolean; emailSkipped?: boolean; emailError?: string };
+  }
+
+  async function submitStatusUpdate() {
+    if (!selected) return;
+    setStatusBusy(true);
+    setStatusMessage("");
+    setStatusError("");
+
+    try {
+      const data = await updateStatus(selected, statusValue, { notifyCustomer, customerNote: statusNote });
+      setSelected((prev) => (prev ? { ...prev, status: statusValue, lastStatusEmailNote: notifyCustomer ? statusNote : prev.lastStatusEmailNote } : prev));
+
+      if (notifyCustomer && data.emailSent) {
+        setStatusMessage("Status updated and customer email sent.");
+      } else if (notifyCustomer && data.emailSkipped) {
+        setStatusMessage(data.emailError || "Status updated, but no customer email was available.");
+      } else if (notifyCustomer && data.emailError) {
+        setStatusMessage(data.emailError);
+      } else {
+        setStatusMessage("Status updated. No customer email was sent.");
+      }
+    } catch (error) {
+      setStatusError(error instanceof Error ? error.message : "Unable to update status.");
+    } finally {
+      setStatusBusy(false);
+    }
   }
 
   async function copyToClipboard(text: string) {
@@ -101,6 +160,7 @@ export default function AdminTable({
       }
 
       setSelected((prev) => prev ? { ...prev, checkoutUrl: data.url, checkoutSessionId: data.sessionId, status: "Checkout Sent", paymentStatus: "Checkout Sent" } : prev);
+      setStatusValue("Checkout Sent");
       setCheckoutMessage(data.emailError || (data.emailSent ? "Checkout link created and emailed to the customer." : "Checkout link created. Copy it and send it manually."));
     } catch (error) {
       setCheckoutError(error instanceof Error ? error.message : "Unable to create checkout link.");
@@ -110,6 +170,7 @@ export default function AdminTable({
   }
 
   const showPaymentActions = enablePaymentActions && collectionName === "serviceRequests" && selected;
+  const showCustomerStatusActions = collectionName === "serviceRequests" && selected;
 
   return (
     <section className="space-y-5">
@@ -153,8 +214,9 @@ export default function AdminTable({
                       <button onClick={() => setSelected(item)} className="rounded-full bg-[#075c58] px-3 py-1.5 text-xs font-bold text-white">View</button>
                       <select
                         value={item.status || "New"}
-                        onChange={(e) => updateStatus(item, e.target.value)}
+                        onChange={(e) => updateStatus(item, e.target.value).catch(console.error)}
                         className="rounded-full border border-[#eadfc8] bg-white px-3 py-1.5 text-xs"
+                        title="Quick internal status update. Open View to send a customer email."
                       >
                         {statuses.map((status) => <option key={status}>{status}</option>)}
                       </select>
@@ -180,6 +242,76 @@ export default function AdminTable({
               </div>
               <button onClick={() => setSelected(null)} className="rounded-full border px-4 py-2 text-sm font-bold">Close</button>
             </div>
+
+            {showCustomerStatusActions && (
+              <div className="mb-5 rounded-3xl border border-[#eadfc8] bg-white p-5 shadow-sm">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="max-w-2xl">
+                    <p className="text-xs font-black uppercase tracking-[0.2em] text-[#b98a2f]">Status + customer update</p>
+                    <h4 className="mt-1 text-xl font-black text-[#075c58]">Update the request and choose whether to notify the customer</h4>
+                    <p className="mt-2 text-sm leading-6 text-slate-700">
+                      Use the table dropdown for quick internal updates. Use this section when the customer should get a clear NestHelper email.
+                    </p>
+                  </div>
+                  <StatusBadge status={statusValue} />
+                </div>
+
+                <div className="mt-4 grid gap-3 md:grid-cols-2">
+                  <label className="grid gap-2 text-sm font-bold text-slate-700">
+                    Customer-facing status
+                    <select
+                      value={statusValue}
+                      onChange={(e) => {
+                        const next = e.target.value;
+                        setStatusValue(next);
+                        setNotifyCustomer(shouldNotifyByDefault(next));
+                      }}
+                      className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-bold text-[#075c58] outline-none focus:border-[#075c58]"
+                    >
+                      {statuses.map((status) => <option key={status}>{status}</option>)}
+                    </select>
+                  </label>
+
+                  <label className="flex items-center gap-3 rounded-2xl border border-[#eadfc8] bg-[#fbf6ea] px-4 py-3 text-sm font-bold text-slate-700">
+                    <input
+                      type="checkbox"
+                      checked={notifyCustomer}
+                      onChange={(e) => setNotifyCustomer(e.target.checked)}
+                      className="h-5 w-5 rounded border-[#075c58] accent-[#075c58]"
+                    />
+                    Send customer email notification
+                  </label>
+                </div>
+
+                <label className="mt-4 grid gap-2 text-sm font-bold text-slate-700">
+                  Optional customer note
+                  <textarea
+                    value={statusNote}
+                    onChange={(e) => setStatusNote(e.target.value)}
+                    placeholder={getStatusNotePlaceholder(statusValue)}
+                    rows={4}
+                    className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
+                  />
+                </label>
+
+                <div className="mt-4 flex flex-wrap gap-3">
+                  <button
+                    type="button"
+                    disabled={statusBusy}
+                    onClick={submitStatusUpdate}
+                    className="rounded-2xl bg-[#075c58] px-5 py-3 text-sm font-black text-white shadow-lg shadow-[#075c58]/15 transition hover:-translate-y-0.5 hover:bg-[#064b48] disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {statusBusy ? "Updating..." : notifyCustomer ? "Update status + notify customer" : "Update status only"}
+                  </button>
+                  <p className="max-w-xl text-xs leading-5 text-slate-500">
+                    Payment link emails and payment received emails are handled separately. This button is for manual updates like Declined, Scheduled, Canceled, or Needs Info.
+                  </p>
+                </div>
+
+                {statusMessage && <p className="mt-3 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">{statusMessage}</p>}
+                {statusError && <p className="mt-3 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{statusError}</p>}
+              </div>
+            )}
 
             {showPaymentActions && (
               <div className="mb-5 rounded-3xl border border-[#d8c18f] bg-[#fbf6ea] p-5 shadow-sm">

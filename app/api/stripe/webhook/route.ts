@@ -3,10 +3,21 @@ import { NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
 import Stripe from "stripe";
 import { getFirebaseAdminDb } from "@/lib/firebaseAdmin";
+import { services } from "@/lib/services";
+import { sendPaymentReceivedEmail } from "@/lib/sendPaymentReceivedEmail";
 
 export const runtime = "nodejs";
 
 const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
+
+function getString(value: unknown) {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function getServiceTitle(data: Record<string, unknown>, fallback?: string) {
+  const serviceId = getString(data.service);
+  return getString(data.selectedServiceTitle) || fallback || services.find((item) => item.id === serviceId)?.title || serviceId || "NestHelper service";
+}
 
 export async function POST(request: Request) {
   if (!stripe) {
@@ -41,7 +52,11 @@ export async function POST(request: Request) {
 
       if (requestId) {
         const db = getFirebaseAdminDb();
-        await db.collection("serviceRequests").doc(requestId).update({
+        const requestRef = db.collection("serviceRequests").doc(requestId);
+        const requestSnap = await requestRef.get();
+        const existingData = requestSnap.exists ? requestSnap.data() || {} : {};
+
+        await requestRef.update({
           status: "Paid",
           paymentStatus: "Paid",
           checkoutSessionId: session.id,
@@ -54,6 +69,34 @@ export async function POST(request: Request) {
           updatedAt: FieldValue.serverTimestamp(),
           updatedBy: "stripe-webhook",
         });
+
+        const email = getString(existingData.email) || getString(session.customer_details?.email) || getString(session.customer_email);
+        const alreadySent = Boolean(existingData.paymentConfirmationEmailSent);
+
+        if (email && !alreadySent) {
+          try {
+            await sendPaymentReceivedEmail({
+              to: email,
+              customerName: getString(existingData.fullName) || getString(session.customer_details?.name),
+              requestId,
+              serviceTitle: getServiceTitle(existingData, session.metadata?.serviceTitle),
+              amountTotal: session.amount_total,
+              currency: session.currency,
+            });
+
+            await requestRef.update({
+              paymentConfirmationEmailSent: true,
+              paymentConfirmationEmailSentAt: FieldValue.serverTimestamp(),
+              paymentConfirmationEmailError: "",
+            });
+          } catch (error) {
+            console.error("Payment received email failed", error);
+            await requestRef.update({
+              paymentConfirmationEmailSent: false,
+              paymentConfirmationEmailError: "Payment was marked paid, but the NestHelper payment confirmation email failed.",
+            });
+          }
+        }
       }
     }
 
