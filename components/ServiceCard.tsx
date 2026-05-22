@@ -104,6 +104,8 @@ type CardOpenEvent = CustomEvent<{ id: string }>;
 export function ServiceCard({ service }: { service: Service }) {
   const [open, setOpen] = useState(false);
   const cardRef = useRef<HTMLElement | null>(null);
+  const returnScrollYRef = useRef<number | null>(null);
+  const returnTimerRef = useRef<ReturnType<typeof window.setTimeout> | null>(null);
   const theme = serviceStyles[service.id] || serviceStyles["parent-reset-2hr"];
   const extra = serviceExtras[service.id];
   const detailsId = `service-details-${service.id}`;
@@ -118,19 +120,51 @@ export function ServiceCard({ service }: { service: Service }) {
     }
 
     window.addEventListener("nesthelper-service-card-open", handleOtherCard);
-    return () => window.removeEventListener("nesthelper-service-card-open", handleOtherCard);
+    return () => {
+      window.removeEventListener("nesthelper-service-card-open", handleOtherCard);
+      if (returnTimerRef.current) window.clearTimeout(returnTimerRef.current);
+    };
   }, [service.id]);
 
+  function rememberReturnPosition() {
+    if (typeof window === "undefined" || !cardRef.current) return;
+    const headerOffset = window.innerWidth < 768 ? 88 : 110;
+    const cardTop = cardRef.current.getBoundingClientRect().top + window.scrollY;
+    returnScrollYRef.current = Math.max(0, cardTop - headerOffset);
+  }
+
+  function returnToCardStart() {
+    if (typeof window === "undefined") return;
+    const targetY = returnScrollYRef.current;
+    if (targetY === null) return;
+
+    if (returnTimerRef.current) window.clearTimeout(returnTimerRef.current);
+    returnTimerRef.current = window.setTimeout(() => {
+      window.scrollTo({ top: targetY, behavior: "smooth" });
+      returnScrollYRef.current = null;
+      returnTimerRef.current = null;
+    }, 120);
+  }
+
   function openCard() {
+    rememberReturnPosition();
     window.dispatchEvent(new CustomEvent("nesthelper-service-card-open", { detail: { id: service.id } }));
     setOpen(true);
+  }
+
+  function closeCardAndReturn() {
+    setOpen(false);
+    returnToCardStart();
   }
 
   function toggleCard() {
     setOpen((currentOpen) => {
       const nextOpen = !currentOpen;
       if (nextOpen) {
+        rememberReturnPosition();
         window.dispatchEvent(new CustomEvent("nesthelper-service-card-open", { detail: { id: service.id } }));
+      } else {
+        returnToCardStart();
       }
       return nextOpen;
     });
@@ -144,11 +178,14 @@ export function ServiceCard({ service }: { service: Service }) {
 
   function toggleDetails(event: MouseEvent<HTMLButtonElement>) {
     event.stopPropagation();
-    const nextOpen = !open;
-    setOpen(nextOpen);
-    if (nextOpen) {
-      window.dispatchEvent(new CustomEvent("nesthelper-service-card-open", { detail: { id: service.id } }));
+    if (open) {
+      closeCardAndReturn();
+      return;
     }
+
+    rememberReturnPosition();
+    window.dispatchEvent(new CustomEvent("nesthelper-service-card-open", { detail: { id: service.id } }));
+    setOpen(true);
   }
 
   return (
