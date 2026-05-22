@@ -149,7 +149,7 @@ export function ServiceCard({ service }: { service: Service }) {
     <article
       ref={cardRef}
       onClick={openCard}
-      className={`group flex cursor-pointer flex-col overflow-hidden rounded-[2rem] border border-nest-gold/18 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-lift ${open ? `ring-4 ${theme.ring}` : ""}`}
+      className={`group flex cursor-pointer flex-col overflow-hidden rounded-[2rem] border border-nest-gold/18 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-lift ${open ? `ring-4 ${theme.ring}` : "h-[590px] sm:h-[610px]"}`}
     >
       <div className={`relative h-40 shrink-0 overflow-hidden bg-gradient-to-br sm:h-44 ${theme.accent}`}>
         <Image
@@ -167,8 +167,8 @@ export function ServiceCard({ service }: { service: Service }) {
       <div className="flex flex-1 flex-col p-5 sm:p-6">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h3 className="text-2xl font-black leading-tight text-nest-teal">{service.title}</h3>
-            <p className="mt-2 text-sm font-semibold leading-6 text-nest-ink/68 sm:text-base">
+            <h3 className={`text-2xl font-black leading-tight text-nest-teal ${open ? "" : "min-h-[3.5rem]"}`}>{service.title}</h3>
+            <p className={`mt-2 text-sm font-semibold leading-6 text-nest-ink/68 sm:text-base ${open ? "" : "line-clamp-2 min-h-[3rem]"}`}>
               {service.description}
             </p>
           </div>
@@ -176,25 +176,25 @@ export function ServiceCard({ service }: { service: Service }) {
         </div>
 
         <div className="mt-5 overflow-hidden rounded-3xl border border-nest-gold/14 bg-nest-cream">
-          <div className="grid gap-0 sm:grid-cols-[1fr_auto]">
-            <div className="p-5">
+          <div className="grid min-h-[8.35rem] gap-0 sm:grid-cols-[1fr_auto]">
+            <div className="flex flex-col justify-center p-5">
               <div className="text-xs font-black uppercase tracking-[0.16em] text-nest-ink/55">Starting at</div>
-              <div className="mt-1 text-3xl font-black leading-tight text-nest-teal">
+              <div className={`mt-1 font-black leading-tight text-nest-teal ${service.id === "laundry-rescue" ? "text-2xl sm:text-3xl" : "text-3xl"}`}>
                 {service.standardPrice}
               </div>
               {service.foundingPrice && (
-                <div className="mt-2 text-sm font-bold text-nest-ink/60">
+                <div className={`mt-2 font-bold text-nest-ink/60 ${service.id === "laundry-rescue" ? "text-xs leading-5 sm:text-sm" : "text-sm"}`}>
                   Founding/Beta: <span className="text-nest-teal">{service.foundingPrice}</span>
                 </div>
               )}
             </div>
-            <div className={`flex items-center justify-center px-5 py-4 text-center text-xs font-black uppercase tracking-[0.13em] ${theme.price}`}>
+            <div className={`flex min-h-[3.2rem] items-center justify-center px-5 py-4 text-center text-xs font-black uppercase tracking-[0.13em] sm:min-w-[8.8rem] ${theme.price}`}>
               {service.priceNote}
             </div>
           </div>
         </div>
 
-        <div className="mt-4 rounded-3xl border border-dashed border-nest-gold/25 bg-white/75 p-4 text-sm font-bold text-nest-ink/62">
+        <div className={`mt-4 rounded-3xl border border-dashed border-nest-gold/25 bg-white/75 p-4 text-sm font-bold leading-6 text-nest-ink/62 ${open ? "" : "line-clamp-2 min-h-[4.4rem]"}`}>
           Tap to see what is included, best-fit notes, timing, and important details.
         </div>
 
