@@ -97,7 +97,7 @@ export function ServiceCard({ service }: { service: Service }) {
     <article
       ref={cardRef}
       onClick={openCard}
-      className={`group flex h-full cursor-pointer flex-col overflow-hidden rounded-[2rem] border border-nest-gold/18 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-lift ${open ? `ring-4 ${theme.ring}` : ""}`}
+      className={`group flex cursor-pointer flex-col overflow-hidden rounded-[2rem] border border-nest-gold/18 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-lift ${open ? `ring-4 ${theme.ring}` : ""}`}
     >
       <div className={`relative h-44 shrink-0 overflow-hidden bg-gradient-to-br ${theme.accent}`}>
         <Image

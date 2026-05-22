@@ -84,7 +84,7 @@ export default function HomePage() {
               Choose a package, submit details, and NestHelper reviews the request before payment. It is cleaner than messaging strangers, negotiating scope, and hoping someone shows up.
             </p>
           </div>
-          <div className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-10 grid items-start gap-6 md:grid-cols-2 lg:grid-cols-3">
             {services.map((service) => <ServiceCard key={service.id} service={service} />)}
           </div>
         </div>
