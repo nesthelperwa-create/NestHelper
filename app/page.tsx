@@ -20,8 +20,6 @@ import { ServiceCard } from "@/components/ServiceCard";
 import { services } from "@/lib/services";
 import { siteConfig } from "@/lib/siteConfig";
 
-const trustPoints = ["Request reviewed before checkout", "Checked helper model", "Clear packages", "Family-first support"];
-
 export default function HomePage() {
   return (
     <>
@@ -46,13 +44,6 @@ export default function HomePage() {
               <ButtonLink href="/request">Request Help</ButtonLink>
               <ButtonLink href="/services" variant="secondary">View Services</ButtonLink>
             </div>
-            <div className="mt-7 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-              {trustPoints.map((x) => (
-                <div key={x} className="glass-card rounded-2xl px-4 py-3 text-sm font-black text-nest-teal">
-                  ✓ {x}
-                </div>
-              ))}
-            </div>
           </AnimatedSection>
 
           <AnimatedSection className="order-1 lg:order-2">
@@ -67,15 +58,6 @@ export default function HomePage() {
                   priority
                   className="aspect-[16/9] w-full rounded-[2rem] object-cover"
                 />
-                <div className="mt-3 rounded-[1.5rem] border border-white/50 bg-white/90 p-4 shadow-soft backdrop-blur sm:absolute sm:bottom-6 sm:left-auto sm:right-6 sm:mt-0 sm:w-[21rem]">
-                  <div className="flex items-center gap-3">
-                    <div className="rounded-2xl bg-nest-mint/55 p-3 text-nest-teal"><ShieldCheck /></div>
-                    <div>
-                      <p className="text-sm font-black uppercase tracking-[0.16em] text-nest-gold">Why parents choose us</p>
-                      <p className="mt-1 font-black text-nest-teal">Vetted help. Clear scope. Follow-up.</p>
-                    </div>
-                  </div>
-                </div>
               </div>
             </div>
           </AnimatedSection>
