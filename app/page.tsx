@@ -68,80 +68,58 @@ export default function HomePage() {
       </section>
 
       <AnimatedSection className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
-        <div className="grid gap-8 rounded-[2.75rem] border border-nest-gold/12 bg-white/82 p-6 shadow-soft backdrop-blur sm:p-8 lg:grid-cols-[0.95fr_1.05fr] lg:p-10">
-          <div className="self-center">
-            <p className="pill-label w-fit"><Heart size={15} /> What NestHelper is</p>
-            <h2 className="text-balance mt-4 text-4xl font-black text-nest-teal sm:text-5xl">
-              Parent Reset help, coordinated for busy families.
-            </h2>
-            <p className="mt-5 text-lg font-medium leading-8 text-nest-ink/72">
-              NestHelper is a managed local parent-help service for families who need extra hands at home, but do not want to search through random posts, message strangers, or negotiate every detail alone.
-            </p>
-            <p className="mt-4 text-lg font-medium leading-8 text-nest-ink/72">
-              Families send one clear request. We review the scope, timing, location, safety notes, and best-fit package before checkout so expectations are clearer from the start.
-            </p>
-          </div>
+        <SectionShell>
+          <SectionIntro
+            label="What NestHelper is"
+            icon={<Heart size={15} />}
+            title="Parent Reset help, coordinated for busy families."
+            description="NestHelper is a managed local parent-help service for families who need extra hands at home, but do not want to search through random posts, message strangers, or negotiate every detail alone. Families send one clear request, and NestHelper reviews the scope, timing, location, safety notes, and best-fit package before checkout so expectations are clearer from the start."
+          />
 
-          <div className="grid gap-3 sm:grid-cols-2">
-            <WhyPoint icon={<Home />} title="Home reset help" text="Kitchen resets, tidying support, light household catch-up, and practical help when the day gets away from you." />
-            <WhyPoint icon={<Sparkles />} title="Laundry rescue" text="Pickup, dry weigh-in, wash/fold coordination, return delivery, and clear reusable bag expectations." />
-            <WhyPoint icon={<ClipboardCheck />} title="Errands and family support" text="Approved errands, pickups, returns, and household support with a reviewed scope before payment." />
-            <WhyPoint icon={<MessageCircle />} title="One request, less chaos" text="No messy group posts or endless message threads. NestHelper helps coordinate the details." />
+          <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <InfoCard icon={<Home size={20} />} title="Home reset help" text="Kitchen resets, tidying support, light household catch-up, and practical help when the day gets away from you." />
+            <InfoCard icon={<Sparkles size={20} />} title="Laundry rescue" text="Pickup, dry weigh-in, wash/fold coordination, return delivery, and clear reusable bag expectations." />
+            <InfoCard icon={<ClipboardCheck size={20} />} title="Errands and family support" text="Approved errands, pickups, returns, and household support with a reviewed scope before payment." />
+            <InfoCard icon={<MessageCircle size={20} />} title="One request, less chaos" text="No messy group posts or endless message threads. NestHelper helps coordinate the details." />
           </div>
-        </div>
+        </SectionShell>
       </AnimatedSection>
 
-      <AnimatedSection className="soft-section px-4 py-16 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-7xl">
-          <div className="grid gap-8 lg:grid-cols-[0.78fr_1.22fr] lg:items-start">
-            <div>
-              <p className="pill-label w-fit"><ShieldCheck size={15} /> Why families choose NestHelper</p>
-              <h2 className="text-balance mt-4 text-4xl font-black text-nest-teal sm:text-5xl">
-                A better choice than random unvetted help.
-              </h2>
-              <p className="mt-5 text-lg font-medium leading-8 text-nest-ink/72">
-                Facebook groups and marketplace listings can be useful, but parents are often left sorting through strangers, unclear pricing, and loose promises. NestHelper gives families a more professional path: insured service, reviewed requests, checked helpers or vetted partners, and follow-up after the job.
-              </p>
-              <div className="mt-7 rounded-[2rem] border border-nest-gold/14 bg-white/82 p-5 shadow-sm">
-                <p className="text-xs font-black uppercase tracking-[0.22em] text-nest-gold2">The difference</p>
-                <p className="mt-2 text-lg font-black leading-7 text-nest-teal">
-                  We are not just sending a name from the internet. We help define the job, review the fit, coordinate the details, and stand behind the process.
-                </p>
-              </div>
-            </div>
+      <AnimatedSection className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+        <SectionShell>
+          <SectionIntro
+            label="Why families choose NestHelper"
+            icon={<ShieldCheck size={15} />}
+            title="A better choice than random unvetted help."
+            description="Facebook groups and marketplace listings can be useful, but parents are often left sorting through strangers, unclear pricing, and loose promises. NestHelper gives families a more professional, insured, and coordinated way to get household help."
+          />
 
-            <div className="grid gap-4 md:grid-cols-2">
-              <ChoiceItem icon={<ShieldCheck />} title="Insured local service" text="NestHelper is insured, so families are not relying only on a handshake with a random helper." />
-              <ChoiceItem icon={<UserCheck />} title="Checked helpers" text="Helpers are reviewed before being matched to in-home family requests." />
-              <ChoiceItem icon={<CheckCircle2 />} title="Vetted partners" text="For partner-completed services, we review the provider instead of leaving parents to guess." />
-              <ChoiceItem icon={<ClipboardCheck />} title="Clear scope before payment" text="Timing, location, access, pets, safety notes, and package fit are reviewed before checkout." />
-              <ChoiceItem icon={<CreditCard />} title="Clear packages and pricing" text="Parents can see what they are requesting and the starting price before moving forward." />
-              <ChoiceItem icon={<MessageCircle />} title="Coordinated follow-up" text="NestHelper helps reduce awkward back-and-forth and follows up after service." />
-            </div>
+          <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+            <ChoiceItem title="Insured local service" text="NestHelper is insured, so families are not relying only on a handshake with a random helper." />
+            <ChoiceItem title="Checked helpers" text="Helpers are reviewed before being matched to in-home family requests." />
+            <ChoiceItem title="Vetted partners" text="For partner-completed services, we review the provider instead of leaving parents to guess." />
+            <ChoiceItem title="Clear scope before payment" text="Timing, location, access, pets, safety notes, and package fit are reviewed before checkout." />
+            <ChoiceItem title="Clear packages and follow-up" text="You get clearer pricing, better boundaries, and coordination from request to completion." />
           </div>
-        </div>
+        </SectionShell>
       </AnimatedSection>
 
-      <AnimatedSection className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8 lg:py-16">
-        <div id="how-it-works" className="scroll-mt-24 rounded-[2.75rem] border border-nest-gold/12 bg-white/84 p-6 shadow-soft backdrop-blur sm:p-8 lg:p-10">
-          <div className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr] lg:items-end">
-            <div>
-              <p className="pill-label w-fit">How it works</p>
-              <h2 className="text-balance mt-4 text-4xl font-black text-nest-teal sm:text-5xl">
-                Simple request. Reviewed first. Then we get to work.
-              </h2>
-            </div>
-            <p className="text-lg font-medium leading-8 text-nest-ink/70">
-              The process is built to feel controlled and clear, so families know what happens before payment and what to expect next.
-            </p>
+      <AnimatedSection className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+        <SectionShell>
+          <SectionIntro
+            label="How it works"
+            icon={<Star size={15} />}
+            title="Simple request. Reviewed first. Then we get to work."
+            description="The process is built to feel controlled and clear, so families know what happens before payment and what to expect next."
+          />
+
+          <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <StepCard icon={<MessageCircle size={20} />} title="1. Request help" text="Tell us what is piling up, your location, timing, pets, access, and other details." />
+            <StepCard icon={<ShieldCheck size={20} />} title="2. We review" text="We check service area, availability, safety notes, and whether the package is the right fit." />
+            <StepCard icon={<CreditCard size={20} />} title="3. Secure checkout" text="After approval, we send a secure payment link or invoice so you know the request is confirmed." />
+            <StepCard icon={<Home size={20} />} title="4. We get to work" text="A checked helper or vetted partner completes the job, and NestHelper follows up after service." />
           </div>
-          <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <Step icon={<MessageCircle />} title="1. Request help" text="Tell us what is piling up, your location, timing, pets, access, and other details." />
-            <Step icon={<ShieldCheck />} title="2. We review" text="We check service area, availability, safety notes, and whether the package is the right fit." />
-            <Step icon={<CreditCard />} title="3. Secure checkout" text="After approval, we send a secure payment link or invoice so you know the request is confirmed." />
-            <Step icon={<Home />} title="4. We get to work" text="A checked helper or vetted partner completes the job, and NestHelper follows up after service." />
-          </div>
-        </div>
+        </SectionShell>
       </AnimatedSection>
 
       <AnimatedSection className="soft-section px-4 py-16 sm:px-6 lg:px-8">
@@ -172,7 +150,7 @@ export default function HomePage() {
           <p className="pill-label w-fit"><ShieldCheck size={15} /> Trust & Safety</p>
           <h2 className="text-balance mt-4 text-4xl font-black text-nest-teal sm:text-5xl">Not a random helper board.</h2>
           <p className="mt-5 text-lg font-medium leading-8 text-nest-ink/72">
-            NestHelper is a managed local parent-help service. We coordinate the request, set expectations, use checked helpers or vetted partner providers, and follow up after service.
+            NestHelper is being built as a managed local parent-help service. We coordinate the request, set expectations, use checked helpers or vetted partner providers, and follow up after service.
           </p>
           <div className="mt-7 grid gap-3 sm:grid-cols-2">
             {[
@@ -195,36 +173,68 @@ export default function HomePage() {
   );
 }
 
-function WhyPoint({ icon, title, text }: { icon: ReactNode; title: string; text: string }) {
+function SectionShell({ children }: { children: ReactNode }) {
   return (
-    <div className="h-full rounded-3xl border border-nest-gold/12 bg-white/84 p-4 shadow-sm">
-      <div className="mb-3 inline-flex rounded-2xl bg-nest-mint/40 p-3 text-nest-teal">{icon}</div>
-      <h3 className="font-black text-nest-teal">{title}</h3>
-      <p className="mt-2 text-sm font-semibold leading-6 text-nest-ink/68">{text}</p>
+    <div className="rounded-[2.75rem] border border-nest-gold/12 bg-white/78 p-6 shadow-soft backdrop-blur sm:p-8 lg:p-10">
+      {children}
     </div>
   );
 }
 
-function ChoiceItem({ icon, title, text }: { icon: ReactNode; title: string; text: string }) {
+function SectionIntro({
+  label,
+  icon,
+  title,
+  description,
+}: {
+  label: string;
+  icon: ReactNode;
+  title: string;
+  description: string;
+}) {
   return (
-    <div className="grid h-full grid-cols-[2.25rem_1fr] gap-3 rounded-[1.55rem] border border-nest-gold/12 bg-white/90 p-4 shadow-sm">
-      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-nest-mint/45 text-nest-teal">
-        {icon}
-      </div>
+    <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr] lg:items-end">
       <div>
-        <h3 className="text-sm font-black uppercase tracking-[0.08em] text-nest-teal">{title}</h3>
-        <p className="mt-1 text-sm font-medium leading-6 text-nest-ink/68">{text}</p>
+        <p className="pill-label w-fit">{icon} {label}</p>
+        <h2 className="text-balance mt-4 text-4xl font-black text-nest-teal sm:text-5xl">
+          {title}
+        </h2>
       </div>
+      <p className="text-lg font-medium leading-8 text-nest-ink/70">
+        {description}
+      </p>
     </div>
   );
 }
 
-function Step({ icon, title, text }: { icon: ReactNode; title: string; text: string }) {
+function InfoCard({ icon, title, text }: { icon: ReactNode; title: string; text: string }) {
   return (
-    <div className="h-full rounded-[1.7rem] border border-nest-gold/12 bg-nest-cream/55 p-5 shadow-sm transition hover:-translate-y-1 hover:bg-white">
-      <div className="mb-4 inline-flex rounded-2xl bg-white p-3 text-nest-teal shadow-sm">{icon}</div>
-      <h3 className="text-lg font-black text-nest-teal">{title}</h3>
-      <p className="mt-2 text-sm font-medium leading-6 text-nest-ink/68">{text}</p>
+    <div className="h-full rounded-[1.9rem] border border-nest-gold/12 bg-white/88 p-5 shadow-sm">
+      <div className="mb-4 inline-flex rounded-2xl bg-nest-mint/35 p-3 text-nest-teal">{icon}</div>
+      <h3 className="text-xl font-black text-nest-teal">{title}</h3>
+      <p className="mt-3 text-sm font-medium leading-7 text-nest-ink/68">{text}</p>
+    </div>
+  );
+}
+
+function ChoiceItem({ title, text }: { title: string; text: string }) {
+  return (
+    <div className="h-full rounded-[1.9rem] border border-nest-gold/12 bg-white/88 p-5 shadow-sm">
+      <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-2xl bg-nest-mint/35 text-nest-teal">
+        <CheckCircle2 size={20} />
+      </div>
+      <h3 className="text-base font-black uppercase tracking-[0.08em] text-nest-teal">{title}</h3>
+      <p className="mt-3 text-sm font-medium leading-7 text-nest-ink/68">{text}</p>
+    </div>
+  );
+}
+
+function StepCard({ icon, title, text }: { icon: ReactNode; title: string; text: string }) {
+  return (
+    <div className="h-full rounded-[1.9rem] border border-nest-gold/12 bg-white/88 p-5 shadow-sm transition hover:-translate-y-1">
+      <div className="mb-4 inline-flex rounded-2xl bg-nest-mint/35 p-3 text-nest-teal">{icon}</div>
+      <h3 className="text-xl font-black text-nest-teal">{title}</h3>
+      <p className="mt-3 text-sm font-medium leading-7 text-nest-ink/68">{text}</p>
     </div>
   );
 }
