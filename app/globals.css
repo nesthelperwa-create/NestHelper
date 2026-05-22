@@ -33,9 +33,10 @@
 }
 
 * { box-sizing: border-box; }
-html { scroll-behavior: smooth; }
+html { scroll-behavior: smooth; overflow-x: hidden; }
 body {
   min-height: 100vh;
+  overflow-x: hidden;
   background:
     radial-gradient(circle at 8% 4%, rgba(196, 226, 214, 0.78), transparent 30rem),
     radial-gradient(circle at 94% 18%, rgba(230, 190, 90, 0.20), transparent 28rem),
@@ -141,5 +142,14 @@ a { text-underline-offset: 4px; }
     animation-iteration-count: 1 !important;
     scroll-behavior: auto !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+
+@media (max-width: 420px) {
+  .pill-label {
+    max-width: 100%;
+    letter-spacing: 0.11em;
+    line-height: 1.35;
   }
 }

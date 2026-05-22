@@ -9,7 +9,7 @@ export default function ServicesPage() {
       <PageHero
         eyebrow="Services & Pricing"
         title="Clear packages. Real accountability."
-        text="Choose a parent-reset package, submit the details, and NestHelper reviews scope, timing, service area, safety notes, and pricing before sending checkout."
+        text="Choose a parent-reset package, submit the details, and NestHelper reviews scope, timing, service area, safety notes, and pricing before sending payment."
       />
 
       <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
@@ -41,7 +41,7 @@ export default function ServicesPage() {
                 "Request review before checkout",
                 "Service coordination",
                 "Clear scope and prep notes",
-                "Secure Stripe checkout",
+                "Secure payment link",
                 "Follow-up after service",
                 "No awkward negotiation",
               ].map((x) => (
@@ -65,7 +65,7 @@ export default function ServicesPage() {
           <div className="grid gap-5 p-7 sm:p-8 lg:grid-cols-3">
             <LaundryStep icon={<CreditCard />} title="1. Deposit" text="$59 standard minimum/deposit secures the request after approval." />
             <LaundryStep icon={<Scale />} title="2. Dry weigh-in" text="Laundry is weighed dry at pickup so pricing is transparent." />
-            <LaundryStep icon={<ClipboardCheck />} title="3. Final balance" text="Any remaining balance is sent through Stripe after weight and add-ons are confirmed." />
+            <LaundryStep icon={<ClipboardCheck />} title="3. Final balance" text="Any remaining balance is sent after weight and add-ons are confirmed." />
           </div>
 
           <div className="border-t border-nest-gold/12 p-7 sm:p-8">

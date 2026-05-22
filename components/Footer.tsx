@@ -6,28 +6,12 @@ import { policies } from "@/lib/policies";
 
 export function Footer() {
   return (
-    <footer className="relative mt-20 overflow-hidden text-white">
+    <footer className="relative mt-16 overflow-hidden text-white">
       <div className="teal-gradient absolute inset-0" />
       <div className="absolute -left-24 top-10 h-72 w-72 rounded-full bg-white/10 blur-3xl" />
       <div className="absolute -right-20 bottom-0 h-80 w-80 rounded-full bg-nest-gold/20 blur-3xl" />
 
-      <div className="relative mx-auto max-w-7xl px-4 pt-14 sm:px-6 lg:px-8">
-        <div className="rounded-[2rem] border border-white/12 bg-white/10 p-6 shadow-2xl shadow-black/10 backdrop-blur md:p-8">
-          <div className="grid gap-6 lg:grid-cols-[1.1fr_.9fr] lg:items-center">
-            <div>
-              <p className="text-sm font-black uppercase tracking-[0.24em] text-nest-gold2">Parent Reset starts here</p>
-              <h2 className="mt-3 text-3xl font-black sm:text-4xl">Need extra hands this week?</h2>
-              <p className="mt-3 max-w-2xl text-white/78">Submit a request, we review the details, then send a secure checkout link only after the service is approved.</p>
-            </div>
-            <div className="flex flex-col gap-3 sm:flex-row lg:justify-end">
-              <Link href="/request" className="rounded-full bg-white px-6 py-3.5 text-center font-black text-nest-teal transition hover:-translate-y-0.5 hover:shadow-xl">Request Help</Link>
-              <Link href="/services" className="rounded-full border border-white/20 px-6 py-3.5 text-center font-black text-white transition hover:-translate-y-0.5 hover:bg-white/10">View Services</Link>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="relative mx-auto grid max-w-7xl gap-10 px-4 py-14 sm:px-6 lg:grid-cols-[1.15fr_0.75fr_0.75fr_0.95fr] lg:px-8">
+      <div className="relative mx-auto grid max-w-7xl gap-10 px-4 pt-14 pb-12 sm:px-6 lg:grid-cols-[1.15fr_0.75fr_0.75fr_0.95fr] lg:px-8">
         <div>
           <div className="flex items-center gap-3">
             <Image src={siteConfig.assets.icon} alt="NestHelper icon" width={64} height={64} className="h-14 w-14 object-contain" />
@@ -62,7 +46,6 @@ export function Footer() {
           title="For Families"
           links={[
             { href: "/request", label: "Request Help" },
-            { href: "/checkout", label: "Payment Flow" },
             { href: "/services#laundry", label: "Laundry Rescue" },
             { href: "/policies", label: "All Policies" },
           ]}

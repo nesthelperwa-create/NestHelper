@@ -36,10 +36,10 @@ export default function HomePage() {
             <div className="pill-label">
               <Sparkles size={16} /> Parent Reset Concierge
             </div>
-            <h1 className="text-balance mt-5 text-5xl font-black tracking-tight text-nest-teal sm:text-6xl lg:text-7xl">
+            <h1 className="text-balance mt-5 max-w-3xl text-4xl font-black tracking-tight text-nest-teal sm:text-6xl lg:text-7xl">
               Reset the home. Reclaim the day.
             </h1>
-            <p className="mt-5 max-w-2xl text-lg font-semibold leading-8 text-nest-ink/74 sm:text-xl">
+            <p className="mt-5 max-w-2xl text-base font-semibold leading-7 text-nest-ink/74 sm:text-xl sm:leading-8">
               Trusted local help for busy parents — home resets, laundry rescue, errands, and family support without the awkward marketplace guessing game.
             </p>
             <div className="mt-7 flex flex-col gap-3 sm:flex-row">
@@ -65,9 +65,9 @@ export default function HomePage() {
                   width={1792}
                   height={768}
                   priority
-                  className="rounded-[2rem] object-cover"
+                  className="aspect-[16/9] w-full rounded-[2rem] object-cover"
                 />
-                <div className="absolute bottom-6 left-6 right-6 rounded-[1.5rem] border border-white/50 bg-white/90 p-4 shadow-soft backdrop-blur sm:left-auto sm:w-[21rem]">
+                <div className="mt-3 rounded-[1.5rem] border border-white/50 bg-white/90 p-4 shadow-soft backdrop-blur sm:absolute sm:bottom-6 sm:left-auto sm:right-6 sm:mt-0 sm:w-[21rem]">
                   <div className="flex items-center gap-3">
                     <div className="rounded-2xl bg-nest-mint/55 p-3 text-nest-teal"><ShieldCheck /></div>
                     <div>
@@ -87,7 +87,7 @@ export default function HomePage() {
           <TrustMini icon={<ShieldCheck />} title="Checked help model" text="Helpers and partner providers are reviewed before being sent to families." />
           <TrustMini icon={<Heart />} title="Parent-focused" text="Built around real household overwhelm, not random job posts." />
           <TrustMini icon={<MessageCircle />} title="Coordinated for you" text="We review scope, timing, access, pets, and safety before checkout." />
-          <TrustMini icon={<CreditCard />} title="Secure checkout" text="Approved requests receive a Stripe checkout or invoice link." />
+          <TrustMini icon={<CreditCard />} title="Secure checkout" text="Approved requests receive a secure payment link or invoice." />
         </div>
       </AnimatedSection>
 
@@ -147,7 +147,7 @@ export default function HomePage() {
           <div className="mt-10 grid gap-5 md:grid-cols-4">
             <Step icon={<ClipboardCheck />} title="1. Request help" text="Tell us what is piling up, your location, timing, pets, access, and promo code." />
             <Step icon={<ShieldCheck />} title="2. We review" text="We check service area, availability, safety, scope, and whether the package fits." />
-            <Step icon={<CreditCard />} title="3. Secure checkout" text="After approval, we send a Stripe checkout or invoice link." />
+            <Step icon={<CreditCard />} title="3. Secure checkout" text="After approval, we send a secure payment link or invoice." />
             <Step icon={<Home />} title="4. We get to work" text="A checked helper or vetted partner completes the job, then we follow up." />
           </div>
         </div>
@@ -162,14 +162,14 @@ export default function HomePage() {
               <p className="pill-label w-fit"><Users size={15} /> Ready when you need a reset</p>
               <h2 className="text-balance mt-4 text-4xl font-black text-nest-teal sm:text-5xl">Need help this week?</h2>
               <p className="mt-4 text-lg font-medium leading-8 text-nest-ink/72">
-                Submit a request and we’ll review the details before sending your secure checkout link. Laundry requests use a deposit first, then a final balance after dry weigh-in.
+                Submit a request and we’ll review the details before sending your secure payment link. Laundry requests use a deposit first, then a final balance after dry weigh-in.
               </p>
-              <div className="mt-7 flex flex-col gap-3 sm:flex-row"><ButtonLink href="/request">Request Help</ButtonLink><ButtonLink href="/checkout" variant="secondary">See Payment Flow</ButtonLink></div>
+              <div className="mt-7 flex flex-col gap-3 sm:flex-row"><ButtonLink href="/request">Request Help</ButtonLink><ButtonLink href="/contact" variant="secondary">Ask a Question</ButtonLink></div>
             </div>
             <div className="rounded-[2rem] border border-nest-gold/18 bg-nest-cream p-6">
               <div className="flex items-center gap-2 text-nest-teal"><MapPin /> <strong>Serving</strong></div>
               <p className="mt-3 text-2xl font-black text-nest-ink">{siteConfig.serviceArea}</p>
-              <p className="mt-3 text-sm font-semibold leading-6 text-nest-ink/65">Requests outside the core service area may include a travel fee or may not be available during beta.</p>
+              <p className="mt-3 text-sm font-semibold leading-6 text-nest-ink/65">Requests outside the core service area may include a travel fee or have limited availability.</p>
             </div>
           </div>
         </div>

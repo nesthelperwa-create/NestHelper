@@ -9,7 +9,7 @@ export default function RequestPage() {
       <PageHero
         eyebrow="Request Help"
         title="Tell us what’s piling up."
-        text="No payment is due when you submit. We review your service area, timing, scope, safety notes, pets, access, and pricing first — then send a secure Stripe checkout link if the request is approved."
+        text="No payment is due when you submit. We review your service area, timing, scope, safety notes, pets, access, and pricing first — then send a secure payment link if the request is approved."
         cta={false}
       />
       <section className="mx-auto grid max-w-6xl gap-8 px-4 py-14 sm:px-6 lg:grid-cols-[0.9fr_1.6fr] lg:px-8">
@@ -19,7 +19,7 @@ export default function RequestPage() {
           <div className="mt-6 grid gap-4 text-sm leading-6 text-nest-ink/72">
             <RequestStep icon={<ClipboardCheck />} title="1. Submit details" text="Tell us the service, timing, home access, pets, and what needs attention." />
             <RequestStep icon={<ShieldCheck />} title="2. We review" text="We confirm service area, safety, availability, and whether the package fits." />
-            <RequestStep icon={<CreditCard />} title="3. You approve checkout" text="Approved requests receive a secure Stripe checkout or invoice link before work starts." />
+            <RequestStep icon={<CreditCard />} title="3. You approve checkout" text="Approved requests receive a secure payment link or invoice before work starts." />
             <RequestStep icon={<MessageCircle />} title="4. We follow up" text="After service, NestHelper checks in so families are not left guessing." />
           </div>
           <p className="mt-5 rounded-2xl border border-nest-teal/15 bg-nest-mint/25 p-4 text-sm font-semibold leading-6 text-nest-ink/76">

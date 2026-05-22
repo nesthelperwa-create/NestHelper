@@ -20,7 +20,7 @@ export function ButtonLink({
   return (
     <Link
       href={href}
-      className={`focus-ring group inline-flex items-center justify-center gap-2 rounded-full px-6 py-3.5 text-sm font-black transition duration-200 hover:-translate-y-0.5 sm:text-base ${classes}`}
+      className={`focus-ring group inline-flex w-full items-center justify-center gap-2 rounded-full px-6 py-3.5 text-sm font-black transition duration-200 hover:-translate-y-0.5 sm:w-auto sm:text-base ${classes}`}
     >
       {children}
       <ArrowRight size={18} className="transition duration-200 group-hover:translate-x-0.5" />

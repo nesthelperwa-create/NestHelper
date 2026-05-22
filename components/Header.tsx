@@ -21,10 +21,6 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-nest-gold/15 bg-[#fffaf2]/90 backdrop-blur-2xl">
-      <div className="hidden border-b border-nest-gold/10 bg-white/55 px-4 py-2 text-center text-xs font-black uppercase tracking-[0.18em] text-nest-teal/80 sm:block">
-        Request-first parent reset services for busy Eastside families
-      </div>
-
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
         <Link href="/" className="focus-ring flex items-center gap-3 rounded-2xl" aria-label="NestHelper home">
           <Image
@@ -32,11 +28,11 @@ export function Header() {
             alt="NestHelper icon"
             width={56}
             height={56}
-            className="h-12 w-12 object-contain drop-shadow-sm"
+            className="h-11 w-11 object-contain drop-shadow-sm sm:h-12 sm:w-12"
             priority
           />
           <div className="leading-tight">
-            <div className="text-xl font-black tracking-tight text-nest-teal sm:text-2xl">NestHelper</div>
+            <div className="text-lg font-black tracking-tight text-nest-teal sm:text-2xl">NestHelper</div>
             <div className="text-[0.70rem] font-black uppercase tracking-[0.28em] text-nest-gold">Parent Reset</div>
           </div>
         </Link>
@@ -60,7 +56,7 @@ export function Header() {
 
         <div className="hidden items-center gap-3 lg:flex">
           <div className="hidden items-center gap-2 rounded-full border border-nest-teal/10 bg-white/70 px-3 py-2 text-xs font-black text-nest-teal xl:flex">
-            <ShieldCheck size={15} /> Reviewed before checkout
+            <ShieldCheck size={15} /> Reviewed before payment
           </div>
           <Link
             href="/request"

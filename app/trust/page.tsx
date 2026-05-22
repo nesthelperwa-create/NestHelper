@@ -66,7 +66,7 @@ export default function TrustPage() {
               <div>
                 <h3 className="text-xl font-black text-nest-ink">Important boundaries</h3>
                 <p className="mt-2 font-medium leading-7 text-nest-ink/72">
-                  NestHelper does not provide licensed childcare, unsupervised babysitting, medical care, elder care, emergency services, legal services, or financial advice. Insurance and full live-payment setup should be completed before real customer launch.
+                  NestHelper provides household support only. We do not provide licensed childcare, unsupervised babysitting, medical care, elder care, emergency services, legal services, or financial advice.
                 </p>
               </div>
             </div>

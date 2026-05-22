@@ -198,7 +198,7 @@ export function RequestForm() {
         </p>
         <div className="mt-5 grid gap-3 sm:grid-cols-3">
           <Step icon={<ShieldCheck className="h-5 w-5" />} title="1. We review" text="Area, safety, pets, access, and scope." />
-          <Step icon={<CreditCard className="h-5 w-5" />} title="2. You approve" text="We send a secure Stripe checkout link." />
+          <Step icon={<CreditCard className="h-5 w-5" />} title="2. You approve" text="We send a secure payment link." />
           <Step icon={<CheckCircle2 className="h-5 w-5" />} title="3. We reset" text="A checked helper or vetted partner gets to work." />
         </div>
       </div>

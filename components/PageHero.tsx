@@ -13,7 +13,7 @@ export function PageHero({
   cta?: boolean;
 }) {
   return (
-    <section className="relative isolate overflow-hidden px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+    <section className="relative isolate overflow-hidden px-4 py-12 sm:px-6 sm:py-20 lg:px-8">
       <div className="absolute inset-0 -z-10 bg-[url('/assets/backgrounds/warm-mint-gradient.png')] bg-cover opacity-80" />
       <div className="absolute inset-0 -z-10 bg-white/50" />
       <div className="absolute -left-20 top-6 -z-10 h-72 w-72 rounded-full bg-nest-mint/65 blur-3xl" />
@@ -24,10 +24,10 @@ export function PageHero({
           <Sparkles size={15} />
           {eyebrow}
         </div>
-        <h1 className="text-balance text-4xl font-black tracking-tight text-nest-teal sm:text-5xl lg:text-6xl">
+        <h1 className="text-balance text-3xl font-black tracking-tight text-nest-teal sm:text-5xl lg:text-6xl">
           {title}
         </h1>
-        <p className="mx-auto mt-5 max-w-3xl text-lg font-medium leading-8 text-nest-ink/74">
+        <p className="mx-auto mt-5 max-w-3xl text-base font-medium leading-7 text-nest-ink/74 sm:text-lg sm:leading-8">
           {text}
         </p>
         {cta && (
