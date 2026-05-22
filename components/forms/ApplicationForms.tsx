@@ -4,6 +4,106 @@ import { useState } from "react";
 
 type Status = "idle" | "loading" | "success" | "error";
 
+
+type ApplicationPath = "helper" | "partner";
+
+const applicationOptions: Array<{
+  key: ApplicationPath;
+  eyebrow: string;
+  title: string;
+  text: string;
+  bullets: string[];
+  button: string;
+}> = [
+  {
+    key: "helper",
+    eyebrow: "Individual helper",
+    title: "I want to be a NestHelper helper",
+    text: "For people who want to help families with parent-reset visits, laundry folding, errands, organizing, and home reset support.",
+    bullets: ["Individual application", "Gold Star Checked onboarding", "Part-time / flexible availability"],
+    button: "Show helper form",
+  },
+  {
+    key: "partner",
+    eyebrow: "Business or provider",
+    title: "I’m a partner business or contractor",
+    text: "For cleaners, laundromats, errand providers, organizers, and local service businesses that want to partner with NestHelper.",
+    bullets: ["Business/provider application", "Partner-vetted review", "Capacity, insurance, and service standards"],
+    button: "Show partner form",
+  },
+];
+
+export function ApplicationFormChooser() {
+  const [selected, setSelected] = useState<ApplicationPath | null>(null);
+  const selectedOption = applicationOptions.find((option) => option.key === selected);
+
+  return (
+    <section className="mx-auto max-w-5xl px-4 py-14 sm:px-6 lg:px-8">
+      <div className="rounded-[2rem] border border-nest-gold/20 bg-white/70 p-4 shadow-soft sm:p-6 lg:p-8">
+        <div className="mx-auto max-w-3xl text-center">
+          <p className="text-sm font-black uppercase tracking-[0.22em] text-nest-gold">Choose your application path</p>
+          <h2 className="mt-3 text-3xl font-black tracking-tight text-nest-teal sm:text-4xl">Which best describes you?</h2>
+          <p className="mt-3 text-nest-ink/70">Pick one option and we’ll show the right form instead of making you sort through both applications.</p>
+        </div>
+
+        <div className="mt-8 grid gap-4 lg:grid-cols-2">
+          {applicationOptions.map((option) => {
+            const isSelected = selected === option.key;
+            return (
+              <button
+                key={option.key}
+                type="button"
+                onClick={() => setSelected(option.key)}
+                className={`group rounded-[1.6rem] border p-5 text-left shadow-soft transition hover:-translate-y-1 hover:border-nest-gold/60 hover:bg-white sm:p-6 ${
+                  isSelected
+                    ? "border-nest-gold bg-nest-cream ring-4 ring-nest-gold/15"
+                    : "border-nest-gold/20 bg-white/80"
+                }`}
+                aria-pressed={isSelected}
+              >
+                <span className="inline-flex rounded-full bg-nest-mint/55 px-3 py-1 text-xs font-black uppercase tracking-[0.18em] text-nest-teal">{option.eyebrow}</span>
+                <h3 className="mt-4 text-2xl font-black text-nest-teal">{option.title}</h3>
+                <p className="mt-3 leading-7 text-nest-ink/72">{option.text}</p>
+                <ul className="mt-4 grid gap-2 text-sm font-semibold text-nest-ink/75">
+                  {option.bullets.map((bullet) => (
+                    <li key={bullet} className="flex gap-2"><span className="text-nest-gold">•</span>{bullet}</li>
+                  ))}
+                </ul>
+                <div className="mt-5 inline-flex rounded-full bg-nest-teal px-5 py-3 text-sm font-black text-white transition group-hover:bg-nest-teal2">
+                  {isSelected ? "Selected" : option.button}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {selectedOption ? (
+        <div className="mt-8">
+          <div className="mb-4 flex flex-col gap-3 rounded-[1.5rem] border border-nest-gold/20 bg-nest-cream p-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-black uppercase tracking-[0.18em] text-nest-gold">Now showing</p>
+              <p className="text-xl font-black text-nest-teal">{selectedOption.title}</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setSelected(null)}
+              className="rounded-full border border-nest-teal/20 bg-white px-5 py-3 text-sm font-black text-nest-teal transition hover:border-nest-gold hover:text-nest-gold"
+            >
+              Change selection
+            </button>
+          </div>
+          {selected === "helper" ? <HelperApplicationForm /> : <PartnerApplicationForm />}
+        </div>
+      ) : (
+        <div className="mt-8 rounded-[1.5rem] border border-dashed border-nest-gold/45 bg-white/60 p-6 text-center text-sm font-semibold text-nest-ink/70">
+          Select one of the two options above to open the correct application form.
+        </div>
+      )}
+    </section>
+  );
+}
+
 export function HelperApplicationForm() {
   const [status, setStatus] = useState<Status>("idle");
   const [message, setMessage] = useState("");
