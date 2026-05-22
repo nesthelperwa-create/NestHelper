@@ -66,6 +66,94 @@ function getStatusNotePlaceholder(status: string) {
   return "Optional note to include in the customer email.";
 }
 
+
+const SERVICE_LOOKS: Record<string, { label: string; badge: string; row: string; dot: string }> = {
+  "parent-reset-2hr": {
+    label: "Parent Reset",
+    badge: "border-teal-200 bg-teal-50 text-teal-800",
+    row: "border-l-4 border-l-teal-400 hover:bg-teal-50/50",
+    dot: "bg-teal-500",
+  },
+  "family-reset-3hr": {
+    label: "Family Reset",
+    badge: "border-sky-200 bg-sky-50 text-sky-800",
+    row: "border-l-4 border-l-sky-400 hover:bg-sky-50/50",
+    dot: "bg-sky-500",
+  },
+  "helper-block-4hr": {
+    label: "Helper Block",
+    badge: "border-purple-200 bg-purple-50 text-purple-800",
+    row: "border-l-4 border-l-purple-400 hover:bg-purple-50/50",
+    dot: "bg-purple-500",
+  },
+  "errand-helper": {
+    label: "Errand Helper",
+    badge: "border-orange-200 bg-orange-50 text-orange-800",
+    row: "border-l-4 border-l-orange-400 hover:bg-orange-50/50",
+    dot: "bg-orange-500",
+  },
+  "laundry-rescue": {
+    label: "Laundry Rescue",
+    badge: "border-rose-200 bg-rose-50 text-rose-800",
+    row: "border-l-4 border-l-rose-400 hover:bg-rose-50/50",
+    dot: "bg-rose-500",
+  },
+};
+
+const DEFAULT_SERVICE_LOOK = {
+  label: "Unselected",
+  badge: "border-slate-200 bg-slate-50 text-slate-700",
+  row: "border-l-4 border-l-slate-200 hover:bg-[#fbf6ea]",
+  dot: "bg-slate-400",
+};
+
+function getServiceKey(item: AdminDoc | null | undefined) {
+  const raw = String(item?.service || item?.selectedServiceTitle || item?.packageType || "").toLowerCase();
+  if (raw.includes("parent-reset") || raw.includes("parent reset") || raw.includes("2-hour")) return "parent-reset-2hr";
+  if (raw.includes("family-reset") || raw.includes("family reset") || raw.includes("3-hour")) return "family-reset-3hr";
+  if (raw.includes("helper-block") || raw.includes("helper block") || raw.includes("4-hour")) return "helper-block-4hr";
+  if (raw.includes("errand")) return "errand-helper";
+  if (raw.includes("laundry")) return "laundry-rescue";
+  return "";
+}
+
+function getServiceLook(item: AdminDoc | null | undefined) {
+  const key = getServiceKey(item);
+  return key ? SERVICE_LOOKS[key] || DEFAULT_SERVICE_LOOK : DEFAULT_SERVICE_LOOK;
+}
+
+function ServicePill({ item }: { item: AdminDoc }) {
+  const look = getServiceLook(item);
+  const rawService = String(item.service || "");
+  return (
+    <span className={`inline-flex min-w-max items-center gap-2 rounded-full border px-3 py-1 text-xs font-black ${look.badge}`}>
+      <span className={`h-2.5 w-2.5 rounded-full ${look.dot}`} />
+      {look.label}
+      {rawService && !rawService.toLowerCase().includes(look.label.toLowerCase().split(" ")[0]) && (
+        <span className="font-bold opacity-60">{rawService}</span>
+      )}
+    </span>
+  );
+}
+
+function ServiceLegend() {
+  return (
+    <div className="mt-3 flex flex-wrap gap-2">
+      {Object.entries(SERVICE_LOOKS).map(([key, look]) => (
+        <span key={key} className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[11px] font-black ${look.badge}`}>
+          <span className={`h-2 w-2 rounded-full ${look.dot}`} />
+          {look.label}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+function renderAdminCell(key: string, item: AdminDoc) {
+  if (key === "service" || key === "selectedServiceTitle" || key === "packageType") return <ServicePill item={item} />;
+  return formatValue(key, item[key]);
+}
+
 export default function AdminTable({
   collectionName,
   title,
@@ -280,6 +368,7 @@ export default function AdminTable({
           <p className="text-sm font-bold uppercase tracking-[0.2em] text-[#b98a2f]">Admin</p>
           <h2 className="text-3xl font-bold text-[#075c58]">{title}</h2>
           <p className="mt-1 text-slate-600">{filtered.length} records</p>
+          {collectionName === "serviceRequests" && <ServiceLegend />}
         </div>
         <input
           value={filter}
@@ -304,10 +393,10 @@ export default function AdminTable({
             </thead>
             <tbody className="divide-y divide-[#f0e7d7]">
               {filtered.map((item) => (
-                <tr key={item.id} className="hover:bg-[#fbf6ea]">
+                <tr key={item.id} className={`transition-colors ${getServiceLook(item).row}`}>
                   <td className="px-4 py-4"><StatusBadge status={item.status} /></td>
                   {columns.map((col) => (
-                    <td key={col.key} className="max-w-[220px] truncate px-4 py-4 text-slate-700">{formatValue(col.key, item[col.key])}</td>
+                    <td key={col.key} className="max-w-[220px] truncate px-4 py-4 text-slate-700">{renderAdminCell(col.key, item)}</td>
                   ))}
                   <td className="px-4 py-4 text-slate-500">{formatDate(item.createdAt)}</td>
                   <td className="px-4 py-4">
