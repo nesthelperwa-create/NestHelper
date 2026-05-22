@@ -3,7 +3,7 @@
 import { useSearchParams } from "next/navigation";
 import type { FormEvent, ReactNode } from "react";
 import { useMemo, useState } from "react";
-import { CheckCircle2, Clock, CreditCard, MapPin, ShieldCheck } from "lucide-react";
+import { ArrowRight, CheckCircle2, Clock, CreditCard, MapPin, ShieldCheck } from "lucide-react";
 import { services, laundryAddOns } from "@/lib/services";
 import { formatPhoneNumber } from "@/lib/formatPhoneNumber";
 
@@ -190,8 +190,10 @@ export function RequestForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} className="grid gap-6 rounded-[2.5rem] border border-nest-gold/18 bg-white/90 p-5 shadow-soft backdrop-blur sm:p-8">
-      <div className="rounded-[1.75rem] bg-gradient-to-br from-nest-cream via-white to-nest-mint/35 p-5 sm:p-6">
+    <form onSubmit={onSubmit} className="grid gap-6 overflow-hidden rounded-[2.5rem] border border-nest-gold/18 bg-white/90 p-4 shadow-soft backdrop-blur sm:p-6 lg:p-8">
+      <div className="relative overflow-hidden rounded-[1.9rem] bg-gradient-to-br from-nest-cream via-white to-nest-mint/35 p-5 shadow-sm sm:p-7">
+        <div className="absolute -right-16 -top-20 h-48 w-48 rounded-full bg-nest-gold/15 blur-3xl" />
+        <div className="relative">
         <p className="text-xs font-black uppercase tracking-[0.22em] text-nest-gold">No payment due yet</p>
         <h2 className="mt-2 text-2xl font-black text-nest-teal sm:text-3xl">Request a Parent Reset</h2>
         <p className="mt-3 max-w-2xl leading-7 text-nest-ink/72">
@@ -201,6 +203,7 @@ export function RequestForm() {
           <Step icon={<ShieldCheck className="h-5 w-5" />} title="1. We review" text="Area, safety, pets, access, and scope." />
           <Step icon={<CreditCard className="h-5 w-5" />} title="2. You approve" text="We send a secure payment link." />
           <Step icon={<CheckCircle2 className="h-5 w-5" />} title="3. We reset" text="A checked helper or vetted partner gets to work." />
+        </div>
         </div>
       </div>
 
@@ -376,8 +379,9 @@ export function RequestForm() {
         </label>
       </div>
 
-      <button disabled={status === "loading"} className="rounded-full bg-nest-teal px-6 py-4 text-lg font-black text-white shadow-soft transition hover:bg-nest-teal2 disabled:opacity-60">
+      <button disabled={status === "loading"} className="focus-ring inline-flex items-center justify-center gap-2 rounded-full bg-nest-teal px-6 py-4 text-lg font-black text-white shadow-soft transition hover:-translate-y-0.5 hover:bg-nest-teal2 hover:shadow-lift disabled:opacity-60">
         {status === "loading" ? "Submitting..." : "Submit Request"}
+        {status !== "loading" && <ArrowRight size={19} />}
       </button>
       {message && <p className={`rounded-2xl p-4 font-semibold ${status === "success" ? "bg-nest-mint/45 text-nest-teal" : "bg-red-50 text-red-700"}`}>{message}</p>}
     </form>
@@ -385,13 +389,27 @@ export function RequestForm() {
 }
 
 function Section({ title, description, children }: { title: string; description: string; children: ReactNode }) {
+  const match = title.match(/^(\d+)\.\s*(.*)$/);
+  const step = match?.[1];
+  const cleanTitle = match?.[2] || title;
+
   return (
-    <section className="grid gap-5 rounded-[1.75rem] border border-nest-gold/15 bg-white p-5 shadow-sm sm:p-6">
-      <div>
-        <h3 className="text-xl font-black text-nest-teal sm:text-2xl">{title}</h3>
-        <p className="mt-2 text-sm leading-6 text-nest-ink/68">{description}</p>
+    <section className="relative grid gap-5 overflow-hidden rounded-[1.9rem] border border-nest-gold/15 bg-gradient-to-br from-white via-white to-nest-cream/30 p-5 shadow-sm sm:p-6">
+      <div className="absolute -right-20 -top-24 h-48 w-48 rounded-full bg-nest-mint/35 blur-3xl" />
+      <div className="relative flex gap-4">
+        {step ? (
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-nest-teal text-lg font-black text-white shadow-sm">
+            {step}
+          </div>
+        ) : null}
+        <div>
+          <h3 className="text-xl font-black text-nest-teal sm:text-2xl">{cleanTitle}</h3>
+          <p className="mt-2 text-sm leading-6 text-nest-ink/68">{description}</p>
+        </div>
       </div>
-      {children}
+      <div className="relative grid gap-5">
+        {children}
+      </div>
     </section>
   );
 }
@@ -402,7 +420,7 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
 
 function Step({ icon, title, text }: { icon: ReactNode; title: string; text: string }) {
   return (
-    <div className="rounded-2xl bg-white/80 p-4 shadow-sm">
+    <div className="rounded-2xl border border-white/70 bg-white/80 p-4 shadow-sm">
       <div className="text-nest-gold">{icon}</div>
       <p className="mt-2 font-black text-nest-teal">{title}</p>
       <p className="mt-1 text-sm leading-5 text-nest-ink/65">{text}</p>
@@ -421,8 +439,8 @@ function MiniInfo({ icon, text }: { icon: ReactNode; text: string }) {
 
 function CheckOption({ checked, onChange, children }: { checked: boolean; onChange: (checked: boolean) => void; children: ReactNode }) {
   return (
-    <label className="flex items-center gap-3 rounded-2xl bg-nest-cream p-3 text-sm font-semibold text-nest-ink/78 transition hover:bg-nest-mint/35">
-      <input type="checkbox" className="h-4 w-4" checked={checked} onChange={(e) => onChange(e.target.checked)} />
+    <label className={`flex items-center gap-3 rounded-2xl border p-3 text-sm font-semibold transition ${checked ? "border-nest-gold/45 bg-nest-mint/35 text-nest-teal shadow-sm" : "border-nest-gold/10 bg-nest-cream text-nest-ink/78 hover:bg-nest-mint/25"}`}>
+      <input type="checkbox" className="h-4 w-4 accent-nest-teal" checked={checked} onChange={(e) => onChange(e.target.checked)} />
       <span>{children}</span>
     </label>
   );

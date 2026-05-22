@@ -1,5 +1,5 @@
+import type { ReactNode } from "react";
 import Image from "next/image";
-import Link from "next/link";
 import {
   ArrowRight,
   CheckCircle2,
@@ -23,13 +23,13 @@ import { siteConfig } from "@/lib/siteConfig";
 export default function HomePage() {
   return (
     <>
-      <section className="relative isolate overflow-hidden px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
+      <section className="relative isolate overflow-hidden px-4 py-10 sm:px-6 lg:px-8 lg:py-16">
         <div className="absolute inset-0 -z-10 bg-[url('/assets/backgrounds/warm-mint-gradient.png')] bg-cover opacity-80" />
         <div className="absolute inset-0 -z-10 bg-white/42" />
         <div className="absolute -left-24 top-20 -z-10 h-80 w-80 rounded-full bg-nest-mint/70 blur-3xl" />
         <div className="absolute -right-20 bottom-10 -z-10 h-80 w-80 rounded-full bg-nest-gold/20 blur-3xl" />
 
-        <div className="relative mx-auto grid max-w-7xl items-center gap-10 lg:grid-cols-[0.95fr_1.05fr]">
+        <div className="relative mx-auto grid max-w-7xl items-center gap-10 lg:grid-cols-[0.92fr_1.08fr]">
           <AnimatedSection className="order-2 lg:order-1">
             <div className="pill-label">
               <Sparkles size={16} /> Parent Reset Concierge
@@ -44,10 +44,14 @@ export default function HomePage() {
               <ButtonLink href="/request">Request Help</ButtonLink>
               <ButtonLink href="/services" variant="secondary">View Services</ButtonLink>
             </div>
+            <div className="mt-6 inline-flex max-w-full items-center gap-2 rounded-full border border-nest-gold/18 bg-white/75 px-4 py-2 text-sm font-black text-nest-teal shadow-sm backdrop-blur">
+              <MapPin size={16} className="shrink-0 text-nest-gold" />
+              <span className="truncate">Serving {siteConfig.serviceArea}</span>
+            </div>
           </AnimatedSection>
 
           <AnimatedSection className="order-1 lg:order-2">
-            <div className="relative">
+            <div className="relative mx-auto max-w-2xl lg:max-w-none">
               <div className="absolute -inset-5 rounded-[2.8rem] bg-nest-gold/16 blur-2xl" />
               <div className="relative overflow-hidden rounded-[2.5rem] border border-white/80 bg-white/55 p-3 shadow-glow backdrop-blur">
                 <Image
@@ -58,6 +62,17 @@ export default function HomePage() {
                   priority
                   className="aspect-[16/9] w-full rounded-[2rem] object-cover"
                 />
+                <div className="absolute bottom-6 left-6 hidden max-w-[15rem] rounded-[1.6rem] border border-white/70 bg-white/90 p-4 shadow-soft backdrop-blur sm:block">
+                  <p className="text-xs font-black uppercase tracking-[0.2em] text-nest-gold">Parent Reset</p>
+                  <p className="mt-1 text-2xl font-black leading-tight text-nest-teal">Help that feels coordinated.</p>
+                </div>
+                <div className="absolute right-5 top-5 hidden rounded-full border border-white/70 bg-white/90 px-4 py-2 text-sm font-black text-nest-teal shadow-sm backdrop-blur sm:inline-flex">
+                  <Heart size={16} className="text-nest-gold" /> Built for busy parents
+                </div>
+              </div>
+              <div className="absolute -bottom-6 right-6 hidden rounded-[1.6rem] border border-nest-gold/18 bg-nest-cream p-4 shadow-soft lg:block">
+                <p className="text-xs font-black uppercase tracking-[0.2em] text-nest-gold">No booking chaos</p>
+                <p className="mt-1 max-w-[13rem] text-sm font-bold leading-5 text-nest-ink/72">Request first. We review before payment.</p>
               </div>
             </div>
           </AnimatedSection>
@@ -65,11 +80,25 @@ export default function HomePage() {
       </section>
 
       <AnimatedSection className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        <div className="grid gap-4 md:grid-cols-4">
-          <TrustMini icon={<ShieldCheck />} title="Checked help model" text="Helpers and partner providers are reviewed before being sent to families." />
-          <TrustMini icon={<Heart />} title="Parent-focused" text="Built around real household overwhelm, not random job posts." />
-          <TrustMini icon={<MessageCircle />} title="Coordinated for you" text="We review scope, timing, access, pets, and safety before checkout." />
-          <TrustMini icon={<CreditCard />} title="Secure checkout" text="Approved requests receive a secure payment link or invoice." />
+        <div className="grid gap-5 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
+          <div className="overflow-hidden rounded-[2.5rem] border border-nest-gold/16 bg-white/90 p-5 shadow-soft backdrop-blur sm:p-6">
+            <div className="grid gap-4 sm:grid-cols-3">
+              <LifestyleImage src="/assets/services/service-parent-reset.png" label="Home reset" />
+              <LifestyleImage src="/assets/services/service-laundry-rescue.png" label="Laundry rescue" />
+              <LifestyleImage src="/assets/services/service-family-reset.png" label="Family catch-up" />
+            </div>
+          </div>
+          <div>
+            <p className="pill-label w-fit"><Heart size={15} /> What NestHelper is</p>
+            <h2 className="text-balance mt-4 text-4xl font-black text-nest-teal sm:text-5xl">A calmer way to ask for household help.</h2>
+            <p className="mt-4 text-lg font-medium leading-8 text-nest-ink/70">
+              Instead of posting in a random group, comparing strangers, and negotiating the scope yourself, families submit one clear request and NestHelper coordinates the details.
+            </p>
+            <div className="mt-6 grid gap-3 sm:grid-cols-2">
+              <MiniPoint icon={<MessageCircle />} title="Less back-and-forth" text="Clear request details before checkout." />
+              <MiniPoint icon={<ShieldCheck />} title="More controlled" text="Scope and safety reviewed first." />
+            </div>
+          </div>
         </div>
       </AnimatedSection>
 
@@ -81,7 +110,7 @@ export default function HomePage() {
               <h2 className="text-balance mt-4 text-4xl font-black text-nest-teal sm:text-5xl">Extra hands for busy parents.</h2>
             </div>
             <p className="text-lg font-medium leading-8 text-nest-ink/70">
-              Choose a package, submit details, and NestHelper reviews the request before payment. It is cleaner than messaging strangers, negotiating scope, and hoping someone shows up.
+              Choose a package, submit details, and NestHelper reviews the request before payment. Each card shows the price first, then expands for more detail when needed.
             </p>
           </div>
           <div className="mt-10 grid items-start gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -91,9 +120,10 @@ export default function HomePage() {
       </AnimatedSection>
 
       <AnimatedSection className="mx-auto grid max-w-7xl gap-8 px-4 py-16 sm:px-6 lg:grid-cols-[0.95fr_1.05fr] lg:px-8">
-        <div className="pro-card overflow-hidden rounded-[2.5rem] p-6 sm:p-8">
-          <div className="rounded-[2rem] bg-nest-cream p-6">
-            <Image src={siteConfig.assets.badge} alt="NestHelper Gold Star Checked badge" width={600} height={600} className="mx-auto max-h-[420px] w-full object-contain animate-float" />
+        <div className="pro-card overflow-hidden rounded-[2.5rem] p-5 sm:p-8">
+          <div className="relative overflow-hidden rounded-[2rem] bg-nest-cream p-6">
+            <div className="absolute -left-16 -top-16 h-48 w-48 rounded-full bg-nest-mint/55 blur-3xl" />
+            <Image src={siteConfig.assets.badge} alt="NestHelper Gold Star Checked badge" width={600} height={600} className="relative mx-auto max-h-[420px] w-full object-contain animate-float" />
           </div>
         </div>
         <div className="self-center">
@@ -111,7 +141,7 @@ export default function HomePage() {
               "Partner-vetted providers",
               "Follow-up after service",
             ].map((item) => (
-              <div key={item} className="flex gap-3 rounded-2xl bg-white p-4 font-black text-nest-ink/78 shadow-sm">
+              <div key={item} className="flex gap-3 rounded-2xl border border-nest-gold/12 bg-white p-4 font-black text-nest-ink/78 shadow-sm">
                 <CheckCircle2 className="shrink-0 text-nest-teal" /> {item}
               </div>
             ))}
@@ -160,22 +190,33 @@ export default function HomePage() {
   );
 }
 
-function TrustMini({ icon, title, text }: { icon: React.ReactNode; title: string; text: string }) {
+function LifestyleImage({ src, label }: { src: string; label: string }) {
   return (
-    <div className="card-hover rounded-[1.6rem] border border-nest-gold/15 bg-white/90 p-5 shadow-sm backdrop-blur">
-      <div className="mb-4 inline-flex rounded-2xl bg-nest-mint/45 p-3 text-nest-teal">{icon}</div>
-      <h3 className="text-lg font-black text-nest-teal">{title}</h3>
-      <p className="mt-2 text-sm font-medium leading-6 text-nest-ink/70">{text}</p>
+    <div className="relative overflow-hidden rounded-[1.8rem] bg-nest-cream shadow-sm">
+      <Image src={src} alt={label} width={500} height={500} className="aspect-[4/5] w-full object-cover object-top transition duration-700 hover:scale-105" />
+      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/45 to-transparent p-4">
+        <span className="rounded-full bg-white/90 px-3 py-1.5 text-xs font-black uppercase tracking-[0.16em] text-nest-teal shadow-sm">{label}</span>
+      </div>
     </div>
   );
 }
 
-function Step({ icon, title, text }: { icon: React.ReactNode; title: string; text: string }) {
+function MiniPoint({ icon, title, text }: { icon: ReactNode; title: string; text: string }) {
   return (
-    <div className="rounded-[1.7rem] border border-white/15 bg-white/10 p-6 backdrop-blur transition hover:-translate-y-1 hover:bg-white/14">
-      <div className="mb-4 inline-flex rounded-2xl bg-white/14 p-3 text-nest-gold2">{icon}</div>
+    <div className="rounded-[1.5rem] border border-nest-gold/14 bg-white/90 p-4 shadow-sm">
+      <div className="mb-3 inline-flex rounded-2xl bg-nest-mint/35 p-3 text-nest-teal">{icon}</div>
+      <h3 className="font-black text-nest-teal">{title}</h3>
+      <p className="mt-1 text-sm font-medium leading-6 text-nest-ink/68">{text}</p>
+    </div>
+  );
+}
+
+function Step({ icon, title, text }: { icon: ReactNode; title: string; text: string }) {
+  return (
+    <div className="rounded-[2rem] border border-white/12 bg-white/10 p-6 backdrop-blur transition hover:-translate-y-1 hover:bg-white/14">
+      <div className="mb-4 inline-flex rounded-2xl bg-white/12 p-3 text-nest-gold2">{icon}</div>
       <h3 className="text-xl font-black">{title}</h3>
-      <p className="mt-2 text-sm font-medium leading-6 text-white/75">{text}</p>
+      <p className="mt-2 text-sm font-medium leading-6 text-white/78">{text}</p>
     </div>
   );
 }

@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import type { FormEvent, HTMLAttributes, ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { ArrowRight } from "lucide-react";
 import { formatPhoneNumber } from "@/lib/formatPhoneNumber";
 
 
@@ -41,9 +43,10 @@ export function ApplicationFormChooser() {
   const selectedOption = applicationOptions.find((option) => option.key === selected);
 
   return (
-    <section className="mx-auto max-w-5xl px-4 py-14 sm:px-6 lg:px-8">
-      <div className="rounded-[2.5rem] border border-nest-gold/18 bg-white/90 p-4 shadow-soft backdrop-blur sm:p-6 lg:p-8">
-        <div className="mx-auto max-w-3xl text-center">
+    <section className="mx-auto max-w-6xl px-4 py-14 sm:px-6 lg:px-8">
+      <div className="overflow-hidden rounded-[2.5rem] border border-nest-gold/18 bg-white/90 shadow-soft backdrop-blur">
+        <div className="bg-gradient-to-br from-nest-cream via-white to-nest-mint/30 p-6 text-center sm:p-8">
+        <div className="mx-auto max-w-3xl">
           <p className="text-sm font-black uppercase tracking-[0.22em] text-nest-gold">Choose your application path</p>
           <h2 className="mt-3 text-3xl font-black tracking-tight text-nest-teal sm:text-4xl">Which best describes you?</h2>
           <p className="mt-3 text-nest-ink/70">
@@ -55,7 +58,9 @@ export function ApplicationFormChooser() {
           </div>
         </div>
 
-        <div className="mt-8 grid items-start gap-5 lg:grid-cols-2">
+        </div>
+
+        <div className="grid items-start gap-5 p-5 sm:p-6 lg:grid-cols-2 lg:p-8">
           {applicationOptions.map((option) => {
             const isSelected = selected === option.key;
             return (
@@ -67,7 +72,7 @@ export function ApplicationFormChooser() {
                 whileTap={{ scale: 0.975 }}
                 transition={{ type: "spring", stiffness: 420, damping: 28 }}
                 onClick={() => setSelected(option.key)}
-                className={`group relative flex min-h-[330px] cursor-pointer flex-col overflow-hidden rounded-[1.75rem] border-2 p-5 text-left shadow-soft outline-none transition-colors duration-200 ease-out focus-visible:ring-4 focus-visible:ring-nest-gold/25 sm:p-6 ${
+                className={`group relative flex min-h-[315px] cursor-pointer flex-col overflow-hidden rounded-[1.75rem] border-2 p-5 text-left shadow-sm outline-none transition-colors duration-200 ease-out focus-visible:ring-4 focus-visible:ring-nest-gold/25 sm:p-6 ${
                   isSelected
                     ? "border-nest-gold bg-nest-cream ring-4 ring-nest-gold/15"
                     : "border-nest-gold/20 bg-white hover:border-nest-gold/70 hover:bg-nest-cream/45"
@@ -182,7 +187,7 @@ export function HelperApplicationForm() {
   const [message, setMessage] = useState("");
   const [form, setForm] = useState({ fullName:"", email:"", phone:"", city:"", availability:"", services:"", experience:"", transportation:"", backgroundConsent:false, references:"", notes:"" });
   const update = (name:string, value:unknown) => setForm(prev=>({...prev,[name]:value}));
-  async function submit(e:React.FormEvent){
+  async function submit(e:FormEvent){
     e.preventDefault(); setStatus("loading"); setMessage("");
     try {
       const response = await fetch("/api/submit-helper-application", {
@@ -200,12 +205,15 @@ export function HelperApplicationForm() {
     catch(err){ console.error(err); setStatus("error"); setMessage("Something went wrong. Please try again."); }
   }
   return (
-    <form onSubmit={submit} className="grid gap-4 rounded-[2.5rem] border border-nest-gold/18 bg-white/90 p-5 shadow-soft backdrop-blur sm:p-8">
-      <h2 className="text-2xl font-black text-nest-teal">Part-Time Helper Application</h2>
-      <p className="text-nest-ink/70">For individuals interested in becoming a NestHelper Gold Star Checked helper.</p>
+    <form onSubmit={submit} className="grid gap-5 overflow-hidden rounded-[2.5rem] border border-nest-gold/18 bg-white/90 p-5 shadow-soft backdrop-blur sm:p-8">
+      <div className="rounded-[1.75rem] bg-gradient-to-br from-nest-cream via-white to-nest-mint/30 p-5">
+        <p className="text-xs font-black uppercase tracking-[0.22em] text-nest-gold">Individual helper</p>
+        <h2 className="mt-2 text-2xl font-black text-nest-teal">Part-Time Helper Application</h2>
+        <p className="mt-2 text-nest-ink/70">For individuals interested in becoming a NestHelper Gold Star Checked helper.</p>
+      </div>
       <Grid>
         <Input label="Full name" value={form.fullName} onChange={(v)=>update('fullName',v)} required />
-        <Input label="Phone" value={form.phone} onChange={(v)=>update('phone',formatPhoneNumber(v))} required autoComplete="tel" inputMode="tel" />
+        <Input label="Phone" value={form.phone} onChange={(v)=>update('phone',formatPhoneNumber(v))} required inputMode="tel" autoComplete="tel" placeholder="555-555-5555" />
         <Input label="Email" type="email" value={form.email} onChange={(v)=>update('email',v)} required />
         <Input label="City" value={form.city} onChange={(v)=>update('city',v)} required />
       </Grid>
@@ -227,7 +235,7 @@ export function PartnerApplicationForm() {
   const [message, setMessage] = useState("");
   const [form, setForm] = useState({ businessName:"", ownerName:"", email:"", phone:"", serviceType:"", website:"", serviceArea:"", licenseInfo:"", insuranceInfo:"", capacity:"", notes:"", consent:false });
   const update = (name:string, value:unknown) => setForm(prev=>({...prev,[name]:value}));
-  async function submit(e:React.FormEvent){
+  async function submit(e:FormEvent){
     e.preventDefault(); setStatus("loading"); setMessage("");
     try {
       const response = await fetch("/api/submit-partner-application", {
@@ -245,13 +253,16 @@ export function PartnerApplicationForm() {
     catch(err){ console.error(err); setStatus("error"); setMessage("Something went wrong. Please try again."); }
   }
   return (
-    <form onSubmit={submit} className="grid gap-4 rounded-[2.5rem] border border-nest-gold/18 bg-white/90 p-5 shadow-soft backdrop-blur sm:p-8">
-      <h2 className="text-2xl font-black text-nest-teal">Independent Contractor / Partner Provider Application</h2>
-      <p className="text-nest-ink/70">For cleaners, laundromats, errand providers, and local businesses interested in partnering with NestHelper.</p>
+    <form onSubmit={submit} className="grid gap-5 overflow-hidden rounded-[2.5rem] border border-nest-gold/18 bg-white/90 p-5 shadow-soft backdrop-blur sm:p-8">
+      <div className="rounded-[1.75rem] bg-gradient-to-br from-nest-cream via-white to-nest-mint/30 p-5">
+        <p className="text-xs font-black uppercase tracking-[0.22em] text-nest-gold">Partner provider</p>
+        <h2 className="mt-2 text-2xl font-black text-nest-teal">Independent Contractor / Partner Provider Application</h2>
+        <p className="mt-2 text-nest-ink/70">For cleaners, laundromats, errand providers, and local businesses interested in partnering with NestHelper.</p>
+      </div>
       <Grid>
         <Input label="Business name" value={form.businessName} onChange={(v)=>update('businessName',v)} required />
         <Input label="Owner/contact name" value={form.ownerName} onChange={(v)=>update('ownerName',v)} required />
-        <Input label="Phone" value={form.phone} onChange={(v)=>update('phone',formatPhoneNumber(v))} required autoComplete="tel" inputMode="tel" />
+        <Input label="Phone" value={form.phone} onChange={(v)=>update('phone',formatPhoneNumber(v))} required inputMode="tel" autoComplete="tel" placeholder="555-555-5555" />
         <Input label="Email" type="email" value={form.email} onChange={(v)=>update('email',v)} required />
       </Grid>
       <Input label="Service type" value={form.serviceType} onChange={(v)=>update('serviceType',v)} placeholder="Cleaning, laundromat, errands, organizing, etc." required />
@@ -268,8 +279,8 @@ export function PartnerApplicationForm() {
   );
 }
 
-function Input({label,value,onChange,type="text",required=false,placeholder="",autoComplete,inputMode}:{label:string;value:string;onChange:(v:string)=>void;type?:string;required?:boolean;placeholder?:string;autoComplete?:string;inputMode?:React.HTMLAttributes<HTMLInputElement>["inputMode"]}){return <label className="grid gap-2"><span className="label">{label}</span><input type={type} required={required} value={value} placeholder={placeholder} autoComplete={autoComplete} inputMode={inputMode} onChange={(e)=>onChange(e.target.value)} className="input" /></label>}
+function Input({label,value,onChange,type="text",required=false,placeholder="",inputMode,autoComplete}:{label:string;value:string;onChange:(v:string)=>void;type?:string;required?:boolean;placeholder?:string;inputMode?:HTMLAttributes<HTMLInputElement>["inputMode"];autoComplete?:string}){return <label className="grid gap-2"><span className="label">{label}</span><input type={type} required={required} value={value} placeholder={placeholder} inputMode={inputMode} autoComplete={autoComplete} onChange={(e)=>onChange(e.target.value)} className="input" /></label>}
 function Textarea({label,value,onChange,placeholder=""}:{label:string;value:string;onChange:(v:string)=>void;placeholder?:string}){return <label className="grid gap-2"><span className="label">{label}</span><textarea value={value} placeholder={placeholder} onChange={(e)=>onChange(e.target.value)} className="input min-h-28" /></label>}
-function Grid({children}:{children:React.ReactNode}){return <div className="grid gap-4 sm:grid-cols-2">{children}</div>}
-function Submit({status,children}:{status:Status;children:React.ReactNode}){return <button disabled={status==="loading"} className="rounded-full bg-nest-teal px-6 py-4 font-black text-white shadow-soft transition hover:bg-nest-teal2 disabled:opacity-60">{status==="loading"?"Submitting...":children}</button>}
-function Message({status,children}:{status:Status;children:React.ReactNode}){return <p className={`rounded-2xl p-4 font-semibold ${status==="success"?"bg-nest-mint/45 text-nest-teal":"bg-red-50 text-red-700"}`}>{children}</p>}
+function Grid({children}:{children:ReactNode}){return <div className="grid gap-4 sm:grid-cols-2">{children}</div>}
+function Submit({status,children}:{status:Status;children:ReactNode}){return <button disabled={status==="loading"} className="focus-ring inline-flex items-center justify-center gap-2 rounded-full bg-nest-teal px-6 py-4 font-black text-white shadow-soft transition hover:-translate-y-0.5 hover:bg-nest-teal2 hover:shadow-lift disabled:opacity-60">{status==="loading"?"Submitting...":children}{status!=="loading"&&<ArrowRight size={18} />}</button>}
+function Message({status,children}:{status:Status;children:ReactNode}){return <p className={`rounded-2xl p-4 font-semibold ${status==="success"?"bg-nest-mint/45 text-nest-teal":"bg-red-50 text-red-700"}`}>{children}</p>}

@@ -3,42 +3,42 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import type { MouseEvent, PointerEvent } from "react";
-import { ArrowRight, CheckCircle2, ChevronDown, Clock, Info, MapPin, MousePointerClick, Sparkles } from "lucide-react";
+import type { MouseEvent } from "react";
+import { ArrowRight, CheckCircle2, ChevronDown, Clock, Info, MapPin, MousePointerClick, Sparkles, Star } from "lucide-react";
 import type { Service } from "@/lib/services";
 
 const serviceStyles: Record<string, { eyebrow: string; accent: string; chip: string; price: string; ring: string }> = {
   "parent-reset-2hr": {
     eyebrow: "Home reset",
-    accent: "from-emerald-500/20 to-nest-mint/35",
+    accent: "from-emerald-500/12 via-nest-mint/30 to-white",
     chip: "bg-emerald-50 text-emerald-800 border-emerald-200",
     price: "bg-emerald-50 text-emerald-900",
     ring: "ring-emerald-200/70",
   },
   "family-reset-3hr": {
     eyebrow: "Family catch-up",
-    accent: "from-blue-500/18 to-sky-100",
+    accent: "from-blue-500/12 via-sky-100 to-white",
     chip: "bg-blue-50 text-blue-800 border-blue-200",
     price: "bg-blue-50 text-blue-900",
     ring: "ring-blue-200/70",
   },
   "helper-block-4hr": {
     eyebrow: "Bigger reset",
-    accent: "from-violet-500/18 to-purple-100",
+    accent: "from-violet-500/12 via-purple-100 to-white",
     chip: "bg-violet-50 text-violet-800 border-violet-200",
     price: "bg-violet-50 text-violet-900",
     ring: "ring-violet-200/70",
   },
   "errand-helper": {
     eyebrow: "Errand support",
-    accent: "from-amber-500/22 to-orange-100",
+    accent: "from-amber-500/14 via-orange-100 to-white",
     chip: "bg-amber-50 text-amber-900 border-amber-200",
     price: "bg-amber-50 text-amber-950",
     ring: "ring-amber-200/70",
   },
   "laundry-rescue": {
     eyebrow: "Laundry relief",
-    accent: "from-rose-500/18 to-pink-100",
+    accent: "from-rose-500/12 via-pink-100 to-white",
     chip: "bg-rose-50 text-rose-800 border-rose-200",
     price: "bg-rose-50 text-rose-900",
     ring: "ring-rose-200/70",
@@ -104,10 +104,10 @@ type CardOpenEvent = CustomEvent<{ id: string }>;
 export function ServiceCard({ service }: { service: Service }) {
   const [open, setOpen] = useState(false);
   const cardRef = useRef<HTMLElement | null>(null);
-  const pointerStartRef = useRef<{ x: number; y: number } | null>(null);
   const theme = serviceStyles[service.id] || serviceStyles["parent-reset-2hr"];
   const extra = serviceExtras[service.id];
   const detailsId = `service-details-${service.id}`;
+  const featured = service.id === "family-reset-3hr";
 
   useEffect(() => {
     function handleOtherCard(event: Event) {
@@ -118,11 +118,13 @@ export function ServiceCard({ service }: { service: Service }) {
     }
 
     window.addEventListener("nesthelper-service-card-open", handleOtherCard);
-
-    return () => {
-      window.removeEventListener("nesthelper-service-card-open", handleOtherCard);
-    };
+    return () => window.removeEventListener("nesthelper-service-card-open", handleOtherCard);
   }, [service.id]);
+
+  function openCard() {
+    window.dispatchEvent(new CustomEvent("nesthelper-service-card-open", { detail: { id: service.id } }));
+    setOpen(true);
+  }
 
   function toggleCard() {
     setOpen((currentOpen) => {
@@ -134,6 +136,12 @@ export function ServiceCard({ service }: { service: Service }) {
     });
   }
 
+  function handleCardClick(event: MouseEvent<HTMLElement>) {
+    const target = event.target as HTMLElement;
+    if (target.closest("a, button, input, label, select, textarea")) return;
+    toggleCard();
+  }
+
   function toggleDetails(event: MouseEvent<HTMLButtonElement>) {
     event.stopPropagation();
     const nextOpen = !open;
@@ -143,64 +151,57 @@ export function ServiceCard({ service }: { service: Service }) {
     }
   }
 
-  function handleCardPointerDown(event: PointerEvent<HTMLElement>) {
-    pointerStartRef.current = { x: event.clientX, y: event.clientY };
-  }
-
-  function handleCardClick(event: MouseEvent<HTMLElement>) {
-    const clickedInteractiveElement = (event.target as HTMLElement).closest("a, button");
-    if (clickedInteractiveElement) return;
-
-    const start = pointerStartRef.current;
-    if (start) {
-      const movedX = Math.abs(event.clientX - start.x);
-      const movedY = Math.abs(event.clientY - start.y);
-      if (movedX > 10 || movedY > 10) return;
-    }
-
-    toggleCard();
-  }
-
   return (
     <article
       ref={cardRef}
-      onPointerDown={handleCardPointerDown}
       onClick={handleCardClick}
-      className={`group flex cursor-pointer flex-col overflow-hidden rounded-[2rem] border border-nest-gold/18 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-lift ${open ? `ring-4 ${theme.ring}` : "h-[590px] sm:h-[610px]"}`}
+      className={`group relative flex cursor-pointer flex-col overflow-hidden rounded-[2rem] border bg-white/95 shadow-sm backdrop-blur transition duration-300 hover:-translate-y-1 hover:shadow-lift ${
+        open ? `border-nest-gold/35 ring-4 ${theme.ring}` : "h-[548px] border-nest-gold/16 sm:h-[565px]"
+      }`}
     >
-      <div className={`relative h-40 shrink-0 overflow-hidden bg-gradient-to-br sm:h-44 ${theme.accent}`}>
+      {featured && (
+        <div className="absolute right-4 top-4 z-20 inline-flex items-center gap-1.5 rounded-full bg-nest-teal px-3 py-1.5 text-xs font-black uppercase tracking-[0.14em] text-white shadow-soft">
+          <Star size={13} /> Most popular
+        </div>
+      )}
+
+      <div className={`relative h-36 shrink-0 overflow-hidden bg-gradient-to-br sm:h-40 ${theme.accent}`}>
         <Image
           src={service.image}
           alt={service.title}
           fill
-          className="object-cover object-top transition duration-700 group-hover:scale-105"
+          className="object-cover object-top opacity-95 transition duration-700 group-hover:scale-105"
         />
-        <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/32 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/34 via-black/4 to-white/0" />
         <div className={`absolute left-4 top-4 rounded-full border px-3 py-1.5 text-xs font-black uppercase tracking-[0.16em] shadow-sm ${theme.chip}`}>
           {theme.eyebrow}
-        </div>
-        <div className="absolute bottom-4 right-4 inline-flex items-center gap-1.5 rounded-full border border-white/70 bg-white/92 px-3 py-1.5 text-xs font-black text-nest-teal shadow-sm backdrop-blur transition group-hover:-translate-y-0.5">
-          <MousePointerClick size={14} />
-          {open ? "Click again to hide" : "Click for details"}
         </div>
       </div>
 
       <div className="flex flex-1 flex-col p-5 sm:p-6">
-        <div className="flex items-start justify-between gap-3">
-          <div>
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0">
             <h3 className={`text-2xl font-black leading-tight text-nest-teal ${open ? "" : "min-h-[3.5rem]"}`}>{service.title}</h3>
-            <p className={`mt-2 text-sm font-semibold leading-6 text-nest-ink/68 sm:text-base ${open ? "" : "line-clamp-2 min-h-[3rem]"}`}>
+            <p className={`mt-2 text-sm font-semibold leading-6 text-nest-ink/68 ${open ? "" : "line-clamp-2 min-h-[3rem]"}`}>
               {service.description}
             </p>
           </div>
-          <Sparkles className="mt-1 shrink-0 text-nest-gold" size={20} />
+          <button
+            type="button"
+            onClick={toggleDetails}
+            aria-expanded={open}
+            aria-controls={detailsId}
+            className="focus-ring shrink-0 rounded-full border border-nest-gold/18 bg-nest-cream p-2.5 text-nest-teal shadow-sm transition hover:-translate-y-0.5 hover:border-nest-gold/55 hover:bg-white"
+          >
+            <ChevronDown size={18} className={`transition ${open ? "rotate-180" : ""}`} />
+          </button>
         </div>
 
-        <div className="mt-5 overflow-hidden rounded-3xl border border-nest-gold/14 bg-nest-cream">
-          <div className="grid min-h-[8.35rem] gap-0 sm:grid-cols-[1fr_auto]">
+        <div className="mt-5 overflow-hidden rounded-3xl border border-nest-gold/14 bg-gradient-to-br from-nest-cream via-white to-nest-mint/20 shadow-sm">
+          <div className="grid min-h-[7.4rem] gap-0 sm:grid-cols-[1fr_auto]">
             <div className="flex flex-col justify-center p-5">
               <div className="text-xs font-black uppercase tracking-[0.16em] text-nest-ink/55">Starting at</div>
-              <div className={`mt-1 font-black leading-tight text-nest-teal ${service.id === "laundry-rescue" ? "text-2xl sm:text-3xl" : "text-3xl"}`}>
+              <div className={`mt-1 font-black leading-tight text-nest-teal ${service.id === "laundry-rescue" ? "text-[1.65rem] sm:text-3xl" : "text-3xl"}`}>
                 {service.standardPrice}
               </div>
               {service.foundingPrice && (
@@ -209,22 +210,23 @@ export function ServiceCard({ service }: { service: Service }) {
                 </div>
               )}
             </div>
-            <div className={`flex min-h-[3.2rem] items-center justify-center px-5 py-4 text-center text-xs font-black uppercase tracking-[0.13em] sm:min-w-[8.8rem] ${theme.price}`}>
+            <div className={`flex min-h-[3rem] items-center justify-center px-4 py-3 text-center text-[0.68rem] font-black uppercase tracking-[0.12em] sm:min-w-[8.2rem] ${theme.price}`}>
               {service.priceNote}
             </div>
           </div>
         </div>
 
-        <div className={`mt-4 rounded-3xl border border-dashed border-nest-gold/25 bg-white/75 p-4 text-sm font-bold leading-6 text-nest-ink/62 ${open ? "" : "min-h-[4.4rem]"}`}>
-          {open ? (
-            "Details are open. Click the card again or use Hide details to collapse this package."
-          ) : (
+        {!open && (
+          <div className="mt-4 grid gap-2 rounded-3xl border border-dashed border-nest-gold/25 bg-white/80 p-4 text-sm font-bold leading-6 text-nest-ink/72">
             <span className="flex items-center gap-2 text-nest-teal">
-              <MousePointerClick className="shrink-0" size={18} />
-              Click this card for what is included and good-to-know details.
+              <MousePointerClick className="shrink-0" size={17} />
+              Tap for details
             </span>
-          )}
-        </div>
+            <span className="line-clamp-2 text-nest-ink/62">
+              Open this package to see best fit, what may fit in the visit, and good-to-know details.
+            </span>
+          </div>
+        )}
 
         <div
           id={detailsId}
@@ -241,7 +243,7 @@ export function ServiceCard({ service }: { service: Service }) {
                 </div>
               )}
 
-              <div className="rounded-3xl border border-nest-gold/12 bg-white p-5">
+              <div className="rounded-3xl border border-nest-gold/12 bg-white p-5 shadow-sm">
                 <h4 className="font-black text-nest-teal">What may fit in this visit</h4>
                 <ul className="mt-3 grid gap-2.5 text-sm text-nest-ink/76">
                   {[...service.details, ...(extra?.extraDetails || [])].map((detail) => (
@@ -294,7 +296,7 @@ export function ServiceCard({ service }: { service: Service }) {
             aria-controls={detailsId}
             className="focus-ring mb-3 inline-flex w-full items-center justify-center gap-2 rounded-full border border-nest-teal/20 bg-white px-5 py-3 font-black text-nest-teal shadow-sm transition hover:-translate-y-0.5 hover:bg-nest-mint/25"
           >
-            {open ? "Hide details" : "Click for more info"}
+            {open ? "Hide details" : "View package details"}
             <ChevronDown size={18} className={`transition ${open ? "rotate-180" : ""}`} />
           </button>
 

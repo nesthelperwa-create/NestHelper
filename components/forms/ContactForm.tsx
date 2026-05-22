@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import type { FormEvent, HTMLAttributes } from "react";
+import { ArrowRight, MessageCircle } from "lucide-react";
 import { formatPhoneNumber } from "@/lib/formatPhoneNumber";
 
 type Status = "idle" | "loading" | "success" | "error";
@@ -14,7 +16,7 @@ export function ContactForm() {
 
   const update = (name: keyof typeof defaultForm, value: string) => setForm((prev) => ({ ...prev, [name]: value }));
 
-  async function submit(e: React.FormEvent) {
+  async function submit(e: FormEvent) {
     e.preventDefault();
     setStatus("loading");
     setMessage("");
@@ -39,17 +41,70 @@ export function ContactForm() {
   }
 
   return (
-    <form onSubmit={submit} className="grid gap-4 rounded-[2.5rem] border border-nest-gold/18 bg-white/90 p-6 shadow-soft backdrop-blur sm:p-8">
-      <h2 className="text-2xl font-black text-nest-teal">Send a message</h2>
-      <input className="input" required placeholder="Name" value={form.name} onChange={(e) => update("name", e.target.value)} />
-      <input className="input" required type="email" placeholder="Email" value={form.email} onChange={(e) => update("email", e.target.value)} />
-      <input className="input" placeholder="Phone" autoComplete="tel" inputMode="tel" value={form.phone} onChange={(e) => update("phone", formatPhoneNumber(e.target.value))} />
-      <input className="input" required placeholder="Subject" value={form.subject} onChange={(e) => update("subject", e.target.value)} />
-      <textarea className="input min-h-32" required placeholder="How can we help?" value={form.message} onChange={(e) => update("message", e.target.value)} />
-      <button className="rounded-full bg-nest-teal px-6 py-4 font-black text-white shadow-soft" disabled={status === "loading"}>
-        {status === "loading" ? "Sending..." : "Send Message"}
-      </button>
-      {message && <p className={`rounded-2xl p-4 font-semibold ${status === "success" ? "bg-nest-mint/45 text-nest-teal" : "bg-red-50 text-red-700"}`}>{message}</p>}
+    <form onSubmit={submit} className="overflow-hidden rounded-[2.5rem] border border-nest-gold/18 bg-white/90 shadow-soft backdrop-blur">
+      <div className="bg-gradient-to-br from-nest-cream via-white to-nest-mint/30 p-6 sm:p-8">
+        <div className="inline-flex rounded-2xl bg-white p-3 text-nest-teal shadow-sm">
+          <MessageCircle />
+        </div>
+        <h2 className="mt-4 text-2xl font-black text-nest-teal sm:text-3xl">Send a message</h2>
+        <p className="mt-2 leading-7 text-nest-ink/68">
+          Ask a quick question or tell us what you are trying to figure out before submitting a request.
+        </p>
+      </div>
+
+      <div className="grid gap-5 p-6 sm:p-8">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Input label="Name" required value={form.name} onChange={(value) => update("name", value)} autoComplete="name" />
+          <Input label="Phone" value={form.phone} onChange={(value) => update("phone", formatPhoneNumber(value))} inputMode="tel" autoComplete="tel" placeholder="555-555-5555" />
+          <Input label="Email" required type="email" value={form.email} onChange={(value) => update("email", value)} autoComplete="email" />
+          <Input label="Subject" required value={form.subject} onChange={(value) => update("subject", value)} />
+        </div>
+        <label className="grid gap-2">
+          <span className="label">How can we help?</span>
+          <textarea className="input min-h-36" required placeholder="Tell us what you’re looking for, where you’re located, or what question you have." value={form.message} onChange={(e) => update("message", e.target.value)} />
+        </label>
+        <button className="focus-ring inline-flex items-center justify-center gap-2 rounded-full bg-nest-teal px-6 py-4 font-black text-white shadow-soft transition hover:-translate-y-0.5 hover:bg-nest-teal2 hover:shadow-lift disabled:opacity-60" disabled={status === "loading"}>
+          {status === "loading" ? "Sending..." : "Send Message"}
+          {status !== "loading" && <ArrowRight size={18} />}
+        </button>
+        {message && <p className={`rounded-2xl p-4 font-semibold ${status === "success" ? "bg-nest-mint/45 text-nest-teal" : "bg-red-50 text-red-700"}`}>{message}</p>}
+      </div>
     </form>
+  );
+}
+
+function Input({
+  label,
+  value,
+  onChange,
+  type = "text",
+  required = false,
+  placeholder = "",
+  autoComplete,
+  inputMode,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  type?: string;
+  required?: boolean;
+  placeholder?: string;
+  autoComplete?: string;
+  inputMode?: HTMLAttributes<HTMLInputElement>["inputMode"];
+}) {
+  return (
+    <label className="grid gap-2">
+      <span className="label">{label}</span>
+      <input
+        className="input"
+        required={required}
+        type={type}
+        placeholder={placeholder}
+        value={value}
+        autoComplete={autoComplete}
+        inputMode={inputMode}
+        onChange={(event) => onChange(event.target.value)}
+      />
+    </label>
   );
 }
