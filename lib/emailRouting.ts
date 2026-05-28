@@ -15,67 +15,29 @@ export const emailAliases = {
   contact: process.env.NESTHELPER_CONTACT_EMAIL || "contact@nesthelperwa.com",
 } as const;
 
-export type EmailAliasKey = keyof typeof emailAliases;
-
 type SubmissionCollection = "serviceRequests" | "helperApplications" | "partnerApplications" | "contactMessages";
-
-const emailDisplayNames: Record<EmailAliasKey, string> = {
-  hello: "NestHelper Support",
-  support: "NestHelper Support",
-  help: "NestHelper Help",
-  info: "NestHelper Info",
-  booking: "NestHelper Booking",
-  requests: "NestHelper Booking",
-  billing: "NestHelper Billing",
-  payments: "NestHelper Billing",
-  laundry: "NestHelper Laundry",
-  helpers: "NestHelper Helpers",
-  partners: "NestHelper Partners",
-  jobs: "NestHelper Helpers",
-  admin: "NestHelper Admin",
-  contact: "NestHelper Contact",
-};
 
 function clean(value: unknown) {
   return typeof value === "string" ? value.trim().toLowerCase() : "";
 }
 
-function hasAny(value: unknown, terms: string[]) {
-  const normalized = clean(value);
-  return terms.some((term) => normalized.includes(term));
+export function getPublicReplyEmail() {
+  // Keep one customer-facing reply address. Website/admin routing can still use aliases,
+  // but customer replies should go back to the main NestHelper inbox.
+  return emailAliases.hello;
 }
 
-function firstNonEmpty(...values: unknown[]) {
-  for (const value of values) {
-    if (typeof value === "string" && value.trim()) return value.trim();
-  }
-  return "";
-}
+function isLaundryService(payload: Record<string, unknown>) {
+  const combined = [
+    payload.service,
+    payload.selectedServiceTitle,
+    payload.serviceTitle,
+    payload.selectedPackage,
+  ]
+    .map(clean)
+    .join(" ");
 
-function getAliasKeyForEmail(email: string): EmailAliasKey | undefined {
-  const normalized = clean(email);
-  return (Object.keys(emailAliases) as EmailAliasKey[]).find((key) => clean(emailAliases[key]) === normalized);
-}
-
-export function getAliasDisplayName(emailOrKey: string) {
-  const key = (emailOrKey in emailAliases ? emailOrKey : getAliasKeyForEmail(emailOrKey)) as EmailAliasKey | undefined;
-  return key ? emailDisplayNames[key] : "NestHelper";
-}
-
-export function formatNestHelperSender(emailOrKey: string, fallbackName = "NestHelper") {
-  const key = (emailOrKey in emailAliases ? emailOrKey : getAliasKeyForEmail(emailOrKey)) as EmailAliasKey | undefined;
-  const email = key ? emailAliases[key] : emailOrKey;
-  const displayName = key ? emailDisplayNames[key] : fallbackName;
-  return `${displayName} <${email}>`;
-}
-
-export function isLaundryService(payload: Record<string, unknown>) {
-  return hasAny(firstNonEmpty(payload.service, payload.selectedServiceTitle, payload.packageType, payload.serviceTitle), ["laundry"]);
-}
-
-export function getServiceRequestAliasKey(payload: Record<string, unknown>): EmailAliasKey {
-  if (isLaundryService(payload)) return "laundry";
-  return "booking";
+  return combined.includes("laundry");
 }
 
 export function getContactTopicEmail(topic: unknown) {
@@ -109,24 +71,19 @@ export function getContactTopicEmail(topic: unknown) {
 }
 
 export function getSubmissionNotificationEmail(collection: SubmissionCollection, payload: Record<string, unknown>) {
-  if (collection === "serviceRequests") return emailAliases[getServiceRequestAliasKey(payload)];
+  // Keep aliases for internal sorting/routing into the hello@ mailbox.
+  if (collection === "serviceRequests") return isLaundryService(payload) ? emailAliases.laundry : emailAliases.booking;
   if (collection === "helperApplications") return emailAliases.helpers;
   if (collection === "partnerApplications") return emailAliases.partners;
   if (collection === "contactMessages") return getContactTopicEmail(payload.topic || payload.subject);
   return process.env.ADMIN_NOTIFICATION_EMAIL || emailAliases.hello;
 }
 
-export function getCustomerReplyEmail(collection: SubmissionCollection, payload: Record<string, unknown>) {
-  if (collection === "serviceRequests") return emailAliases[getServiceRequestAliasKey(payload)];
-  if (collection === "helperApplications") return emailAliases.helpers;
-  if (collection === "partnerApplications") return emailAliases.partners;
-  if (collection === "contactMessages") return getContactTopicEmail(payload.topic || payload.subject);
-  return emailAliases.support;
+export function getCustomerReplyEmail(_collection: SubmissionCollection, _payload: Record<string, unknown>) {
+  // Do not use routed aliases as customer reply addresses. Use hello@ for all manual replies.
+  return getPublicReplyEmail();
 }
 
-export function getSubmissionFromIdentity(collection: SubmissionCollection, payload: Record<string, unknown>) {
-  return formatNestHelperSender(getCustomerReplyEmail(collection, payload));
-}
 
 export function getContactTopicLabel(topic: unknown) {
   const normalized = clean(topic);
@@ -159,7 +116,7 @@ export function getContactTopicLabel(topic: unknown) {
 }
 
 export function getSubmissionRouteLabel(collection: SubmissionCollection, payload: Record<string, unknown>) {
-  if (collection === "serviceRequests") return getServiceRequestAliasKey(payload) === "laundry" ? "Laundry" : "Booking";
+  if (collection === "serviceRequests") return isLaundryService(payload) ? "Laundry" : "Booking";
   if (collection === "helperApplications") return "Helpers";
   if (collection === "partnerApplications") return "Partners";
   if (collection === "contactMessages") return `Contact: ${getContactTopicLabel(payload.topic || payload.subject)}`;
@@ -176,6 +133,7 @@ export function getSubmissionSubjectPrefix(collection: SubmissionCollection, pay
   const routedTo = getSubmissionNotificationEmail(collection, payload);
   return `[NestHelper ${routeLabel} → ${getAliasShortName(routedTo)}]`;
 }
+
 
 function splitNotificationEmails(value: string | undefined) {
   return String(value || "")
@@ -195,13 +153,8 @@ function uniqueEmails(emails: string[]) {
 }
 
 export function getPrimaryAdminNotificationRecipients() {
-  // Keep this as a fallback only. New public-form admin notices are routed to the
-  // matching shared mailbox in saveSubmission(), such as booking@, laundry@, etc.
-  return uniqueEmails(splitNotificationEmails(process.env.ADMIN_NOTIFICATION_EMAIL).concat(emailAliases.hello));
-}
-
-export function getPaymentAdminNotificationEmail(paymentStatus?: string, serviceTitle?: string) {
-  const combined = `${paymentStatus || ""} ${serviceTitle || ""}`;
-  if (hasAny(combined, ["laundry", "deposit", "final balance"])) return emailAliases.laundry;
-  return emailAliases.billing;
+  // Send website admin notifications only to the NestHelper mailbox.
+  // This prevents accidental replies from nesthelperwa@gmail.com while the subject/body
+  // still label the website route, such as Billing, Laundry, Helpers, or Partners.
+  return uniqueEmails([emailAliases.hello]);
 }

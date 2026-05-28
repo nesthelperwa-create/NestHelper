@@ -2,7 +2,7 @@ import { FieldValue } from "firebase-admin/firestore";
 import { getFirebaseAdminDb } from "./firebaseAdmin";
 import { sendAdminEmail } from "./sendAdminEmail";
 import { sendCustomerConfirmationEmail } from "./sendCustomerConfirmationEmail";
-import { getCustomerReplyEmail, getSubmissionFromIdentity, getSubmissionNotificationEmail, getSubmissionRouteLabel, getSubmissionSubjectPrefix } from "./emailRouting";
+import { getCustomerReplyEmail, getSubmissionNotificationEmail, getSubmissionRouteLabel, getSubmissionSubjectPrefix } from "./emailRouting";
 
 export type SaveSubmissionInput = {
   collection: "serviceRequests" | "helperApplications" | "partnerApplications" | "contactMessages";
@@ -29,7 +29,6 @@ export async function saveSubmission({ collection, payload, emailSubject, emailT
   const routedAliasEmail = getSubmissionNotificationEmail(collection, cleaned);
   const customerReplyEmail = getCustomerReplyEmail(collection, cleaned);
   const routeLabel = getSubmissionRouteLabel(collection, cleaned);
-  const routeFromIdentity = getSubmissionFromIdentity(collection, cleaned);
   const subjectPrefix = getSubmissionSubjectPrefix(collection, cleaned);
 
   try {
@@ -44,10 +43,9 @@ export async function saveSubmission({ collection, payload, emailSubject, emailT
         ...cleaned,
       },
       adminPath,
-      // Send the admin notice to the routed NestHelper mailbox, not only hello@.
-      // This lets Outlook reply from the matching shared mailbox when Send As is configured.
+      // Send the admin notice to the routed NestHelper alias for sorting/routing.
+      // Replies stay customer-facing through hello@, not the alias.
       to: routedAliasEmail,
-      from: routeFromIdentity,
       routeLabel,
       routedToText: routedAliasEmail,
     });
@@ -63,7 +61,6 @@ export async function saveSubmission({ collection, payload, emailSubject, emailT
       payload: cleaned,
       submissionId: doc.id,
       replyToEmail: customerReplyEmail,
-      fromEmail: routeFromIdentity,
     });
   } catch (error) {
     // Form submissions should still succeed even if the customer confirmation email fails.

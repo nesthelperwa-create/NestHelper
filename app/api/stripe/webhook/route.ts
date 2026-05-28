@@ -5,8 +5,8 @@ import Stripe from "stripe";
 import { getFirebaseAdminDb } from "@/lib/firebaseAdmin";
 import { services } from "@/lib/services";
 import { sendAdminEmail } from "@/lib/sendAdminEmail";
-import { formatNestHelperSender, getPaymentAdminNotificationEmail } from "@/lib/emailRouting";
 import { sendPaymentReceivedEmail } from "@/lib/sendPaymentReceivedEmail";
+import { emailAliases } from "@/lib/emailRouting";
 
 export const runtime = "nodejs";
 
@@ -196,17 +196,17 @@ export async function POST(request: Request) {
 
         if (!adminAlreadySent) {
           try {
-            const paymentAdminTo = getPaymentAdminNotificationEmail(paymentStatus, serviceTitle);
-            const paymentRouteLabel = paymentAdminTo.toLowerCase().includes("laundry@") ? "Laundry" : "Billing";
+            const routedPaymentInbox = isLaundryDeposit || isLaundryFinalBalance ? emailAliases.laundry : emailAliases.billing;
+            const routedPaymentLabel = isLaundryDeposit || isLaundryFinalBalance ? "Laundry" : "Billing";
+
             const result = await sendAdminEmail({
               subject: `Stripe Payment Received: ${serviceTitle}`,
               title: "Payment received — ready to schedule",
               intro: "A customer completed Stripe checkout. The request is now marked paid in the admin dashboard and is ready for scheduling follow-up.",
               adminPath: "/admin/requests",
-              to: paymentAdminTo,
-              from: formatNestHelperSender(paymentAdminTo),
-              routeLabel: paymentRouteLabel,
-              routedToText: paymentAdminTo,
+              to: routedPaymentInbox,
+              routeLabel: routedPaymentLabel,
+              routedToText: routedPaymentInbox,
               rows: {
                 "Dashboard ID": requestId,
                 Customer: customerName,

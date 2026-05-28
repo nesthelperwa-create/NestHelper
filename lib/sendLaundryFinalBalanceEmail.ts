@@ -1,5 +1,5 @@
 import { Resend } from "resend";
-import { emailAliases, formatNestHelperSender } from "./emailRouting";
+import { getPublicReplyEmail } from "./emailRouting";
 
 type LaundryFinalBalanceEmailInput = {
   to: string;
@@ -60,8 +60,8 @@ export async function sendLaundryFinalBalanceEmail({
   city,
 }: LaundryFinalBalanceEmailInput) {
   const apiKey = process.env.RESEND_API_KEY;
-  const customerSupportEmail = emailAliases.laundry;
-  const from = process.env.LAUNDRY_FROM_EMAIL || formatNestHelperSender(customerSupportEmail);
+  const from = process.env.NOTIFICATION_FROM_EMAIL || "NestHelper <onboarding@resend.dev>";
+  const customerSupportEmail = getPublicReplyEmail();
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
   if (!apiKey || !to || !paymentUrl) {

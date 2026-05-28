@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { getPublicReplyEmail } from "./emailRouting";
 
 type AdminEmailInput = {
   subject: string;
@@ -9,7 +10,6 @@ type AdminEmailInput = {
   to?: string | string[];
   routeLabel?: string;
   routedToText?: string;
-  from?: string;
 };
 
 function escapeHtml(value: unknown) {
@@ -39,15 +39,26 @@ function getReplyTo(rows: Record<string, unknown>) {
   return email.includes("@") ? email : undefined;
 }
 
-export async function sendAdminEmail({ subject, title, rows, adminPath = "/admin", intro, to: routedTo, routeLabel, routedToText, from: routedFrom }: AdminEmailInput) {
+function encodeMailto(value: string) {
+  return encodeURIComponent(value).replaceAll("%20", "+");
+}
+
+function getSafeCustomerComposeLink(customerEmail: string | undefined, subject: string) {
+  if (!customerEmail) return "";
+  return `mailto:${encodeURIComponent(customerEmail)}?subject=${encodeMailto(`Re: ${subject}`)}`;
+}
+
+export async function sendAdminEmail({ subject, title, rows, adminPath = "/admin", intro, to: routedTo, routeLabel, routedToText }: AdminEmailInput) {
   const apiKey = process.env.RESEND_API_KEY;
   const to = routedTo || getAdminEmail();
-  const from = routedFrom || process.env.NOTIFICATION_FROM_EMAIL || "NestHelper <onboarding@resend.dev>";
+  const from = process.env.NOTIFICATION_FROM_EMAIL || "NestHelper <onboarding@resend.dev>";
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-  const replyTo = getReplyTo(rows);
+  const customerEmail = getReplyTo(rows);
+  const publicReplyEmail = getPublicReplyEmail();
+  const composeCustomerLink = getSafeCustomerComposeLink(customerEmail, title || "Your NestHelper request");
   const toText = Array.isArray(to) ? to.join(", ") : String(to);
   const routeHtml = routeLabel || routedToText
-    ? `<div style="margin:0 0 16px 0;padding:12px 14px;background:#f5fbf8;border:1px solid #d7eee4;border-radius:14px;box-sizing:border-box;overflow-wrap:anywhere;word-break:break-word;"><div style="font-size:12px;line-height:1.35;font-weight:700;color:#0f4f4a;margin:0 0 4px 0;text-transform:uppercase;letter-spacing:.08em;">Inbox route</div><div style="font-size:18px;line-height:1.35;font-weight:800;color:#123;margin:0;overflow-wrap:anywhere;word-break:break-word;">${escapeHtml(routeLabel || "NestHelper")}</div><div style="font-size:14px;line-height:1.5;color:#456;margin:4px 0 0 0;overflow-wrap:anywhere;word-break:break-word;">Website route: ${escapeHtml(routedToText || toText)}</div>${replyTo ? `<div style="font-size:13px;line-height:1.5;color:#667;margin:4px 0 0 0;overflow-wrap:anywhere;word-break:break-word;">Reply-to customer: ${escapeHtml(replyTo)}</div>` : ""}</div>`
+    ? `<div style="margin:0 0 16px 0;padding:12px 14px;background:#f5fbf8;border:1px solid #d7eee4;border-radius:14px;box-sizing:border-box;overflow-wrap:anywhere;word-break:break-word;"><div style="font-size:12px;line-height:1.35;font-weight:700;color:#0f4f4a;margin:0 0 4px 0;text-transform:uppercase;letter-spacing:.08em;">Inbox route</div><div style="font-size:18px;line-height:1.35;font-weight:800;color:#123;margin:0;overflow-wrap:anywhere;word-break:break-word;">${escapeHtml(routeLabel || "NestHelper")}</div><div style="font-size:14px;line-height:1.5;color:#456;margin:4px 0 0 0;overflow-wrap:anywhere;word-break:break-word;">Website route: ${escapeHtml(routedToText || toText)}</div>${customerEmail ? `<div style="font-size:13px;line-height:1.5;color:#667;margin:4px 0 0 0;overflow-wrap:anywhere;word-break:break-word;">Customer email: ${escapeHtml(customerEmail)}</div>` : ""}</div>`
     : "";
 
   if (!apiKey) {
@@ -80,17 +91,18 @@ export async function sendAdminEmail({ subject, title, rows, adminPath = "/admin
           <p style="margin:0 0 16px 0;color:#233;line-height:1.6;">${escapeHtml(intro || "A new public NestHelper form was submitted. Review it in the admin dashboard.")}</p>
           ${routeHtml}
           <div style="width:100%;box-sizing:border-box;border:1px solid #eee;border-radius:14px;overflow:hidden;">${rowsHtml}</div>
-          <p style="margin-top:22px;"><a href="${siteUrl}${adminPath}" style="display:inline-block;background:#075c58;color:#fff;text-decoration:none;padding:12px 18px;border-radius:999px;font-weight:700;max-width:100%;box-sizing:border-box;white-space:normal;text-align:center;">Open Admin Dashboard</a></p>
-          <p style="font-size:12px;color:#667;line-height:1.5;">Sent to admin inbox: ${escapeHtml(toText)}. ${replyTo ? `Replying to this email should reply to ${escapeHtml(replyTo)}.` : ""}</p>
+          ${composeCustomerLink ? `<p style="margin-top:22px;"><a href="${composeCustomerLink}" style="display:inline-block;background:#075c58;color:#fff;text-decoration:none;padding:12px 18px;border-radius:999px;font-weight:700;max-width:100%;box-sizing:border-box;white-space:normal;text-align:center;">Compose customer reply</a></p>` : ""}
+          <p style="margin-top:${composeCustomerLink ? "10px" : "22px"};"><a href="${siteUrl}${adminPath}" style="display:inline-block;background:#f4ecdc;color:#075c58;text-decoration:none;padding:12px 18px;border-radius:999px;font-weight:700;max-width:100%;box-sizing:border-box;white-space:normal;text-align:center;">Open Admin Dashboard</a></p>
+          <p style="font-size:12px;color:#667;line-height:1.5;">Sent to admin inbox: ${escapeHtml(toText)}. Customer-facing replies should come from ${escapeHtml(publicReplyEmail)}. Use the compose button so private admin dashboard links and internal notes are not quoted to the customer.</p>
         </div>
       </div>
     </div>`;
 
   const routeText = routeLabel || routedToText
-    ? `Inbox route: ${routeLabel || "NestHelper"}\nWebsite route: ${routedToText || toText}\n${replyTo ? `Reply-to customer: ${replyTo}\n` : ""}\n`
+    ? `Inbox route: ${routeLabel || "NestHelper"}\nWebsite route: ${routedToText || toText}\n${customerEmail ? `Customer email: ${customerEmail}\n` : ""}\n`
     : "";
 
-  const text = `${title}\n\n${intro || "A new public NestHelper form was submitted."}\n\n${routeText}${textRows}\n\nOpen admin dashboard: ${siteUrl}${adminPath}`;
+  const text = `${title}\n\n${intro || "A new public NestHelper form was submitted."}\n\n${routeText}${textRows}${customerEmail ? `\n\nCompose customer reply: ${composeCustomerLink}` : ""}\nOpen admin dashboard: ${siteUrl}${adminPath}\n\nDo not reply directly to this admin alert when contacting a customer. Use a fresh message/compose link so the customer does not receive private admin dashboard links or internal notes.`;
 
-  return resend.emails.send({ from, to, subject, html, text, replyTo });
+  return resend.emails.send({ from, to, subject, html, text, replyTo: publicReplyEmail });
 }
