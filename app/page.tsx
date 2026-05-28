@@ -104,7 +104,7 @@ export default function HomePage() {
         </SectionShell>
       </AnimatedSection>
 
-      <AnimatedSection className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+      <AnimatedSection id="how-it-works" className="mx-auto max-w-7xl scroll-mt-24 px-4 py-10 sm:px-6 lg:px-8">
         <SectionShell>
           <SectionIntro
             label="How it works"
@@ -120,6 +120,31 @@ export default function HomePage() {
             <StepCard icon={<Home size={20} />} title="4. We get to work" text="A checked helper or vetted partner completes the job, and NestHelper follows up after service." />
           </div>
         </SectionShell>
+      </AnimatedSection>
+
+      <AnimatedSection id="giving-back" className="mx-auto max-w-7xl scroll-mt-24 px-4 py-10 sm:px-6 lg:px-8">
+        <div className="relative overflow-hidden rounded-[2.5rem] border border-nest-gold/18 bg-white/80 p-5 shadow-soft backdrop-blur sm:p-8 lg:p-10">
+          <div className="absolute -right-20 -top-20 h-72 w-72 rounded-full bg-nest-gold/14 blur-3xl" />
+          <div className="absolute -bottom-24 -left-24 h-72 w-72 rounded-full bg-nest-mint/55 blur-3xl" />
+
+          <div className="relative grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
+            <div>
+              <p className="pill-label w-fit"><Heart size={15} /> Giving Back</p>
+              <h2 className="text-balance mt-4 text-3xl font-black leading-tight text-nest-teal sm:text-5xl">
+                Every reset helps more than one home.
+              </h2>
+              <p className="mt-5 text-base font-medium leading-7 text-nest-ink/72 sm:text-lg sm:leading-8">
+                NestHelper sets aside 10% of net income to give back to local churches, families, and community needs. We believe good work should serve the home in front of us and help strengthen the community around us.
+              </p>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-3">
+              <GivingBackCard icon={<CheckCircle2 size={20} />} title="10% set aside" text="A clear portion of net income is dedicated to giving back." />
+              <GivingBackCard icon={<Home size={20} />} title="Families first" text="Support is directed toward local family and household needs." />
+              <GivingBackCard icon={<Sparkles size={20} />} title="Faithful service" text="Built on honest work, care, and responsible stewardship." />
+            </div>
+          </div>
+        </div>
       </AnimatedSection>
 
       <AnimatedSection className="soft-section px-4 py-16 sm:px-6 lg:px-8">
@@ -225,6 +250,16 @@ function ChoiceItem({ title, text }: { title: string; text: string }) {
       </div>
       <h3 className="text-base font-black uppercase tracking-[0.08em] text-nest-teal">{title}</h3>
       <p className="mt-3 text-sm font-medium leading-7 text-nest-ink/68">{text}</p>
+    </div>
+  );
+}
+
+function GivingBackCard({ icon, title, text }: { icon: ReactNode; title: string; text: string }) {
+  return (
+    <div className="h-full rounded-[1.75rem] border border-nest-gold/14 bg-white/90 p-5 shadow-sm">
+      <div className="mb-4 inline-flex rounded-2xl bg-nest-cream p-3 text-nest-gold">{icon}</div>
+      <h3 className="text-base font-black uppercase tracking-[0.08em] text-nest-teal">{title}</h3>
+      <p className="mt-3 text-sm font-medium leading-6 text-nest-ink/68">{text}</p>
     </div>
   );
 }

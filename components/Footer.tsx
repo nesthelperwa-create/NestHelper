@@ -61,6 +61,7 @@ export function Footer() {
           links={[
             { href: "/request", label: "Request Help" },
             { href: "/#how-it-works", label: "How It Works" },
+            { href: "/#giving-back", label: "Giving Back" },
             { href: "/#service-area", label: "Service Area" },
             { href: "/faq", label: "FAQ" },
             { href: "/contact", label: "Contact" },
