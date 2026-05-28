@@ -40,7 +40,7 @@ function getReplyTo(rows: Record<string, unknown>) {
 }
 
 function encodeMailto(value: string) {
-  return encodeURIComponent(value).replaceAll("%20", "+");
+  return encodeURIComponent(value);
 }
 
 function getCustomerName(rows: Record<string, unknown>) {
@@ -100,10 +100,30 @@ function buildCustomerComposeBody(rows: Record<string, unknown>, publicReplyEmai
   return body.length > 4500 ? `${body.slice(0, 4500)}\n\n[Customer details truncated. Open the admin dashboard to review the full submission.]` : body;
 }
 
+
+function getCustomerReplySubject(adminTitle: string, rows: Record<string, unknown>) {
+  const normalizedTitle = adminTitle.trim().toLowerCase();
+  const customerSubject = formatValue(rows.subject || rows.Subject).trim();
+
+  if (customerSubject && !customerSubject.toLowerCase().startsWith("new nesthelper")) {
+    return `Re: ${customerSubject}`;
+  }
+
+  if (normalizedTitle.includes("contact")) return "Re: Your NestHelper message";
+  if (normalizedTitle.includes("helper")) return "Re: Your NestHelper helper application";
+  if (normalizedTitle.includes("partner") || normalizedTitle.includes("contractor")) return "Re: Your NestHelper partner application";
+  if (normalizedTitle.includes("payment") || normalizedTitle.includes("invoice") || normalizedTitle.includes("billing")) return "Re: Your NestHelper payment";
+  if (normalizedTitle.includes("laundry")) return "Re: Your NestHelper Laundry Rescue request";
+  if (normalizedTitle.includes("service") || normalizedTitle.includes("request")) return "Re: Your NestHelper request";
+
+  return "Re: NestHelper";
+}
+
 function getSafeCustomerComposeLink(customerEmail: string | undefined, subject: string, rows: Record<string, unknown>, publicReplyEmail: string) {
   if (!customerEmail) return "";
   const body = buildCustomerComposeBody(rows, publicReplyEmail);
-  return `mailto:${encodeURIComponent(customerEmail)}?subject=${encodeMailto(`Re: ${subject}`)}&body=${encodeURIComponent(body)}`;
+  const replySubject = getCustomerReplySubject(subject, rows);
+  return `mailto:${encodeURIComponent(customerEmail)}?subject=${encodeMailto(replySubject)}&body=${encodeURIComponent(body)}`;
 }
 
 export async function sendAdminEmail({ subject, title, rows, adminPath = "/admin", intro, to: routedTo, routeLabel, routedToText }: AdminEmailInput) {
