@@ -45,8 +45,8 @@ export async function sendPaymentLinkEmail({
 }: PaymentLinkEmailInput) {
   const apiKey = process.env.RESEND_API_KEY;
   const customerSupportEmail = emailAliases.billing;
+  const from = process.env.BILLING_FROM_EMAIL || formatNestHelperSender(customerSupportEmail);
   const replyTo = customerSupportEmail;
-  const from = formatNestHelperSender(replyTo);
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
   if (!apiKey || !to || !paymentUrl) {

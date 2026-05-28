@@ -8,6 +8,7 @@ type CustomerConfirmationInput = {
   payload: Record<string, unknown>;
   submissionId: string;
   replyToEmail?: string;
+  fromEmail?: string;
 };
 
 function escapeHtml(value: unknown) {
@@ -115,11 +116,11 @@ function getConfirmationContent(collection: SubmissionCollection, payload: Recor
   };
 }
 
-export async function sendCustomerConfirmationEmail({ collection, payload, submissionId, replyToEmail }: CustomerConfirmationInput) {
+export async function sendCustomerConfirmationEmail({ collection, payload, submissionId, replyToEmail, fromEmail }: CustomerConfirmationInput) {
   const apiKey = process.env.RESEND_API_KEY;
   const to = getEmail(payload);
   const replyTo = replyToEmail || process.env.CUSTOMER_SUPPORT_EMAIL || process.env.NEXT_PUBLIC_CONTACT_EMAIL || "hello@nesthelperwa.com";
-  const from = formatNestHelperSender(replyTo);
+  const from = fromEmail || formatNestHelperSender(replyTo);
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
   if (!apiKey || !to) {

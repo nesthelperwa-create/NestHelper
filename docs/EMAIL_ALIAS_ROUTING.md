@@ -31,12 +31,13 @@ The contact form now includes a Topic dropdown. The selected topic routes admin 
 
 Website form alerts route like this:
 
-- Request form → `requests@nesthelperwa.com`
+- Request form, regular home/errand packages → `booking@nesthelperwa.com`
+- Request form, Laundry Rescue → `laundry@nesthelperwa.com`
 - Helper application → `helpers@nesthelperwa.com`
 - Partner application → `partners@nesthelperwa.com`
 - Contact form → based on selected topic
 
-Customer confirmation emails also use the best matching Reply-To address.
+Customer confirmation emails also use the best matching From name and Reply-To address, such as `NestHelper Booking <booking@nesthelperwa.com>` or `NestHelper Laundry <laundry@nesthelperwa.com>`.
 
 ## Optional Vercel environment variables
 

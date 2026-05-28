@@ -137,7 +137,7 @@ export async function sendStatusUpdateEmail({
   city,
 }: SendStatusUpdateEmailInput) {
   const apiKey = process.env.RESEND_API_KEY;
-  const replyTo = emailAliases.booking;
+  const replyTo = clean(serviceTitle).includes("laundry") ? emailAliases.laundry : emailAliases.booking;
   const from = formatNestHelperSender(replyTo);
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 

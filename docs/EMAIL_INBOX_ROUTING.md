@@ -4,11 +4,12 @@ This update makes admin notification emails easier to identify when multiple ali
 
 ## What changed
 
-Website-generated admin emails now include a clear subject prefix, for example:
+Website-generated admin emails now route to the matching mailbox and include a clear subject prefix, for example:
 
 - `[NestHelper Contact: Billing → billing@] New NestHelper Contact Message`
 - `[NestHelper Contact: Laundry → laundry@] New NestHelper Contact Message`
-- `[NestHelper Requests → requests@] New NestHelper Service Request`
+- `[NestHelper Booking → booking@] New NestHelper Service Request`
+- `[NestHelper Laundry → laundry@] New NestHelper Service Request`
 - `[NestHelper Helpers → helpers@] New NestHelper Helper Application`
 - `[NestHelper Partners → partners@] New NestHelper Partner / Contractor Application`
 

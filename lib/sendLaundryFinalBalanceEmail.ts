@@ -61,7 +61,7 @@ export async function sendLaundryFinalBalanceEmail({
 }: LaundryFinalBalanceEmailInput) {
   const apiKey = process.env.RESEND_API_KEY;
   const customerSupportEmail = emailAliases.laundry;
-  const from = formatNestHelperSender(customerSupportEmail);
+  const from = process.env.LAUNDRY_FROM_EMAIL || formatNestHelperSender(customerSupportEmail);
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
   if (!apiKey || !to || !paymentUrl) {

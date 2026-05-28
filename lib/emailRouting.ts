@@ -16,21 +16,22 @@ export const emailAliases = {
 } as const;
 
 export type EmailAliasKey = keyof typeof emailAliases;
-export type SubmissionCollection = "serviceRequests" | "helperApplications" | "partnerApplications" | "contactMessages";
 
-const aliasDisplayNames: Record<EmailAliasKey, string> = {
-  hello: "NestHelper",
+type SubmissionCollection = "serviceRequests" | "helperApplications" | "partnerApplications" | "contactMessages";
+
+const emailDisplayNames: Record<EmailAliasKey, string> = {
+  hello: "NestHelper Support",
   support: "NestHelper Support",
   help: "NestHelper Help",
   info: "NestHelper Info",
   booking: "NestHelper Booking",
-  requests: "NestHelper Requests",
+  requests: "NestHelper Booking",
   billing: "NestHelper Billing",
-  payments: "NestHelper Payments",
+  payments: "NestHelper Billing",
   laundry: "NestHelper Laundry",
   helpers: "NestHelper Helpers",
   partners: "NestHelper Partners",
-  jobs: "NestHelper Jobs",
+  jobs: "NestHelper Helpers",
   admin: "NestHelper Admin",
   contact: "NestHelper Contact",
 };
@@ -39,37 +40,42 @@ function clean(value: unknown) {
   return typeof value === "string" ? value.trim().toLowerCase() : "";
 }
 
-function normalizeEmail(value: unknown) {
-  return typeof value === "string" ? value.trim().toLowerCase() : "";
+function hasAny(value: unknown, terms: string[]) {
+  const normalized = clean(value);
+  return terms.some((term) => normalized.includes(term));
+}
+
+function firstNonEmpty(...values: unknown[]) {
+  for (const value of values) {
+    if (typeof value === "string" && value.trim()) return value.trim();
+  }
+  return "";
 }
 
 function getAliasKeyForEmail(email: string): EmailAliasKey | undefined {
-  const normalized = normalizeEmail(email);
-  return (Object.keys(emailAliases) as EmailAliasKey[]).find((key) => normalizeEmail(emailAliases[key]) === normalized);
+  const normalized = clean(email);
+  return (Object.keys(emailAliases) as EmailAliasKey[]).find((key) => clean(emailAliases[key]) === normalized);
 }
 
-function titleCaseWords(value: string) {
-  return value
-    .split(/[._+-]+/)
-    .filter(Boolean)
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
-    .join(" ");
+export function getAliasDisplayName(emailOrKey: string) {
+  const key = (emailOrKey in emailAliases ? emailOrKey : getAliasKeyForEmail(emailOrKey)) as EmailAliasKey | undefined;
+  return key ? emailDisplayNames[key] : "NestHelper";
 }
 
-function getFallbackAliasDisplayName(email: string) {
-  const localPart = email.split("@")[0]?.trim();
-  return localPart ? `NestHelper ${titleCaseWords(localPart)}` : "NestHelper";
+export function formatNestHelperSender(emailOrKey: string, fallbackName = "NestHelper") {
+  const key = (emailOrKey in emailAliases ? emailOrKey : getAliasKeyForEmail(emailOrKey)) as EmailAliasKey | undefined;
+  const email = key ? emailAliases[key] : emailOrKey;
+  const displayName = key ? emailDisplayNames[key] : fallbackName;
+  return `${displayName} <${email}>`;
 }
 
-export function getAliasDisplayName(email: string) {
-  const aliasKey = getAliasKeyForEmail(email);
-  return aliasKey ? aliasDisplayNames[aliasKey] : getFallbackAliasDisplayName(email);
+export function isLaundryService(payload: Record<string, unknown>) {
+  return hasAny(firstNonEmpty(payload.service, payload.selectedServiceTitle, payload.packageType, payload.serviceTitle), ["laundry"]);
 }
 
-export function formatNestHelperSender(email: string) {
-  const safeEmail = email.trim();
-  const displayName = getAliasDisplayName(safeEmail).replaceAll('"', "'");
-  return `${displayName} <${safeEmail}>`;
+export function getServiceRequestAliasKey(payload: Record<string, unknown>): EmailAliasKey {
+  if (isLaundryService(payload)) return "laundry";
+  return "booking";
 }
 
 export function getContactTopicEmail(topic: unknown) {
@@ -103,7 +109,7 @@ export function getContactTopicEmail(topic: unknown) {
 }
 
 export function getSubmissionNotificationEmail(collection: SubmissionCollection, payload: Record<string, unknown>) {
-  if (collection === "serviceRequests") return emailAliases.requests;
+  if (collection === "serviceRequests") return emailAliases[getServiceRequestAliasKey(payload)];
   if (collection === "helperApplications") return emailAliases.helpers;
   if (collection === "partnerApplications") return emailAliases.partners;
   if (collection === "contactMessages") return getContactTopicEmail(payload.topic || payload.subject);
@@ -111,19 +117,15 @@ export function getSubmissionNotificationEmail(collection: SubmissionCollection,
 }
 
 export function getCustomerReplyEmail(collection: SubmissionCollection, payload: Record<string, unknown>) {
-  if (collection === "serviceRequests") return emailAliases.booking;
+  if (collection === "serviceRequests") return emailAliases[getServiceRequestAliasKey(payload)];
   if (collection === "helperApplications") return emailAliases.helpers;
   if (collection === "partnerApplications") return emailAliases.partners;
   if (collection === "contactMessages") return getContactTopicEmail(payload.topic || payload.subject);
   return emailAliases.support;
 }
 
-export function getCustomerFacingSender(collection: SubmissionCollection, payload: Record<string, unknown>) {
+export function getSubmissionFromIdentity(collection: SubmissionCollection, payload: Record<string, unknown>) {
   return formatNestHelperSender(getCustomerReplyEmail(collection, payload));
-}
-
-export function getAdminNotificationSender(collection: SubmissionCollection, payload: Record<string, unknown>) {
-  return formatNestHelperSender(getSubmissionNotificationEmail(collection, payload));
 }
 
 export function getContactTopicLabel(topic: unknown) {
@@ -157,7 +159,7 @@ export function getContactTopicLabel(topic: unknown) {
 }
 
 export function getSubmissionRouteLabel(collection: SubmissionCollection, payload: Record<string, unknown>) {
-  if (collection === "serviceRequests") return "Requests";
+  if (collection === "serviceRequests") return getServiceRequestAliasKey(payload) === "laundry" ? "Laundry" : "Booking";
   if (collection === "helperApplications") return "Helpers";
   if (collection === "partnerApplications") return "Partners";
   if (collection === "contactMessages") return `Contact: ${getContactTopicLabel(payload.topic || payload.subject)}`;
@@ -175,6 +177,13 @@ export function getSubmissionSubjectPrefix(collection: SubmissionCollection, pay
   return `[NestHelper ${routeLabel} → ${getAliasShortName(routedTo)}]`;
 }
 
+function splitNotificationEmails(value: string | undefined) {
+  return String(value || "")
+    .split(",")
+    .map((email) => email.trim())
+    .filter((email) => email.includes("@"));
+}
+
 function uniqueEmails(emails: string[]) {
   const seen = new Set<string>();
   return emails.filter((email) => {
@@ -186,8 +195,13 @@ function uniqueEmails(emails: string[]) {
 }
 
 export function getPrimaryAdminNotificationRecipients() {
-  // Send website admin notifications only to the NestHelper mailbox.
-  // This prevents accidental replies from nesthelperwa@gmail.com while the subject/body
-  // still label the website route, such as Billing, Laundry, Helpers, or Partners.
-  return uniqueEmails([emailAliases.hello]);
+  // Keep this as a fallback only. New public-form admin notices are routed to the
+  // matching shared mailbox in saveSubmission(), such as booking@, laundry@, etc.
+  return uniqueEmails(splitNotificationEmails(process.env.ADMIN_NOTIFICATION_EMAIL).concat(emailAliases.hello));
+}
+
+export function getPaymentAdminNotificationEmail(paymentStatus?: string, serviceTitle?: string) {
+  const combined = `${paymentStatus || ""} ${serviceTitle || ""}`;
+  if (hasAny(combined, ["laundry", "deposit", "final balance"])) return emailAliases.laundry;
+  return emailAliases.billing;
 }
