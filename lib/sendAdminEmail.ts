@@ -53,7 +53,7 @@ export async function sendAdminEmail({ subject, title, rows, adminPath = "/admin
     .filter(([, value]) => formatValue(value).trim().length > 0)
     .map(
       ([key, value]) =>
-        `<tr><td style="padding:8px 12px;border-bottom:1px solid #eee;font-weight:700;color:#0f4f4a;vertical-align:top;">${escapeHtml(key)}</td><td style="padding:8px 12px;border-bottom:1px solid #eee;color:#233;white-space:pre-wrap;vertical-align:top;">${escapeHtml(formatValue(value))}</td></tr>`
+        `<div style="padding:10px 12px;border-bottom:1px solid #eee;box-sizing:border-box;overflow-wrap:anywhere;word-break:break-word;"><div style="font-size:12px;line-height:1.35;font-weight:700;color:#0f4f4a;margin:0 0 4px 0;overflow-wrap:anywhere;word-break:break-word;">${escapeHtml(key)}</div><div style="font-size:15px;line-height:1.5;color:#233;margin:0;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;">${escapeHtml(formatValue(value))}</div></div>`
     )
     .join("");
 
@@ -63,16 +63,16 @@ export async function sendAdminEmail({ subject, title, rows, adminPath = "/admin
     .join("\n");
 
   const html = `
-    <div style="font-family:Arial,sans-serif;background:#faf7ef;padding:28px;">
-      <div style="max-width:680px;margin:0 auto;background:#fff;border-radius:18px;border:1px solid #eadfc8;overflow:hidden;">
-        <div style="background:#075c58;color:#fff;padding:22px 26px;">
+    <div style="font-family:Arial,sans-serif;background:#faf7ef;padding:14px;margin:0;width:100%;max-width:100%;box-sizing:border-box;">
+      <div style="width:100%;max-width:680px;margin:0 auto;background:#fff;border-radius:18px;border:1px solid #eadfc8;overflow:hidden;box-sizing:border-box;">
+        <div style="background:#075c58;color:#fff;padding:22px 18px;box-sizing:border-box;">
           <div style="font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:#f1c96b;">NestHelper Admin Alert</div>
-          <h1 style="margin:6px 0 0;font-size:24px;">${escapeHtml(title)}</h1>
+          <h1 style="margin:6px 0 0;font-size:22px;line-height:1.25;">${escapeHtml(title)}</h1>
         </div>
-        <div style="padding:22px 26px;">
+        <div style="padding:22px 18px;box-sizing:border-box;overflow-wrap:anywhere;word-break:break-word;">
           <p style="margin:0 0 16px 0;color:#233;line-height:1.6;">${escapeHtml(intro || "A new public NestHelper form was submitted. Review it in the admin dashboard.")}</p>
-          <table style="width:100%;border-collapse:collapse;">${rowsHtml}</table>
-          <p style="margin-top:22px;"><a href="${siteUrl}${adminPath}" style="display:inline-block;background:#075c58;color:#fff;text-decoration:none;padding:12px 18px;border-radius:999px;font-weight:700;">Open Admin Dashboard</a></p>
+          <div style="width:100%;box-sizing:border-box;border:1px solid #eee;border-radius:14px;overflow:hidden;">${rowsHtml}</div>
+          <p style="margin-top:22px;"><a href="${siteUrl}${adminPath}" style="display:inline-block;background:#075c58;color:#fff;text-decoration:none;padding:12px 18px;border-radius:999px;font-weight:700;max-width:100%;box-sizing:border-box;white-space:normal;text-align:center;">Open Admin Dashboard</a></p>
           <p style="font-size:12px;color:#667;line-height:1.5;">Sent to ${escapeHtml(to)}. ${replyTo ? `Replying to this email should reply to ${escapeHtml(replyTo)}.` : ""}</p>
         </div>
       </div>

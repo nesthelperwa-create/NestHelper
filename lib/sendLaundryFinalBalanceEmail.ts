@@ -39,7 +39,7 @@ function buildSummaryRows(rows: Record<string, unknown>) {
     .filter(([, value]) => String(value || "").trim().length > 0)
     .map(
       ([key, value]) =>
-        `<tr><td style="padding:9px 12px;border-bottom:1px solid #eee;font-weight:700;color:#0f4f4a;vertical-align:top;">${escapeHtml(key)}</td><td style="padding:9px 12px;border-bottom:1px solid #eee;color:#233;vertical-align:top;">${escapeHtml(value)}</td></tr>`
+        `<div style="padding:10px 12px;border-bottom:1px solid #eee;box-sizing:border-box;overflow-wrap:anywhere;word-break:break-word;"><div style="font-size:12px;line-height:1.35;font-weight:700;color:#0f4f4a;margin:0 0 4px 0;overflow-wrap:anywhere;word-break:break-word;">${escapeHtml(key)}</div><div style="font-size:15px;line-height:1.5;color:#233;margin:0;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;">${escapeHtml(value)}</div></div>`
     )
     .join("");
 }
@@ -86,22 +86,22 @@ export async function sendLaundryFinalBalanceEmail({
   });
 
   const noteHtml = note?.trim()
-    ? `<div style="margin:0 0 20px 0;padding:16px 18px;border-radius:14px;background:#fbf6ea;border:1px solid #eadfc8;"><div style="font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#b98a2f;font-weight:700;margin-bottom:6px;">Note from NestHelper</div><div style="white-space:pre-wrap;color:#233;line-height:1.6;">${escapeHtml(note.trim())}</div></div>`
+    ? `<div style="margin:0 0 20px 0;padding:14px 14px;border-radius:14px;background:#fbf6ea;border:1px solid #eadfc8;box-sizing:border-box;overflow-wrap:anywhere;word-break:break-word;"><div style="font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#b98a2f;font-weight:700;margin-bottom:6px;">Note from NestHelper</div><div style="white-space:pre-wrap;color:#233;line-height:1.6;overflow-wrap:anywhere;word-break:break-word;">${escapeHtml(note.trim())}</div></div>`
     : "";
 
   const html = `
-    <div style="font-family:Arial,sans-serif;background:#faf7ef;padding:28px;">
-      <div style="max-width:680px;margin:0 auto;background:#fff;border-radius:18px;border:1px solid #eadfc8;overflow:hidden;">
-        <div style="background:#075c58;color:#fff;padding:24px 26px;">
+    <div style="font-family:Arial,sans-serif;background:#faf7ef;padding:14px;margin:0;width:100%;max-width:100%;box-sizing:border-box;">
+      <div style="width:100%;max-width:680px;margin:0 auto;background:#fff;border-radius:18px;border:1px solid #eadfc8;overflow:hidden;box-sizing:border-box;">
+        <div style="background:#075c58;color:#fff;padding:22px 18px;box-sizing:border-box;">
           <div style="font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:#f1c96b;">Laundry final balance</div>
-          <h1 style="margin:8px 0 0;font-size:24px;line-height:1.25;">Your Laundry Rescue final balance is ready.</h1>
+          <h1 style="margin:8px 0 0;font-size:22px;line-height:1.25;">Your Laundry Rescue final balance is ready.</h1>
         </div>
-        <div style="padding:24px 26px;color:#233;line-height:1.6;">
+        <div style="padding:22px 18px;color:#233;line-height:1.6;box-sizing:border-box;overflow-wrap:anywhere;word-break:break-word;">
           <p style="margin:0 0 16px 0;">${escapeHtml(greeting)}</p>
           <p style="margin:0 0 18px 0;">Your laundry was dry-weighed and your deposit has been credited. The remaining balance is ready for secure checkout.</p>
           ${noteHtml}
-          ${summaryRows ? `<table style="width:100%;border-collapse:collapse;margin:0 0 22px 0;">${summaryRows}</table>` : ""}
-          <p style="margin:22px 0;"><a href="${escapeHtml(paymentUrl)}" style="display:inline-block;background:#075c58;color:#fff;text-decoration:none;padding:13px 20px;border-radius:999px;font-weight:800;">Pay final balance securely</a></p>
+          ${summaryRows ? `<div style="width:100%;box-sizing:border-box;border:1px solid #eee;border-radius:14px;overflow:hidden;margin:0 0 22px 0;">${summaryRows}</div>` : ""}
+          <p style="margin:22px 0;"><a href="${escapeHtml(paymentUrl)}" style="display:inline-block;background:#075c58;color:#fff;text-decoration:none;padding:13px 20px;border-radius:999px;font-weight:800;max-width:100%;box-sizing:border-box;white-space:normal;text-align:center;">Pay final balance securely</a></p>
           <p style="margin:0 0 14px 0;font-size:14px;color:#556;">If the button does not work, copy and paste this secure checkout link into your browser:</p>
           <p style="word-break:break-all;font-size:13px;color:#075c58;margin:0 0 18px 0;">${escapeHtml(paymentUrl)}</p>
           <h2 style="font-size:18px;margin:0 0 10px 0;color:#0f4f4a;">What happens after payment</h2>
@@ -111,7 +111,7 @@ export async function sendLaundryFinalBalanceEmail({
             <li style="margin:0 0 8px 0;">Reply right away if you have questions about the weight, add-ons, or return details.</li>
           </ol>
           <p style="margin:0 0 18px 0;">Questions or changes? Reply to this email or contact us at ${escapeHtml(customerSupportEmail)}.</p>
-          <p style="margin:22px 0 0 0;"><a href="${escapeHtml(siteUrl)}" style="display:inline-block;background:#f4ecdc;color:#075c58;text-decoration:none;padding:12px 18px;border-radius:999px;font-weight:700;">Visit NestHelper</a></p>
+          <p style="margin:22px 0 0 0;"><a href="${escapeHtml(siteUrl)}" style="display:inline-block;background:#f4ecdc;color:#075c58;text-decoration:none;padding:12px 18px;border-radius:999px;font-weight:700;max-width:100%;box-sizing:border-box;white-space:normal;text-align:center;">Visit NestHelper</a></p>
         </div>
       </div>
     </div>`;

@@ -131,7 +131,7 @@ export async function sendCustomerConfirmationEmail({ collection, payload, submi
     .filter(([, value]) => String(value || "").trim().length > 0)
     .map(
       ([key, value]) =>
-        `<tr><td style="padding:9px 12px;border-bottom:1px solid #eee;font-weight:700;color:#0f4f4a;vertical-align:top;">${escapeHtml(key)}</td><td style="padding:9px 12px;border-bottom:1px solid #eee;color:#233;vertical-align:top;">${escapeHtml(value)}</td></tr>`
+        `<div style="padding:10px 12px;border-bottom:1px solid #eee;box-sizing:border-box;overflow-wrap:anywhere;word-break:break-word;"><div style="font-size:12px;line-height:1.35;font-weight:700;color:#0f4f4a;margin:0 0 4px 0;overflow-wrap:anywhere;word-break:break-word;">${escapeHtml(key)}</div><div style="font-size:15px;line-height:1.5;color:#233;margin:0;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;">${escapeHtml(value)}</div></div>`
     )
     .join("");
 
@@ -140,19 +140,19 @@ export async function sendCustomerConfirmationEmail({ collection, payload, submi
     .join("");
 
   const html = `
-    <div style="font-family:Arial,sans-serif;background:#faf7ef;padding:28px;">
-      <div style="max-width:680px;margin:0 auto;background:#fff;border-radius:18px;border:1px solid #eadfc8;overflow:hidden;">
-        <div style="background:#075c58;color:#fff;padding:24px 26px;">
+    <div style="font-family:Arial,sans-serif;background:#faf7ef;padding:14px;margin:0;width:100%;max-width:100%;box-sizing:border-box;">
+      <div style="width:100%;max-width:680px;margin:0 auto;background:#fff;border-radius:18px;border:1px solid #eadfc8;overflow:hidden;box-sizing:border-box;">
+        <div style="background:#075c58;color:#fff;padding:22px 18px;box-sizing:border-box;">
           <div style="font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:#f1c96b;">${escapeHtml(content.eyebrow)}</div>
-          <h1 style="margin:8px 0 0;font-size:24px;line-height:1.25;">${escapeHtml(content.title)}</h1>
+          <h1 style="margin:8px 0 0;font-size:22px;line-height:1.25;">${escapeHtml(content.title)}</h1>
         </div>
-        <div style="padding:24px 26px;color:#233;line-height:1.6;">
+        <div style="padding:22px 18px;color:#233;line-height:1.6;box-sizing:border-box;overflow-wrap:anywhere;word-break:break-word;">
           <p style="margin:0 0 18px 0;">${escapeHtml(content.intro)}</p>
-          ${summaryRows ? `<table style="width:100%;border-collapse:collapse;margin:0 0 20px 0;">${summaryRows}</table>` : ""}
+          ${summaryRows ? `<div style="width:100%;box-sizing:border-box;border:1px solid #eee;border-radius:14px;overflow:hidden;margin:0 0 20px 0;">${summaryRows}</div>` : ""}
           <h2 style="font-size:18px;margin:0 0 10px 0;color:#0f4f4a;">What happens next</h2>
           <ol style="margin:0 0 18px 20px;padding:0;">${nextStepsHtml}</ol>
           <p style="margin:0 0 18px 0;">${escapeHtml(content.closing)}</p>
-          <p style="margin:22px 0 0 0;"><a href="${siteUrl}" style="display:inline-block;background:#075c58;color:#fff;text-decoration:none;padding:12px 18px;border-radius:999px;font-weight:700;">Visit NestHelper</a></p>
+          <p style="margin:22px 0 0 0;"><a href="${siteUrl}" style="display:inline-block;background:#075c58;color:#fff;text-decoration:none;padding:12px 18px;border-radius:999px;font-weight:700;max-width:100%;box-sizing:border-box;white-space:normal;text-align:center;">Visit NestHelper</a></p>
           <p style="font-size:12px;color:#667;line-height:1.5;margin-top:22px;">This confirmation was sent because this email address was used on a NestHelper website form.</p>
         </div>
       </div>
