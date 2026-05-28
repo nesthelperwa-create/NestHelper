@@ -48,7 +48,7 @@ export function ContactForm() {
       if (!response.ok || !result?.ok) throw new Error(result?.error || "Contact submission failed");
 
       setStatus("success");
-      setMessage("Message received. We’ll route it to the right NestHelper inbox and follow up as soon as we can.");
+      setMessage("Message received. We’ll route it to the right NestHelper inbox, email you a copy, and follow up as soon as we can.");
       setForm(defaultForm);
     } catch (err) {
       console.error(err);

@@ -65,7 +65,9 @@ function getConfirmationContent(collection: SubmissionCollection, payload: Recor
       nextSteps: ["A NestHelper team member will review your message.", "We’ll reply to the email or phone number you provided."],
       summary: {
         "Message ID": submissionId,
+        Topic: formatValue(payload.topic),
         Subject: formatValue(payload.subject || "Contact message"),
+        "Your message": formatValue(payload.message),
       },
       closing: `Need to add anything? You can reply to this email or contact us at ${customerSupportEmail}.`,
     };
@@ -156,7 +158,12 @@ export async function sendCustomerConfirmationEmail({ collection, payload, submi
       </div>
     </div>`;
 
-  const text = `${content.title}\n\n${content.intro}\n\nWhat happens next:\n${content.nextSteps
+  const textSummary = Object.entries(content.summary)
+    .filter(([, value]) => String(value || "").trim().length > 0)
+    .map(([key, value]) => `${key}: ${value}`)
+    .join("\n");
+
+  const text = `${content.title}\n\n${content.intro}${textSummary ? `\n\nSubmission details:\n${textSummary}` : ""}\n\nWhat happens next:\n${content.nextSteps
     .map((step, index) => `${index + 1}. ${step}`)
     .join("\n")}\n\n${content.closing}\n\nNestHelper: ${siteUrl}`;
 

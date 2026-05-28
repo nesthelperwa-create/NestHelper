@@ -63,3 +63,8 @@ NEXT_PUBLIC_LAUNDRY_EMAIL=laundry@nesthelperwa.com
 NEXT_PUBLIC_HELPERS_EMAIL=helpers@nesthelperwa.com
 NEXT_PUBLIC_PARTNERS_EMAIL=partners@nesthelperwa.com
 ```
+
+
+## Public Website Display
+
+The Contact page now relies on the contact form topic dropdown instead of showing a separate contact-routes card. The footer shows support email only, while internal aliases still route form notifications behind the scenes. Contact-form confirmations include a copy of the submitted topic, subject, and message.
