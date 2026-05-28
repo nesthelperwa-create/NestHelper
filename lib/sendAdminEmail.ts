@@ -6,6 +6,7 @@ type AdminEmailInput = {
   rows: Record<string, unknown>;
   adminPath?: string;
   intro?: string;
+  to?: string | string[];
 };
 
 function escapeHtml(value: unknown) {
@@ -35,9 +36,9 @@ function getReplyTo(rows: Record<string, unknown>) {
   return email.includes("@") ? email : undefined;
 }
 
-export async function sendAdminEmail({ subject, title, rows, adminPath = "/admin", intro }: AdminEmailInput) {
+export async function sendAdminEmail({ subject, title, rows, adminPath = "/admin", intro, to: routedTo }: AdminEmailInput) {
   const apiKey = process.env.RESEND_API_KEY;
-  const to = getAdminEmail();
+  const to = routedTo || getAdminEmail();
   const from = process.env.NOTIFICATION_FROM_EMAIL || "NestHelper <onboarding@resend.dev>";
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
   const replyTo = getReplyTo(rows);

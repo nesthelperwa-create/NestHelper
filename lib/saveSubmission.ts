@@ -2,6 +2,7 @@ import { FieldValue } from "firebase-admin/firestore";
 import { getFirebaseAdminDb } from "./firebaseAdmin";
 import { sendAdminEmail } from "./sendAdminEmail";
 import { sendCustomerConfirmationEmail } from "./sendCustomerConfirmationEmail";
+import { getCustomerReplyEmail, getSubmissionNotificationEmail } from "./emailRouting";
 
 export type SaveSubmissionInput = {
   collection: "serviceRequests" | "helperApplications" | "partnerApplications" | "contactMessages";
@@ -25,12 +26,16 @@ export async function saveSubmission({ collection, payload, emailSubject, emailT
     updatedAt: FieldValue.serverTimestamp(),
   });
 
+  const adminNotificationEmail = getSubmissionNotificationEmail(collection, cleaned);
+  const customerReplyEmail = getCustomerReplyEmail(collection, cleaned);
+
   try {
     await sendAdminEmail({
       subject: emailSubject,
       title: emailTitle,
-      rows: { "Dashboard ID": doc.id, ...cleaned },
+      rows: { "Dashboard ID": doc.id, "Routed to": adminNotificationEmail, ...cleaned },
       adminPath,
+      to: adminNotificationEmail,
     });
   } catch (error) {
     // Form submissions should still succeed even if admin email notifications fail.
@@ -43,6 +48,7 @@ export async function saveSubmission({ collection, payload, emailSubject, emailT
       collection,
       payload: cleaned,
       submissionId: doc.id,
+      replyToEmail: customerReplyEmail,
     });
   } catch (error) {
     // Form submissions should still succeed even if the customer confirmation email fails.

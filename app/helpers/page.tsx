@@ -1,6 +1,7 @@
-import { CheckCircle2, HeartHandshake, ShieldCheck, Sparkles } from "lucide-react";
+import { CheckCircle2, HeartHandshake, Mail, ShieldCheck, Sparkles } from "lucide-react";
 import { PageHero } from "@/components/PageHero";
 import { ApplicationFormChooser } from "@/components/forms/ApplicationForms";
+import { siteConfig } from "@/lib/siteConfig";
 
 export default function HelpersPage() {
   return (
@@ -17,6 +18,25 @@ export default function HelpersPage() {
           <InfoCard icon={<ShieldCheck />} title="Trust-first" text="NestHelper reviews helper fit, standards, references, and screening before active work." />
           <InfoCard icon={<HeartHandshake />} title="Parent-focused" text="The service is built around helping overwhelmed families with household support." />
           <InfoCard icon={<Sparkles />} title="Clear expectations" text="We define service scope, communication, and standards before matching work." />
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-7xl px-4 pt-8 sm:px-6 lg:px-8">
+        <div className="grid gap-4 rounded-[2rem] border border-nest-gold/16 bg-white/90 p-5 shadow-sm sm:grid-cols-2 sm:p-6">
+          <a href={`mailto:${siteConfig.emails.helpers}`} className="flex items-start gap-3 rounded-2xl bg-nest-cream p-4 transition hover:-translate-y-0.5 hover:shadow-sm">
+            <Mail className="mt-1 shrink-0 text-nest-teal" size={19} />
+            <span>
+              <span className="block text-sm font-black uppercase tracking-[0.18em] text-nest-gold">Helper questions</span>
+              <span className="mt-1 block break-all font-black text-nest-teal">{siteConfig.emails.helpers}</span>
+            </span>
+          </a>
+          <a href={`mailto:${siteConfig.emails.partners}`} className="flex items-start gap-3 rounded-2xl bg-nest-cream p-4 transition hover:-translate-y-0.5 hover:shadow-sm">
+            <Mail className="mt-1 shrink-0 text-nest-teal" size={19} />
+            <span>
+              <span className="block text-sm font-black uppercase tracking-[0.18em] text-nest-gold">Partner questions</span>
+              <span className="mt-1 block break-all font-black text-nest-teal">{siteConfig.emails.partners}</span>
+            </span>
+          </a>
         </div>
       </section>
 

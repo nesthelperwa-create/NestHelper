@@ -7,7 +7,24 @@ import { formatPhoneNumber } from "@/lib/formatPhoneNumber";
 
 type Status = "idle" | "loading" | "success" | "error";
 
-const defaultForm = { name: "", email: "", phone: "", subject: "", message: "" };
+const topicOptions = [
+  "General question",
+  "Existing request or service issue",
+  "New request or booking question",
+  "Billing or payment question",
+  "Laundry Rescue question",
+  "Helper application question",
+  "Partner/provider question",
+];
+
+const defaultForm = {
+  name: "",
+  email: "",
+  phone: "",
+  topic: topicOptions[0],
+  subject: "",
+  message: "",
+};
 
 export function ContactForm() {
   const [form, setForm] = useState(defaultForm);
@@ -31,7 +48,7 @@ export function ContactForm() {
       if (!response.ok || !result?.ok) throw new Error(result?.error || "Contact submission failed");
 
       setStatus("success");
-      setMessage("Message received. We’ll follow up as soon as we can.");
+      setMessage("Message received. We’ll route it to the right NestHelper inbox and follow up as soon as we can.");
       setForm(defaultForm);
     } catch (err) {
       console.error(err);
@@ -48,7 +65,7 @@ export function ContactForm() {
         </div>
         <h2 className="mt-4 text-2xl font-black text-nest-teal sm:text-3xl">Send a message</h2>
         <p className="mt-2 leading-7 text-nest-ink/68">
-          Ask a quick question or tell us what you are trying to figure out before submitting a request.
+          Choose a topic so your message is routed to the best NestHelper inbox behind the scenes.
         </p>
       </div>
 
@@ -57,8 +74,16 @@ export function ContactForm() {
           <Input label="Name" required value={form.name} onChange={(value) => update("name", value)} autoComplete="name" />
           <Input label="Phone" value={form.phone} onChange={(value) => update("phone", formatPhoneNumber(value))} inputMode="tel" autoComplete="tel" placeholder="555-555-5555" />
           <Input label="Email" required type="email" value={form.email} onChange={(value) => update("email", value)} autoComplete="email" />
-          <Input label="Subject" required value={form.subject} onChange={(value) => update("subject", value)} />
+          <label className="grid gap-2">
+            <span className="label">Topic</span>
+            <select className="input" value={form.topic} onChange={(event) => update("topic", event.target.value)}>
+              {topicOptions.map((topic) => (
+                <option key={topic} value={topic}>{topic}</option>
+              ))}
+            </select>
+          </label>
         </div>
+        <Input label="Subject" required value={form.subject} onChange={(value) => update("subject", value)} />
         <label className="grid gap-2">
           <span className="label">How can we help?</span>
           <textarea className="input min-h-36" required placeholder="Tell us what you’re looking for, where you’re located, or what question you have." value={form.message} onChange={(e) => update("message", e.target.value)} />

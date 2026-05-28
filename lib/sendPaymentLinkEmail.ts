@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { emailAliases } from "./emailRouting";
 
 type PaymentLinkEmailInput = {
   to: string;
@@ -44,7 +45,7 @@ export async function sendPaymentLinkEmail({
 }: PaymentLinkEmailInput) {
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.NOTIFICATION_FROM_EMAIL || "NestHelper <onboarding@resend.dev>";
-  const customerSupportEmail = process.env.CUSTOMER_SUPPORT_EMAIL || process.env.NEXT_PUBLIC_CONTACT_EMAIL || "hello@nesthelperwa.com";
+  const customerSupportEmail = emailAliases.billing;
   const replyTo = customerSupportEmail;
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 

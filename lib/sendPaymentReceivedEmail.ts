@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { emailAliases } from "./emailRouting";
 
 type SendPaymentReceivedEmailInput = {
   to: string;
@@ -75,7 +76,8 @@ function getPaymentCopy(paymentStatus: string) {
 export async function sendPaymentReceivedEmail({ to, customerName, requestId, serviceTitle, amountTotal, currency, paymentStatus = "Paid" }: SendPaymentReceivedEmailInput) {
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.NOTIFICATION_FROM_EMAIL || "NestHelper <onboarding@resend.dev>";
-  const replyTo = process.env.CUSTOMER_SUPPORT_EMAIL || process.env.NEXT_PUBLIC_CONTACT_EMAIL || "hello@nesthelperwa.com";
+  const normalizedPaymentStatus = paymentStatus.toLowerCase();
+  const replyTo = normalizedPaymentStatus.includes("laundry") || normalizedPaymentStatus.includes("deposit") || normalizedPaymentStatus.includes("final balance") ? emailAliases.laundry : emailAliases.billing;
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
   if (!apiKey || !to || !to.includes("@")) {

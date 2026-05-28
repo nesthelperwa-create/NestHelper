@@ -6,6 +6,7 @@ type CustomerConfirmationInput = {
   collection: SubmissionCollection;
   payload: Record<string, unknown>;
   submissionId: string;
+  replyToEmail?: string;
 };
 
 function escapeHtml(value: unknown) {
@@ -29,8 +30,7 @@ function getEmail(payload: Record<string, unknown>) {
   return email.includes("@") ? email : "";
 }
 
-function getConfirmationContent(collection: SubmissionCollection, payload: Record<string, unknown>, submissionId: string) {
-  const customerSupportEmail = process.env.CUSTOMER_SUPPORT_EMAIL || process.env.NEXT_PUBLIC_CONTACT_EMAIL || "hello@nesthelperwa.com";
+function getConfirmationContent(collection: SubmissionCollection, payload: Record<string, unknown>, submissionId: string, customerSupportEmail: string) {
 
   if (collection === "serviceRequests") {
     const service = formatValue(payload.selectedServiceTitle || payload.service || "Service request");
@@ -112,11 +112,11 @@ function getConfirmationContent(collection: SubmissionCollection, payload: Recor
   };
 }
 
-export async function sendCustomerConfirmationEmail({ collection, payload, submissionId }: CustomerConfirmationInput) {
+export async function sendCustomerConfirmationEmail({ collection, payload, submissionId, replyToEmail }: CustomerConfirmationInput) {
   const apiKey = process.env.RESEND_API_KEY;
   const to = getEmail(payload);
   const from = process.env.NOTIFICATION_FROM_EMAIL || "NestHelper <onboarding@resend.dev>";
-  const replyTo = process.env.CUSTOMER_SUPPORT_EMAIL || process.env.NEXT_PUBLIC_CONTACT_EMAIL || "hello@nesthelperwa.com";
+  const replyTo = replyToEmail || process.env.CUSTOMER_SUPPORT_EMAIL || process.env.NEXT_PUBLIC_CONTACT_EMAIL || "hello@nesthelperwa.com";
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
   if (!apiKey || !to) {
@@ -124,7 +124,7 @@ export async function sendCustomerConfirmationEmail({ collection, payload, submi
     return { skipped: true };
   }
 
-  const content = getConfirmationContent(collection, payload, submissionId);
+  const content = getConfirmationContent(collection, payload, submissionId, replyTo);
   const summaryRows = Object.entries(content.summary)
     .filter(([, value]) => String(value || "").trim().length > 0)
     .map(

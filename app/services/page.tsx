@@ -1,8 +1,9 @@
 import type { ReactNode } from "react";
-import { CheckCircle2, ClipboardCheck, CreditCard, Scale, ShieldCheck, Sparkles } from "lucide-react";
+import { CheckCircle2, ClipboardCheck, CreditCard, Mail, Scale, ShieldCheck, Sparkles } from "lucide-react";
 import { PageHero } from "@/components/PageHero";
 import { ServiceCard } from "@/components/ServiceCard";
 import { services, laundryAddOns } from "@/lib/services";
+import { siteConfig } from "@/lib/siteConfig";
 
 export default function ServicesPage() {
   return (
@@ -83,6 +84,9 @@ export default function ServicesPage() {
               <p className="mt-3 leading-7 text-nest-ink/72">
                 Clean laundry may be returned in NestHelper reusable bags or totes. Please empty and return them at your next Laundry Rescue pickup, scheduled drop-off, or another approved return method. Missing or damaged bags may be billed a reasonable replacement fee.
               </p>
+              <a href={`mailto:${siteConfig.emails.laundry}`} className="mt-4 inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-black text-nest-teal shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+                <Mail size={16} /> Laundry questions: {siteConfig.emails.laundry}
+              </a>
             </div>
           </div>
         </div>
