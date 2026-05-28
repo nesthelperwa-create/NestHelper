@@ -2,7 +2,7 @@ import { FieldValue } from "firebase-admin/firestore";
 import { getFirebaseAdminDb } from "./firebaseAdmin";
 import { sendAdminEmail } from "./sendAdminEmail";
 import { sendCustomerConfirmationEmail } from "./sendCustomerConfirmationEmail";
-import { getCustomerReplyEmail, getPrimaryAdminNotificationRecipients, getSubmissionNotificationEmail, getSubmissionRouteLabel, getSubmissionSubjectPrefix } from "./emailRouting";
+import { getCustomerReplyEmail, getSubmissionNotificationEmail, getSubmissionRouteLabel, getSubmissionSubjectPrefix } from "./emailRouting";
 
 export type SaveSubmissionInput = {
   collection: "serviceRequests" | "helperApplications" | "partnerApplications" | "contactMessages";
@@ -27,7 +27,6 @@ export async function saveSubmission({ collection, payload, emailSubject, emailT
   });
 
   const routedAliasEmail = getSubmissionNotificationEmail(collection, cleaned);
-  const adminInboxRecipients = getPrimaryAdminNotificationRecipients();
   const customerReplyEmail = getCustomerReplyEmail(collection, cleaned);
   const routeLabel = getSubmissionRouteLabel(collection, cleaned);
   const subjectPrefix = getSubmissionSubjectPrefix(collection, cleaned);
@@ -38,14 +37,16 @@ export async function saveSubmission({ collection, payload, emailSubject, emailT
       title: emailTitle,
       rows: {
         "Inbox route": routeLabel,
-        "Website route": routedAliasEmail,
-        "Admin inbox sent to": adminInboxRecipients.join(", "),
+        "Website route / sent to": routedAliasEmail,
         "Customer reply-to": customerReplyEmail,
         "Dashboard ID": doc.id,
         ...cleaned,
       },
       adminPath,
-      to: adminInboxRecipients,
+      // Send the admin notice to the routed NestHelper alias, not Gmail and not only hello@.
+      // This lets Gmail/Private Email recognize which alias received the message, so replies
+      // can use the same NestHelper alias when the mail client is configured for alias sending.
+      to: routedAliasEmail,
       routeLabel,
       routedToText: routedAliasEmail,
     });

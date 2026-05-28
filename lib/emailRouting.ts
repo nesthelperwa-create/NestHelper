@@ -136,10 +136,8 @@ function uniqueEmails(emails: string[]) {
 }
 
 export function getPrimaryAdminNotificationRecipients() {
-  const configured = splitNotificationEmails(process.env.ADMIN_NOTIFICATION_EMAIL);
-  const primary = configured.length > 0 ? configured : ["nesthelperwa@gmail.com"];
-
-  // Website notifications should land in the real inboxes you check.
-  // The routed alias is still shown in the subject/body so you can tell what type of message it is.
-  return uniqueEmails([...primary, emailAliases.hello]);
+  // Send website admin notifications only to the NestHelper mailbox.
+  // This prevents accidental replies from nesthelperwa@gmail.com while the subject/body
+  // still label the website route, such as Billing, Laundry, Helpers, or Partners.
+  return uniqueEmails([emailAliases.hello]);
 }

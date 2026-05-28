@@ -29,7 +29,7 @@ function formatValue(value: unknown) {
 }
 
 function getAdminEmail() {
-  return process.env.ADMIN_NOTIFICATION_EMAIL || "nesthelperwa@gmail.com";
+  return process.env.ADMIN_NOTIFICATION_EMAIL || process.env.NESTHELPER_HELLO_EMAIL || process.env.NEXT_PUBLIC_CONTACT_EMAIL || "hello@nesthelperwa.com";
 }
 
 function getReplyTo(rows: Record<string, unknown>) {
