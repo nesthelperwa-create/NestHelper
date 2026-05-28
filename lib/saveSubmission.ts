@@ -2,7 +2,7 @@ import { FieldValue } from "firebase-admin/firestore";
 import { getFirebaseAdminDb } from "./firebaseAdmin";
 import { sendAdminEmail } from "./sendAdminEmail";
 import { sendCustomerConfirmationEmail } from "./sendCustomerConfirmationEmail";
-import { getCustomerReplyEmail, getSubmissionNotificationEmail, getSubmissionRouteLabel, getSubmissionSubjectPrefix } from "./emailRouting";
+import { getCustomerReplyEmail, getPrimaryAdminNotificationRecipients, getSubmissionNotificationEmail, getSubmissionRouteLabel, getSubmissionSubjectPrefix } from "./emailRouting";
 
 export type SaveSubmissionInput = {
   collection: "serviceRequests" | "helperApplications" | "partnerApplications" | "contactMessages";
@@ -26,7 +26,8 @@ export async function saveSubmission({ collection, payload, emailSubject, emailT
     updatedAt: FieldValue.serverTimestamp(),
   });
 
-  const adminNotificationEmail = getSubmissionNotificationEmail(collection, cleaned);
+  const routedAliasEmail = getSubmissionNotificationEmail(collection, cleaned);
+  const adminInboxRecipients = getPrimaryAdminNotificationRecipients();
   const customerReplyEmail = getCustomerReplyEmail(collection, cleaned);
   const routeLabel = getSubmissionRouteLabel(collection, cleaned);
   const subjectPrefix = getSubmissionSubjectPrefix(collection, cleaned);
@@ -37,15 +38,16 @@ export async function saveSubmission({ collection, payload, emailSubject, emailT
       title: emailTitle,
       rows: {
         "Inbox route": routeLabel,
-        "Website routed to": adminNotificationEmail,
+        "Website route": routedAliasEmail,
+        "Admin inbox sent to": adminInboxRecipients.join(", "),
         "Customer reply-to": customerReplyEmail,
         "Dashboard ID": doc.id,
         ...cleaned,
       },
       adminPath,
-      to: adminNotificationEmail,
+      to: adminInboxRecipients,
       routeLabel,
-      routedToText: adminNotificationEmail,
+      routedToText: routedAliasEmail,
     });
   } catch (error) {
     // Form submissions should still succeed even if admin email notifications fail.

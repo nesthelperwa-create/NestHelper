@@ -116,3 +116,30 @@ export function getSubmissionSubjectPrefix(collection: SubmissionCollection, pay
   const routedTo = getSubmissionNotificationEmail(collection, payload);
   return `[NestHelper ${routeLabel} → ${getAliasShortName(routedTo)}]`;
 }
+
+
+function splitNotificationEmails(value: string | undefined) {
+  return String(value || "")
+    .split(",")
+    .map((email) => email.trim())
+    .filter((email) => email.includes("@"));
+}
+
+function uniqueEmails(emails: string[]) {
+  const seen = new Set<string>();
+  return emails.filter((email) => {
+    const normalized = email.toLowerCase();
+    if (seen.has(normalized)) return false;
+    seen.add(normalized);
+    return true;
+  });
+}
+
+export function getPrimaryAdminNotificationRecipients() {
+  const configured = splitNotificationEmails(process.env.ADMIN_NOTIFICATION_EMAIL);
+  const primary = configured.length > 0 ? configured : ["nesthelperwa@gmail.com"];
+
+  // Website notifications should land in the real inboxes you check.
+  // The routed alias is still shown in the subject/body so you can tell what type of message it is.
+  return uniqueEmails([...primary, emailAliases.hello]);
+}
