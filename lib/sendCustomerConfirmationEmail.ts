@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { formatNestHelperSender } from "./emailRouting";
 
 type SubmissionCollection = "serviceRequests" | "helperApplications" | "partnerApplications" | "contactMessages";
 
@@ -117,8 +118,8 @@ function getConfirmationContent(collection: SubmissionCollection, payload: Recor
 export async function sendCustomerConfirmationEmail({ collection, payload, submissionId, replyToEmail }: CustomerConfirmationInput) {
   const apiKey = process.env.RESEND_API_KEY;
   const to = getEmail(payload);
-  const from = process.env.NOTIFICATION_FROM_EMAIL || "NestHelper <onboarding@resend.dev>";
   const replyTo = replyToEmail || process.env.CUSTOMER_SUPPORT_EMAIL || process.env.NEXT_PUBLIC_CONTACT_EMAIL || "hello@nesthelperwa.com";
+  const from = formatNestHelperSender(replyTo);
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
   if (!apiKey || !to) {

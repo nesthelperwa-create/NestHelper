@@ -1,5 +1,5 @@
 import { Resend } from "resend";
-import { emailAliases } from "./emailRouting";
+import { emailAliases, formatNestHelperSender } from "./emailRouting";
 
 type PaymentLinkEmailInput = {
   to: string;
@@ -44,9 +44,9 @@ export async function sendPaymentLinkEmail({
   city,
 }: PaymentLinkEmailInput) {
   const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.NOTIFICATION_FROM_EMAIL || "NestHelper <onboarding@resend.dev>";
   const customerSupportEmail = emailAliases.billing;
   const replyTo = customerSupportEmail;
+  const from = formatNestHelperSender(replyTo);
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
   if (!apiKey || !to || !paymentUrl) {

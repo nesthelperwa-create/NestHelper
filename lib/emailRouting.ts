@@ -15,10 +15,61 @@ export const emailAliases = {
   contact: process.env.NESTHELPER_CONTACT_EMAIL || "contact@nesthelperwa.com",
 } as const;
 
-type SubmissionCollection = "serviceRequests" | "helperApplications" | "partnerApplications" | "contactMessages";
+export type EmailAliasKey = keyof typeof emailAliases;
+export type SubmissionCollection = "serviceRequests" | "helperApplications" | "partnerApplications" | "contactMessages";
+
+const aliasDisplayNames: Record<EmailAliasKey, string> = {
+  hello: "NestHelper",
+  support: "NestHelper Support",
+  help: "NestHelper Help",
+  info: "NestHelper Info",
+  booking: "NestHelper Booking",
+  requests: "NestHelper Requests",
+  billing: "NestHelper Billing",
+  payments: "NestHelper Payments",
+  laundry: "NestHelper Laundry",
+  helpers: "NestHelper Helpers",
+  partners: "NestHelper Partners",
+  jobs: "NestHelper Jobs",
+  admin: "NestHelper Admin",
+  contact: "NestHelper Contact",
+};
 
 function clean(value: unknown) {
   return typeof value === "string" ? value.trim().toLowerCase() : "";
+}
+
+function normalizeEmail(value: unknown) {
+  return typeof value === "string" ? value.trim().toLowerCase() : "";
+}
+
+function getAliasKeyForEmail(email: string): EmailAliasKey | undefined {
+  const normalized = normalizeEmail(email);
+  return (Object.keys(emailAliases) as EmailAliasKey[]).find((key) => normalizeEmail(emailAliases[key]) === normalized);
+}
+
+function titleCaseWords(value: string) {
+  return value
+    .split(/[._+-]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+    .join(" ");
+}
+
+function getFallbackAliasDisplayName(email: string) {
+  const localPart = email.split("@")[0]?.trim();
+  return localPart ? `NestHelper ${titleCaseWords(localPart)}` : "NestHelper";
+}
+
+export function getAliasDisplayName(email: string) {
+  const aliasKey = getAliasKeyForEmail(email);
+  return aliasKey ? aliasDisplayNames[aliasKey] : getFallbackAliasDisplayName(email);
+}
+
+export function formatNestHelperSender(email: string) {
+  const safeEmail = email.trim();
+  const displayName = getAliasDisplayName(safeEmail).replaceAll('"', "'");
+  return `${displayName} <${safeEmail}>`;
 }
 
 export function getContactTopicEmail(topic: unknown) {
@@ -67,6 +118,13 @@ export function getCustomerReplyEmail(collection: SubmissionCollection, payload:
   return emailAliases.support;
 }
 
+export function getCustomerFacingSender(collection: SubmissionCollection, payload: Record<string, unknown>) {
+  return formatNestHelperSender(getCustomerReplyEmail(collection, payload));
+}
+
+export function getAdminNotificationSender(collection: SubmissionCollection, payload: Record<string, unknown>) {
+  return formatNestHelperSender(getSubmissionNotificationEmail(collection, payload));
+}
 
 export function getContactTopicLabel(topic: unknown) {
   const normalized = clean(topic);
@@ -115,14 +173,6 @@ export function getSubmissionSubjectPrefix(collection: SubmissionCollection, pay
   const routeLabel = getSubmissionRouteLabel(collection, payload);
   const routedTo = getSubmissionNotificationEmail(collection, payload);
   return `[NestHelper ${routeLabel} → ${getAliasShortName(routedTo)}]`;
-}
-
-
-function splitNotificationEmails(value: string | undefined) {
-  return String(value || "")
-    .split(",")
-    .map((email) => email.trim())
-    .filter((email) => email.includes("@"));
 }
 
 function uniqueEmails(emails: string[]) {

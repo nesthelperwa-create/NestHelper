@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { emailAliases, formatNestHelperSender } from "./emailRouting";
 
 type AdminEmailInput = {
   subject: string;
@@ -9,6 +10,7 @@ type AdminEmailInput = {
   to?: string | string[];
   routeLabel?: string;
   routedToText?: string;
+  fromEmail?: string;
 };
 
 function escapeHtml(value: unknown) {
@@ -29,7 +31,7 @@ function formatValue(value: unknown) {
 }
 
 function getAdminEmail() {
-  return process.env.ADMIN_NOTIFICATION_EMAIL || process.env.NESTHELPER_HELLO_EMAIL || process.env.NEXT_PUBLIC_CONTACT_EMAIL || "hello@nesthelperwa.com";
+  return process.env.ADMIN_NOTIFICATION_EMAIL || process.env.NESTHELPER_HELLO_EMAIL || process.env.NEXT_PUBLIC_CONTACT_EMAIL || emailAliases.hello;
 }
 
 function getReplyTo(rows: Record<string, unknown>) {
@@ -38,10 +40,11 @@ function getReplyTo(rows: Record<string, unknown>) {
   return email.includes("@") ? email : undefined;
 }
 
-export async function sendAdminEmail({ subject, title, rows, adminPath = "/admin", intro, to: routedTo, routeLabel, routedToText }: AdminEmailInput) {
+export async function sendAdminEmail({ subject, title, rows, adminPath = "/admin", intro, to: routedTo, routeLabel, routedToText, fromEmail }: AdminEmailInput) {
   const apiKey = process.env.RESEND_API_KEY;
   const to = routedTo || getAdminEmail();
-  const from = process.env.NOTIFICATION_FROM_EMAIL || "NestHelper <onboarding@resend.dev>";
+  const senderEmail = fromEmail || (typeof routedToText === "string" && routedToText.includes("@") ? routedToText : emailAliases.hello);
+  const from = formatNestHelperSender(senderEmail);
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
   const replyTo = getReplyTo(rows);
   const toText = Array.isArray(to) ? to.join(", ") : String(to);

@@ -49,6 +49,7 @@ export async function saveSubmission({ collection, payload, emailSubject, emailT
       to: routedAliasEmail,
       routeLabel,
       routedToText: routedAliasEmail,
+      fromEmail: routedAliasEmail,
     });
   } catch (error) {
     // Form submissions should still succeed even if admin email notifications fail.
