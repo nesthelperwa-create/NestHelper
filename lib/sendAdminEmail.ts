@@ -7,6 +7,8 @@ type AdminEmailInput = {
   adminPath?: string;
   intro?: string;
   to?: string | string[];
+  routeLabel?: string;
+  routedToText?: string;
 };
 
 function escapeHtml(value: unknown) {
@@ -36,12 +38,16 @@ function getReplyTo(rows: Record<string, unknown>) {
   return email.includes("@") ? email : undefined;
 }
 
-export async function sendAdminEmail({ subject, title, rows, adminPath = "/admin", intro, to: routedTo }: AdminEmailInput) {
+export async function sendAdminEmail({ subject, title, rows, adminPath = "/admin", intro, to: routedTo, routeLabel, routedToText }: AdminEmailInput) {
   const apiKey = process.env.RESEND_API_KEY;
   const to = routedTo || getAdminEmail();
   const from = process.env.NOTIFICATION_FROM_EMAIL || "NestHelper <onboarding@resend.dev>";
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
   const replyTo = getReplyTo(rows);
+  const toText = Array.isArray(to) ? to.join(", ") : String(to);
+  const routeHtml = routeLabel || routedToText
+    ? `<div style="margin:0 0 16px 0;padding:12px 14px;background:#f5fbf8;border:1px solid #d7eee4;border-radius:14px;box-sizing:border-box;overflow-wrap:anywhere;word-break:break-word;"><div style="font-size:12px;line-height:1.35;font-weight:700;color:#0f4f4a;margin:0 0 4px 0;text-transform:uppercase;letter-spacing:.08em;">Inbox route</div><div style="font-size:18px;line-height:1.35;font-weight:800;color:#123;margin:0;overflow-wrap:anywhere;word-break:break-word;">${escapeHtml(routeLabel || "NestHelper")}</div><div style="font-size:14px;line-height:1.5;color:#456;margin:4px 0 0 0;overflow-wrap:anywhere;word-break:break-word;">Website notification sent to ${escapeHtml(routedToText || toText)}</div>${replyTo ? `<div style="font-size:13px;line-height:1.5;color:#667;margin:4px 0 0 0;overflow-wrap:anywhere;word-break:break-word;">Reply-to customer: ${escapeHtml(replyTo)}</div>` : ""}</div>`
+    : "";
 
   if (!apiKey) {
     console.warn("Skipping admin email. Missing RESEND_API_KEY.");
@@ -71,14 +77,19 @@ export async function sendAdminEmail({ subject, title, rows, adminPath = "/admin
         </div>
         <div style="padding:22px 18px;box-sizing:border-box;overflow-wrap:anywhere;word-break:break-word;">
           <p style="margin:0 0 16px 0;color:#233;line-height:1.6;">${escapeHtml(intro || "A new public NestHelper form was submitted. Review it in the admin dashboard.")}</p>
+          ${routeHtml}
           <div style="width:100%;box-sizing:border-box;border:1px solid #eee;border-radius:14px;overflow:hidden;">${rowsHtml}</div>
           <p style="margin-top:22px;"><a href="${siteUrl}${adminPath}" style="display:inline-block;background:#075c58;color:#fff;text-decoration:none;padding:12px 18px;border-radius:999px;font-weight:700;max-width:100%;box-sizing:border-box;white-space:normal;text-align:center;">Open Admin Dashboard</a></p>
-          <p style="font-size:12px;color:#667;line-height:1.5;">Sent to ${escapeHtml(to)}. ${replyTo ? `Replying to this email should reply to ${escapeHtml(replyTo)}.` : ""}</p>
+          <p style="font-size:12px;color:#667;line-height:1.5;">Sent to ${escapeHtml(toText)}. ${replyTo ? `Replying to this email should reply to ${escapeHtml(replyTo)}.` : ""}</p>
         </div>
       </div>
     </div>`;
 
-  const text = `${title}\n\n${intro || "A new public NestHelper form was submitted."}\n\n${textRows}\n\nOpen admin dashboard: ${siteUrl}${adminPath}`;
+  const routeText = routeLabel || routedToText
+    ? `Inbox route: ${routeLabel || "NestHelper"}\nWebsite notification sent to: ${routedToText || toText}\n${replyTo ? `Reply-to customer: ${replyTo}\n` : ""}\n`
+    : "";
+
+  const text = `${title}\n\n${intro || "A new public NestHelper form was submitted."}\n\n${routeText}${textRows}\n\nOpen admin dashboard: ${siteUrl}${adminPath}`;
 
   return resend.emails.send({ from, to, subject, html, text, replyTo });
 }

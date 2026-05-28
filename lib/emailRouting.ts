@@ -66,3 +66,53 @@ export function getCustomerReplyEmail(collection: SubmissionCollection, payload:
   if (collection === "contactMessages") return getContactTopicEmail(payload.topic || payload.subject);
   return emailAliases.support;
 }
+
+
+export function getContactTopicLabel(topic: unknown) {
+  const normalized = clean(topic);
+
+  if (normalized.includes("billing") || normalized.includes("payment") || normalized.includes("invoice") || normalized.includes("refund")) {
+    return "Billing";
+  }
+
+  if (normalized.includes("laundry")) {
+    return "Laundry";
+  }
+
+  if (normalized.includes("helper") || normalized.includes("job")) {
+    return "Helpers";
+  }
+
+  if (normalized.includes("partner") || normalized.includes("provider") || normalized.includes("contractor")) {
+    return "Partners";
+  }
+
+  if (normalized.includes("existing") || normalized.includes("issue") || normalized.includes("support")) {
+    return "Support";
+  }
+
+  if (normalized.includes("request") || normalized.includes("booking") || normalized.includes("schedule")) {
+    return "Booking";
+  }
+
+  return "General";
+}
+
+export function getSubmissionRouteLabel(collection: SubmissionCollection, payload: Record<string, unknown>) {
+  if (collection === "serviceRequests") return "Requests";
+  if (collection === "helperApplications") return "Helpers";
+  if (collection === "partnerApplications") return "Partners";
+  if (collection === "contactMessages") return `Contact: ${getContactTopicLabel(payload.topic || payload.subject)}`;
+  return "Admin";
+}
+
+function getAliasShortName(email: string) {
+  const localPart = email.split("@")[0]?.trim();
+  return localPart ? `${localPart}@` : email;
+}
+
+export function getSubmissionSubjectPrefix(collection: SubmissionCollection, payload: Record<string, unknown>) {
+  const routeLabel = getSubmissionRouteLabel(collection, payload);
+  const routedTo = getSubmissionNotificationEmail(collection, payload);
+  return `[NestHelper ${routeLabel} → ${getAliasShortName(routedTo)}]`;
+}
