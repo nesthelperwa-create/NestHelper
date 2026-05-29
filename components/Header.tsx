@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { Menu, X, ShieldCheck } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { siteConfig } from "@/lib/siteConfig";
 
 const nav = [
@@ -56,9 +56,6 @@ export function Header() {
         </nav>
 
         <div className="hidden items-center gap-3 lg:flex">
-          <div className="hidden items-center gap-2 rounded-full border border-nest-teal/10 bg-white/70 px-3 py-2 text-xs font-black text-nest-teal xl:flex">
-            <ShieldCheck size={15} /> Reviewed before payment
-          </div>
           <Link
             href="/request"
             className="focus-ring rounded-full bg-nest-teal px-5 py-3 text-sm font-black text-white shadow-soft transition hover:-translate-y-0.5 hover:bg-nest-teal2 hover:shadow-lift"
