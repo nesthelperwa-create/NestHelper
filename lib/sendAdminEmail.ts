@@ -84,6 +84,20 @@ function isInternalAdminField(key: string) {
   ].includes(normalized);
 }
 
+function isPromoCodeField(key: string) {
+  const normalized = key.trim().toLowerCase().replaceAll(" ", "").replaceAll("_", "").replaceAll("-", "");
+  return ["promocode", "promo", "discountcode", "couponcode"].includes(normalized);
+}
+
+function getPromoCode(rows: Record<string, unknown>) {
+  for (const [key, value] of Object.entries(rows)) {
+    if (!isPromoCodeField(key)) continue;
+    const formatted = formatValue(value).trim();
+    if (formatted) return formatted;
+  }
+  return "";
+}
+
 function buildCustomerDetailsText(rows: Record<string, unknown>) {
   return Object.entries(rows)
     .filter(([key, value]) => !isInternalAdminField(key) && formatValue(value).trim().length > 0)
@@ -324,12 +338,17 @@ export async function sendAdminEmail({ subject, title, rows, adminPath = "/admin
   const from = process.env.NOTIFICATION_FROM_EMAIL || "NestHelper <onboarding@resend.dev>";
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
   const customerEmail = getReplyTo(rows);
-  const publicReplyEmail = getRowValue(rows, ["Customer reply-to", "customerReplyTo"]) || getPublicReplyEmail();
+  const publicReplyEmail = getPublicReplyEmail();
   const composeCustomerLink = getSafeCustomerComposeLink(customerEmail, title || "Your NestHelper request", rows, publicReplyEmail);
   const composeButtonLabel = getComposeButtonLabel(title || "Your NestHelper request", rows);
+  const promoCode = getPromoCode(rows);
   const toText = Array.isArray(to) ? to.join(", ") : String(to);
   const routeHtml = routeLabel || routedToText
     ? `<div style="margin:0 0 16px 0;padding:12px 14px;background:#f5fbf8;border:1px solid #d7eee4;border-radius:14px;box-sizing:border-box;overflow-wrap:anywhere;word-break:break-word;"><div style="font-size:12px;line-height:1.35;font-weight:700;color:#0f4f4a;margin:0 0 4px 0;text-transform:uppercase;letter-spacing:.08em;">Inbox route</div><div style="font-size:18px;line-height:1.35;font-weight:800;color:#123;margin:0;overflow-wrap:anywhere;word-break:break-word;">${escapeHtml(routeLabel || "NestHelper")}</div><div style="font-size:14px;line-height:1.5;color:#456;margin:4px 0 0 0;overflow-wrap:anywhere;word-break:break-word;">Website route: ${escapeHtml(routedToText || toText)}</div>${customerEmail ? `<div style="font-size:13px;line-height:1.5;color:#667;margin:4px 0 0 0;overflow-wrap:anywhere;word-break:break-word;">Customer email: ${escapeHtml(customerEmail)}</div>` : ""}</div>`
+    : "";
+
+  const promoAlertHtml = promoCode
+    ? `<div style="margin:0 0 16px 0;padding:14px 16px;background:#fff4d6;border:2px solid #d0961f;border-radius:16px;box-sizing:border-box;overflow-wrap:anywhere;word-break:break-word;"><div style="font-size:12px;line-height:1.35;font-weight:900;color:#7a4b00;margin:0 0 6px 0;text-transform:uppercase;letter-spacing:.1em;">⚠️ Promo code entered</div><div style="font-size:22px;line-height:1.25;font-weight:900;color:#3a2800;margin:0;overflow-wrap:anywhere;word-break:break-word;">${escapeHtml(promoCode)}</div><div style="font-size:14px;line-height:1.5;color:#5c4100;margin:8px 0 0 0;">Check the requested promo/beta/founding discount before sending a checkout or invoice link.</div></div>`
     : "";
 
   if (!apiKey) {
@@ -340,10 +359,19 @@ export async function sendAdminEmail({ subject, title, rows, adminPath = "/admin
   const resend = new Resend(apiKey);
   const rowsHtml = Object.entries(rows)
     .filter(([, value]) => formatValue(value).trim().length > 0)
-    .map(
-      ([key, value]) =>
-        `<div style="padding:10px 12px;border-bottom:1px solid #eee;box-sizing:border-box;overflow-wrap:anywhere;word-break:break-word;"><div style="font-size:12px;line-height:1.35;font-weight:700;color:#0f4f4a;margin:0 0 4px 0;overflow-wrap:anywhere;word-break:break-word;">${escapeHtml(key)}</div><div style="font-size:15px;line-height:1.5;color:#233;margin:0;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;">${escapeHtml(formatValue(value))}</div></div>`
-    )
+    .map(([key, value]) => {
+      const isPromoRow = isPromoCodeField(key);
+      const rowStyle = isPromoRow
+        ? "padding:12px 14px;border-bottom:1px solid #e7c55f;box-sizing:border-box;overflow-wrap:anywhere;word-break:break-word;background:#fff8df;border-left:6px solid #d0961f;"
+        : "padding:10px 12px;border-bottom:1px solid #eee;box-sizing:border-box;overflow-wrap:anywhere;word-break:break-word;";
+      const labelStyle = isPromoRow
+        ? "font-size:12px;line-height:1.35;font-weight:900;color:#7a4b00;margin:0 0 4px 0;overflow-wrap:anywhere;word-break:break-word;text-transform:uppercase;letter-spacing:.08em;"
+        : "font-size:12px;line-height:1.35;font-weight:700;color:#0f4f4a;margin:0 0 4px 0;overflow-wrap:anywhere;word-break:break-word;";
+      const valueStyle = isPromoRow
+        ? "font-size:20px;line-height:1.35;color:#3a2800;margin:0;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;font-weight:900;"
+        : "font-size:15px;line-height:1.5;color:#233;margin:0;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;";
+      return `<div style="${rowStyle}"><div style="${labelStyle}">${escapeHtml(isPromoRow ? "⚠️ Promo code" : key)}</div><div style="${valueStyle}">${escapeHtml(formatValue(value))}</div>${isPromoRow ? `<div style="font-size:13px;line-height:1.45;color:#5c4100;margin:6px 0 0 0;font-weight:700;">Verify the discount before sending a payment link.</div>` : ""}</div>`;
+    })
     .join("");
 
   const textRows = Object.entries(rows)
@@ -361,6 +389,7 @@ export async function sendAdminEmail({ subject, title, rows, adminPath = "/admin
         <div style="padding:22px 18px;box-sizing:border-box;overflow-wrap:anywhere;word-break:break-word;">
           <p style="margin:0 0 16px 0;color:#233;line-height:1.6;">${escapeHtml(intro || "A new public NestHelper form was submitted. Review it in the admin dashboard.")}</p>
           ${routeHtml}
+          ${promoAlertHtml}
           <div style="width:100%;box-sizing:border-box;border:1px solid #eee;border-radius:14px;overflow:hidden;">${rowsHtml}</div>
           ${composeCustomerLink ? `<p style="margin-top:22px;"><a href="${composeCustomerLink}" style="display:inline-block;background:#075c58;color:#fff;text-decoration:none;padding:12px 18px;border-radius:999px;font-weight:700;max-width:100%;box-sizing:border-box;white-space:normal;text-align:center;">${escapeHtml(composeButtonLabel)}</a></p>` : ""}
           <p style="margin-top:${composeCustomerLink ? "10px" : "22px"};"><a href="${siteUrl}${adminPath}" style="display:inline-block;background:#f4ecdc;color:#075c58;text-decoration:none;padding:12px 18px;border-radius:999px;font-weight:700;max-width:100%;box-sizing:border-box;white-space:normal;text-align:center;">Open Admin Dashboard</a></p>
@@ -373,7 +402,13 @@ export async function sendAdminEmail({ subject, title, rows, adminPath = "/admin
     ? `Inbox route: ${routeLabel || "NestHelper"}\nWebsite route: ${routedToText || toText}\n${customerEmail ? `Customer email: ${customerEmail}\n` : ""}\n`
     : "";
 
-  const text = `${title}\n\n${intro || "A new public NestHelper form was submitted."}\n\n${routeText}${textRows}${customerEmail ? `\n\nCompose customer reply: ${composeCustomerLink}` : ""}\nOpen admin dashboard: ${siteUrl}${adminPath}\n\nDo not reply directly to this admin alert when contacting a customer. Use the compose link so the reply includes the customer's original message/details without private admin dashboard links or internal notes.`;
+  const promoText = promoCode
+    ? `\n\nPROMO CODE ENTERED: ${promoCode}\nCheck the requested promo/beta/founding discount before sending a checkout or invoice link.\n`
+    : "";
 
-  return resend.emails.send({ from, to, subject, html, text, replyTo: publicReplyEmail });
+  const text = `${title}\n\n${intro || "A new public NestHelper form was submitted."}\n\n${routeText}${promoText}${textRows}${customerEmail ? `\n\nCompose customer reply: ${composeCustomerLink}` : ""}\nOpen admin dashboard: ${siteUrl}${adminPath}\n\nDo not reply directly to this admin alert when contacting a customer. Use the compose link so the reply includes the customer's original message/details without private admin dashboard links or internal notes.`;
+
+  const emailSubject = promoCode ? `PROMO CODE: ${promoCode} — ${subject}` : subject;
+
+  return resend.emails.send({ from, to, subject: emailSubject, html, text, replyTo: publicReplyEmail });
 }
