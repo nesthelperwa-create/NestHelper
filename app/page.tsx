@@ -36,7 +36,7 @@ export default function HomePage() {
               Reset the home. Reclaim the day.
             </h1>
             <p className="mx-auto mt-5 max-w-2xl text-base font-semibold leading-7 text-nest-ink/74 sm:text-xl sm:leading-8 lg:mx-0">
-              Trusted local help for busy parents — home resets, laundry rescue, errands, and family support without the awkward marketplace guessing game.
+              Parent Reset help for busy families — home resets, laundry rescue, errands, and household support with clear packages, reviewed requests, and follow-up.
             </p>
             <div className="mx-auto mt-7 flex max-w-sm flex-col gap-3 sm:max-w-none sm:flex-row lg:mx-0">
               <ButtonLink href="/request">Request Help</ButtonLink>
@@ -45,6 +45,11 @@ export default function HomePage() {
             <div id="service-area" className="mx-auto mt-6 inline-flex max-w-full scroll-mt-24 items-start gap-2 rounded-3xl border border-nest-gold/18 bg-white/78 px-4 py-2 text-left text-sm font-black leading-5 text-nest-teal shadow-sm backdrop-blur sm:items-center sm:rounded-full lg:mx-0">
               <MapPin size={16} className="shrink-0 text-nest-gold" />
               <span>Serving {siteConfig.serviceArea}</span>
+            </div>
+            <div className="mx-auto mt-4 flex max-w-2xl flex-wrap justify-center gap-2 lg:mx-0 lg:justify-start">
+              <TrustPill icon={<CheckCircle2 size={14} />} text="Washington business license approved" />
+              <TrustPill icon={<ShieldCheck size={14} />} text="Insured service model" />
+              <TrustPill icon={<ClipboardCheck size={14} />} text="Request reviewed before payment" />
             </div>
           </AnimatedSection>
 
@@ -72,14 +77,14 @@ export default function HomePage() {
             label="What NestHelper is"
             icon={<Heart size={15} />}
             title="Parent Reset help, coordinated for busy families."
-            description="NestHelper is a managed local parent-help service for families who need extra hands at home without random group posts, stranger DMs, or awkward negotiation. Send one request and we review the scope, timing, location, safety notes, and best-fit package before checkout."
+            description="NestHelper is a managed local parent-help service for families who need extra hands at home without having to coordinate everything themselves. Send one request and we review the scope, timing, location, safety notes, and best-fit package before checkout."
           />
 
           <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             <InfoCard icon={<Home size={20} />} title="Home reset help" text="Kitchen resets, tidying support, light household catch-up, and practical help when the day gets away from you." />
             <InfoCard icon={<Sparkles size={20} />} title="Laundry rescue" text="Pickup, dry weigh-in, wash/fold coordination, return delivery, and clear reusable bag expectations." />
             <InfoCard icon={<ClipboardCheck size={20} />} title="Errands and family support" text="Approved errands, pickups, returns, and household support with a reviewed scope before payment." />
-            <InfoCard icon={<MessageCircle size={20} />} title="One request, less chaos" text="No messy group posts or endless message threads. NestHelper helps coordinate the details." />
+            <InfoCard icon={<MessageCircle size={20} />} title="One request, less chaos" text="NestHelper helps coordinate the details so families are not stuck managing every message, scope question, and next step alone." />
           </div>
         </SectionShell>
       </AnimatedSection>
@@ -89,16 +94,16 @@ export default function HomePage() {
           <SectionIntro
             label="Why families choose NestHelper"
             icon={<ShieldCheck size={15} />}
-            title="A better choice than random unvetted help."
-            description="Instead of sorting through strangers, unclear pricing, and loose promises, families get an insured service with checked helpers, vetted partners, clear packages, request review, and follow-up."
+            title="More than a cheaper marketplace hire."
+            description="A lower-priced helper can look simple at first, but families are trusting someone with their home, routines, laundry, errands, and personal space. NestHelper is built for parents who want help that is reviewed, coordinated, insured, and accountable."
           />
 
           <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-            <ChoiceItem title="Insured local service" text="NestHelper is insured, so families are not relying only on a handshake with a random helper." />
-            <ChoiceItem title="Checked helpers" text="Helpers are reviewed before being matched to in-home family requests." />
-            <ChoiceItem title="Vetted partners" text="For partner-completed services, we review the provider instead of leaving parents to guess." />
-            <ChoiceItem title="Clear scope before payment" text="Timing, location, access, pets, safety notes, and package fit are reviewed before checkout." />
-            <ChoiceItem title="Clear packages and follow-up" text="You get clearer pricing, better boundaries, and coordination from request to completion." />
+            <ChoiceItem icon={<CheckCircle2 size={20} />} title="Business license approved" text="NestHelper operates as a real Washington business, not just a casual side arrangement." />
+            <ChoiceItem icon={<ShieldCheck size={20} />} title="Insured service" text="Families get an insured local service model instead of only a handshake agreement." />
+            <ChoiceItem icon={<Heart size={20} />} title="Checked helper model" text="In-home requests are matched through a reviewed helper or partner process." />
+            <ChoiceItem icon={<ClipboardCheck size={20} />} title="Clear scope before payment" text="Timing, location, access, pets, safety notes, and package fit are reviewed before checkout." />
+            <ChoiceItem icon={<MessageCircle size={20} />} title="Coordination + follow-up" text="NestHelper stays involved from request to completion so families are not left guessing." />
           </div>
         </SectionShell>
       </AnimatedSection>
@@ -201,9 +206,9 @@ export default function HomePage() {
         </div>
         <div className="self-center">
           <p className="pill-label w-fit"><ShieldCheck size={15} /> Trust & Safety</p>
-          <h2 className="text-balance mt-4 text-3xl font-black leading-tight text-nest-teal sm:text-5xl">Not a random helper board.</h2>
+          <h2 className="text-balance mt-4 text-3xl font-black leading-tight text-nest-teal sm:text-5xl">The trust standards behind every reset.</h2>
           <p className="mt-5 text-base font-medium leading-7 text-nest-ink/72 sm:text-lg sm:leading-8">
-            NestHelper is a managed local parent-help service. We coordinate requests, set expectations, use checked helpers or vetted partner providers, and follow up after service.
+            NestHelper uses a checked-helper and vetted-partner model with screening steps, service boundaries, and follow-up after service. The Trust & Safety page explains how we review helpers, partners, scope, and safety before matching work.
           </p>
           <div className="mt-7 grid gap-3 sm:grid-cols-2">
             {[
@@ -260,9 +265,18 @@ function SectionIntro({
   );
 }
 
+function TrustPill({ icon, text }: { icon: ReactNode; text: string }) {
+  return (
+    <div className="inline-flex items-center gap-2 rounded-full border border-nest-gold/18 bg-white/74 px-3 py-2 text-xs font-black text-nest-teal shadow-sm backdrop-blur transition hover:-translate-y-0.5 hover:border-nest-gold/35 hover:bg-white">
+      <span className="text-nest-gold">{icon}</span>
+      <span>{text}</span>
+    </div>
+  );
+}
+
 function InfoCard({ icon, title, text }: { icon: ReactNode; title: string; text: string }) {
   return (
-    <div className="h-full rounded-[1.9rem] border border-nest-gold/12 bg-white/88 p-5 shadow-sm">
+    <div className="h-full rounded-[1.9rem] border border-nest-gold/12 bg-white/88 p-5 shadow-sm transition hover:-translate-y-1 hover:border-nest-gold/28 hover:shadow-soft">
       <div className="mb-4 inline-flex rounded-2xl bg-nest-mint/35 p-3 text-nest-teal">{icon}</div>
       <h3 className="text-xl font-black text-nest-teal">{title}</h3>
       <p className="mt-3 text-sm font-medium leading-7 text-nest-ink/68">{text}</p>
@@ -270,11 +284,11 @@ function InfoCard({ icon, title, text }: { icon: ReactNode; title: string; text:
   );
 }
 
-function ChoiceItem({ title, text }: { title: string; text: string }) {
+function ChoiceItem({ icon, title, text }: { icon: ReactNode; title: string; text: string }) {
   return (
-    <div className="h-full rounded-[1.9rem] border border-nest-gold/12 bg-white/88 p-5 shadow-sm">
-      <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-2xl bg-nest-mint/35 text-nest-teal">
-        <CheckCircle2 size={20} />
+    <div className="group h-full rounded-[1.9rem] border border-nest-gold/12 bg-white/88 p-5 shadow-sm transition hover:-translate-y-1 hover:border-nest-gold/28 hover:shadow-soft">
+      <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-2xl bg-nest-mint/35 text-nest-teal transition group-hover:bg-nest-teal group-hover:text-white">
+        {icon}
       </div>
       <h3 className="text-base font-black uppercase tracking-[0.08em] text-nest-teal">{title}</h3>
       <p className="mt-3 text-sm font-medium leading-7 text-nest-ink/68">{text}</p>

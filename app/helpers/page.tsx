@@ -1,4 +1,4 @@
-import { CheckCircle2, HeartHandshake, Mail, ShieldCheck, Sparkles } from "lucide-react";
+import { HeartHandshake, Mail, ShieldCheck, Sparkles } from "lucide-react";
 import { PageHero } from "@/components/PageHero";
 import { ApplicationFormChooser } from "@/components/forms/ApplicationForms";
 import { siteConfig } from "@/lib/siteConfig";
@@ -47,9 +47,9 @@ export default function HelpersPage() {
 
 function InfoCard({ icon, title, text }: { icon: React.ReactNode; title: string; text: string }) {
   return (
-    <div className="rounded-[2rem] border border-nest-gold/14 bg-white/90 p-6 shadow-sm">
+    <div className="rounded-[2rem] border border-nest-gold/14 bg-white/90 p-6 shadow-sm transition hover:-translate-y-1 hover:border-nest-gold/28 hover:shadow-soft">
       <div className="mb-4 inline-flex rounded-2xl bg-nest-mint/35 p-3 text-nest-teal">{icon}</div>
-      <h2 className="flex items-center gap-2 text-xl font-black text-nest-teal"><CheckCircle2 size={19} /> {title}</h2>
+      <h3 className="text-xl font-black text-nest-teal">{title}</h3>
       <p className="mt-2 font-medium leading-7 text-nest-ink/70">{text}</p>
     </div>
   );

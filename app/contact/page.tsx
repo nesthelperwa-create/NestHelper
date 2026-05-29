@@ -44,7 +44,7 @@ export default function ContactPage() {
 
 function Info({ icon, label, children }: { icon: React.ReactNode; label: string; children: React.ReactNode }) {
   return (
-    <div className="flex gap-4 rounded-2xl bg-nest-cream p-4">
+    <div className="flex gap-4 rounded-2xl bg-nest-cream p-4 transition hover:-translate-y-0.5 hover:bg-white hover:shadow-sm">
       <div className="shrink-0 text-nest-teal">{icon}</div>
       <div className="min-w-0 flex-1">
         <div className="mb-1 text-sm font-black uppercase tracking-[0.18em] text-nest-gold">

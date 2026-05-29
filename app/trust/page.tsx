@@ -20,8 +20,8 @@ export default function TrustPage() {
     <>
       <PageHero
         eyebrow="Trust & Safety"
-        title="Screened. Coordinated. Accountable."
-        text="NestHelper is designed as a managed parent-help service with checked helpers, vetted partners, clear policies, and controlled service scope."
+        title="Trust standards for family homes."
+        text="NestHelper is designed as a managed parent-help service with checked helpers, vetted partners, clear policies, controlled service scope, and follow-up after service."
       />
 
       <section className="mx-auto grid max-w-7xl gap-8 px-4 py-14 sm:px-6 lg:grid-cols-[0.85fr_1.15fr] lg:px-8">
@@ -35,14 +35,18 @@ export default function TrustPage() {
               A trust badge for individual helpers who complete NestHelper’s screening and service-standard steps before working with families.
             </p>
           </div>
+          <div className="mt-4 grid gap-3 rounded-2xl border border-nest-gold/18 bg-white/82 p-5 text-sm font-black text-nest-ink/76 shadow-sm">
+            <div className="flex items-center gap-3"><ShieldCheck className="shrink-0 text-nest-teal" size={18} /> Washington business license approved</div>
+            <div className="flex items-center gap-3"><ShieldCheck className="shrink-0 text-nest-teal" size={18} /> Insured local service model</div>
+          </div>
         </div>
 
         <div className="grid gap-8">
           <div>
             <p className="pill-label w-fit"><ShieldCheck size={15} /> Standards</p>
-            <h2 className="text-balance mt-4 text-4xl font-black text-nest-teal sm:text-5xl">Built for parents who do not want to gamble on random help.</h2>
+            <h2 className="text-balance mt-4 text-4xl font-black text-nest-teal sm:text-5xl">Built for parents who want trust, scope, and accountability.</h2>
             <p className="mt-4 text-lg font-medium leading-8 text-nest-ink/72">
-              NestHelper coordinates the details, sets expectations, reviews scope, and uses checked helpers or vetted partner providers depending on the service.
+              NestHelper coordinates the details, sets expectations, reviews scope, and uses checked helpers or vetted partner providers depending on the service. This page is the proof behind the homepage promise.
             </p>
           </div>
 
@@ -55,7 +59,7 @@ export default function TrustPage() {
           </div>
 
           <div className="grid gap-5 md:grid-cols-3">
-            <TrustCard icon={<Users />} title="Managed service" text="Requests are reviewed and coordinated instead of leaving families to negotiate with strangers." />
+            <TrustCard icon={<Users />} title="Managed service" text="Requests are reviewed and coordinated before payment so families understand the plan." />
             <TrustCard icon={<HeartHandshake />} title="Parent fit" text="Services are designed around household support and parent relief, not generic gig work." />
             <TrustCard icon={<Sparkles />} title="Follow-up" text="After service, NestHelper checks in so families have a point of accountability." />
           </div>
@@ -85,7 +89,7 @@ export default function TrustPage() {
 
 function TrustCard({ icon, title, text }: { icon: React.ReactNode; title: string; text: string }) {
   return (
-    <div className="rounded-[2rem] border border-nest-gold/14 bg-white p-6 shadow-sm">
+    <div className="rounded-[2rem] border border-nest-gold/14 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:border-nest-gold/28 hover:shadow-soft">
       <div className="mb-4 inline-flex rounded-2xl bg-nest-mint/35 p-3 text-nest-teal">{icon}</div>
       <h3 className="text-xl font-black text-nest-teal">{title}</h3>
       <p className="mt-2 text-sm font-medium leading-6 text-nest-ink/70">{text}</p>

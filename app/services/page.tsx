@@ -11,7 +11,7 @@ export default function ServicesPage() {
       <PageHero
         eyebrow="Services & Pricing"
         title="Clear packages. Real accountability."
-        text="Choose a parent-reset package, submit the details, and NestHelper reviews scope, timing, service area, safety notes, and pricing before sending payment."
+        text="Choose a parent-reset package, submit the details, and NestHelper reviews scope, timing, service area, safety notes, and pricing before sending a secure payment link."
       />
 
       <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
@@ -45,13 +45,13 @@ export default function ServicesPage() {
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {[
                 "Request review before checkout",
-                "Service coordination",
                 "Clear scope and prep notes",
+                "Service coordination",
+                "Insured local service model",
                 "Secure payment link",
                 "Follow-up after service",
-                "No awkward negotiation",
               ].map((x) => (
-                <div key={x} className="flex gap-3 rounded-2xl bg-nest-cream p-4 font-black text-nest-ink/76">
+                <div key={x} className="flex gap-3 rounded-2xl bg-nest-cream p-4 font-black text-nest-ink/76 transition hover:-translate-y-0.5 hover:bg-white hover:shadow-sm">
                   <CheckCircle2 className="shrink-0 text-nest-teal" size={19} /> {x}
                 </div>
               ))}
@@ -97,7 +97,7 @@ export default function ServicesPage() {
 
 function LaundryStep({ icon, title, text }: { icon: ReactNode; title: string; text: string }) {
   return (
-    <div className="rounded-[2rem] border border-rose-100 bg-rose-50/65 p-6">
+    <div className="rounded-[2rem] border border-rose-100 bg-rose-50/65 p-6 transition hover:-translate-y-1 hover:shadow-sm">
       <div className="mb-4 inline-flex rounded-2xl bg-white p-3 text-rose-700 shadow-sm">{icon}</div>
       <h3 className="text-xl font-black text-nest-teal">{title}</h3>
       <p className="mt-2 font-medium leading-7 text-nest-ink/70">{text}</p>
