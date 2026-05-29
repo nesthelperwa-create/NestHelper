@@ -8,6 +8,7 @@ import { Menu, X, ShieldCheck } from "lucide-react";
 import { siteConfig } from "@/lib/siteConfig";
 
 const nav = [
+  { href: "/", label: "Home" },
   { href: "/services", label: "Services" },
   { href: "/trust", label: "Trust" },
   { href: "/helpers", label: "Helpers" },
@@ -44,7 +45,7 @@ export function Header() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`rounded-full px-4 py-2 text-sm font-black transition ${
+                className={`rounded-full px-3 py-2 text-sm font-black transition xl:px-4 ${
                   active ? "bg-nest-teal text-white shadow-sm" : "text-nest-ink/72 hover:bg-nest-mint/35 hover:text-nest-teal"
                 }`}
               >
@@ -78,7 +79,6 @@ export function Header() {
       {open && (
         <div className="border-t border-nest-gold/15 bg-[#fffaf2] px-4 pb-5 pt-2 shadow-soft lg:hidden">
           <nav className="mx-auto flex max-w-7xl flex-col gap-2" aria-label="Mobile navigation">
-            <Link onClick={() => setOpen(false)} href="/" className="rounded-2xl px-4 py-3 font-black text-nest-ink hover:bg-white">Home</Link>
             {nav.map((item) => (
               <Link key={item.href} onClick={() => setOpen(false)} href={item.href} className="rounded-2xl px-4 py-3 font-black text-nest-ink hover:bg-white">
                 {item.label}
