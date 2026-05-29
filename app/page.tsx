@@ -158,17 +158,17 @@ export default function HomePage() {
               <GivingBackCard
                 icon={<Heart size={30} />}
                 title="Community care"
-                text="We give back to local churches, families, and community needs."
+                textLines={["We give back to local", "churches, families, and", "community needs."]}
               />
               <GivingBackCard
                 icon={<Home size={30} />}
                 title="Families first"
-                text="Every booking supports a business built around serving families well."
+                textLines={["Every booking supports a", "business built around", "serving families well."]}
               />
               <GivingBackCard
                 icon={<Sparkles size={30} />}
                 title="Faithful service"
-                text="We aim to work with honesty, care, and excellence in every home we serve."
+                textLines={["We aim to work with", "honesty, care, and excellence", "in every home we serve."]}
               />
             </div>
           </SectionShell>
@@ -342,16 +342,22 @@ function ProcessStepCard({
   );
 }
 
-function GivingBackCard({ icon, title, text }: { icon: ReactNode; title: string; text: string }) {
+function GivingBackCard({ icon, title, textLines }: { icon: ReactNode; title: string; textLines: string[] }) {
   return (
-    <div className="h-full rounded-[1.9rem] border border-nest-gold/12 bg-white/92 p-6 text-center shadow-sm transition hover:-translate-y-1 hover:border-nest-gold/28 hover:shadow-soft">
-      <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full border border-nest-gold/12 bg-nest-mint/38 text-nest-teal shadow-sm">
+    <div className="flex h-full min-h-[20rem] flex-col items-center rounded-[1.9rem] border border-nest-gold/12 bg-white/92 p-6 text-center shadow-sm transition hover:-translate-y-1 hover:border-nest-gold/28 hover:shadow-soft">
+      <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-full border border-nest-gold/12 bg-nest-mint/38 text-nest-teal shadow-sm">
         {icon}
       </div>
-      <div className="mx-auto mt-6 h-0.5 w-16 rounded-full bg-nest-gold/85" />
-      <h3 className="mt-5 text-2xl font-black text-nest-teal">{title}</h3>
-      <p className="mx-auto mt-3 max-w-[18rem] text-sm font-medium leading-7 text-nest-ink/68">
-        {text}
+      <div className="mt-6 h-0.5 w-16 shrink-0 rounded-full bg-nest-gold/85" />
+      <h3 className="mt-5 flex min-h-[2rem] items-center justify-center text-2xl font-black leading-tight text-nest-teal">
+        {title}
+      </h3>
+      <p className="mx-auto mt-3 min-h-[5.25rem] max-w-[18rem] text-sm font-medium leading-7 text-nest-ink/68">
+        {textLines.map((line) => (
+          <span key={line} className="block">
+            {line}
+          </span>
+        ))}
       </p>
     </div>
   );
