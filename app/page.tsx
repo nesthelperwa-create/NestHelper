@@ -134,12 +134,12 @@ export default function HomePage() {
                 Every reset helps more than one home.
               </h2>
               <p className="mt-5 text-base font-medium leading-7 text-nest-ink/72 sm:text-lg sm:leading-8">
-                NestHelper sets aside 10% of net income to give back to local churches, families, and community needs. We believe good work should serve the home in front of us and help strengthen the community around us.
+                NestHelper gives back to local churches, families, and community needs as part of how we do business. We believe good work should serve the home in front of us and help strengthen the community around us.
               </p>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-3">
-              <GivingBackCard icon={<CheckCircle2 size={20} />} title="10% set aside" text="A clear portion of net income is dedicated to giving back." />
+              <GivingBackCard icon={<CheckCircle2 size={20} />} title="Community care" text="A portion of our work supports local churches, families, and community needs." />
               <GivingBackCard icon={<Home size={20} />} title="Families first" text="Support is directed toward local family and household needs." />
               <GivingBackCard icon={<Sparkles size={20} />} title="Faithful service" text="Built on honest work, care, and responsible stewardship." />
             </div>
