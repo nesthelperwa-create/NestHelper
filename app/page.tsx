@@ -46,10 +46,12 @@ export default function HomePage() {
               <MapPin size={16} className="shrink-0 text-nest-gold" />
               <span>Serving {siteConfig.serviceArea}</span>
             </div>
-            <div className="mx-auto mt-4 flex max-w-2xl flex-wrap justify-center gap-2 lg:mx-0 lg:justify-start">
-              <TrustPill icon={<CheckCircle2 size={14} />} text="Washington business license approved" />
-              <TrustPill icon={<ShieldCheck size={14} />} text="Insured service model" />
-              <TrustPill icon={<ClipboardCheck size={14} />} text="Request reviewed before payment" />
+            <div className="mx-auto mt-5 max-w-2xl lg:mx-0">
+              <div className="grid gap-2 rounded-[1.6rem] border border-nest-gold/14 bg-white/56 p-2 shadow-sm backdrop-blur sm:grid-cols-3">
+                <TrustPill icon={<CheckCircle2 size={14} />} text="Washington business license approved" />
+                <TrustPill icon={<ShieldCheck size={14} />} text="Insured service model" />
+                <TrustPill icon={<ClipboardCheck size={14} />} text="Request reviewed before payment" />
+              </div>
             </div>
           </AnimatedSection>
 
@@ -267,8 +269,8 @@ function SectionIntro({
 
 function TrustPill({ icon, text }: { icon: ReactNode; text: string }) {
   return (
-    <div className="inline-flex items-center gap-2 rounded-full border border-nest-gold/18 bg-white/74 px-3 py-2 text-xs font-black text-nest-teal shadow-sm backdrop-blur transition hover:-translate-y-0.5 hover:border-nest-gold/35 hover:bg-white">
-      <span className="text-nest-gold">{icon}</span>
+    <div className="flex h-full min-h-[2.75rem] items-center justify-center gap-2 rounded-[1.15rem] bg-white/78 px-3 py-2 text-center text-xs font-black leading-4 text-nest-teal transition hover:-translate-y-0.5 hover:bg-white hover:shadow-sm">
+      <span className="shrink-0 text-nest-gold">{icon}</span>
       <span>{text}</span>
     </div>
   );
