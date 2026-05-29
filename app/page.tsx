@@ -157,25 +157,25 @@ export default function HomePage() {
             <CenteredSectionIntro
               label="Giving Back"
               icon={<Heart size={15} />}
-              title="Practical help with a bigger purpose."
-              description="NestHelper is built to serve the family in front of us and, as we grow, support local needs around us. Every booking helps provide household relief while helping build a business that can give back with honesty, care, and excellence."
+              title="A local business with a community heart."
+              description="NestHelper is here to serve busy families, but the mission is bigger than one booking. As we grow, we plan to give back locally through practical family relief, neighborhood partnerships, and reliable helper opportunities in the community we serve."
             />
 
             <div className="mt-10 grid gap-4 md:grid-cols-3">
               <GivingBackCard
                 icon={<Heart size={30} />}
-                title="Local care"
-                textLines={["As NestHelper grows,", "we plan to support", "local family needs."]}
+                title="Family relief"
+                textLines={["As bookings grow,", "we plan to support", "local families in need."]}
               />
               <GivingBackCard
                 icon={<Home size={30} />}
-                title="Families first"
-                textLines={["Every reset is meant", "to help one household", "breathe a little easier."]}
+                title="Community partners"
+                textLines={["We want to work with", "local groups, schools,", "churches, and nonprofits."]}
               />
               <GivingBackCard
                 icon={<Sparkles size={30} />}
-                title="Work with purpose"
-                textLines={["We aim to show up", "with honesty, respect,", "care, and excellence."]}
+                title="Local opportunity"
+                textLines={["Every booking helps", "build trusted local work", "and practical support."]}
               />
             </div>
           </SectionShell>
