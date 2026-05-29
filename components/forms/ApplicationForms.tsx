@@ -60,7 +60,7 @@ export function ApplicationFormChooser() {
 
         </div>
 
-        <div className="grid items-start gap-5 p-5 sm:p-6 lg:grid-cols-2 lg:p-8">
+        <div className="grid items-stretch gap-5 p-5 sm:p-6 lg:grid-cols-2 lg:p-8">
           {applicationOptions.map((option) => {
             const isSelected = selected === option.key;
             return (
@@ -72,7 +72,7 @@ export function ApplicationFormChooser() {
                 whileTap={{ scale: 0.975 }}
                 transition={{ type: "spring", stiffness: 420, damping: 28 }}
                 onClick={() => setSelected(option.key)}
-                className={`group relative flex min-h-[315px] cursor-pointer flex-col overflow-hidden rounded-[1.75rem] border-2 p-5 text-left shadow-sm outline-none transition-colors duration-200 ease-out focus-visible:ring-4 focus-visible:ring-nest-gold/25 sm:p-6 ${
+                className={`group relative flex h-full min-h-[340px] cursor-pointer flex-col overflow-hidden rounded-[1.75rem] border-2 p-5 text-left shadow-sm outline-none transition-colors duration-200 ease-out focus-visible:ring-4 focus-visible:ring-nest-gold/25 sm:p-6 ${
                   isSelected
                     ? "border-nest-gold bg-nest-cream ring-4 ring-nest-gold/15"
                     : "border-nest-gold/20 bg-white hover:border-nest-gold/70 hover:bg-nest-cream/45"
@@ -126,7 +126,7 @@ export function ApplicationFormChooser() {
 
                 <motion.div
                   layout
-                  className={`relative z-10 mt-6 flex w-full items-center justify-center rounded-full px-5 py-4 text-sm font-black shadow-soft transition-colors ${
+                  className={`relative z-10 mt-auto flex min-h-[56px] w-full items-center justify-center rounded-full px-5 py-4 text-center text-sm font-black shadow-soft transition-colors ${
                     isSelected
                       ? "bg-nest-gold text-white"
                       : "bg-nest-teal text-white group-hover:bg-nest-teal2 group-hover:tracking-wide"
