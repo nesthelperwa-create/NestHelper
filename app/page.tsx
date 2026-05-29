@@ -158,19 +158,19 @@ export default function HomePage() {
               label="Giving Back"
               icon={<Heart size={15} />}
               title="A local business with a community heart."
-              description="NestHelper is here to serve busy families, but the mission is bigger than one booking. As we grow, we plan to give back locally through practical family relief, neighborhood partnerships, and reliable helper opportunities in the community we serve."
+              description="NestHelper is here to serve busy families, but the mission is bigger than one booking. As we grow, our goal is to set aside a portion of what we earn to support local family relief, community charities, neighborhood partners, and reliable helper opportunities in the community we serve."
             />
 
             <div className="mt-10 grid gap-4 md:grid-cols-3">
               <GivingBackCard
                 icon={<Heart size={30} />}
                 title="Family relief"
-                textLines={["As bookings grow,", "we plan to support", "local families in need."]}
+                textLines={["As revenue allows,", "we plan to support", "local families in need."]}
               />
               <GivingBackCard
                 icon={<Home size={30} />}
-                title="Community partners"
-                textLines={["We want to work with", "local groups, schools,", "churches, and nonprofits."]}
+                title="Community giving"
+                textLines={["Our goal is to give", "to local charities, churches,", "schools, and nonprofits."]}
               />
               <GivingBackCard
                 icon={<Sparkles size={30} />}
