@@ -44,7 +44,7 @@ export async function saveSubmission({ collection, payload, emailSubject, emailT
       },
       adminPath,
       // Send the admin notice to the routed NestHelper alias for sorting/routing.
-      // Replies stay customer-facing through hello@, not the alias.
+      // Customer confirmations use the matching customer-facing alias below.
       to: routedAliasEmail,
       routeLabel,
       routedToText: routedAliasEmail,

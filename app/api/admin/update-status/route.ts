@@ -6,6 +6,7 @@ import { getFirebaseAdminDb } from "@/lib/firebaseAdmin";
 import { isAllowedAdminEmail } from "@/lib/adminAuth";
 import { sendStatusUpdateEmail } from "@/lib/sendStatusUpdateEmail";
 import { services } from "@/lib/services";
+import { getCustomerReplyEmail, type SubmissionCollection } from "@/lib/emailRouting";
 
 const allowedCollections = new Set(["serviceRequests", "helperApplications", "partnerApplications", "contactMessages"]);
 
@@ -79,6 +80,7 @@ export async function POST(request: Request) {
             preferredDate: getString(data.preferredDate),
             preferredWindow: getString(data.preferredWindow),
             city: getString(data.city),
+            replyToEmail: getCustomerReplyEmail(collection as SubmissionCollection, data),
           });
           emailSent = true;
           updatePayload.lastStatusEmailSentAt = FieldValue.serverTimestamp();

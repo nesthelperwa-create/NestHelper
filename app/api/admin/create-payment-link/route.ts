@@ -8,6 +8,7 @@ import { getFirebaseAdminDb } from "@/lib/firebaseAdmin";
 import { services } from "@/lib/services";
 import { getStripePriceId, normalizeStripePriceMode } from "@/lib/stripePriceMap";
 import { sendPaymentLinkEmail } from "@/lib/sendPaymentLinkEmail";
+import { getPaymentReplyEmail } from "@/lib/emailRouting";
 
 export const runtime = "nodejs";
 
@@ -110,6 +111,7 @@ export async function POST(request: Request) {
           preferredDate: getString(data.preferredDate),
           preferredWindow: getString(data.preferredWindow),
           city: getString(data.city),
+          replyToEmail: getPaymentReplyEmail({ service: serviceId, selectedServiceTitle: serviceTitle }),
         });
         emailSent = true;
       } catch (error) {

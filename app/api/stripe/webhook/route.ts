@@ -6,7 +6,7 @@ import { getFirebaseAdminDb } from "@/lib/firebaseAdmin";
 import { services } from "@/lib/services";
 import { sendAdminEmail } from "@/lib/sendAdminEmail";
 import { sendPaymentReceivedEmail } from "@/lib/sendPaymentReceivedEmail";
-import { emailAliases } from "@/lib/emailRouting";
+import { emailAliases, getPaymentReplyEmail } from "@/lib/emailRouting";
 
 export const runtime = "nodejs";
 
@@ -175,6 +175,7 @@ export async function POST(request: Request) {
               amountTotal: session.amount_total,
               currency: session.currency,
               paymentStatus,
+              replyToEmail: getPaymentReplyEmail({ service: getString(existingData.service), selectedServiceTitle: serviceTitle, paymentStatus }),
             });
 
             await requestRef.update({

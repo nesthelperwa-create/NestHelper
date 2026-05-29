@@ -1,5 +1,5 @@
 import { Resend } from "resend";
-import { getPublicReplyEmail } from "./emailRouting";
+import { getPaymentReplyEmail } from "./emailRouting";
 
 type PaymentLinkEmailInput = {
   to: string;
@@ -11,6 +11,7 @@ type PaymentLinkEmailInput = {
   preferredDate?: string;
   preferredWindow?: string;
   city?: string;
+  replyToEmail?: string;
 };
 
 function escapeHtml(value: unknown) {
@@ -42,10 +43,11 @@ export async function sendPaymentLinkEmail({
   preferredDate,
   preferredWindow,
   city,
+  replyToEmail,
 }: PaymentLinkEmailInput) {
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.NOTIFICATION_FROM_EMAIL || "NestHelper <onboarding@resend.dev>";
-  const customerSupportEmail = getPublicReplyEmail();
+  const customerSupportEmail = replyToEmail || getPaymentReplyEmail({ serviceTitle });
   const replyTo = customerSupportEmail;
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 

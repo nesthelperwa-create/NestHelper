@@ -15,15 +15,15 @@ export const emailAliases = {
   contact: process.env.NESTHELPER_CONTACT_EMAIL || "contact@nesthelperwa.com",
 } as const;
 
-type SubmissionCollection = "serviceRequests" | "helperApplications" | "partnerApplications" | "contactMessages";
+export type SubmissionCollection = "serviceRequests" | "helperApplications" | "partnerApplications" | "contactMessages";
 
 function clean(value: unknown) {
   return typeof value === "string" ? value.trim().toLowerCase() : "";
 }
 
 export function getPublicReplyEmail() {
-  // Keep one customer-facing reply address. Website/admin routing can still use aliases,
-  // but customer replies should go back to the main NestHelper inbox.
+  // Default general customer-facing reply address. Specific forms/emails can use
+  // service aliases such as booking@, laundry@, billing@, helpers@, or partners@.
   return emailAliases.hello;
 }
 
@@ -79,9 +79,23 @@ export function getSubmissionNotificationEmail(collection: SubmissionCollection,
   return process.env.ADMIN_NOTIFICATION_EMAIL || emailAliases.hello;
 }
 
-export function getCustomerReplyEmail(_collection: SubmissionCollection, _payload: Record<string, unknown>) {
-  // Do not use routed aliases as customer reply addresses. Use hello@ for all manual replies.
+export function getCustomerReplyEmail(collection: SubmissionCollection, payload: Record<string, unknown>) {
+  if (collection === "serviceRequests") {
+    return isLaundryService(payload) ? emailAliases.laundry : emailAliases.booking;
+  }
+
+  if (collection === "helperApplications") return emailAliases.helpers;
+  if (collection === "partnerApplications") return emailAliases.partners;
+
+  if (collection === "contactMessages") {
+    return getContactTopicEmail(payload.topic || payload.subject);
+  }
+
   return getPublicReplyEmail();
+}
+
+export function getPaymentReplyEmail(payload: Record<string, unknown>) {
+  return isLaundryService(payload) ? emailAliases.laundry : emailAliases.billing;
 }
 
 

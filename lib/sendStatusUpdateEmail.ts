@@ -1,5 +1,5 @@
 import { Resend } from "resend";
-import { getPublicReplyEmail } from "./emailRouting";
+import { getCustomerReplyEmail } from "./emailRouting";
 
 type SendStatusUpdateEmailInput = {
   to: string;
@@ -11,6 +11,7 @@ type SendStatusUpdateEmailInput = {
   preferredDate?: string;
   preferredWindow?: string;
   city?: string;
+  replyToEmail?: string;
 };
 
 function escapeHtml(value: unknown) {
@@ -135,10 +136,11 @@ export async function sendStatusUpdateEmail({
   preferredDate,
   preferredWindow,
   city,
+  replyToEmail,
 }: SendStatusUpdateEmailInput) {
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.NOTIFICATION_FROM_EMAIL || "NestHelper <onboarding@resend.dev>";
-  const replyTo = getPublicReplyEmail();
+  const replyTo = replyToEmail || getCustomerReplyEmail("serviceRequests", { serviceTitle });
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
   if (!apiKey || !to || !to.includes("@")) {

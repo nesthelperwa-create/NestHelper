@@ -1,5 +1,5 @@
 import { Resend } from "resend";
-import { getPublicReplyEmail } from "./emailRouting";
+import { getPaymentReplyEmail } from "./emailRouting";
 
 type SendPaymentReceivedEmailInput = {
   to: string;
@@ -9,6 +9,7 @@ type SendPaymentReceivedEmailInput = {
   amountTotal?: number | null;
   currency?: string | null;
   paymentStatus?: string;
+  replyToEmail?: string;
 };
 
 function escapeHtml(value: unknown) {
@@ -73,11 +74,11 @@ function getPaymentCopy(paymentStatus: string) {
   };
 }
 
-export async function sendPaymentReceivedEmail({ to, customerName, requestId, serviceTitle, amountTotal, currency, paymentStatus = "Paid" }: SendPaymentReceivedEmailInput) {
+export async function sendPaymentReceivedEmail({ to, customerName, requestId, serviceTitle, amountTotal, currency, paymentStatus = "Paid", replyToEmail }: SendPaymentReceivedEmailInput) {
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.NOTIFICATION_FROM_EMAIL || "NestHelper <onboarding@resend.dev>";
   const normalizedPaymentStatus = paymentStatus.toLowerCase();
-  const replyTo = getPublicReplyEmail();
+  const replyTo = replyToEmail || getPaymentReplyEmail({ serviceTitle, paymentStatus });
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
   if (!apiKey || !to || !to.includes("@")) {
