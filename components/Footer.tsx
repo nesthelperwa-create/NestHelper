@@ -50,21 +50,19 @@ export function Footer() {
             { href: "/", label: "Home" },
             { href: "/services", label: "Services & Pricing" },
             { href: "/trust", label: "Trust & Safety" },
+            { href: "/helpers", label: "Helpers & Partners" },
             { href: "/faq", label: "FAQ" },
             { href: "/contact", label: "Contact" },
-            { href: "/helpers", label: "Helpers & Partners" },
           ]}
         />
 
         <FooterColumn
-          title="Start Here"
+          title="Explore"
           links={[
             { href: "/request", label: "Request Help" },
             { href: "/#how-it-works", label: "How It Works" },
             { href: "/#giving-back", label: "Giving Back" },
             { href: "/#service-area", label: "Service Area" },
-            { href: "/faq", label: "FAQ" },
-            { href: "/contact", label: "Contact" },
           ]}
         />
 
