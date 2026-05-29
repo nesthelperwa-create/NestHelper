@@ -1,4 +1,3 @@
-import { HelpCircle } from "lucide-react";
 import { PageHero } from "@/components/PageHero";
 
 const faqs = [
@@ -18,15 +17,6 @@ export default function FAQPage() {
     <>
       <PageHero eyebrow="FAQ" title="Clear answers before you request help." text="Simple policies, clear expectations, and answers to common pricing, trust, laundry, and service-scope questions." />
       <section className="mx-auto max-w-4xl px-4 py-14 sm:px-6 lg:px-8">
-        <div className="mb-8 rounded-[2rem] border border-nest-gold/18 bg-white/90 p-6 shadow-soft">
-          <div className="flex gap-4">
-            <div className="shrink-0 rounded-2xl bg-nest-mint/40 p-3 text-nest-teal"><HelpCircle /></div>
-            <div>
-              <h2 className="text-2xl font-black text-nest-teal">Quick note</h2>
-              <p className="mt-2 font-medium leading-7 text-nest-ink/70">NestHelper reviews each request before checkout so pricing, safety, service area, and scope are clear before you pay.</p>
-            </div>
-          </div>
-        </div>
         <div className="grid gap-4">
           {faqs.map(([q, a]) => (
             <details key={q} className="group rounded-3xl border border-nest-gold/12 bg-white/90 p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-nest-gold/28 open:shadow-soft">
