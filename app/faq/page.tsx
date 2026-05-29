@@ -32,7 +32,7 @@ export default function FAQPage() {
             <details key={q} className="group rounded-3xl border border-nest-gold/12 bg-white/90 p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-nest-gold/28 open:shadow-soft">
               <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-xl font-black text-nest-teal">
                 {q}
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-nest-cream text-nest-gold transition group-open:rotate-45">+</span>
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-nest-cream text-nest-gold transition group-hover:bg-nest-teal group-hover:text-white group-open:rotate-45 group-open:bg-nest-teal group-open:text-white">+</span>
               </summary>
               <p className="mt-4 leading-7 text-nest-ink/72">{a}</p>
             </details>

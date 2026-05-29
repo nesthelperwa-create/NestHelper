@@ -23,15 +23,19 @@ export default function HelpersPage() {
 
       <section className="mx-auto max-w-7xl px-4 pt-8 sm:px-6 lg:px-8">
         <div className="grid gap-4 rounded-[2rem] border border-nest-gold/16 bg-white/90 p-5 shadow-sm sm:grid-cols-2 sm:p-6">
-          <a href={`mailto:${siteConfig.emails.helpers}`} className="flex items-start gap-3 rounded-2xl bg-nest-cream p-4 transition hover:-translate-y-0.5 hover:shadow-sm">
-            <Mail className="mt-1 shrink-0 text-nest-teal" size={19} />
+          <a href={`mailto:${siteConfig.emails.helpers}`} className="group flex items-start gap-3 rounded-2xl bg-nest-cream p-4 transition hover:-translate-y-0.5 hover:bg-white hover:shadow-sm">
+            <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-nest-teal shadow-sm transition group-hover:bg-nest-teal group-hover:text-white">
+              <Mail size={18} />
+            </span>
             <span>
               <span className="block text-sm font-black uppercase tracking-[0.18em] text-nest-gold">Helper questions</span>
               <span className="mt-1 block break-all font-black text-nest-teal">{siteConfig.emails.helpers}</span>
             </span>
           </a>
-          <a href={`mailto:${siteConfig.emails.partners}`} className="flex items-start gap-3 rounded-2xl bg-nest-cream p-4 transition hover:-translate-y-0.5 hover:shadow-sm">
-            <Mail className="mt-1 shrink-0 text-nest-teal" size={19} />
+          <a href={`mailto:${siteConfig.emails.partners}`} className="group flex items-start gap-3 rounded-2xl bg-nest-cream p-4 transition hover:-translate-y-0.5 hover:bg-white hover:shadow-sm">
+            <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-nest-teal shadow-sm transition group-hover:bg-nest-teal group-hover:text-white">
+              <Mail size={18} />
+            </span>
             <span>
               <span className="block text-sm font-black uppercase tracking-[0.18em] text-nest-gold">Partner questions</span>
               <span className="mt-1 block break-all font-black text-nest-teal">{siteConfig.emails.partners}</span>
@@ -47,8 +51,8 @@ export default function HelpersPage() {
 
 function InfoCard({ icon, title, text }: { icon: React.ReactNode; title: string; text: string }) {
   return (
-    <div className="rounded-[2rem] border border-nest-gold/14 bg-white/90 p-6 shadow-sm transition hover:-translate-y-1 hover:border-nest-gold/28 hover:shadow-soft">
-      <div className="mb-4 inline-flex rounded-2xl bg-nest-mint/35 p-3 text-nest-teal">{icon}</div>
+    <div className="group rounded-[2rem] border border-nest-gold/14 bg-white/90 p-6 shadow-sm transition hover:-translate-y-1 hover:border-nest-gold/28 hover:shadow-soft">
+      <div className="mb-4 inline-flex rounded-2xl bg-nest-mint/35 p-3 text-nest-teal transition group-hover:bg-nest-teal group-hover:text-white">{icon}</div>
       <h3 className="text-xl font-black text-nest-teal">{title}</h3>
       <p className="mt-2 font-medium leading-7 text-nest-ink/70">{text}</p>
     </div>

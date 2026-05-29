@@ -223,7 +223,11 @@ export function ServiceCard({ service }: { service: Service }) {
             onClick={toggleDetails}
             aria-expanded={open}
             aria-controls={detailsId}
-            className="focus-ring shrink-0 rounded-full border border-nest-gold/18 bg-nest-cream p-2.5 text-nest-teal shadow-sm transition hover:-translate-y-0.5 hover:border-nest-gold/55 hover:bg-white"
+            className={`focus-ring shrink-0 rounded-full border p-2.5 shadow-sm transition hover:-translate-y-0.5 ${
+              open
+                ? "border-nest-teal bg-nest-teal text-white"
+                : "border-nest-gold/18 bg-nest-cream text-nest-teal hover:border-nest-gold/55 hover:bg-white"
+            }`}
           >
             <ChevronDown size={18} className={`transition ${open ? "rotate-180" : ""}`} />
           </button>
@@ -275,7 +279,9 @@ export function ServiceCard({ service }: { service: Service }) {
                 <ul className="mt-3 grid gap-2.5 text-sm text-nest-ink/76">
                   {[...service.details, ...(extra?.extraDetails || [])].map((detail) => (
                     <li key={detail} className="flex gap-2">
-                      <CheckCircle2 className="mt-0.5 shrink-0 text-nest-teal" size={18} />
+                      <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-nest-mint/45 text-nest-teal">
+                        <CheckCircle2 size={15} />
+                      </span>
                       <span>{detail}</span>
                     </li>
                   ))}
@@ -321,7 +327,11 @@ export function ServiceCard({ service }: { service: Service }) {
             onClick={toggleDetails}
             aria-expanded={open}
             aria-controls={detailsId}
-            className="focus-ring mb-3 inline-flex w-full items-center justify-center gap-2 rounded-full border border-nest-teal/20 bg-white px-5 py-3 font-black text-nest-teal shadow-sm transition hover:-translate-y-0.5 hover:bg-nest-mint/25"
+            className={`focus-ring mb-3 inline-flex w-full items-center justify-center gap-2 rounded-full border px-5 py-3 font-black shadow-sm transition hover:-translate-y-0.5 ${
+              open
+                ? "border-nest-teal bg-nest-teal text-white"
+                : "border-nest-teal/20 bg-white text-nest-teal hover:bg-nest-mint/25"
+            }`}
           >
             {open ? "Hide details" : "View package details"}
             <ChevronDown size={18} className={`transition ${open ? "rotate-180" : ""}`} />

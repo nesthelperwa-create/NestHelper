@@ -36,8 +36,8 @@ export default function TrustPage() {
             </p>
           </div>
           <div className="mt-4 grid gap-3 rounded-2xl border border-nest-gold/18 bg-white/82 p-5 text-sm font-black text-nest-ink/76 shadow-sm">
-            <div className="flex items-center gap-3"><ShieldCheck className="shrink-0 text-nest-teal" size={18} /> Washington business license approved</div>
-            <div className="flex items-center gap-3"><ShieldCheck className="shrink-0 text-nest-teal" size={18} /> Insured local service model</div>
+            <ProofLine text="Washington business license approved" />
+            <ProofLine text="Insured local service model" />
           </div>
         </div>
 
@@ -52,8 +52,11 @@ export default function TrustPage() {
 
           <div className="grid gap-4 sm:grid-cols-2">
             {standards.map((item) => (
-              <div key={item} className="flex gap-3 rounded-2xl border border-nest-gold/12 bg-white p-5 font-black text-nest-ink/78 shadow-sm">
-                <ShieldCheck className="shrink-0 text-nest-teal" /> {item}
+              <div key={item} className="group flex gap-3 rounded-2xl border border-nest-gold/12 bg-white p-5 font-black text-nest-ink/78 shadow-sm transition hover:-translate-y-0.5 hover:border-nest-gold/28 hover:shadow-sm">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-nest-mint/35 text-nest-teal transition group-hover:bg-nest-teal group-hover:text-white">
+                  <ShieldCheck size={18} />
+                </span>
+                {item}
               </div>
             ))}
           </div>
@@ -87,10 +90,21 @@ export default function TrustPage() {
   );
 }
 
+function ProofLine({ text }: { text: string }) {
+  return (
+    <div className="group flex items-center gap-3">
+      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-nest-mint/35 text-nest-teal transition group-hover:bg-nest-teal group-hover:text-white">
+        <ShieldCheck size={17} />
+      </span>
+      <span>{text}</span>
+    </div>
+  );
+}
+
 function TrustCard({ icon, title, text }: { icon: React.ReactNode; title: string; text: string }) {
   return (
-    <div className="rounded-[2rem] border border-nest-gold/14 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:border-nest-gold/28 hover:shadow-soft">
-      <div className="mb-4 inline-flex rounded-2xl bg-nest-mint/35 p-3 text-nest-teal">{icon}</div>
+    <div className="group rounded-[2rem] border border-nest-gold/14 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:border-nest-gold/28 hover:shadow-soft">
+      <div className="mb-4 inline-flex rounded-2xl bg-nest-mint/35 p-3 text-nest-teal transition group-hover:bg-nest-teal group-hover:text-white">{icon}</div>
       <h3 className="text-xl font-black text-nest-teal">{title}</h3>
       <p className="mt-2 text-sm font-medium leading-6 text-nest-ink/70">{text}</p>
     </div>

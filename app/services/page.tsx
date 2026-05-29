@@ -51,8 +51,11 @@ export default function ServicesPage() {
                 "Secure payment link",
                 "Follow-up after service",
               ].map((x) => (
-                <div key={x} className="flex gap-3 rounded-2xl bg-nest-cream p-4 font-black text-nest-ink/76 transition hover:-translate-y-0.5 hover:bg-white hover:shadow-sm">
-                  <CheckCircle2 className="shrink-0 text-nest-teal" size={19} /> {x}
+                <div key={x} className="group flex gap-3 rounded-2xl bg-nest-cream p-4 font-black text-nest-ink/76 transition hover:-translate-y-0.5 hover:bg-white hover:shadow-sm">
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white text-nest-teal shadow-sm transition group-hover:bg-nest-teal group-hover:text-white">
+                    <CheckCircle2 size={17} />
+                  </span>
+                  {x}
                 </div>
               ))}
             </div>
@@ -77,7 +80,7 @@ export default function ServicesPage() {
           <div className="border-t border-nest-gold/12 p-7 sm:p-8">
             <h3 className="text-2xl font-black text-nest-teal">Laundry add-ons</h3>
             <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {laundryAddOns.map((x) => <div key={x} className="rounded-2xl bg-nest-cream p-4 font-bold text-nest-ink/75">{x}</div>)}
+              {laundryAddOns.map((x) => <div key={x} className="rounded-2xl bg-nest-cream p-4 font-bold text-nest-ink/75 transition hover:-translate-y-0.5 hover:bg-white hover:shadow-sm">{x}</div>)}
             </div>
             <div className="mt-6 rounded-3xl border border-nest-gold/20 bg-nest-mint/20 p-6">
               <h3 className="text-2xl font-black text-nest-teal">Reusable return bags</h3>
@@ -97,8 +100,8 @@ export default function ServicesPage() {
 
 function LaundryStep({ icon, title, text }: { icon: ReactNode; title: string; text: string }) {
   return (
-    <div className="rounded-[2rem] border border-rose-100 bg-rose-50/65 p-6 transition hover:-translate-y-1 hover:shadow-sm">
-      <div className="mb-4 inline-flex rounded-2xl bg-white p-3 text-rose-700 shadow-sm">{icon}</div>
+    <div className="group rounded-[2rem] border border-rose-100 bg-rose-50/65 p-6 transition hover:-translate-y-1 hover:shadow-sm">
+      <div className="mb-4 inline-flex rounded-2xl bg-white p-3 text-rose-700 shadow-sm transition group-hover:bg-rose-700 group-hover:text-white">{icon}</div>
       <h3 className="text-xl font-black text-nest-teal">{title}</h3>
       <p className="mt-2 font-medium leading-7 text-nest-ink/70">{text}</p>
     </div>

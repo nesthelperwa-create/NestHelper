@@ -42,15 +42,15 @@ export default function HomePage() {
               <ButtonLink href="/request">Request Help</ButtonLink>
               <ButtonLink href="/services" variant="secondary">View Services</ButtonLink>
             </div>
-            <div id="service-area" className="mx-auto mt-6 inline-flex max-w-full scroll-mt-24 items-start gap-2 rounded-3xl border border-nest-gold/18 bg-white/78 px-4 py-2 text-left text-sm font-black leading-5 text-nest-teal shadow-sm backdrop-blur sm:items-center sm:rounded-full lg:mx-0">
-              <MapPin size={16} className="shrink-0 text-nest-gold" />
-              <span>Serving {siteConfig.serviceArea}</span>
-            </div>
-            <div className="mx-auto mt-5 max-w-2xl lg:mx-0">
-              <div className="grid gap-2 rounded-[1.6rem] border border-nest-gold/14 bg-white/56 p-2 shadow-sm backdrop-blur sm:grid-cols-3">
-                <TrustPill icon={<CheckCircle2 size={14} />} text="Washington business license approved" />
-                <TrustPill icon={<ShieldCheck size={14} />} text="Insured service model" />
-                <TrustPill icon={<ClipboardCheck size={14} />} text="Request reviewed before payment" />
+            <div className="mx-auto mt-6 max-w-2xl rounded-[1.8rem] border border-nest-gold/16 bg-white/70 p-4 text-left shadow-sm backdrop-blur lg:mx-0">
+              <div className="grid gap-3 sm:grid-cols-3">
+                <TrustProofItem icon={<CheckCircle2 size={15} />} text="Washington business license approved" />
+                <TrustProofItem icon={<ShieldCheck size={15} />} text="Insured service model" />
+                <TrustProofItem icon={<ClipboardCheck size={15} />} text="Request reviewed before payment" />
+              </div>
+              <div id="service-area" className="mt-4 flex scroll-mt-24 items-start gap-2 border-t border-nest-gold/14 pt-3 text-sm font-black leading-5 text-nest-teal sm:items-center">
+                <MapPin size={16} className="mt-0.5 shrink-0 text-nest-gold sm:mt-0" />
+                <span>Serving {siteConfig.serviceArea}</span>
               </div>
             </div>
           </AnimatedSection>
@@ -157,25 +157,25 @@ export default function HomePage() {
             <CenteredSectionIntro
               label="Giving Back"
               icon={<Heart size={15} />}
-              title="Serving families well and supporting the community around us."
-              description="NestHelper gives back to local churches, families, and community needs as part of how we do business. Every booking helps us serve one household while helping us bless others too."
+              title="Practical help with a bigger purpose."
+              description="NestHelper is built to serve the family in front of us and, as we grow, support local needs around us. Every booking helps provide household relief while helping build a business that can give back with honesty, care, and excellence."
             />
 
             <div className="mt-10 grid gap-4 md:grid-cols-3">
               <GivingBackCard
                 icon={<Heart size={30} />}
-                title="Community care"
-                textLines={["We give back to local", "churches, families, and", "community needs."]}
+                title="Local care"
+                textLines={["As NestHelper grows,", "we plan to support", "local family needs."]}
               />
               <GivingBackCard
                 icon={<Home size={30} />}
                 title="Families first"
-                textLines={["Every booking supports a", "business built around", "serving families well."]}
+                textLines={["Every reset is meant", "to help one household", "breathe a little easier."]}
               />
               <GivingBackCard
                 icon={<Sparkles size={30} />}
-                title="Faithful service"
-                textLines={["We aim to work with", "honesty, care, and excellence", "in every home we serve."]}
+                title="Work with purpose"
+                textLines={["We aim to show up", "with honesty, respect,", "care, and excellence."]}
               />
             </div>
           </SectionShell>
@@ -221,8 +221,11 @@ export default function HomePage() {
               "Partner-vetted providers",
               "Follow-up after service",
             ].map((item) => (
-              <div key={item} className="flex gap-3 rounded-2xl border border-nest-gold/12 bg-white p-4 font-black text-nest-ink/78 shadow-sm">
-                <ShieldCheck className="shrink-0 text-nest-teal" /> {item}
+              <div key={item} className="group flex gap-3 rounded-2xl border border-nest-gold/12 bg-white p-4 font-black text-nest-ink/78 shadow-sm transition hover:-translate-y-0.5 hover:border-nest-gold/28 hover:shadow-sm">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-nest-mint/35 text-nest-teal transition group-hover:bg-nest-teal group-hover:text-white">
+                  <ShieldCheck size={18} />
+                </span>
+                {item}
               </div>
             ))}
           </div>
@@ -267,10 +270,12 @@ function SectionIntro({
   );
 }
 
-function TrustPill({ icon, text }: { icon: ReactNode; text: string }) {
+function TrustProofItem({ icon, text }: { icon: ReactNode; text: string }) {
   return (
-    <div className="flex h-full min-h-[2.75rem] items-center justify-center gap-2 rounded-[1.15rem] bg-white/78 px-3 py-2 text-center text-xs font-black leading-4 text-nest-teal transition hover:-translate-y-0.5 hover:bg-white hover:shadow-sm">
-      <span className="shrink-0 text-nest-gold">{icon}</span>
+    <div className="group flex h-full items-center gap-3 rounded-[1.15rem] px-1 py-1 text-sm font-black leading-5 text-nest-teal transition hover:-translate-y-0.5">
+      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-nest-mint/45 text-nest-teal transition group-hover:bg-nest-teal group-hover:text-white">
+        {icon}
+      </span>
       <span>{text}</span>
     </div>
   );
@@ -278,8 +283,8 @@ function TrustPill({ icon, text }: { icon: ReactNode; text: string }) {
 
 function InfoCard({ icon, title, text }: { icon: ReactNode; title: string; text: string }) {
   return (
-    <div className="h-full rounded-[1.9rem] border border-nest-gold/12 bg-white/88 p-5 shadow-sm transition hover:-translate-y-1 hover:border-nest-gold/28 hover:shadow-soft">
-      <div className="mb-4 inline-flex rounded-2xl bg-nest-mint/35 p-3 text-nest-teal">{icon}</div>
+    <div className="group h-full rounded-[1.9rem] border border-nest-gold/12 bg-white/88 p-5 shadow-sm transition hover:-translate-y-1 hover:border-nest-gold/28 hover:shadow-soft">
+      <div className="mb-4 inline-flex rounded-2xl bg-nest-mint/35 p-3 text-nest-teal transition group-hover:bg-nest-teal group-hover:text-white">{icon}</div>
       <h3 className="text-xl font-black text-nest-teal">{title}</h3>
       <p className="mt-3 text-sm font-medium leading-7 text-nest-ink/68">{text}</p>
     </div>
@@ -339,8 +344,8 @@ function ProcessStepCard({
   text: string;
 }) {
   return (
-    <div className="relative z-10 h-full rounded-[1.9rem] border border-nest-gold/12 bg-white/92 p-6 text-center shadow-sm transition hover:-translate-y-1 hover:border-nest-gold/28 hover:shadow-soft">
-      <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border border-nest-gold/12 bg-nest-mint/38 text-nest-teal shadow-sm">
+    <div className="group relative z-10 h-full rounded-[1.9rem] border border-nest-gold/12 bg-white/92 p-6 text-center shadow-sm transition hover:-translate-y-1 hover:border-nest-gold/28 hover:shadow-soft">
+      <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border border-nest-gold/12 bg-nest-mint/38 text-nest-teal shadow-sm transition group-hover:border-nest-teal/20 group-hover:bg-nest-teal group-hover:text-white">
         {icon}
       </div>
       <div className="mx-auto -mt-2 flex h-11 w-11 items-center justify-center rounded-full bg-nest-teal text-lg font-black text-white shadow-soft ring-4 ring-white">
@@ -360,8 +365,8 @@ function ProcessStepCard({
 
 function GivingBackCard({ icon, title, textLines }: { icon: ReactNode; title: string; textLines: string[] }) {
   return (
-    <div className="flex h-full min-h-[20rem] flex-col items-center rounded-[1.9rem] border border-nest-gold/12 bg-white/92 p-6 text-center shadow-sm transition hover:-translate-y-1 hover:border-nest-gold/28 hover:shadow-soft">
-      <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-full border border-nest-gold/12 bg-nest-mint/38 text-nest-teal shadow-sm">
+    <div className="group flex h-full min-h-[20rem] flex-col items-center rounded-[1.9rem] border border-nest-gold/12 bg-white/92 p-6 text-center shadow-sm transition hover:-translate-y-1 hover:border-nest-gold/28 hover:shadow-soft">
+      <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-full border border-nest-gold/12 bg-nest-mint/38 text-nest-teal shadow-sm transition group-hover:border-nest-teal/20 group-hover:bg-nest-teal group-hover:text-white">
         {icon}
       </div>
       <div className="mt-6 h-0.5 w-16 shrink-0 rounded-full bg-nest-gold/85" />
