@@ -2,8 +2,8 @@ import type { ReactNode } from "react";
 import Image from "next/image";
 import {
   CheckCircle2,
+  CalendarClock,
   ClipboardCheck,
-  CreditCard,
   Heart,
   Home,
   MapPin,
@@ -11,7 +11,6 @@ import {
   ShieldCheck,
   Sparkles,
   Star,
-  UserCheck,
 } from "lucide-react";
 import { AnimatedSection } from "@/components/AnimatedSection";
 import { ButtonLink } from "@/components/ui/ButtonLink";
@@ -104,46 +103,75 @@ export default function HomePage() {
         </SectionShell>
       </AnimatedSection>
 
-      <AnimatedSection id="how-it-works" className="mx-auto max-w-7xl scroll-mt-24 px-4 py-10 sm:px-6 lg:px-8">
-        <SectionShell>
-          <SectionIntro
-            label="How it works"
-            icon={<Star size={15} />}
-            title="Simple request. Reviewed first. Then we get to work."
-            description="We review the details before payment so each visit starts with clearer expectations, safer boundaries, and a plan that makes sense for the family."
-          />
+      <AnimatedSection className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+        <div id="how-it-works" className="scroll-mt-24">
+          <SectionShell>
+            <CenteredSectionIntro
+              label="How it works"
+              icon={<Star size={15} />}
+              title="Simple steps. Clear communication. Family-first help."
+              description="We review the details before payment so each visit starts with clearer expectations, safer boundaries, and a plan that makes sense for the family."
+            />
 
-          <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            <StepCard icon={<MessageCircle size={20} />} title="1. Request help" text="Tell us what is piling up, your location, timing, pets, access, and other details." />
-            <StepCard icon={<ShieldCheck size={20} />} title="2. We review" text="We check service area, availability, safety notes, and whether the package is the right fit." />
-            <StepCard icon={<CreditCard size={20} />} title="3. Secure checkout" text="After approval, we send a secure payment link or invoice so you know the request is confirmed." />
-            <StepCard icon={<Home size={20} />} title="4. We get to work" text="A checked helper or vetted partner completes the job, and NestHelper follows up after service." />
-          </div>
-        </SectionShell>
+            <div className="relative mt-10 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+              <div className="pointer-events-none absolute left-[18%] right-[18%] top-[4.6rem] hidden border-t-2 border-dotted border-nest-gold/50 xl:block" />
+              <ProcessStepCard
+                step="1"
+                icon={<ClipboardCheck size={31} />}
+                title="Tell us what you need"
+                text="Submit a request for home reset help, laundry rescue, errands, or family support."
+              />
+              <ProcessStepCard
+                step="2"
+                icon={<ShieldCheck size={31} />}
+                title="We review the request"
+                text="We check scope, location, timing, pets or access, and helper fit before confirming."
+              />
+              <ProcessStepCard
+                step="3"
+                icon={<CalendarClock size={31} />}
+                title="We confirm the details"
+                text="If approved, we send next steps, scheduling details, and payment information."
+              />
+              <ProcessStepCard
+                step="4"
+                icon={<Home size={31} />}
+                title="Your reset gets done"
+                text="A checked helper or vetted partner completes the work with clear expectations and follow-up."
+              />
+            </div>
+          </SectionShell>
+        </div>
       </AnimatedSection>
 
-      <AnimatedSection id="giving-back" className="mx-auto max-w-7xl scroll-mt-24 px-4 py-10 sm:px-6 lg:px-8">
-        <div className="relative overflow-hidden rounded-[2.5rem] border border-nest-gold/18 bg-white/80 p-5 shadow-soft backdrop-blur sm:p-8 lg:p-10">
-          <div className="absolute -right-20 -top-20 h-72 w-72 rounded-full bg-nest-gold/14 blur-3xl" />
-          <div className="absolute -bottom-24 -left-24 h-72 w-72 rounded-full bg-nest-mint/55 blur-3xl" />
+      <AnimatedSection className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+        <div id="giving-back" className="scroll-mt-24">
+          <SectionShell>
+            <CenteredSectionIntro
+              label="Giving Back"
+              icon={<Heart size={15} />}
+              title="Serving families well and supporting the community around us."
+              description="NestHelper gives back to local churches, families, and community needs as part of how we do business. Every booking helps us serve one household while helping us bless others too."
+            />
 
-          <div className="relative grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
-            <div>
-              <p className="pill-label w-fit"><Heart size={15} /> Giving Back</p>
-              <h2 className="text-balance mt-4 text-3xl font-black leading-tight text-nest-teal sm:text-5xl">
-                Every reset helps more than one home.
-              </h2>
-              <p className="mt-5 text-base font-medium leading-7 text-nest-ink/72 sm:text-lg sm:leading-8">
-                NestHelper gives back to local churches, families, and community needs as part of how we do business. We believe good work should serve the home in front of us and help strengthen the community around us.
-              </p>
+            <div className="mt-10 grid gap-4 md:grid-cols-3">
+              <GivingBackCard
+                icon={<Heart size={30} />}
+                title="Community care"
+                text="We give back to local churches, families, and community needs."
+              />
+              <GivingBackCard
+                icon={<Home size={30} />}
+                title="Families first"
+                text="Every booking supports a business built around serving families well."
+              />
+              <GivingBackCard
+                icon={<Sparkles size={30} />}
+                title="Faithful service"
+                text="We aim to work with honesty, care, and excellence in every home we serve."
+              />
             </div>
-
-            <div className="grid gap-4 sm:grid-cols-3">
-              <GivingBackCard icon={<CheckCircle2 size={20} />} title="Community care" text="A portion of our work supports local churches, families, and community needs." />
-              <GivingBackCard icon={<Home size={20} />} title="Families first" text="Support is directed toward local family and household needs." />
-              <GivingBackCard icon={<Sparkles size={20} />} title="Faithful service" text="Built on honest work, care, and responsible stewardship." />
-            </div>
-          </div>
+          </SectionShell>
         </div>
       </AnimatedSection>
 
@@ -254,22 +282,77 @@ function ChoiceItem({ title, text }: { title: string; text: string }) {
   );
 }
 
-function GivingBackCard({ icon, title, text }: { icon: ReactNode; title: string; text: string }) {
+function CenteredSectionIntro({
+  label,
+  icon,
+  title,
+  description,
+}: {
+  label: string;
+  icon: ReactNode;
+  title: string;
+  description: string;
+}) {
   return (
-    <div className="h-full rounded-[1.75rem] border border-nest-gold/14 bg-white/90 p-5 shadow-sm">
-      <div className="mb-4 inline-flex rounded-2xl bg-nest-cream p-3 text-nest-gold">{icon}</div>
-      <h3 className="text-base font-black uppercase tracking-[0.08em] text-nest-teal">{title}</h3>
-      <p className="mt-3 text-sm font-medium leading-6 text-nest-ink/68">{text}</p>
+    <div className="mx-auto max-w-4xl text-center">
+      <p className="pill-label mx-auto w-fit">{icon} {label}</p>
+      <h2 className="text-balance mt-4 text-3xl font-black leading-tight text-nest-teal sm:text-5xl">
+        {title}
+      </h2>
+      <div className="mx-auto mt-5 flex max-w-[12rem] items-center justify-center gap-3 text-nest-gold">
+        <span className="h-px flex-1 bg-nest-gold/45" />
+        <Heart size={16} fill="currentColor" />
+        <span className="h-px flex-1 bg-nest-gold/45" />
+      </div>
+      <p className="mx-auto mt-5 max-w-3xl text-base font-medium leading-7 text-nest-ink/70 sm:text-lg sm:leading-8">
+        {description}
+      </p>
     </div>
   );
 }
 
-function StepCard({ icon, title, text }: { icon: ReactNode; title: string; text: string }) {
+function ProcessStepCard({
+  step,
+  icon,
+  title,
+  text,
+}: {
+  step: string;
+  icon: ReactNode;
+  title: string;
+  text: string;
+}) {
   return (
-    <div className="h-full rounded-[1.9rem] border border-nest-gold/12 bg-white/88 p-5 shadow-sm transition hover:-translate-y-1">
-      <div className="mb-4 inline-flex rounded-2xl bg-nest-mint/35 p-3 text-nest-teal">{icon}</div>
-      <h3 className="text-xl font-black text-nest-teal">{title}</h3>
-      <p className="mt-3 text-sm font-medium leading-7 text-nest-ink/68">{text}</p>
+    <div className="relative z-10 h-full rounded-[1.9rem] border border-nest-gold/12 bg-white/92 p-6 text-center shadow-sm transition hover:-translate-y-1 hover:border-nest-gold/28 hover:shadow-soft">
+      <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border border-nest-gold/12 bg-nest-mint/38 text-nest-teal shadow-sm">
+        {icon}
+      </div>
+      <div className="mx-auto -mt-2 flex h-11 w-11 items-center justify-center rounded-full bg-nest-teal text-lg font-black text-white shadow-soft ring-4 ring-white">
+        {step}
+      </div>
+      <div className="mx-auto mt-4 h-px w-28 bg-nest-mint" />
+      <h3 className="text-balance mt-5 text-xl font-black leading-tight text-nest-teal sm:text-2xl">
+        {title}
+      </h3>
+      <div className="mx-auto mt-4 h-0.5 w-12 rounded-full bg-nest-gold/85" />
+      <p className="mx-auto mt-4 max-w-[16rem] text-sm font-medium leading-7 text-nest-ink/68">
+        {text}
+      </p>
+    </div>
+  );
+}
+
+function GivingBackCard({ icon, title, text }: { icon: ReactNode; title: string; text: string }) {
+  return (
+    <div className="h-full rounded-[1.9rem] border border-nest-gold/12 bg-white/92 p-6 text-center shadow-sm transition hover:-translate-y-1 hover:border-nest-gold/28 hover:shadow-soft">
+      <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full border border-nest-gold/12 bg-nest-mint/38 text-nest-teal shadow-sm">
+        {icon}
+      </div>
+      <div className="mx-auto mt-6 h-0.5 w-16 rounded-full bg-nest-gold/85" />
+      <h3 className="mt-5 text-2xl font-black text-nest-teal">{title}</h3>
+      <p className="mx-auto mt-3 max-w-[18rem] text-sm font-medium leading-7 text-nest-ink/68">
+        {text}
+      </p>
     </div>
   );
 }
