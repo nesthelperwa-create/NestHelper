@@ -33,14 +33,26 @@ function getAdminEmail() {
   return process.env.ADMIN_NOTIFICATION_EMAIL || process.env.NESTHELPER_HELLO_EMAIL || process.env.NEXT_PUBLIC_CONTACT_EMAIL || "hello@nesthelperwa.com";
 }
 
+function extractEmailAddress(value: unknown) {
+  const text = typeof value === "string" ? value.trim() : "";
+  const match = text.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i);
+  return match ? match[0].toLowerCase() : "";
+}
+
 function getReplyTo(rows: Record<string, unknown>) {
   const possibleEmail = rows.email || rows.Email || rows.customerEmail || rows["Customer email"] || rows.contactEmail;
-  const email = typeof possibleEmail === "string" ? possibleEmail.trim() : "";
-  return email.includes("@") ? email : undefined;
+  const email = extractEmailAddress(possibleEmail);
+  return email || undefined;
 }
 
 function encodeMailto(value: string) {
   return encodeURIComponent(value);
+}
+
+function encodeMailtoRecipient(email: string) {
+  // Keep the recipient as a plain email address. Some email apps display
+  // "email <email>" if they receive a display-name style recipient.
+  return extractEmailAddress(email);
 }
 
 function getCustomerName(rows: Record<string, unknown>) {
@@ -301,7 +313,9 @@ function getSafeCustomerComposeLink(customerEmail: string | undefined, subject: 
   if (!customerEmail) return "";
   const body = buildCustomerComposeBody(subject, rows, publicReplyEmail);
   const replySubject = getCustomerReplySubject(subject, rows);
-  return `mailto:${encodeURIComponent(customerEmail)}?subject=${encodeMailto(replySubject)}&body=${encodeURIComponent(body)}`;
+  const recipient = encodeMailtoRecipient(customerEmail);
+  if (!recipient) return "";
+  return `mailto:${recipient}?subject=${encodeMailto(replySubject)}&body=${encodeURIComponent(body)}`;
 }
 
 export async function sendAdminEmail({ subject, title, rows, adminPath = "/admin", intro, to: routedTo, routeLabel, routedToText }: AdminEmailInput) {
