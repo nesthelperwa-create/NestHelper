@@ -36,8 +36,8 @@ export default function TrustPage() {
             </p>
           </div>
           <div className="mt-4 grid gap-3 rounded-2xl border border-nest-gold/18 bg-white/82 p-5 text-sm font-black text-nest-ink/76 shadow-sm">
-            <ProofLine text="Washington business license approved" />
-            <ProofLine text="Insured local service model" />
+            <ProofLine text="Washington business licensed" />
+            <ProofLine text="Insured local service" />
           </div>
         </div>
 

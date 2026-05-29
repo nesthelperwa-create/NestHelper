@@ -44,8 +44,8 @@ export default function HomePage() {
             </div>
             <div className="mx-auto mt-6 max-w-2xl rounded-[1.8rem] border border-nest-gold/16 bg-white/70 p-4 text-left shadow-sm backdrop-blur lg:mx-0">
               <div className="grid gap-3 sm:grid-cols-3">
-                <TrustProofItem icon={<CheckCircle2 size={15} />} text="Washington business license approved" />
-                <TrustProofItem icon={<ShieldCheck size={15} />} text="Insured service model" />
+                <TrustProofItem icon={<CheckCircle2 size={15} />} text="Washington business licensed" />
+                <TrustProofItem icon={<ShieldCheck size={15} />} text="Insured local service" />
                 <TrustProofItem icon={<ClipboardCheck size={15} />} text="Request reviewed before payment" />
               </div>
               <div id="service-area" className="mt-4 flex scroll-mt-24 items-start gap-2 border-t border-nest-gold/14 pt-3 text-sm font-black leading-5 text-nest-teal sm:items-center">
@@ -101,8 +101,8 @@ export default function HomePage() {
           />
 
           <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-            <ChoiceItem icon={<CheckCircle2 size={20} />} title="Business license approved" text="NestHelper operates as a real Washington business, not just a casual side arrangement." />
-            <ChoiceItem icon={<ShieldCheck size={20} />} title="Insured service" text="Families get an insured local service model instead of only a handshake agreement." />
+            <ChoiceItem icon={<CheckCircle2 size={20} />} title="Washington business licensed" text="NestHelper operates as a real local Washington business, not just a casual side arrangement." />
+            <ChoiceItem icon={<ShieldCheck size={20} />} title="Insured local service" text="Families get support from an insured local service instead of only a handshake agreement." />
             <ChoiceItem icon={<Heart size={20} />} title="Checked helper model" text="In-home requests are matched through a reviewed helper or partner process." />
             <ChoiceItem icon={<ClipboardCheck size={20} />} title="Clear scope before payment" text="Timing, location, access, pets, safety notes, and package fit are reviewed before checkout." />
             <ChoiceItem icon={<MessageCircle size={20} />} title="Coordination + follow-up" text="NestHelper stays involved from request to completion so families are not left guessing." />

@@ -47,7 +47,7 @@ export default function ServicesPage() {
                 "Request review before checkout",
                 "Clear scope and prep notes",
                 "Service coordination",
-                "Insured local service model",
+                "Insured local service",
                 "Secure payment link",
                 "Follow-up after service",
               ].map((x) => (
