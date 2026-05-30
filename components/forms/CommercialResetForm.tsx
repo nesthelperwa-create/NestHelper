@@ -220,7 +220,7 @@ export function CommercialResetForm() {
         <Field label="City / community"><input className="input" required autoComplete="address-level2" value={form.city} onChange={(e) => update("city", e.target.value)} /></Field>
       </Section>
 
-      <Section title="3. Space and schedule" description="These details help us estimate labor time, quote range, and whether a walkthrough is needed first.">
+      <Section title="3. Space and schedule" description="These details help us understand the scope, prepare a clear quote range, and decide whether a walkthrough is needed first.">
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Approx. square footage">
             <select className="input" required value={form.squareFootage} onChange={(e) => update("squareFootage", e.target.value)}>

@@ -58,17 +58,17 @@ const pricingCards = [
   {
     title: "Small recurring spaces",
     price: "From $149/visit",
-    text: "A competitive starting point for smaller offices, studios, salons, and common-area resets. Final quote depends on bathrooms, foot traffic, timing, and scope.",
+    text: "A competitive starting point for smaller offices, studios, salons, and common-area resets. Final quote is presented as a clear per-visit price based on bathrooms, foot traffic, timing, and scope.",
   },
   {
     title: "Weekly recurring plans",
     price: "Often $595+/month",
-    text: "Useful planning range for small spaces that need reliable weekly service. More frequent visits can lower the per-visit square-foot rate.",
+    text: "Useful planning range for small spaces that need reliable weekly service. Recurring plans are quoted up front so businesses know the expected monthly cost.",
   },
   {
     title: "One-time commercial reset",
     price: "From $225",
-    text: "For first-time catch-up, move-in prep, office reset, or heavier cleaning before recurring service begins. Photos help us quote fairly.",
+    text: "For first-time catch-up, move-in prep, office reset, or heavier cleaning before recurring service begins. Photos help us quote a clear job price fairly.",
   },
 ];
 
@@ -77,7 +77,7 @@ const squareFootRanges = [
   { frequency: "2x per week", range: "$0.11–$0.17 / sq ft", note: "Helpful for restrooms, client-facing rooms, and higher traffic spaces." },
   { frequency: "3x+ per week", range: "$0.09–$0.15 / sq ft", note: "Lower per-visit rate when the space stays on a steady routine." },
   { frequency: "One-time light reset", range: "$0.22–$0.35 / sq ft", note: "For lighter first-time cleaning, move-in readiness, or catch-up resets." },
-  { frequency: "Heavier first-time reset", range: "$0.35–$0.50 / sq ft", note: "Used when the space needs extra labor before routine service makes sense." },
+  { frequency: "Heavier first-time reset", range: "$0.35–$0.50 / sq ft", note: "Used when the space needs more catch-up work before routine service makes sense." },
 ];
 
 const addOnPricing = [
@@ -126,7 +126,7 @@ export default function CommercialResetPage() {
 
           <div className="grid gap-4">
             <MiniProof icon={<ShieldCheck size={20} />} title="Insured local service" text="Commercial requests are reviewed for scope, schedule, address, and safety before any work is confirmed." />
-            <MiniProof icon={<ClipboardCheck size={20} />} title="Quote-first process" text="Pricing is customized around square footage, bathrooms, frequency, product preferences, access, and condition." />
+            <MiniProof icon={<ClipboardCheck size={20} />} title="Quote-first process" text="Pricing is customized around square footage, bathrooms, frequency, product preferences, access, and condition, then quoted clearly before work begins." />
             <MiniProof icon={<CalendarClock size={20} />} title="Recurring or one-time" text="Request a one-time reset, weekly service, or more frequent routine cleaning depending on the space." />
             <MiniProof icon={<SprayCan size={20} />} title="Product preferences" text="Non-toxic, low-odor, or fragrance-free options can be requested where appropriate for the surface and scope." />
           </div>
@@ -207,8 +207,14 @@ export default function CommercialResetPage() {
               icon={<BadgeDollarSign size={15} />}
               label="Pricing Guidance"
               title="Competitive ranges, reviewed before anything is confirmed."
-              text="Commercial pricing stays quote-based because square footage, bathrooms, flooring, access, after-hours timing, current condition, product preferences, and optional photos can change the real labor cost. These ranges are planning guidance, not guaranteed flat pricing."
+              text="Commercial pricing stays quote-based because square footage, bathrooms, flooring, access, after-hours timing, current condition, product preferences, and optional photos can change the final scope. Customers receive a clear quoted visit price or recurring plan before service begins — not an open-ended hourly clock. These ranges are planning guidance, not guaranteed flat pricing."
             />
+          </div>
+
+          <div className="border-t border-nest-gold/12 bg-white/78 px-6 py-5 text-center sm:px-8 lg:px-10">
+            <p className="mx-auto max-w-3xl text-sm font-black leading-6 text-nest-teal">
+              Trust note: commercial quotes are not open-ended hourly billing. You approve a clear visit price, recurring plan, or separately quoted add-on before service is scheduled.
+            </p>
           </div>
 
           <div className="grid gap-4 p-6 sm:p-8 lg:grid-cols-3 lg:p-10">

@@ -212,19 +212,19 @@ export const policies: Policy[] = [
   {
     slug: "commercial-pricing-addons",
     title: "Commercial Pricing & Add-On Policy",
-    intro: "Commercial Reset pricing is quote-based so small businesses can compare clear planning ranges without being locked into the wrong flat price.",
+    intro: "Commercial Reset pricing is quote-based so small businesses can compare clear planning ranges without worrying about an open-ended hourly clock.",
     sections: [
       {
         heading: "Quote-first pricing",
-        body: "Commercial prices shown on the website are planning ranges only. Final pricing depends on square footage, bathrooms, flooring, foot traffic, current condition, product preferences, access, schedule, photos, walkthrough notes, and requested frequency."
+        body: "Commercial prices shown on the website are planning ranges only. Final pricing depends on square footage, bathrooms, flooring, foot traffic, current condition, product preferences, access, schedule, photos, walkthrough notes, and requested frequency. Before service is scheduled, NestHelper provides a clear visit price, recurring plan, or add-on quote for approval."
       },
       {
         heading: "Minimums",
-        body: "Small recurring commercial spaces may start around $149 per visit, and one-time commercial resets may start around $225. Minimums protect travel time, setup, supplies, insurance, administration, and helper scheduling."
+        body: "Small recurring commercial spaces may start around $149 per visit, and one-time commercial resets may start around $225. Minimums protect travel time, setup, supplies, insurance, administration, and helper scheduling while still giving the customer a clear quoted price before work begins."
       },
       {
         heading: "Square-foot planning ranges",
-        body: "Routine commercial cleaning may be estimated by square foot and frequency. More frequent visits may lower the per-visit square-foot rate because the space stays easier to maintain. These ranges are guidance, not guaranteed pricing."
+        body: "Routine commercial cleaning may be estimated by square foot and frequency, then converted into a clear per-visit or monthly recurring quote. More frequent visits may lower the per-visit square-foot range because the space stays easier to maintain. These ranges are guidance, not guaranteed pricing."
       },
       {
         heading: "Add-ons quoted separately",
@@ -232,7 +232,7 @@ export const policies: Policy[] = [
       },
       {
         heading: "Scope changes",
-        body: "If the actual space, condition, access, or requested tasks are materially different from the submitted request, NestHelper may revise the quote, pause service, reschedule, or decline work that falls outside scope."
+        body: "If the actual space, condition, access, or requested tasks are materially different from the submitted request, NestHelper may revise the quote before continuing, pause service, reschedule, or decline work that falls outside scope. This protects the customer from surprise open-ended billing and protects NestHelper from work outside the approved quote."
       },
       {
         heading: "Local endorsement review",
