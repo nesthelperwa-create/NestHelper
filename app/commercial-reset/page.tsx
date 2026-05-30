@@ -1,11 +1,14 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import {
+  BadgeDollarSign,
   Building2,
   CalendarClock,
   CheckCircle2,
   ClipboardCheck,
   DoorOpen,
+  FileText,
+  ListChecks,
   MapPin,
   ShieldCheck,
   Sparkles,
@@ -49,6 +52,48 @@ const specialtyAddOns = [
   "First-time heavier reset quoted after walkthrough",
   "Daycare requests are common-area focused unless reviewed",
   "No mold, biohazard, construction cleanup, or hazardous work",
+];
+
+const pricingCards = [
+  {
+    title: "Small recurring spaces",
+    price: "From $149/visit",
+    text: "A competitive starting point for smaller offices, studios, salons, and common-area resets. Final quote depends on bathrooms, foot traffic, timing, and scope.",
+  },
+  {
+    title: "Weekly recurring plans",
+    price: "Often $595+/month",
+    text: "Useful planning range for small spaces that need reliable weekly service. More frequent visits can lower the per-visit square-foot rate.",
+  },
+  {
+    title: "One-time commercial reset",
+    price: "From $225",
+    text: "For first-time catch-up, move-in prep, office reset, or heavier cleaning before recurring service begins. Photos help us quote fairly.",
+  },
+];
+
+const squareFootRanges = [
+  { frequency: "1x per week", range: "$0.14–$0.20 / sq ft", note: "Best for small offices, studios, and light routine upkeep." },
+  { frequency: "2x per week", range: "$0.11–$0.17 / sq ft", note: "Helpful for restrooms, client-facing rooms, and higher traffic spaces." },
+  { frequency: "3x+ per week", range: "$0.09–$0.15 / sq ft", note: "Lower per-visit rate when the space stays on a steady routine." },
+  { frequency: "One-time light reset", range: "$0.22–$0.35 / sq ft", note: "For lighter first-time cleaning, move-in readiness, or catch-up resets." },
+  { frequency: "Heavier first-time reset", range: "$0.35–$0.50 / sq ft", note: "Used when the space needs extra labor before routine service makes sense." },
+];
+
+const addOnPricing = [
+  { service: "Carpet extraction", range: "$0.35–$0.55 / sq ft", note: "$199 minimum when available" },
+  { service: "Spot treatment", range: "$25–$65 / area", note: "Quoted after photo or walkthrough review" },
+  { service: "Floor scrub", range: "$0.30–$0.55 / sq ft", note: "$225 minimum when available" },
+  { service: "Buff / shine", range: "$0.45–$0.75 / sq ft", note: "$249 minimum when available" },
+  { service: "Wax / finish", range: "$0.65–$1.10 / sq ft", note: "$299 minimum when available" },
+  { service: "Strip & wax", range: "$1.50–$2.25 / sq ft", note: "$499 minimum; condition matters" },
+];
+
+const commercialPolicies = [
+  "Commercial Reset is routine janitorial-style support, not licensed childcare, medical, hazmat, biohazard, mold, construction cleanup, or regulated sanitation service.",
+  "Daycare and learning-space requests are focused on common areas unless a reviewed scope says otherwise.",
+  "NestHelper brings supplies and reviews product preferences before confirming what fits the surface and scope.",
+  "Final pricing, add-ons, schedule, access, and city endorsement needs are reviewed before checkout or recurring service begins.",
 ];
 
 export default function CommercialResetPage() {
@@ -159,16 +204,73 @@ export default function CommercialResetPage() {
         <div className="overflow-hidden rounded-[2.75rem] border border-nest-gold/18 bg-white/90 shadow-soft">
           <div className="bg-gradient-to-br from-nest-cream via-white to-nest-mint/35 p-6 sm:p-8 lg:p-10">
             <CommercialSectionIntro
-              icon={<CheckCircle2 size={15} />}
-              label="Quote Guidance"
-              title="Pricing is shown as guidance, not a guaranteed flat rate."
-              text="Commercial pricing stays quote-based because square footage, bathrooms, flooring, access, after-hours timing, current condition, product preferences, and optional photos can change the real labor cost."
+              icon={<BadgeDollarSign size={15} />}
+              label="Pricing Guidance"
+              title="Competitive ranges, reviewed before anything is confirmed."
+              text="Commercial pricing stays quote-based because square footage, bathrooms, flooring, access, after-hours timing, current condition, product preferences, and optional photos can change the real labor cost. These ranges are planning guidance, not guaranteed flat pricing."
             />
           </div>
+
           <div className="grid gap-4 p-6 sm:p-8 lg:grid-cols-3 lg:p-10">
-            <PricingCard title="Recurring commercial cleaning" price="Starting at $175/visit" text="$499/month recurring minimum. Quote depends on square footage, bathrooms, frequency, timing, and product preferences." />
-            <PricingCard title="One-time commercial reset" price="Starting at $249" text="Best for first-time catch-up, move-in prep, office reset, or a deeper one-time clean before recurring service." />
-            <PricingCard title="Hourly quote planning" price="$75–$95/labor hour" text="Used for custom scopes, heavier resets, walkthrough-based quotes, and specialty add-ons." />
+            {pricingCards.map((card) => (
+              <PricingCard key={card.title} title={card.title} price={card.price} text={card.text} />
+            ))}
+          </div>
+
+          <div className="border-t border-nest-gold/12 p-6 sm:p-8 lg:p-10">
+            <div className="grid gap-7 lg:grid-cols-[0.78fr_1.22fr] lg:items-start">
+              <div>
+                <p className="pill-label mx-auto w-fit lg:mx-0"><ListChecks size={15} /> Sq Ft Planning</p>
+                <h3 className="mt-4 text-center text-3xl font-black text-nest-teal lg:text-left">Routine cleaning by frequency.</h3>
+                <p className="mt-3 text-center font-medium leading-7 text-nest-ink/70 lg:text-left">
+                  More frequent service usually lowers the per-visit square-foot range because the space stays easier to maintain.
+                </p>
+              </div>
+              <div className="grid gap-3">
+                {squareFootRanges.map((item) => (
+                  <RangeRow key={item.frequency} title={item.frequency} range={item.range} note={item.note} />
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="border-t border-nest-gold/12 bg-nest-cream/55 p-6 sm:p-8 lg:p-10">
+            <div className="grid gap-7 lg:grid-cols-[0.78fr_1.22fr] lg:items-start">
+              <div>
+                <p className="pill-label mx-auto w-fit lg:mx-0"><SprayCan size={15} /> Add-on Ranges</p>
+                <h3 className="mt-4 text-center text-3xl font-black text-nest-teal lg:text-left">Specialty items stay separate.</h3>
+                <p className="mt-3 text-center font-medium leading-7 text-nest-ink/70 lg:text-left">
+                  Basic Commercial Reset does not include carpet extraction, waxing, or specialty floor work by default. These are quoted separately when available.
+                </p>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {addOnPricing.map((item) => (
+                  <AddOnPrice key={item.service} service={item.service} range={item.range} note={item.note} />
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
+        <div className="rounded-[2.75rem] border border-nest-gold/18 bg-gradient-to-br from-white via-nest-cream to-nest-mint/30 p-6 shadow-soft sm:p-8 lg:p-10">
+          <CommercialSectionIntro
+            icon={<FileText size={15} />}
+            label="Commercial Policies"
+            title="Clear boundaries for business spaces."
+            text="Commercial Reset has its own policy expectations so business customers understand scope, access, supplies, pricing, add-ons, and service boundaries before work begins."
+          />
+
+          <div className="mt-9 grid gap-4 md:grid-cols-2">
+            {commercialPolicies.map((policy) => (
+              <CheckTile key={policy}>{policy}</CheckTile>
+            ))}
+          </div>
+
+          <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+            <ButtonLink href="/policies/commercial-reset-policy" variant="secondary">Read Commercial Policy</ButtonLink>
+            <ButtonLink href="/policies/commercial-pricing-addons" variant="secondary">Read Pricing & Add-ons</ButtonLink>
           </div>
         </div>
       </section>
@@ -240,6 +342,26 @@ function AreaCard({ title, text }: { title: string; text: string }) {
     <div className="rounded-[2rem] border border-nest-gold/16 bg-white/90 p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-soft">
       <h3 className="text-2xl font-black text-nest-teal">{title}</h3>
       <p className="mt-3 font-medium leading-7 text-nest-ink/70">{text}</p>
+    </div>
+  );
+}
+
+function RangeRow({ title, range, note }: { title: string; range: string; note: string }) {
+  return (
+    <div className="grid gap-3 rounded-2xl border border-nest-gold/12 bg-white p-4 shadow-sm sm:grid-cols-[0.75fr_0.8fr_1.2fr] sm:items-center">
+      <div className="font-black text-nest-teal">{title}</div>
+      <div className="rounded-full bg-nest-mint/35 px-3 py-2 text-center text-sm font-black text-nest-teal">{range}</div>
+      <div className="text-sm font-medium leading-6 text-nest-ink/68">{note}</div>
+    </div>
+  );
+}
+
+function AddOnPrice({ service, range, note }: { service: string; range: string; note: string }) {
+  return (
+    <div className="rounded-2xl border border-nest-gold/12 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-sm">
+      <h4 className="font-black text-nest-teal">{service}</h4>
+      <p className="mt-2 text-2xl font-black text-nest-teal">{range}</p>
+      <p className="mt-2 text-sm font-medium leading-6 text-nest-ink/66">{note}</p>
     </div>
   );
 }

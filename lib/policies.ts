@@ -63,7 +63,7 @@ export const policies: Policy[] = [
       },
       {
         heading: "Supplies",
-        body: "Customers should disclose whether NestHelper should use customer supplies, NestHelper supplies, or partner-provider supplies. Special detergents or supplies may carry an add-on fee."
+        body: "NestHelper generally brings supplies for approved services. Customers should share product preferences, sensitivities, allergies, surfaces that need special care, and any supplies that should not be used. Special detergents or specialty supplies may carry an add-on fee."
       }
     ]
   },
@@ -174,6 +174,69 @@ export const policies: Policy[] = [
       {
         heading: "Helper safety",
         body: "Helpers may refuse service or stop work if a pet creates unsafe conditions."
+      }
+    ]
+  },
+
+  {
+    slug: "commercial-reset-policy",
+    title: "Commercial Reset Policy",
+    intro: "Commercial Reset is a separate service lane for routine cleaning support in small business and community spaces.",
+    sections: [
+      {
+        heading: "Commercial-only scope",
+        body: "Commercial Reset is intended for small offices, studios, churches, salons, barbershops, professional offices, daycare common areas, learning-space common areas, and similar local business spaces. It is separate from Parent Reset household services."
+      },
+      {
+        heading: "Routine janitorial support",
+        body: "Commercial Reset may include routine trash removal, restroom cleaning, breakroom or kitchenette reset, surface wipe-downs, vacuuming, sweeping, mopping, dusting, and high-touch area cleaning within the approved scope."
+      },
+      {
+        heading: "Daycare and learning spaces",
+        body: "Daycare, school, and learning-space requests are reviewed as common-area cleaning requests unless a written scope says otherwise. NestHelper does not provide childcare, supervision, medical care, or regulated sanitation services."
+      },
+      {
+        heading: "Supplies and product preferences",
+        body: "NestHelper generally brings cleaning supplies and reviews product preferences before service. Non-toxic, low-odor, fragrance-free, or sensitive-use preferences may be requested where appropriate for the surface and cleaning scope."
+      },
+      {
+        heading: "Excluded commercial work",
+        body: "Commercial Reset does not include mold remediation, biohazard cleanup, pest cleanup, construction cleanup, hazardous materials, hood/duct cleaning, repairs, regulated medical cleaning, or specialty floor/carpet work unless separately reviewed and quoted."
+      },
+      {
+        heading: "Access, security, and readiness",
+        body: "Businesses must provide safe access, parking or loading information, alarm/access instructions when needed, and disclose hazards, restricted rooms, sensitive equipment, pets, cameras, or security rules before service."
+      }
+    ]
+  },
+  {
+    slug: "commercial-pricing-addons",
+    title: "Commercial Pricing & Add-On Policy",
+    intro: "Commercial Reset pricing is quote-based so small businesses can compare clear planning ranges without being locked into the wrong flat price.",
+    sections: [
+      {
+        heading: "Quote-first pricing",
+        body: "Commercial prices shown on the website are planning ranges only. Final pricing depends on square footage, bathrooms, flooring, foot traffic, current condition, product preferences, access, schedule, photos, walkthrough notes, and requested frequency."
+      },
+      {
+        heading: "Minimums",
+        body: "Small recurring commercial spaces may start around $149 per visit, and one-time commercial resets may start around $225. Minimums protect travel time, setup, supplies, insurance, administration, and helper scheduling."
+      },
+      {
+        heading: "Square-foot planning ranges",
+        body: "Routine commercial cleaning may be estimated by square foot and frequency. More frequent visits may lower the per-visit square-foot rate because the space stays easier to maintain. These ranges are guidance, not guaranteed pricing."
+      },
+      {
+        heading: "Add-ons quoted separately",
+        body: "Carpet extraction, spot treatment, floor scrub, buffing, waxing, strip-and-wax, upholstery, heavy first-time resets, and specialty surfaces are not included in basic Commercial Reset pricing unless specifically quoted."
+      },
+      {
+        heading: "Scope changes",
+        body: "If the actual space, condition, access, or requested tasks are materially different from the submitted request, NestHelper may revise the quote, pause service, reschedule, or decline work that falls outside scope."
+      },
+      {
+        heading: "Local endorsement review",
+        body: "Commercial availability may depend on address, city limits, local licensing or endorsement requirements, schedule, insurance fit, and operational capacity. Some city-limit jobs may require a city endorsement before service begins."
       }
     ]
   },
