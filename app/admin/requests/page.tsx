@@ -18,7 +18,7 @@ export default function AdminRequestsPage() {
           { key: "preferredDate", label: "Preferred Date" },
           { key: "promoCode", label: "Promo" },
         ]}
-        statuses={["New", "Reviewed", "Approved", "Checkout Sent", "Deposit Paid", "Final Balance Sent", "Paid", "Fully Paid", "Scheduled", "Completed", "Declined", "Needs Info", "Follow-Up Needed", "Canceled"]}
+        statuses={["New", "Reviewed", "Approved", "Checkout Sent", "Deposit Paid", "Final Balance Sent", "Paid", "Fully Paid", "Additional Payment Sent", "Additional Paid", "Scheduled", "Completed", "Declined", "Needs Info", "Follow-Up Needed", "Canceled"]}
         enablePaymentActions
       />
     </AdminShell>

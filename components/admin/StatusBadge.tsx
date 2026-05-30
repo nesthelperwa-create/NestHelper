@@ -10,6 +10,8 @@ const STATUS_STYLES: Record<string, string> = {
   "Deposit Paid": "bg-teal-100 text-teal-800 border-teal-200",
   "Final Balance Sent": "bg-purple-100 text-purple-800 border-purple-200",
   "Final Balance Paid": "bg-green-100 text-green-800 border-green-200",
+  "Additional Payment Sent": "bg-fuchsia-100 text-fuchsia-800 border-fuchsia-200",
+  "Additional Paid": "bg-green-100 text-green-800 border-green-200",
   Paid: "bg-green-100 text-green-800 border-green-200",
   "Fully Paid": "bg-green-100 text-green-800 border-green-200",
   Scheduled: "bg-teal-100 text-teal-800 border-teal-200",

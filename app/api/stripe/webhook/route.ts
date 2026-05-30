@@ -6,7 +6,7 @@ import { getFirebaseAdminDb } from "@/lib/firebaseAdmin";
 import { services } from "@/lib/services";
 import { sendAdminEmail } from "@/lib/sendAdminEmail";
 import { sendPaymentReceivedEmail } from "@/lib/sendPaymentReceivedEmail";
-import { emailAliases, getPaymentReplyEmail } from "@/lib/emailRouting";
+import { emailAliases } from "@/lib/emailRouting";
 
 export const runtime = "nodejs";
 
@@ -34,7 +34,17 @@ function formatMoney(amountTotal?: number | null, currency?: string | null) {
   }
 }
 
-function getAdminAlertFields(isLaundryDeposit: boolean, isLaundryFinalBalance: boolean) {
+function getAdminAlertFields(isLaundryDeposit: boolean, isLaundryFinalBalance: boolean, isAdditionalPayment: boolean, sessionId = "") {
+  if (isAdditionalPayment) {
+    const suffix = sessionId ? `_${sessionId}` : "";
+    return {
+      sentFlag: `additionalPaymentAdminEmailSent${suffix}`,
+      sentAt: `additionalPaymentAdminEmailSentAt${suffix}`,
+      errorField: `additionalPaymentAdminEmailError${suffix}`,
+      paymentLabel: "Additional balance",
+    };
+  }
+
   if (isLaundryFinalBalance) {
     return {
       sentFlag: "laundryFinalAdminPaymentEmailSent",
@@ -103,24 +113,50 @@ export async function POST(request: Request) {
         const existingData = requestSnap.exists ? requestSnap.data() || {} : {};
         const serviceId = getString(session.metadata?.serviceId) || getString(existingData.service);
         const paymentType = getString(session.metadata?.paymentType);
+        const isAdditionalPayment = paymentType === "additional_payment";
         const isLaundryFinalBalance = paymentType === "laundry_final_balance";
-        const isLaundryDeposit = serviceId === "laundry-rescue" && !isLaundryFinalBalance;
-        const status = isLaundryFinalBalance ? "Fully Paid" : isLaundryDeposit ? "Deposit Paid" : "Paid";
-        const paymentStatus = isLaundryFinalBalance ? "Final Balance Paid" : isLaundryDeposit ? "Deposit Paid" : "Paid";
+        const isLaundryDeposit = serviceId === "laundry-rescue" && !isLaundryFinalBalance && !isAdditionalPayment;
+        const status = isAdditionalPayment ? "Additional Paid" : isLaundryFinalBalance ? "Fully Paid" : isLaundryDeposit ? "Deposit Paid" : "Paid";
+        const paymentStatus = isAdditionalPayment ? "Additional Paid" : isLaundryFinalBalance ? "Final Balance Paid" : isLaundryDeposit ? "Deposit Paid" : "Paid";
 
         const updatePayload: Record<string, unknown> = {
           status,
           paymentStatus,
-          checkoutSessionId: session.id,
-          paymentIntentId: typeof session.payment_intent === "string" ? session.payment_intent : "",
-          stripeCustomerId: typeof session.customer === "string" ? session.customer : "",
           amountSubtotal: session.amount_subtotal ?? null,
           amountTotal: session.amount_total ?? null,
           currency: session.currency || "usd",
-          paidAt: FieldValue.serverTimestamp(),
           updatedAt: FieldValue.serverTimestamp(),
           updatedBy: "stripe-webhook",
         };
+
+        if (!isAdditionalPayment) {
+          updatePayload.checkoutSessionId = session.id;
+          updatePayload.paymentIntentId = typeof session.payment_intent === "string" ? session.payment_intent : "";
+          updatePayload.stripeCustomerId = typeof session.customer === "string" ? session.customer : "";
+          updatePayload.paidAt = FieldValue.serverTimestamp();
+        }
+
+        if (isAdditionalPayment) {
+          updatePayload.additionalPaymentStatus = "Additional Paid";
+          updatePayload.additionalPaymentPaidAt = FieldValue.serverTimestamp();
+          updatePayload.additionalPaymentPaidAmountTotal = session.amount_total ?? null;
+          updatePayload.additionalPaymentPaidAmountSubtotal = session.amount_subtotal ?? null;
+          updatePayload.additionalPaymentPaidCurrency = session.currency || "usd";
+          updatePayload.additionalPaymentPaidCheckoutSessionId = session.id;
+          updatePayload.additionalPaymentPaidPaymentIntentId = typeof session.payment_intent === "string" ? session.payment_intent : "";
+          updatePayload.additionalPaymentPaidCustomerId = typeof session.customer === "string" ? session.customer : "";
+          updatePayload.additionalPaymentTotalPaidCents = FieldValue.increment(session.amount_total ?? 0);
+          updatePayload.additionalPaymentPaidHistory = FieldValue.arrayUnion({
+            type: "paid",
+            checkoutSessionId: session.id,
+            paymentIntentId: typeof session.payment_intent === "string" ? session.payment_intent : "",
+            amountTotal: session.amount_total ?? null,
+            currency: session.currency || "usd",
+            reason: getString(session.metadata?.additionalReason),
+            note: getString(session.metadata?.additionalNote),
+            paidAtIso: new Date().toISOString(),
+          });
+        }
 
         if (isLaundryDeposit) {
           updatePayload.laundryPaymentStatus = "Deposit Paid";
@@ -142,27 +178,35 @@ export async function POST(request: Request) {
 
         const email = getString(existingData.email) || getString(session.customer_details?.email) || getString(session.customer_email);
         const customerName = getString(existingData.fullName) || getString(session.customer_details?.name) || getString(session.metadata?.customerName);
-        const serviceTitle = isLaundryFinalBalance
-          ? "Laundry Rescue final balance"
-          : isLaundryDeposit
-            ? "Laundry Rescue deposit/minimum"
-            : getServiceTitle(existingData, session.metadata?.serviceTitle);
+        const serviceTitle = isAdditionalPayment
+          ? `Additional balance for ${getServiceTitle(existingData, session.metadata?.serviceTitle)}`
+          : isLaundryFinalBalance
+            ? "Laundry Rescue final balance"
+            : isLaundryDeposit
+              ? "Laundry Rescue deposit/minimum"
+              : getServiceTitle(existingData, session.metadata?.serviceTitle);
 
-        const confirmationFlag = isLaundryFinalBalance
-          ? "laundryFinalConfirmationEmailSent"
-          : isLaundryDeposit
-            ? "laundryDepositConfirmationEmailSent"
-            : "paymentConfirmationEmailSent";
-        const confirmationAt = isLaundryFinalBalance
-          ? "laundryFinalConfirmationEmailSentAt"
-          : isLaundryDeposit
-            ? "laundryDepositConfirmationEmailSentAt"
-            : "paymentConfirmationEmailSentAt";
-        const confirmationError = isLaundryFinalBalance
-          ? "laundryFinalConfirmationEmailError"
-          : isLaundryDeposit
-            ? "laundryDepositConfirmationEmailError"
-            : "paymentConfirmationEmailError";
+        const confirmationFlag = isAdditionalPayment
+          ? `additionalPaymentConfirmationEmailSent_${session.id}`
+          : isLaundryFinalBalance
+            ? "laundryFinalConfirmationEmailSent"
+            : isLaundryDeposit
+              ? "laundryDepositConfirmationEmailSent"
+              : "paymentConfirmationEmailSent";
+        const confirmationAt = isAdditionalPayment
+          ? `additionalPaymentConfirmationEmailSentAt_${session.id}`
+          : isLaundryFinalBalance
+            ? "laundryFinalConfirmationEmailSentAt"
+            : isLaundryDeposit
+              ? "laundryDepositConfirmationEmailSentAt"
+              : "paymentConfirmationEmailSentAt";
+        const confirmationError = isAdditionalPayment
+          ? `additionalPaymentConfirmationEmailError_${session.id}`
+          : isLaundryFinalBalance
+            ? "laundryFinalConfirmationEmailError"
+            : isLaundryDeposit
+              ? "laundryDepositConfirmationEmailError"
+              : "paymentConfirmationEmailError";
         const alreadySent = Boolean(existingData[confirmationFlag]);
 
         if (email && !alreadySent) {
@@ -175,7 +219,7 @@ export async function POST(request: Request) {
               amountTotal: session.amount_total,
               currency: session.currency,
               paymentStatus,
-              replyToEmail: getPaymentReplyEmail({ service: getString(existingData.service), selectedServiceTitle: serviceTitle, paymentStatus }),
+              replyToEmail: serviceId === "laundry-rescue" ? emailAliases.laundry : emailAliases.billing,
             });
 
             await requestRef.update({
@@ -192,13 +236,13 @@ export async function POST(request: Request) {
           }
         }
 
-        const adminAlert = getAdminAlertFields(isLaundryDeposit, isLaundryFinalBalance);
+        const adminAlert = getAdminAlertFields(isLaundryDeposit, isLaundryFinalBalance, isAdditionalPayment, session.id);
         const adminAlreadySent = Boolean(existingData[adminAlert.sentFlag]);
 
         if (!adminAlreadySent) {
           try {
-            const routedPaymentInbox = isLaundryDeposit || isLaundryFinalBalance ? emailAliases.laundry : emailAliases.billing;
-            const routedPaymentLabel = isLaundryDeposit || isLaundryFinalBalance ? "Laundry" : "Billing";
+            const routedPaymentInbox = serviceId === "laundry-rescue" ? emailAliases.laundry : emailAliases.billing;
+            const routedPaymentLabel = serviceId === "laundry-rescue" ? "Laundry" : "Billing";
 
             const result = await sendAdminEmail({
               subject: `Stripe Payment Received: ${serviceTitle}`,
@@ -216,6 +260,8 @@ export async function POST(request: Request) {
                 Service: serviceTitle,
                 "Payment type": adminAlert.paymentLabel,
                 "Payment status": paymentStatus,
+                "Additional reason": getString(session.metadata?.additionalReason),
+                "Additional note": getString(session.metadata?.additionalNote),
                 "Amount paid": formatMoney(session.amount_total, session.currency),
                 "Preferred date": getString(existingData.preferredDate),
                 "Preferred window": getString(existingData.preferredWindow),

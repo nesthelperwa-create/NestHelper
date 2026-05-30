@@ -4,11 +4,11 @@ import { getAuth } from "firebase-admin/auth";
 import { getApps } from "firebase-admin/app";
 import Stripe from "stripe";
 import { isAllowedAdminEmail } from "@/lib/adminAuth";
+import { emailAliases } from "@/lib/emailRouting";
 import { getFirebaseAdminDb } from "@/lib/firebaseAdmin";
 import { services } from "@/lib/services";
 import { getStripePriceId, normalizeStripePriceMode } from "@/lib/stripePriceMap";
 import { sendPaymentLinkEmail } from "@/lib/sendPaymentLinkEmail";
-import { getPaymentReplyEmail } from "@/lib/emailRouting";
 
 export const runtime = "nodejs";
 
@@ -96,6 +96,8 @@ export async function POST(request: Request) {
     });
 
     const checkoutUrl = session.url || "";
+    const isLaundryRescue = serviceId === "laundry-rescue";
+    const replyToEmail = isLaundryRescue ? emailAliases.laundry : emailAliases.billing;
     let emailSent = false;
     let emailError = "";
 
@@ -111,7 +113,7 @@ export async function POST(request: Request) {
           preferredDate: getString(data.preferredDate),
           preferredWindow: getString(data.preferredWindow),
           city: getString(data.city),
-          replyToEmail: getPaymentReplyEmail({ service: serviceId, selectedServiceTitle: serviceTitle }),
+          replyToEmail,
         });
         emailSent = true;
       } catch (error) {
@@ -120,7 +122,6 @@ export async function POST(request: Request) {
       }
     }
 
-    const isLaundryRescue = serviceId === "laundry-rescue";
 
     await requestRef.update({
       status: "Checkout Sent",

@@ -1,5 +1,5 @@
 import { Resend } from "resend";
-import { getPaymentReplyEmail } from "./emailRouting";
+import { getPublicReplyEmail } from "./emailRouting";
 
 type SendPaymentReceivedEmailInput = {
   to: string;
@@ -61,6 +61,19 @@ function getPaymentCopy(paymentStatus: string) {
     };
   }
 
+  if (paymentStatus === "Additional Paid") {
+    return {
+      subject: "Additional NestHelper payment received",
+      eyebrow: "Additional payment received",
+      title: "Your additional NestHelper payment was received.",
+      intro: "Thank you — we received the additional payment for your NestHelper request.",
+      nextSteps: [
+        "NestHelper will update your request and continue with the agreed service details.",
+        "Reply right away if you have questions about the added time, mileage, or approved work.",
+      ],
+    };
+  }
+
   return {
     subject: "Payment received for your NestHelper request",
     eyebrow: "Payment received",
@@ -77,8 +90,7 @@ function getPaymentCopy(paymentStatus: string) {
 export async function sendPaymentReceivedEmail({ to, customerName, requestId, serviceTitle, amountTotal, currency, paymentStatus = "Paid", replyToEmail }: SendPaymentReceivedEmailInput) {
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.NOTIFICATION_FROM_EMAIL || "NestHelper <onboarding@resend.dev>";
-  const normalizedPaymentStatus = paymentStatus.toLowerCase();
-  const replyTo = replyToEmail || getPaymentReplyEmail({ serviceTitle, paymentStatus });
+  const replyTo = replyToEmail || getPublicReplyEmail();
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
   if (!apiKey || !to || !to.includes("@")) {

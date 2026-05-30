@@ -5,8 +5,8 @@ import { getApps } from "firebase-admin/app";
 import { getFirebaseAdminDb } from "@/lib/firebaseAdmin";
 import { isAllowedAdminEmail } from "@/lib/adminAuth";
 import { sendStatusUpdateEmail } from "@/lib/sendStatusUpdateEmail";
+import { emailAliases } from "@/lib/emailRouting";
 import { services } from "@/lib/services";
-import { getCustomerReplyEmail, type SubmissionCollection } from "@/lib/emailRouting";
 
 const allowedCollections = new Set(["serviceRequests", "helperApplications", "partnerApplications", "contactMessages"]);
 
@@ -70,6 +70,7 @@ export async function POST(request: Request) {
         emailError = "No customer email is available for this record.";
       } else {
         try {
+          const serviceId = getString(data.service);
           await sendStatusUpdateEmail({
             to: email,
             customerName: getString(data.fullName) || getString(data.name),
@@ -80,7 +81,7 @@ export async function POST(request: Request) {
             preferredDate: getString(data.preferredDate),
             preferredWindow: getString(data.preferredWindow),
             city: getString(data.city),
-            replyToEmail: getCustomerReplyEmail(collection as SubmissionCollection, data),
+            replyToEmail: serviceId === "laundry-rescue" ? emailAliases.laundry : emailAliases.booking,
           });
           emailSent = true;
           updatePayload.lastStatusEmailSentAt = FieldValue.serverTimestamp();

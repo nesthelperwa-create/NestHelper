@@ -188,6 +188,12 @@ export default function AdminTable({
   const [laundryFinalBusy, setLaundryFinalBusy] = useState(false);
   const [laundryFinalMessage, setLaundryFinalMessage] = useState("");
   const [laundryFinalError, setLaundryFinalError] = useState("");
+  const [additionalPaymentAmount, setAdditionalPaymentAmount] = useState("");
+  const [additionalPaymentReason, setAdditionalPaymentReason] = useState("Additional hours");
+  const [additionalPaymentNote, setAdditionalPaymentNote] = useState("");
+  const [additionalPaymentBusy, setAdditionalPaymentBusy] = useState(false);
+  const [additionalPaymentMessage, setAdditionalPaymentMessage] = useState("");
+  const [additionalPaymentError, setAdditionalPaymentError] = useState("");
 
   useEffect(() => {
     const q = query(collection(firestoreDb, collectionName), orderBy("createdAt", "desc"));
@@ -213,6 +219,11 @@ export default function AdminTable({
     setLaundryFinalNote("");
     setLaundryFinalMessage("");
     setLaundryFinalError("");
+    setAdditionalPaymentAmount(selected?.additionalPaymentAmount ? String(selected.additionalPaymentAmount) : "");
+    setAdditionalPaymentReason(selected?.additionalPaymentReason ? String(selected.additionalPaymentReason) : "Additional hours");
+    setAdditionalPaymentNote("");
+    setAdditionalPaymentMessage("");
+    setAdditionalPaymentError("");
   }, [selected?.id]);
 
   const filtered = useMemo(() => {
@@ -276,6 +287,11 @@ export default function AdminTable({
   async function copyLaundryLink(text: string) {
     await navigator.clipboard.writeText(text);
     setLaundryFinalMessage("Final balance checkout link copied.");
+  }
+
+  async function copyAdditionalPaymentLink(text: string) {
+    await navigator.clipboard.writeText(text);
+    setAdditionalPaymentMessage("Additional payment checkout link copied.");
   }
 
   async function createPaymentLink(sendEmail: boolean) {
@@ -354,6 +370,51 @@ export default function AdminTable({
       setLaundryFinalError(error instanceof Error ? error.message : "Unable to create laundry final balance link.");
     } finally {
       setLaundryFinalBusy(false);
+    }
+  }
+
+  async function createAdditionalPayment(sendEmail: boolean) {
+    if (!selected) return;
+    setAdditionalPaymentBusy(true);
+    setAdditionalPaymentMessage("");
+    setAdditionalPaymentError("");
+
+    try {
+      const token = await firebaseAuth.currentUser?.getIdToken();
+      const res = await fetch("/api/admin/create-additional-payment-link", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          requestId: selected.id,
+          amount: toNumber(additionalPaymentAmount),
+          reason: additionalPaymentReason,
+          note: additionalPaymentNote,
+          sendEmail,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok || !data.ok) {
+        throw new Error(data.error || "Unable to create additional payment link.");
+      }
+
+      setSelected((prev) => prev ? {
+        ...prev,
+        status: "Additional Payment Sent",
+        paymentStatus: "Additional Payment Sent",
+        additionalPaymentStatus: "Additional Payment Sent",
+        additionalPaymentAmount: toNumber(additionalPaymentAmount),
+        additionalPaymentReason,
+        additionalPaymentNote,
+        additionalPaymentCheckoutUrl: data.url || prev.additionalPaymentCheckoutUrl,
+        additionalPaymentCheckoutSessionId: data.sessionId || prev.additionalPaymentCheckoutSessionId,
+      } : prev);
+      setStatusValue("Additional Payment Sent");
+      setAdditionalPaymentMessage(data.emailError || (data.emailSent ? "Additional payment link created and emailed to the customer." : "Additional payment link created. Copy it and send it manually."));
+    } catch (error) {
+      setAdditionalPaymentError(error instanceof Error ? error.message : "Unable to create additional payment link.");
+    } finally {
+      setAdditionalPaymentBusy(false);
     }
   }
 
@@ -678,6 +739,91 @@ export default function AdminTable({
 
                 {laundryFinalMessage && <p className="mt-3 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">{laundryFinalMessage}</p>}
                 {laundryFinalError && <p className="mt-3 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{laundryFinalError}</p>}
+              </div>
+            )}
+
+            {showPaymentActions && (
+              <div className="mb-5 rounded-3xl border border-[#d8c18f] bg-[#fbf6ea] p-5 shadow-sm">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="max-w-2xl">
+                    <p className="text-xs font-black uppercase tracking-[0.2em] text-[#b98a2f]">Additional payment</p>
+                    <h4 className="mt-1 text-xl font-black text-[#075c58]">Send an extra Stripe link for approved add-ons</h4>
+                    <p className="mt-2 text-sm leading-6 text-slate-700">
+                      Use this after the first payment if the job needs approved extra hours, extra miles, route changes, or another added balance. This creates a separate Stripe Checkout link tied to the same request.
+                    </p>
+                  </div>
+                  <StatusBadge status={String(selected.additionalPaymentStatus || "Optional")} />
+                </div>
+
+                <div className="mt-4 grid gap-3 md:grid-cols-2">
+                  <label className="grid gap-2 text-sm font-bold text-slate-700">
+                    Additional amount
+                    <input
+                      value={additionalPaymentAmount}
+                      onChange={(e) => setAdditionalPaymentAmount(e.target.value)}
+                      inputMode="decimal"
+                      placeholder="35"
+                      className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]"
+                    />
+                  </label>
+                  <label className="grid gap-2 text-sm font-bold text-slate-700">
+                    Reason
+                    <select
+                      value={additionalPaymentReason}
+                      onChange={(e) => setAdditionalPaymentReason(e.target.value)}
+                      className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-bold text-[#075c58] outline-none focus:border-[#075c58]"
+                    >
+                      <option>Additional hours</option>
+                      <option>Extra miles / route time</option>
+                      <option>Additional approved task / add-on</option>
+                      <option>Other approved balance</option>
+                    </select>
+                  </label>
+                </div>
+
+                <label className="mt-4 grid gap-2 text-sm font-bold text-slate-700">
+                  Optional customer note
+                  <textarea
+                    value={additionalPaymentNote}
+                    onChange={(e) => setAdditionalPaymentNote(e.target.value)}
+                    placeholder="Example: Additional 30 minutes approved by text for extra folding and toy reset. Original payment has already been credited."
+                    rows={3}
+                    className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
+                  />
+                </label>
+
+                <div className="mt-4 grid gap-3 md:grid-cols-2">
+                  <button
+                    type="button"
+                    disabled={additionalPaymentBusy}
+                    onClick={() => createAdditionalPayment(true)}
+                    className="rounded-2xl bg-[#075c58] px-5 py-3 text-sm font-black text-white shadow-lg shadow-[#075c58]/15 transition hover:-translate-y-0.5 hover:bg-[#064b48] disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {additionalPaymentBusy ? "Creating..." : "Create + email additional payment link"}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={additionalPaymentBusy}
+                    onClick={() => createAdditionalPayment(false)}
+                    className="rounded-2xl border-2 border-[#075c58] bg-white px-5 py-3 text-sm font-black text-[#075c58] transition hover:-translate-y-0.5 hover:bg-[#f4ecdc] disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    Create additional link only
+                  </button>
+                </div>
+
+                {selected.additionalPaymentCheckoutUrl && (
+                  <div className="mt-4 rounded-2xl border border-[#eadfc8] bg-white p-4">
+                    <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Current additional payment link</p>
+                    <p className="mt-2 break-all text-sm text-[#075c58]">{selected.additionalPaymentCheckoutUrl}</p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <a href={selected.additionalPaymentCheckoutUrl} target="_blank" rel="noreferrer" className="rounded-full bg-[#075c58] px-4 py-2 text-xs font-black text-white">Open additional checkout</a>
+                      <button type="button" onClick={() => copyAdditionalPaymentLink(selected.additionalPaymentCheckoutUrl || "")} className="rounded-full border border-[#075c58] px-4 py-2 text-xs font-black text-[#075c58]">Copy link</button>
+                    </div>
+                  </div>
+                )}
+
+                {additionalPaymentMessage && <p className="mt-3 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">{additionalPaymentMessage}</p>}
+                {additionalPaymentError && <p className="mt-3 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{additionalPaymentError}</p>}
               </div>
             )}
 

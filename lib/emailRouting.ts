@@ -15,15 +15,13 @@ export const emailAliases = {
   contact: process.env.NESTHELPER_CONTACT_EMAIL || "contact@nesthelperwa.com",
 } as const;
 
-export type SubmissionCollection = "serviceRequests" | "helperApplications" | "partnerApplications" | "contactMessages";
+type SubmissionCollection = "serviceRequests" | "helperApplications" | "partnerApplications" | "contactMessages";
 
 function clean(value: unknown) {
   return typeof value === "string" ? value.trim().toLowerCase() : "";
 }
 
 export function getPublicReplyEmail() {
-  // Default general customer-facing reply address. Specific forms/emails can use
-  // service aliases such as booking@, laundry@, billing@, helpers@, or partners@.
   return emailAliases.hello;
 }
 
@@ -80,22 +78,11 @@ export function getSubmissionNotificationEmail(collection: SubmissionCollection,
 }
 
 export function getCustomerReplyEmail(collection: SubmissionCollection, payload: Record<string, unknown>) {
-  if (collection === "serviceRequests") {
-    return isLaundryService(payload) ? emailAliases.laundry : emailAliases.booking;
-  }
-
+  if (collection === "serviceRequests") return isLaundryService(payload) ? emailAliases.laundry : emailAliases.booking;
   if (collection === "helperApplications") return emailAliases.helpers;
   if (collection === "partnerApplications") return emailAliases.partners;
-
-  if (collection === "contactMessages") {
-    return getContactTopicEmail(payload.topic || payload.subject);
-  }
-
+  if (collection === "contactMessages") return getContactTopicEmail(payload.topic || payload.subject);
   return getPublicReplyEmail();
-}
-
-export function getPaymentReplyEmail(payload: Record<string, unknown>) {
-  return isLaundryService(payload) ? emailAliases.laundry : emailAliases.billing;
 }
 
 
