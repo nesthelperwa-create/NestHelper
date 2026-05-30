@@ -21,6 +21,7 @@ export async function POST(req: Request) {
 
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
   const requestId = body?.requestId || "manual-approved-request";
+  const successPaymentType = serviceId === "laundry-rescue" ? "laundry_deposit" : "service_payment";
   const session = await stripe.checkout.sessions.create({
     mode: "payment",
     line_items: [{ price: priceId, quantity: 1 }],
@@ -29,8 +30,8 @@ export async function POST(req: Request) {
     phone_number_collection: { enabled: true },
     allow_promotion_codes: true,
     client_reference_id: requestId,
-    success_url: `${baseUrl}/checkout?success=true&session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${baseUrl}/checkout?cancelled=true`,
+    success_url: `${baseUrl}/checkout?success=true&payment_type=${successPaymentType}&session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${baseUrl}/checkout?cancelled=true&payment_type=${successPaymentType}`,
     metadata: { serviceId, requestId, paymentMode: mode }
   });
 

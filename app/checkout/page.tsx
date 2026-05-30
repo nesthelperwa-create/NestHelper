@@ -7,10 +7,118 @@ type CheckoutPageProps = {
   searchParams?: SearchParams | Promise<SearchParams>;
 };
 
+type PaymentType = "service_payment" | "custom_initial" | "laundry_deposit" | "laundry_final_balance" | "additional_payment";
+
 function getParam(params: SearchParams, key: string) {
   const value = params[key];
   return Array.isArray(value) ? value[0] : value;
 }
+
+function getPaymentType(params: SearchParams): PaymentType {
+  const rawType = getParam(params, "payment_type") || getParam(params, "type") || "service_payment";
+  if (["service_payment", "custom_initial", "laundry_deposit", "laundry_final_balance", "additional_payment"].includes(rawType)) {
+    return rawType as PaymentType;
+  }
+  return "service_payment";
+}
+
+const successContent: Record<PaymentType, {
+  eyebrow: string;
+  title: string;
+  text: string;
+  status: string;
+  steps: string[];
+  note?: string;
+  closing: string;
+}> = {
+  service_payment: {
+    eyebrow: "Service payment received",
+    title: "Your NestHelper service payment was successful.",
+    text: "You are all set. Your approved service payment has been received and your request is moving to scheduling.",
+    status: "Paid ✓",
+    steps: [
+      "NestHelper confirms the final service window and arrival details.",
+      "You receive any prep notes for access, pets, parking, or service-specific details.",
+      "Your request is handled by a NestHelper checked helper or approved partner provider.",
+    ],
+    closing: "You can close this tab. A NestHelper confirmation/follow-up message will come by email, text, or both.",
+  },
+  custom_initial: {
+    eyebrow: "Custom checkout received",
+    title: "Your custom NestHelper payment was successful.",
+    text: "We received your custom initial payment for the reviewed scope. NestHelper will use the approved details and notes for scheduling and next steps.",
+    status: "Custom payment paid ✓",
+    steps: [
+      "NestHelper records the custom payment with your service request.",
+      "We confirm the final service window, approved scope, and any prep notes.",
+      "If anything changes before or during the visit, NestHelper will review it with you first.",
+    ],
+    note: "Custom payments are used when the reviewed scope does not fit a standard package exactly.",
+    closing: "You can close this tab. NestHelper will follow up with scheduling or service-specific details.",
+  },
+  laundry_deposit: {
+    eyebrow: "Laundry deposit received",
+    title: "Your Laundry Rescue deposit was successful.",
+    text: "Your Laundry Rescue minimum/deposit has been received. NestHelper will confirm pickup details, dry-weigh laundry at pickup, and send any final balance after weight and add-ons are confirmed.",
+    status: "Deposit paid ✓",
+    steps: [
+      "NestHelper confirms the pickup window, pickup spot, and laundry notes.",
+      "Laundry is dry-weighed at pickup so the final total can be calculated clearly.",
+      "Any remaining balance is sent separately after weight, deposit credit, and add-ons are confirmed.",
+    ],
+    note: "This payment may be a minimum/deposit, not the final Laundry Rescue total. Dry weight, add-ons, bulky items, and rush options may change the final balance.",
+    closing: "You can close this tab. Watch for Laundry Rescue pickup details from NestHelper.",
+  },
+  laundry_final_balance: {
+    eyebrow: "Laundry final balance paid",
+    title: "Your Laundry Rescue final balance was successful.",
+    text: "Your remaining Laundry Rescue balance has been received. NestHelper will continue with the confirmed return or completion details.",
+    status: "Final balance paid ✓",
+    steps: [
+      "NestHelper records the final laundry balance as paid.",
+      "Your clean laundry return or completion details are confirmed based on the service plan.",
+      "Reusable NestHelper bags or totes should be returned using the approved return method.",
+    ],
+    note: "This payment covers the remaining balance after dry weight, add-ons, and deposit credit were applied.",
+    closing: "You can close this tab. NestHelper will follow up with return or completion details if anything else is needed.",
+  },
+  additional_payment: {
+    eyebrow: "Additional payment received",
+    title: "Your additional NestHelper payment was successful.",
+    text: "We received your additional payment for approved extra time, mileage, add-ons, or balance due. Your request will continue with the updated scope.",
+    status: "Additional paid ✓",
+    steps: [
+      "NestHelper records the additional payment with your existing request.",
+      "Any approved extra time, mileage, add-ons, or balance details are added to the service notes.",
+      "The request continues with the updated scope or completion plan.",
+    ],
+    note: "Additional payments are only for approved changes, extra time, extra miles, add-ons, or remaining balance after the original checkout.",
+    closing: "You can close this tab. NestHelper will follow up if any final details are still needed.",
+  },
+};
+
+const cancelledContent: Record<PaymentType, { title: string; text: string }> = {
+  service_payment: {
+    title: "Your service payment was not completed.",
+    text: "No charge was completed from this checkout attempt. You can return to your NestHelper checkout email and try the payment link again when you are ready.",
+  },
+  custom_initial: {
+    title: "Your custom checkout was not completed.",
+    text: "No charge was completed from this custom checkout attempt. You can return to your NestHelper checkout email and try again when you are ready.",
+  },
+  laundry_deposit: {
+    title: "Your Laundry Rescue deposit was not completed.",
+    text: "No charge was completed from this deposit checkout attempt. You can return to your Laundry Rescue checkout email and try again when you are ready.",
+  },
+  laundry_final_balance: {
+    title: "Your Laundry Rescue final balance was not completed.",
+    text: "No charge was completed from this final-balance checkout attempt. You can return to your NestHelper email and try the payment link again when you are ready.",
+  },
+  additional_payment: {
+    title: "Your additional payment was not completed.",
+    text: "No charge was completed from this additional-payment checkout attempt. You can return to your NestHelper email and try the payment link again when you are ready.",
+  },
+};
 
 function Step({ number, children }: { number: number; children: React.ReactNode }) {
   return (
@@ -28,6 +136,8 @@ export default async function CheckoutPage({ searchParams }: CheckoutPageProps) 
   const success = getParam(params, "success") === "true";
   const cancelled = getParam(params, "cancelled") === "true";
   const sessionId = getParam(params, "session_id");
+  const paymentType = getPaymentType(params);
+  const content = successContent[paymentType];
 
   if (success) {
     return (
@@ -39,10 +149,10 @@ export default async function CheckoutPage({ searchParams }: CheckoutPageProps) 
             <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-white text-5xl shadow-2xl shadow-black/20">
               ✓
             </div>
-            <p className="text-sm font-black uppercase tracking-[0.28em] text-nest-gold">Payment received</p>
-            <h1 className="mt-4 text-4xl font-black leading-tight sm:text-5xl">Your NestHelper payment was successful.</h1>
+            <p className="text-sm font-black uppercase tracking-[0.28em] text-nest-gold">{content.eyebrow}</p>
+            <h1 className="mt-4 text-4xl font-black leading-tight sm:text-5xl">{content.title}</h1>
             <p className="mx-auto mt-5 max-w-2xl text-lg font-semibold leading-8 text-white/85">
-              You are all set. NestHelper received your payment and your request is moving to scheduling.
+              {content.text}
             </p>
           </div>
         </section>
@@ -52,26 +162,28 @@ export default async function CheckoutPage({ searchParams }: CheckoutPageProps) 
             <div className="rounded-[2rem] border border-nest-gold/20 bg-white p-7 shadow-soft">
               <h2 className="text-2xl font-black text-nest-teal">What happens next</h2>
               <ol className="mt-5 grid gap-3">
-                <Step number={1}>NestHelper confirms the final service window and arrival details.</Step>
-                <Step number={2}>You receive any prep notes for access, pets, laundry, or service-specific details.</Step>
-                <Step number={3}>Your request is handled by a NestHelper checked helper or approved partner provider.</Step>
+                {content.steps.map((step, index) => (
+                  <Step key={step} number={index + 1}>{step}</Step>
+                ))}
               </ol>
-              <div className="mt-7 rounded-2xl bg-nest-gold/10 p-5 text-sm font-semibold leading-7 text-nest-ink/75">
-                For Laundry Rescue, this payment may be a minimum/deposit. Dry weight, add-ons, and any final balance are confirmed separately after pickup.
-              </div>
+              {content.note ? (
+                <div className="mt-7 rounded-2xl bg-nest-gold/10 p-5 text-sm font-semibold leading-7 text-nest-ink/75">
+                  {content.note}
+                </div>
+              ) : null}
             </div>
 
             <aside className="rounded-[2rem] border border-nest-gold/20 bg-nest-cream p-7 shadow-soft">
               <h2 className="text-2xl font-black text-nest-teal">Payment status</h2>
               <div className="mt-5 rounded-2xl bg-white p-5">
                 <p className="text-sm font-black uppercase tracking-[0.2em] text-nest-gold">Status</p>
-                <p className="mt-2 text-3xl font-black text-nest-teal">Paid ✓</p>
+                <p className="mt-2 text-3xl font-black text-nest-teal">{content.status}</p>
                 {sessionId ? (
                   <p className="mt-3 break-all text-xs font-semibold text-nest-ink/50">Stripe session: {sessionId}</p>
                 ) : null}
               </div>
               <p className="mt-5 text-sm font-semibold leading-7 text-nest-ink/70">
-                You can close this tab. A NestHelper confirmation/follow-up message will come by email, text, or both.
+                {content.closing}
               </p>
               <div className="mt-6 grid gap-3">
                 <Link href="/" className="rounded-full bg-nest-teal px-5 py-3 text-center font-black text-white shadow-soft transition hover:-translate-y-0.5 hover:shadow-lg">
@@ -89,12 +201,14 @@ export default async function CheckoutPage({ searchParams }: CheckoutPageProps) 
   }
 
   if (cancelled) {
+    const cancelledCopy = cancelledContent[paymentType];
+
     return (
       <>
         <PageHero
           eyebrow="Checkout not completed"
-          title="Your payment was not completed."
-          text="No charge was completed from this checkout attempt. You can return to your NestHelper checkout email and try the payment link again when you are ready."
+          title={cancelledCopy.title}
+          text={cancelledCopy.text}
         />
         <section className="mx-auto max-w-3xl px-4 py-14 text-center sm:px-6 lg:px-8">
           <div className="rounded-[2rem] border border-nest-gold/20 bg-white p-7 shadow-soft">

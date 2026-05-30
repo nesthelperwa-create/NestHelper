@@ -107,8 +107,8 @@ export async function POST(request: Request) {
       allow_promotion_codes: false,
       customer_email: email || undefined,
       client_reference_id: requestId,
-      success_url: `${siteUrl}/checkout?success=true&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${siteUrl}/checkout?cancelled=true&request_id=${requestId}`,
+      success_url: `${siteUrl}/checkout?success=true&payment_type=additional_payment&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${siteUrl}/checkout?cancelled=true&payment_type=additional_payment&request_id=${requestId}`,
       metadata: {
         requestId,
         serviceId,

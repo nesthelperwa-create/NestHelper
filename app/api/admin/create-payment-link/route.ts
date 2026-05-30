@@ -129,6 +129,8 @@ export async function POST(request: Request) {
         ]
       : [{ price: priceId, quantity: 1 }];
 
+    const successPaymentType = isLaundryRescue ? "laundry_deposit" : useCustomInitial ? "custom_initial" : "service_payment";
+
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       line_items: lineItems,
@@ -138,8 +140,8 @@ export async function POST(request: Request) {
       allow_promotion_codes: !useCustomInitial,
       customer_email: email || undefined,
       client_reference_id: requestId,
-      success_url: `${siteUrl}/checkout?success=true&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${siteUrl}/checkout?cancelled=true&request_id=${requestId}`,
+      success_url: `${siteUrl}/checkout?success=true&payment_type=${successPaymentType}&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${siteUrl}/checkout?cancelled=true&payment_type=${successPaymentType}&request_id=${requestId}`,
       metadata: {
         requestId,
         serviceId,
