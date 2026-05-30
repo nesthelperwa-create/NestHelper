@@ -1,4 +1,4 @@
-import { Building2, Mail, MapPin, Phone, Sparkles } from "lucide-react";
+import { Building2, MapPin, Phone, Sparkles } from "lucide-react";
 import { PageHero } from "@/components/PageHero";
 import { ContactForm } from "@/components/forms/ContactForm";
 import { siteConfig } from "@/lib/siteConfig";
@@ -36,15 +36,6 @@ export default function ContactPage() {
 
             <Info icon={<Building2 />} label="Commercial Reset area">
               <div className="font-bold text-nest-ink/78">Select Pierce County, Eastside, and Northshore areas.</div>
-            </Info>
-
-            <Info icon={<Mail />} label="Commercial questions">
-              <a
-                href={`mailto:${siteConfig.emails.commercial}`}
-                className="break-all font-black text-nest-teal underline decoration-nest-gold/40 underline-offset-4 hover:decoration-nest-gold"
-              >
-                {siteConfig.emails.commercial}
-              </a>
             </Info>
           </div>
         </div>
