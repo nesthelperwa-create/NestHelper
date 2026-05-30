@@ -39,7 +39,6 @@ export function Footer() {
           </Link>
           <div className="mt-6 grid gap-3 text-sm text-white/78">
             <a href={`mailto:${siteConfig.emails.support}`} className="flex items-center gap-3 transition hover:text-white"><Mail size={17} /> Support: {siteConfig.emails.support}</a>
-            <a href={`mailto:${siteConfig.emails.commercial}`} className="flex items-center gap-3 transition hover:text-white"><Mail size={17} /> Commercial: {siteConfig.emails.commercial}</a>
             <a href={siteConfig.phoneHref} className="flex items-center gap-3 transition hover:text-white"><Phone size={17} /> {siteConfig.phone}</a>
             <div className="flex items-center gap-3"><MapPin size={17} /> Parent Reset: {siteConfig.serviceArea}</div>
           </div>
