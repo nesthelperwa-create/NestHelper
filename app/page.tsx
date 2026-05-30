@@ -223,7 +223,6 @@ export default function HomePage() {
             </p>
             <div className="mx-auto mt-7 flex max-w-sm flex-col justify-center gap-3 sm:max-w-none sm:flex-row">
               <ButtonLink href="/commercial-reset">Explore Commercial Reset</ButtonLink>
-              <ButtonLink href="/commercial-reset/request" variant="secondary">Start Quote Request</ButtonLink>
             </div>
           </div>
           <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">

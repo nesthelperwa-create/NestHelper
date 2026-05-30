@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import Link from "next/link";
 import {
-  ArrowRight,
   Building2,
   CalendarClock,
   CheckCircle2,
@@ -13,7 +11,6 @@ import {
   Sparkles,
   SprayCan,
 } from "lucide-react";
-import { CommercialQuoteMiniCard } from "@/components/forms/CommercialResetForm";
 import { PageHero } from "@/components/PageHero";
 import { ButtonLink } from "@/components/ui/ButtonLink";
 
@@ -76,9 +73,8 @@ export default function CommercialResetPage() {
               <p className="mt-5 text-base font-medium leading-7 text-nest-ink/72 sm:text-lg sm:leading-8">
                 Commercial Reset keeps the family-focused homepage clean while giving small businesses and community spaces a professional place to ask for routine cleaning, first-time resets, recurring janitorial support, and product preferences such as low-odor or non-toxic options when appropriate.
               </p>
-              <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-                <ButtonLink href="/commercial-reset/request">Start Quote Request</ButtonLink>
-                <ButtonLink href="/services" variant="secondary">Family Services</ButtonLink>
+              <div className="mt-7 rounded-2xl border border-nest-gold/14 bg-nest-cream/85 p-4 text-sm font-black leading-6 text-nest-teal shadow-sm">
+                Commercial requests are reviewed before checkout, so businesses can share the space, scope, timing, and preferences first.
               </div>
             </div>
           </div>
@@ -141,26 +137,20 @@ export default function CommercialResetPage() {
           text="Service availability depends on schedule, scope, address, and local licensing/endorsement requirements. Some city-limit jobs may require a city endorsement before service begins."
         />
 
-        <div className="mt-10 grid gap-8 lg:grid-cols-[0.82fr_1.18fr] lg:items-start">
-          <div className="lg:sticky lg:top-28">
-            <CommercialQuoteMiniCard />
-          </div>
-
-          <div className="grid gap-5">
-            <AreaCard
-              title="Pierce County focus"
-              text="Tacoma, Lakewood, Puyallup, University Place, Fife, Sumner, Bonney Lake, Gig Harbor, Spanaway, Parkland, Graham, Frederickson, South Hill, Midland, Summit-Waller, Elk Plain, and nearby unincorporated Pierce County areas."
-            />
-            <AreaCard
-              title="Eastside and Northshore"
-              text="Woodinville, Bothell, Kenmore, Kirkland, Redmond, Bellevue, Duvall, Mill Creek, and nearby Eastside/Northshore areas."
-            />
-            <div className="rounded-[2rem] border border-nest-gold/16 bg-nest-mint/20 p-6 text-center shadow-sm sm:text-left">
-              <h3 className="text-2xl font-black text-nest-teal">Nearby communities welcome</h3>
-              <p className="mt-3 font-medium leading-7 text-nest-ink/70">
-                We include nearby unincorporated Pierce County communities as service areas because many local businesses are outside city limits. Availability still depends on the address, schedule, scope, and any required local endorsements.
-              </p>
-            </div>
+        <div className="mt-10 grid gap-5 lg:grid-cols-3">
+          <AreaCard
+            title="Pierce County focus"
+            text="Tacoma, Lakewood, Puyallup, University Place, Fife, Sumner, Bonney Lake, Gig Harbor, Spanaway, Parkland, Graham, Frederickson, South Hill, Midland, Summit-Waller, Elk Plain, and nearby unincorporated Pierce County areas."
+          />
+          <AreaCard
+            title="Eastside and Northshore"
+            text="Woodinville, Bothell, Kenmore, Kirkland, Redmond, Bellevue, Duvall, Mill Creek, and nearby Eastside/Northshore areas."
+          />
+          <div className="rounded-[2rem] border border-nest-gold/16 bg-nest-mint/20 p-6 text-center shadow-sm">
+            <h3 className="text-2xl font-black text-nest-teal">Nearby communities welcome</h3>
+            <p className="mt-3 font-medium leading-7 text-nest-ink/70">
+              We include nearby unincorporated Pierce County communities as service areas because many local businesses are outside city limits. Availability still depends on the address, schedule, scope, and any required local endorsements.
+            </p>
           </div>
         </div>
       </section>
@@ -196,9 +186,6 @@ export default function CommercialResetPage() {
             <div className="flex flex-col gap-3 sm:flex-row lg:flex-col lg:items-stretch">
               <ButtonLink href="/commercial-reset/request" variant="secondary">Start Commercial Quote</ButtonLink>
               <ButtonLink href="/contact" variant="secondary">Ask a Question First</ButtonLink>
-              <Link href="/request" className="focus-ring inline-flex items-center justify-center gap-2 rounded-full border border-white/25 px-6 py-3.5 font-black text-white transition hover:-translate-y-0.5 hover:bg-white/10">
-                Need Parent Reset instead? <ArrowRight size={18} />
-              </Link>
             </div>
           </div>
         </div>
