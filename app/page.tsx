@@ -220,11 +220,11 @@ export default function HomePage() {
                 Commercial Reset has its own page.
               </h2>
               <p className="mt-5 text-base font-medium leading-7 text-nest-ink/72 sm:text-lg sm:leading-8">
-                Parent Reset stays focused on families. Commercial Reset is a separate quote-first service lane for small offices, studios, churches, daycare common areas, salons, and local business spaces that need routine cleaning support — including non-toxic or low-odor product preferences when appropriate.
+                Parent Reset stays focused on families. Commercial Reset is a separate quote-first service lane for small offices, studios, churches, daycare common areas, salons, and local business spaces in select Pierce County, Eastside, and Northshore areas that need routine cleaning support — including non-toxic or low-odor product preferences when appropriate.
               </p>
               <div className="mt-7 flex flex-col gap-3 sm:flex-row">
                 <ButtonLink href="/commercial-reset">Explore Commercial Reset</ButtonLink>
-                <ButtonLink href="/commercial-reset/request" variant="secondary">Request Commercial Quote</ButtonLink>
+                <ButtonLink href="/commercial-reset/request" variant="secondary">Start Quote Request</ButtonLink>
               </div>
             </div>
             <div className="grid gap-3 sm:grid-cols-2">

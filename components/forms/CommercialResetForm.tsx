@@ -16,6 +16,7 @@ const defaultState = {
   address: "",
   city: "",
   zip: "",
+  serviceRegion: "Not sure yet",
   businessType: "",
   squareFootage: "",
   bathrooms: "",
@@ -23,8 +24,10 @@ const defaultState = {
   preferredDate: "",
   preferredDaysTimes: "",
   supplies: "NestHelper supplies preferred",
-  flooringTypes: "",
+  flooringTypes: [] as string[],
+  accessType: "Someone can let NestHelper in",
   accessInstructions: "",
+  cleaningPriorities: [] as string[],
   specialNotes: "",
   photoNotes: "",
   consent: false,
@@ -53,7 +56,34 @@ const frequencies = [
   "Twice weekly service",
   "Three times weekly service",
   "Five times weekly service",
+  "Monthly / occasional support",
   "Not sure yet — help me choose",
+];
+
+const squareFootageOptions = [
+  "Under 1,000 sq ft",
+  "1,000–2,000 sq ft",
+  "2,000–3,500 sq ft",
+  "3,500–5,000 sq ft",
+  "Over 5,000 sq ft",
+  "Not sure yet",
+];
+
+const bathroomOptions = ["0", "1", "2", "3", "4+", "Not sure yet"];
+
+const flooringOptions = ["Carpet", "Tile", "LVP / vinyl", "Hardwood", "Concrete", "Rubber gym floor", "Mixed / not sure"];
+
+const cleaningPriorityOptions = [
+  "Trash / recycling",
+  "Bathrooms",
+  "Breakroom / kitchenette",
+  "Floors",
+  "Dusting / surfaces",
+  "Entry / reception",
+  "High-touch areas",
+  "Interior glass / mirrors",
+  "Daycare/common-area surfaces",
+  "One-time catch-up reset",
 ];
 
 function buildPayload(form: CommercialResetFormState) {
@@ -71,6 +101,7 @@ function buildPayload(form: CommercialResetFormState) {
     businessName: form.businessName,
     contactName: form.contactName,
     roleTitle: form.roleTitle,
+    serviceRegion: form.serviceRegion,
     businessType: form.businessType,
     squareFootage: form.squareFootage,
     bathrooms: form.bathrooms,
@@ -80,7 +111,9 @@ function buildPayload(form: CommercialResetFormState) {
     preferredDaysTimes: form.preferredDaysTimes,
     supplies: form.supplies,
     flooringTypes: form.flooringTypes,
+    accessType: form.accessType,
     accessInstructions: form.accessInstructions,
+    cleaningPriorities: form.cleaningPriorities,
     specialNotes: form.specialNotes,
     photoNotes: form.photoNotes,
     ...(form.photoUploads.length ? {
@@ -101,6 +134,16 @@ export function CommercialResetForm() {
 
   function update(name: keyof CommercialResetFormState, value: unknown) {
     setForm((prev) => ({ ...prev, [name]: value }) as CommercialResetFormState);
+  }
+
+  function toggleList(name: "flooringTypes" | "cleaningPriorities", item: string, checked: boolean) {
+    setForm((prev) => {
+      const current = prev[name];
+      return {
+        ...prev,
+        [name]: checked ? [...current, item] : current.filter((value) => value !== item),
+      };
+    });
   }
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
@@ -135,7 +178,7 @@ export function CommercialResetForm() {
           <p className="text-xs font-black uppercase tracking-[0.22em] text-nest-gold">No payment due yet</p>
           <h2 className="mt-2 text-2xl font-black text-nest-teal sm:text-3xl">Request a Commercial Reset quote</h2>
           <p className="mt-3 max-w-2xl leading-7 text-nest-ink/72">
-            Tell us about the business space, schedule, photos, and cleaning scope. NestHelper reviews commercial requests before quoting so pricing fits the real job instead of forcing every space into one package.
+            This guided form uses quick dropdowns and checkboxes first. Add notes only where needed, and upload photos only if they help us quote the space.
           </p>
           <div className="mt-5 grid gap-3 sm:grid-cols-3">
             <Step icon={<ClipboardCheck className="h-5 w-5" />} title="1. Scope review" text="Business type, square footage, bathrooms, and frequency." />
@@ -161,18 +204,36 @@ export function CommercialResetForm() {
         </div>
       </Section>
 
-      <Section title="2. Cleaning address" description="Commercial Reset availability depends on schedule, scope, address, and any local licensing or endorsement requirements.">
-        <Field label="Street address"><input className="input" required autoComplete="street-address" value={form.address} onChange={(e) => update("address", e.target.value)} /></Field>
+      <Section title="2. Cleaning address" description="Commercial Reset is quoted in select Pierce County, Eastside, and Northshore areas. Parent Reset home services remain focused on the Eastside/Northshore side.">
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="City / community"><input className="input" required autoComplete="address-level2" value={form.city} onChange={(e) => update("city", e.target.value)} /></Field>
+          <Field label="Service area">
+            <select className="input" value={form.serviceRegion} onChange={(e) => update("serviceRegion", e.target.value)}>
+              <option>Not sure yet</option>
+              <option>Pierce County commercial area</option>
+              <option>Eastside / Northshore commercial area</option>
+              <option>Nearby area — please review</option>
+            </select>
+          </Field>
           <Field label="ZIP"><input className="input" required autoComplete="postal-code" inputMode="numeric" value={form.zip} onChange={(e) => update("zip", e.target.value)} /></Field>
         </div>
+        <Field label="Street address"><input className="input" required autoComplete="street-address" value={form.address} onChange={(e) => update("address", e.target.value)} /></Field>
+        <Field label="City / community"><input className="input" required autoComplete="address-level2" value={form.city} onChange={(e) => update("city", e.target.value)} /></Field>
       </Section>
 
       <Section title="3. Space and schedule" description="These details help us estimate labor time, quote range, and whether a walkthrough is needed first.">
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Approx. square footage"><input className="input" required inputMode="numeric" placeholder="Example: 1,200 sq ft" value={form.squareFootage} onChange={(e) => update("squareFootage", e.target.value)} /></Field>
-          <Field label="Bathrooms"><input className="input" required placeholder="Example: 2 bathrooms" value={form.bathrooms} onChange={(e) => update("bathrooms", e.target.value)} /></Field>
+          <Field label="Approx. square footage">
+            <select className="input" required value={form.squareFootage} onChange={(e) => update("squareFootage", e.target.value)}>
+              <option value="">Choose one</option>
+              {squareFootageOptions.map((option) => <option key={option}>{option}</option>)}
+            </select>
+          </Field>
+          <Field label="Bathrooms">
+            <select className="input" required value={form.bathrooms} onChange={(e) => update("bathrooms", e.target.value)}>
+              <option value="">Choose one</option>
+              {bathroomOptions.map((option) => <option key={option}>{option}</option>)}
+            </select>
+          </Field>
           <Field label="Cleaning frequency">
             <select className="input" required value={form.frequency} onChange={(e) => update("frequency", e.target.value)}>
               <option value="">Choose one</option>
@@ -184,7 +245,7 @@ export function CommercialResetForm() {
         <Field label="Preferred days/times"><input className="input" required placeholder="Example: after 6pm weekdays, Saturday morning, before opening" value={form.preferredDaysTimes} onChange={(e) => update("preferredDaysTimes", e.target.value)} /></Field>
       </Section>
 
-      <Section title="4. Scope, access, and supplies" description="Commercial Reset starts with routine janitorial cleaning. Specialty work is quoted separately when available.">
+      <Section title="4. Scope and product preferences" description="Commercial Reset starts with routine janitorial cleaning. Specialty work is quoted separately when available.">
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Supplies preference">
             <select className="input" value={form.supplies} onChange={(e) => update("supplies", e.target.value)}>
@@ -192,16 +253,45 @@ export function CommercialResetForm() {
               <option>Non-toxic / low-odor options requested where appropriate</option>
               <option>Fragrance-free products requested where appropriate</option>
               <option>Business provides supplies</option>
+              <option>Discuss with me first</option>
               <option>Not sure yet</option>
             </select>
           </Field>
-          <Field label="Flooring types"><input className="input" placeholder="Example: LVP, tile, carpet, concrete" value={form.flooringTypes} onChange={(e) => update("flooringTypes", e.target.value)} /></Field>
+          <Field label="Access type">
+            <select className="input" value={form.accessType} onChange={(e) => update("accessType", e.target.value)}>
+              <option>Someone can let NestHelper in</option>
+              <option>Lockbox / key available</option>
+              <option>Alarm or code required</option>
+              <option>After-hours entry needed</option>
+              <option>Walkthrough needed first</option>
+              <option>Not sure yet</option>
+            </select>
+          </Field>
         </div>
-        <Field label="Access instructions"><textarea className="input min-h-28" required placeholder="Keys, lockbox, alarm, parking, suite number, after-hours entry, who will be onsite, etc." value={form.accessInstructions} onChange={(e) => update("accessInstructions", e.target.value)} /></Field>
-        <Field label="Cleaning needs / special notes"><textarea className="input min-h-32" required placeholder="Tell us what needs to be cleaned, current condition, priority areas, trash/recycling, restrooms, breakroom, waiting room, daycare/common-area notes, add-ons, or anything sensitive." value={form.specialNotes} onChange={(e) => update("specialNotes", e.target.value)} /></Field>
+        <div>
+          <div className="label mb-3">Cleaning priorities</div>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {cleaningPriorityOptions.map((item) => (
+              <CheckOption key={item} checked={form.cleaningPriorities.includes(item)} onChange={(checked) => toggleList("cleaningPriorities", item, checked)}>{item}</CheckOption>
+            ))}
+          </div>
+        </div>
+        <div>
+          <div className="label mb-3">Flooring types</div>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {flooringOptions.map((item) => (
+              <CheckOption key={item} checked={form.flooringTypes.includes(item)} onChange={(checked) => toggleList("flooringTypes", item, checked)}>{item}</CheckOption>
+            ))}
+          </div>
+        </div>
         <div className="rounded-2xl border border-nest-gold/15 bg-nest-mint/20 p-4 text-sm font-semibold leading-6 text-nest-ink/72">
           For daycare common areas, churches, studios, and family-facing spaces, non-toxic, low-odor, or fragrance-free product options can be requested where appropriate for the surface and scope. NestHelper still reviews each request before confirming products, timing, and boundaries.
         </div>
+      </Section>
+
+      <Section title="5. Notes and optional photos" description="Keep this short unless something needs extra context. Photos are helpful but not required.">
+        <Field label="Access instructions or special notes (optional)"><textarea className="input min-h-28" placeholder="Keys, lockbox, alarm, parking, suite number, after-hours entry, who will be onsite, current condition, daycare/common-area notes, add-ons, or anything sensitive." value={form.accessInstructions} onChange={(e) => update("accessInstructions", e.target.value)} /></Field>
+        <Field label="Anything else NestHelper should know? (optional)"><textarea className="input min-h-24" placeholder="Tell us anything that did not fit above." value={form.specialNotes} onChange={(e) => update("specialNotes", e.target.value)} /></Field>
         <PhotoUploadField
           photos={form.photoUploads}
           onChange={(photos) => update("photoUploads", photos)}
@@ -272,6 +362,15 @@ function Step({ icon, title, text }: { icon: ReactNode; title: string; text: str
   );
 }
 
+function CheckOption({ checked, onChange, children }: { checked: boolean; onChange: (checked: boolean) => void; children: ReactNode }) {
+  return (
+    <label className={`flex items-center gap-3 rounded-2xl border p-3 text-sm font-semibold transition ${checked ? "border-nest-gold/45 bg-nest-mint/35 text-nest-teal shadow-sm" : "border-nest-gold/10 bg-nest-cream text-nest-ink/78 hover:bg-nest-mint/25"}`}>
+      <input type="checkbox" className="h-4 w-4 accent-nest-teal" checked={checked} onChange={(e) => onChange(e.target.checked)} />
+      <span>{children}</span>
+    </label>
+  );
+}
+
 export function CommercialQuoteMiniCard() {
   return (
     <div className="rounded-[1.75rem] border border-nest-gold/16 bg-white/80 p-5 shadow-sm">
@@ -280,13 +379,13 @@ export function CommercialQuoteMiniCard() {
           <Building2 size={23} />
         </div>
         <div>
-          <h3 className="text-xl font-black text-nest-teal">Quote-first commercial requests</h3>
+          <h3 className="text-xl font-black text-nest-teal">Commercial quote before checkout</h3>
           <p className="mt-2 text-sm font-medium leading-6 text-nest-ink/68">
-            Commercial Reset requests are reviewed before checkout because every business has different square footage, frequency, access, supplies, and after-hours needs.
+            For business spaces, NestHelper reviews the address, square footage, frequency, access, supplies, and photos before quoting or sending a payment link.
           </p>
           <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
             <div className="flex items-center gap-2 text-sm font-black text-nest-teal">
-              <CheckCircle2 size={16} /> Custom quote before payment
+              <CheckCircle2 size={16} /> No payment due when you request
             </div>
             <Link href="/commercial-reset/request" className="inline-flex w-fit items-center justify-center rounded-full bg-nest-teal px-4 py-2 text-xs font-black text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-nest-teal2">
               Start quote

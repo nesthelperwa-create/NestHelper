@@ -9,6 +9,8 @@ type Status = "idle" | "loading" | "success" | "error";
 
 const topicOptions = [
   "General question",
+  "Parent Reset / family services question",
+  "Commercial Reset question or quote",
   "Existing request or service issue",
   "New request or booking question",
   "Billing or payment question",
@@ -65,7 +67,7 @@ export function ContactForm() {
         </div>
         <h2 className="mt-4 text-2xl font-black text-nest-teal sm:text-3xl">Send a message</h2>
         <p className="mt-2 leading-7 text-nest-ink/68">
-          Choose a topic so your message is routed to the best NestHelper inbox behind the scenes.
+          Choose a topic so your message routes to the right NestHelper inbox, including Commercial Reset when it is a business-space question.
         </p>
       </div>
 
@@ -86,7 +88,7 @@ export function ContactForm() {
         <Input label="Subject" required value={form.subject} onChange={(value) => update("subject", value)} />
         <label className="grid gap-2">
           <span className="label">How can we help?</span>
-          <textarea className="input min-h-36" required placeholder="Tell us what you’re looking for, where you’re located, or what question you have." value={form.message} onChange={(e) => update("message", e.target.value)} />
+          <textarea className="input min-h-36" required placeholder="Tell us what you’re looking for, where you’re located, or what question you have. For Commercial Reset, include business type and city if you can." value={form.message} onChange={(e) => update("message", e.target.value)} />
         </label>
         <button className="focus-ring inline-flex items-center justify-center gap-2 rounded-full bg-nest-teal px-6 py-4 font-black text-white shadow-soft transition hover:-translate-y-0.5 hover:bg-nest-teal2 hover:shadow-lift disabled:opacity-60" disabled={status === "loading"}>
           {status === "loading" ? "Sending..." : "Send Message"}

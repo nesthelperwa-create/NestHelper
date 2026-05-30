@@ -77,7 +77,7 @@ export default function CommercialResetPage() {
                 Commercial Reset keeps the family-focused homepage clean while giving small businesses and community spaces a professional place to ask for routine cleaning, first-time resets, recurring janitorial support, and product preferences such as low-odor or non-toxic options when appropriate.
               </p>
               <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-                <ButtonLink href="/commercial-reset/request">Request Commercial Quote</ButtonLink>
+                <ButtonLink href="/commercial-reset/request">Start Quote Request</ButtonLink>
                 <ButtonLink href="/services" variant="secondary">Family Services</ButtonLink>
               </div>
             </div>
@@ -193,13 +193,13 @@ export default function CommercialResetPage() {
         <div className="overflow-hidden rounded-[2.75rem] border border-nest-gold/18 bg-gradient-to-br from-nest-teal via-[#075c58] to-[#0b4f4b] p-6 text-white shadow-soft sm:p-8 lg:p-10">
           <div className="grid gap-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
             <div>
-              <p className="pill-label w-fit border-white/20 bg-white/12 text-nest-gold2"><ClipboardCheck size={15} /> Quote Request</p>
-              <h2 className="text-balance mt-4 text-3xl font-black sm:text-5xl">Ready to price a business space?</h2>
+              <p className="pill-label w-fit border-white/20 bg-white/12 text-nest-gold2"><ClipboardCheck size={15} /> Next Step</p>
+              <h2 className="text-balance mt-4 text-3xl font-black sm:text-5xl">Ready for a reviewed commercial quote?</h2>
               <p className="mt-4 max-w-3xl text-base font-medium leading-7 text-white/78 sm:text-lg sm:leading-8">
-                Use the dedicated Commercial Quote page so this overview stays clean and easy to scan. Tell us about the business, square footage, bathrooms, floors, access, schedule, supply preferences, and optional photos there.
+                Use the dedicated Commercial Quote page when you are ready. The form stays separate from this overview and uses quick dropdowns, checkboxes, and optional photos so it does not feel like a long intake packet.
               </p>
               <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-                <ButtonLink href="/commercial-reset/request" variant="secondary">Start Commercial Quote</ButtonLink>
+                <ButtonLink href="/commercial-reset/request" variant="secondary">Start Quote Request</ButtonLink>
                 <ButtonLink href="/contact" variant="secondary">Ask a Question First</ButtonLink>
               </div>
             </div>

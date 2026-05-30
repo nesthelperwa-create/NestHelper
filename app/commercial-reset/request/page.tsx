@@ -22,15 +22,15 @@ export default function CommercialResetRequestPage() {
 
       <section className="mx-auto grid max-w-6xl gap-8 px-4 py-14 sm:px-6 lg:grid-cols-[0.82fr_1.18fr] lg:px-8">
         <aside className="self-start rounded-[2.5rem] border border-nest-gold/18 bg-white/90 p-6 shadow-soft backdrop-blur lg:sticky lg:top-28">
-          <p className="pill-label w-fit"><ClipboardCheck size={15} /> Quote Request</p>
-          <h2 className="mt-4 text-3xl font-black text-nest-teal sm:text-4xl">Start with a reviewed request.</h2>
+          <p className="pill-label w-fit"><ClipboardCheck size={15} /> Guided Intake</p>
+          <h2 className="mt-4 text-3xl font-black text-nest-teal sm:text-4xl">Start with the basics.</h2>
           <p className="mt-3 font-medium leading-7 text-nest-ink/70">
-            This form is for Commercial Reset only. Use it for small offices, studios, churches, salons, daycare common areas, professional offices, and local business spaces that need routine cleaning support or a one-time reset.
+            This page is only for Commercial Reset. The form uses dropdowns, checkboxes, and optional photos to keep the request simple while still giving NestHelper enough information to review fit and quote accurately.
           </p>
           <div className="mt-6 grid gap-3">
-            <SidebarPoint icon={<Building2 />} text="Business name, contact, and business type" />
-            <SidebarPoint icon={<MapPin />} text="Cleaning address and service area review" />
-            <SidebarPoint icon={<SprayCan />} text="Square footage, bathrooms, floors, supplies, and optional photos" />
+            <SidebarPoint icon={<Building2 />} text="Business contact and type" />
+            <SidebarPoint icon={<MapPin />} text="Pierce County or Eastside/Northshore area review" />
+            <SidebarPoint icon={<SprayCan />} text="Size, bathrooms, priorities, supplies, and photos" />
             <SidebarPoint icon={<CalendarClock />} text="Frequency and preferred service windows" />
           </div>
           <p className="mt-5 rounded-2xl border border-nest-teal/15 bg-nest-mint/25 p-4 text-sm font-semibold leading-6 text-nest-ink/76">

@@ -8,6 +8,7 @@ export const emailAliases = {
   billing: process.env.NESTHELPER_BILLING_EMAIL || "billing@nesthelperwa.com",
   payments: process.env.NESTHELPER_PAYMENTS_EMAIL || "payments@nesthelperwa.com",
   laundry: process.env.NESTHELPER_LAUNDRY_EMAIL || "laundry@nesthelperwa.com",
+  commercial: process.env.NESTHELPER_COMMERCIAL_EMAIL || "commercial@nesthelperwa.com",
   helpers: process.env.NESTHELPER_HELPERS_EMAIL || "helpers@nesthelperwa.com",
   partners: process.env.NESTHELPER_PARTNERS_EMAIL || "partners@nesthelperwa.com",
   jobs: process.env.NESTHELPER_JOBS_EMAIL || "jobs@nesthelperwa.com",
@@ -61,6 +62,10 @@ export function getContactTopicEmail(topic: unknown) {
     return emailAliases.billing;
   }
 
+  if (normalized.includes("commercial") || normalized.includes("business") || normalized.includes("office") || normalized.includes("janitorial")) {
+    return emailAliases.commercial;
+  }
+
   if (normalized.includes("laundry")) {
     return emailAliases.laundry;
   }
@@ -86,7 +91,11 @@ export function getContactTopicEmail(topic: unknown) {
 
 export function getSubmissionNotificationEmail(collection: SubmissionCollection, payload: Record<string, unknown>) {
   // Keep aliases for internal sorting/routing into the hello@ mailbox.
-  if (collection === "serviceRequests") return isLaundryService(payload) ? emailAliases.laundry : emailAliases.booking;
+  if (collection === "serviceRequests") {
+    if (isCommercialService(payload)) return emailAliases.commercial;
+    if (isLaundryService(payload)) return emailAliases.laundry;
+    return emailAliases.booking;
+  }
   if (collection === "helperApplications") return emailAliases.helpers;
   if (collection === "partnerApplications") return emailAliases.partners;
   if (collection === "contactMessages") return getContactTopicEmail(payload.topic || payload.subject);
@@ -94,7 +103,11 @@ export function getSubmissionNotificationEmail(collection: SubmissionCollection,
 }
 
 export function getCustomerReplyEmail(collection: SubmissionCollection, payload: Record<string, unknown>) {
-  if (collection === "serviceRequests") return isLaundryService(payload) ? emailAliases.laundry : emailAliases.booking;
+  if (collection === "serviceRequests") {
+    if (isCommercialService(payload)) return emailAliases.commercial;
+    if (isLaundryService(payload)) return emailAliases.laundry;
+    return emailAliases.booking;
+  }
   if (collection === "helperApplications") return emailAliases.helpers;
   if (collection === "partnerApplications") return emailAliases.partners;
   if (collection === "contactMessages") return getContactTopicEmail(payload.topic || payload.subject);
@@ -107,6 +120,10 @@ export function getContactTopicLabel(topic: unknown) {
 
   if (normalized.includes("billing") || normalized.includes("payment") || normalized.includes("invoice") || normalized.includes("refund")) {
     return "Billing";
+  }
+
+  if (normalized.includes("commercial") || normalized.includes("business") || normalized.includes("office") || normalized.includes("janitorial")) {
+    return "Commercial";
   }
 
   if (normalized.includes("laundry")) {
