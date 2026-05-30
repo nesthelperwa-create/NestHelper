@@ -342,7 +342,7 @@ export function CommercialResetForm() {
           </p>
           <div className="mt-5 grid gap-3 sm:grid-cols-3">
             <Step icon={<ClipboardCheck className="h-5 w-5" />} title="1. Quick basics" text="Contact, address, business type, and service area." />
-            <Step icon={<ShieldCheck className="h-5 w-5" />} title="2. Quote factors" text="Size, bathrooms, kitchens, showers, condition, and frequency." />
+            <Step icon={<ShieldCheck className="h-5 w-5" />} title="2. Quote factors" text="Space size, layout, areas that need attention, condition, and frequency." />
             <Step icon={<CreditCard className="h-5 w-5" />} title="3. Clear quote" text="Flat visit price, recurring plan, or reviewed range before checkout." />
           </div>
         </div>
@@ -380,7 +380,7 @@ export function CommercialResetForm() {
         <Field label="City / community"><input className="input" required autoComplete="address-level2" value={form.city} onChange={(e) => update("city", e.target.value)} /></Field>
       </Section>
 
-      <Section title="3. Quote basics" description="These quick ranges help NestHelper prepare a clear visit price, recurring plan, or reviewed quote range instead of an open-ended hourly clock.">
+      <Section title="3. About the Space" description="These quick ranges help NestHelper understand the size, layout, condition, and schedule before preparing a flat visit quote, recurring plan, or reviewed range.">
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Approx. square footage">
             <select className="input" required value={form.squareFootage} onChange={(e) => update("squareFootage", e.target.value)}>
@@ -433,12 +433,20 @@ export function CommercialResetForm() {
       </Section>
 
       {form.businessType && (
-        <Section title="4. Space details" description="Choose what applies. This changes based on the type of space so you are not answering unrelated questions.">
+        <Section title="4. What Needs Attention" description="Choose the areas and priorities that matter most. This changes based on the type of space so you are not answering unrelated questions.">
           <div>
             <div className="label mb-3">Areas included</div>
             <div className="grid gap-2 sm:grid-cols-2">
               {spaceDetailOptions.map((item) => (
                 <CheckOption key={item} checked={form.spaceDetails.includes(item)} onChange={(checked) => toggleList("spaceDetails", item, checked)}>{item}</CheckOption>
+              ))}
+            </div>
+          </div>
+          <div>
+            <div className="label mb-3">Main cleaning priorities</div>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {cleaningPriorityOptions.map((item) => (
+                <CheckOption key={item} checked={form.cleaningPriorities.includes(item)} onChange={(checked) => toggleList("cleaningPriorities", item, checked)}>{item}</CheckOption>
               ))}
             </div>
           </div>
@@ -488,7 +496,7 @@ export function CommercialResetForm() {
         </Section>
       )}
 
-      <Section title={isShortTermRental ? "6. Scope and preferences" : form.businessType ? "5. Scope and preferences" : "4. Scope and preferences"} description="Commercial Reset starts with routine janitorial cleaning. Specialty work is quoted separately when available.">
+      <Section title={isShortTermRental ? "6. Service Preferences" : form.businessType ? "5. Service Preferences" : "4. Service Preferences"} description="Confirm supplies, access, flooring, and any add-ons that should be reviewed before quoting.">
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Supplies preference">
             <select className="input" value={form.supplies} onChange={(e) => update("supplies", e.target.value)}>
@@ -509,14 +517,6 @@ export function CommercialResetForm() {
               <option>Not sure yet</option>
             </select>
           </Field>
-        </div>
-        <div>
-          <div className="label mb-3">Main cleaning priorities</div>
-          <div className="grid gap-2 sm:grid-cols-2">
-            {cleaningPriorityOptions.map((item) => (
-              <CheckOption key={item} checked={form.cleaningPriorities.includes(item)} onChange={(checked) => toggleList("cleaningPriorities", item, checked)}>{item}</CheckOption>
-            ))}
-          </div>
         </div>
         <div>
           <div className="label mb-3">Flooring types</div>

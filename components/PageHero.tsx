@@ -6,11 +6,15 @@ export function PageHero({
   title,
   text,
   cta = true,
+  ctaHref = "/request",
+  ctaLabel = "Request Help",
 }: {
   eyebrow: string;
   title: string;
   text: string;
   cta?: boolean;
+  ctaHref?: string;
+  ctaLabel?: string;
 }) {
   return (
     <section className="relative isolate overflow-hidden px-4 py-12 sm:px-6 sm:py-20 lg:px-8">
@@ -35,7 +39,7 @@ export function PageHero({
           </p>
           {cta && (
             <div className="mt-8">
-              <ButtonLink href="/request">Request Help</ButtonLink>
+              <ButtonLink href={ctaHref}>{ctaLabel}</ButtonLink>
             </div>
           )}
         </div>

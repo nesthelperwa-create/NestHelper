@@ -23,14 +23,14 @@ export default function CommercialResetRequestPage() {
       <section className="mx-auto grid max-w-6xl gap-8 px-4 py-14 sm:px-6 lg:grid-cols-[0.82fr_1.18fr] lg:px-8">
         <aside className="self-start rounded-[2.5rem] border border-nest-gold/18 bg-white/90 p-6 shadow-soft backdrop-blur lg:sticky lg:top-28">
           <p className="pill-label w-fit"><ClipboardCheck size={15} /> Guided Intake</p>
-          <h2 className="mt-4 text-3xl font-black text-nest-teal sm:text-4xl">Start with the basics.</h2>
+          <h2 className="mt-4 text-3xl font-black text-nest-teal sm:text-4xl">Simple guided intake.</h2>
           <p className="mt-3 font-medium leading-7 text-nest-ink/70">
             This page is only for Commercial Reset, including routine business cleaning and short-term rental turnovers. The form uses dropdowns, checkboxes, and optional photos to keep the request simple while still giving NestHelper enough detail to prepare a clear flat visit quote, recurring plan, or reviewed range before checkout.
           </p>
           <div className="mt-6 grid gap-3">
             <SidebarPoint icon={<Building2 />} text="Business, host, or property contact" />
             <SidebarPoint icon={<MapPin />} text="Pierce County or Eastside/Northshore area review" />
-            <SidebarPoint icon={<SprayCan />} text="Size range, bathrooms, kitchens, showers, condition, priorities, and photos" />
+            <SidebarPoint icon={<SprayCan />} text="About the space, what needs attention, product preferences, and photos" />
             <SidebarPoint icon={<BedDouble />} text="Optional turnover details for short-term rentals" />
             <SidebarPoint icon={<CalendarClock />} text="Frequency and preferred service windows" />
           </div>

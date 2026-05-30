@@ -67,7 +67,8 @@ export default function CommercialResetPage() {
         eyebrow="Commercial Reset"
         title="Routine cleaning support for small local business spaces."
         text="A separate NestHelper service page for small offices, studios, churches, daycare common areas, salons, short-term rental turnovers, and local business spaces that need reliable reset-style janitorial support. Commercial jobs are quoted after review, not forced into family-service pricing."
-        cta={false}
+        ctaHref="/commercial-reset/request"
+        ctaLabel="Request Commercial Reset"
       />
 
       <section className="mx-auto max-w-7xl px-4 pb-6 sm:px-6 lg:px-8">
@@ -82,9 +83,6 @@ export default function CommercialResetPage() {
               <p className="mt-5 text-base font-medium leading-7 text-nest-ink/72 sm:text-lg sm:leading-8">
                 Commercial Reset keeps the family-focused homepage clean while giving small businesses and community spaces a professional place to ask for routine cleaning, first-time resets, recurring janitorial support, short-term rental turnover cleaning, and product preferences such as low-odor or non-toxic options when appropriate.
               </p>
-              <div className="mt-7">
-                <ButtonLink href="/commercial-reset/request">Request Commercial Reset</ButtonLink>
-              </div>
             </div>
           </div>
 
@@ -98,14 +96,12 @@ export default function CommercialResetPage() {
       </section>
 
       <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        <div className="grid gap-8 lg:grid-cols-[0.85fr_1.15fr] lg:items-end">
-          <div>
-            <p className="pill-label w-fit"><Sparkles size={15} /> Who it fits</p>
-            <h2 className="text-balance mt-4 text-3xl font-black leading-tight text-nest-teal sm:text-5xl">
-              Small business spaces that need a reset, not a giant cleaning contract.
-            </h2>
-          </div>
-          <p className="text-base font-medium leading-7 text-nest-ink/70 sm:text-lg sm:leading-8">
+        <div className="mx-auto max-w-4xl text-center">
+          <p className="pill-label mx-auto w-fit"><Sparkles size={15} /> Who it fits</p>
+          <h2 className="text-balance mt-4 text-3xl font-black leading-tight text-nest-teal sm:text-5xl">
+            Small business spaces that need a reset, not a giant cleaning contract.
+          </h2>
+          <p className="mx-auto mt-5 max-w-3xl text-base font-medium leading-7 text-nest-ink/70 sm:text-lg sm:leading-8">
             Commercial Reset is best for manageable local spaces where a clean, consistent environment matters: offices, client-facing rooms, studios, waiting areas, restrooms, staff common areas, daycare or learning-space common areas, and host-managed short-term rental spaces.
           </p>
         </div>
@@ -160,42 +156,40 @@ export default function CommercialResetPage() {
       </section>
 
       <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
-        <div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:items-start">
-          <div className="lg:sticky lg:top-28">
-            <p className="pill-label w-fit"><MapPin size={15} /> Service Areas</p>
-            <h2 className="text-balance mt-4 text-3xl font-black leading-tight text-nest-teal sm:text-5xl">
-              Now quoting select Pierce County, Eastside, and Northshore areas.
-            </h2>
-            <p className="mt-5 font-medium leading-7 text-nest-ink/70">
-              Service availability depends on schedule, scope, address, and local licensing/endorsement requirements. Some city-limit jobs may require a city endorsement before service begins.
-            </p>
-          </div>
+        <div className="mx-auto max-w-4xl text-center">
+          <p className="pill-label mx-auto w-fit"><MapPin size={15} /> Service Areas</p>
+          <h2 className="text-balance mt-4 text-3xl font-black leading-tight text-nest-teal sm:text-5xl">
+            Now quoting select Pierce County, Eastside, and Northshore areas.
+          </h2>
+          <p className="mx-auto mt-5 max-w-3xl font-medium leading-7 text-nest-ink/70">
+            Service availability depends on schedule, scope, address, and local licensing/endorsement requirements. Some city-limit jobs may require a city endorsement before service begins.
+          </p>
+        </div>
 
-          <div className="grid gap-5">
-            <AreaCard
-              title="Pierce County focus"
-              text="Tacoma, Lakewood, Puyallup, University Place, Fife, Sumner, Bonney Lake, Gig Harbor, Spanaway, Parkland, Graham, Frederickson, South Hill, Midland, Summit-Waller, Elk Plain, and nearby unincorporated Pierce County areas."
-            />
-            <AreaCard
-              title="Eastside and Northshore"
-              text="Woodinville, Bothell, Kenmore, Kirkland, Redmond, Bellevue, Duvall, Mill Creek, and nearby Eastside/Northshore areas."
-            />
-            <div className="rounded-[2rem] border border-nest-gold/16 bg-nest-mint/20 p-6">
-              <h3 className="text-2xl font-black text-nest-teal">Nearby communities welcome</h3>
-              <p className="mt-3 font-medium leading-7 text-nest-ink/70">
-                We include nearby unincorporated Pierce County communities as service areas because many local businesses are outside city limits. Availability still depends on the address, schedule, scope, and any required local endorsements.
-              </p>
-            </div>
+        <div className="mt-10 grid gap-5 lg:grid-cols-3">
+          <AreaCard
+            title="Pierce County focus"
+            text="Tacoma, Lakewood, Puyallup, University Place, Fife, Sumner, Bonney Lake, Gig Harbor, Spanaway, Parkland, Graham, Frederickson, South Hill, Midland, Summit-Waller, Elk Plain, and nearby unincorporated Pierce County areas."
+          />
+          <AreaCard
+            title="Eastside and Northshore"
+            text="Woodinville, Bothell, Kenmore, Kirkland, Redmond, Bellevue, Duvall, Mill Creek, and nearby Eastside/Northshore areas."
+          />
+          <div className="rounded-[2rem] border border-nest-gold/16 bg-nest-mint/20 p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-soft">
+            <h3 className="text-2xl font-black text-nest-teal">Nearby communities welcome</h3>
+            <p className="mt-3 font-medium leading-7 text-nest-ink/70">
+              We include nearby unincorporated Pierce County communities as service areas because many local businesses are outside city limits. Availability still depends on the address, schedule, scope, and any required local endorsements.
+            </p>
           </div>
         </div>
       </section>
 
       <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
         <div className="overflow-hidden rounded-[2.75rem] border border-nest-gold/18 bg-white/90 shadow-soft">
-          <div className="bg-gradient-to-br from-nest-cream via-white to-nest-mint/35 p-6 sm:p-8 lg:p-10">
-            <p className="pill-label w-fit"><CheckCircle2 size={15} /> Quote Guidance</p>
-            <h2 className="text-balance mt-4 text-3xl font-black text-nest-teal sm:text-5xl">Pricing is quoted clearly before service is scheduled.</h2>
-            <p className="mt-4 max-w-4xl text-lg font-medium leading-8 text-nest-ink/72">
+          <div className="bg-gradient-to-br from-nest-cream via-white to-nest-mint/35 p-6 text-center sm:p-8 lg:p-10">
+            <p className="pill-label mx-auto w-fit"><CheckCircle2 size={15} /> Quote Guidance</p>
+            <h2 className="text-balance mx-auto mt-4 max-w-4xl text-3xl font-black text-nest-teal sm:text-5xl">Pricing is quoted clearly before service is scheduled.</h2>
+            <p className="mx-auto mt-4 max-w-4xl text-lg font-medium leading-8 text-nest-ink/72">
               Commercial pricing is not an open-ended hourly clock. NestHelper reviews the space, frequency, bathrooms, flooring, access, timing, current condition, product preferences, and optional photos, then sends a clear visit price or recurring plan before service is scheduled.
             </p>
           </div>
@@ -214,16 +208,14 @@ export default function CommercialResetPage() {
 
       <section className="mx-auto max-w-7xl px-4 pb-16 pt-10 sm:px-6 lg:px-8">
         <div className="overflow-hidden rounded-[2.75rem] border border-nest-gold/18 bg-gradient-to-br from-nest-teal via-[#075c58] to-[#0b4f4b] p-6 text-white shadow-soft sm:p-8 lg:p-10">
-          <div className="grid gap-8 lg:grid-cols-[1.15fr_0.85fr] lg:items-center">
-            <div>
-              <p className="pill-label w-fit border-white/20 bg-white/12 text-nest-gold2"><ClipboardCheck size={15} /> Commercial Quote</p>
-              <h2 className="text-balance mt-4 text-3xl font-black sm:text-5xl">Ready for a reviewed commercial quote?</h2>
-              <p className="mt-4 max-w-3xl text-base font-medium leading-7 text-white/78 sm:text-lg sm:leading-8">
-                Use the dedicated quote page when you are ready. Commercial Reset stays focused on business spaces, short-term rental turnovers, and routine cleaning support, while Parent Reset remains separate for homes, laundry, errands, and family support.
-              </p>
-            </div>
-            <div className="flex flex-col gap-3 sm:flex-row lg:flex-col lg:items-stretch">
-              <ButtonLink href="/commercial-reset/request" variant="secondary">Start Commercial Quote</ButtonLink>
+          <div className="mx-auto max-w-4xl text-center">
+            <p className="pill-label mx-auto w-fit border-white/20 bg-white/12 text-nest-gold2"><ClipboardCheck size={15} /> Commercial Quote</p>
+            <h2 className="text-balance mt-4 text-3xl font-black sm:text-5xl">Ready for a reviewed commercial quote?</h2>
+            <p className="mx-auto mt-4 max-w-3xl text-base font-medium leading-7 text-white/78 sm:text-lg sm:leading-8">
+              Use the dedicated quote page when you are ready. Commercial Reset stays focused on business spaces, short-term rental turnovers, and routine cleaning support, while Parent Reset remains separate for homes, laundry, errands, and family support.
+            </p>
+            <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row">
+              <ButtonLink href="/commercial-reset/request" variant="secondary">Request Commercial Reset</ButtonLink>
               <ButtonLink href="/contact" variant="secondary">Ask a Question First</ButtonLink>
               <Link href="/request" className="focus-ring inline-flex items-center justify-center gap-2 rounded-full border border-white/25 px-6 py-3.5 font-black text-white transition hover:-translate-y-0.5 hover:bg-white/10">
                 Need Parent Reset instead? <ArrowRight size={18} />
