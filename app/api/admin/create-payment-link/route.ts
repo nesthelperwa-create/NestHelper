@@ -113,7 +113,7 @@ export async function POST(request: Request) {
     const fullName = getString(data.fullName);
     const phone = getString(data.phone);
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-    const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = useCustomInitial
+    const lineItems = useCustomInitial
       ? [
           {
             price_data: {
