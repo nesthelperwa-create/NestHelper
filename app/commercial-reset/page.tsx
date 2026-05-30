@@ -1,14 +1,16 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+import Link from "next/link";
 import {
-  BadgeDollarSign,
+  ArrowRight,
+  BedDouble,
   Building2,
   CalendarClock,
+  Camera,
   CheckCircle2,
   ClipboardCheck,
   DoorOpen,
-  FileText,
-  ListChecks,
+  Home,
   MapPin,
   ShieldCheck,
   Sparkles,
@@ -19,7 +21,7 @@ import { ButtonLink } from "@/components/ui/ButtonLink";
 
 export const metadata: Metadata = {
   title: "Commercial Reset | NestHelper",
-  description: "Quote-first commercial cleaning and reset services for small offices, studios, churches, daycare common areas, salons, and local small businesses in select Pierce County, Eastside, and Northshore areas.",
+  description: "Quote-first commercial cleaning and reset services for small offices, studios, churches, daycare common areas, salons, short-term rental turnovers, and local small businesses in select Pierce County, Eastside, and Northshore areas.",
 };
 
 const businessTypes = [
@@ -31,6 +33,7 @@ const businessTypes = [
   "Real estate and insurance offices",
   "Daycare common areas",
   "Schools and learning studios",
+  "Short-term rental turnovers",
   "Local small businesses",
 ];
 
@@ -42,6 +45,8 @@ const routineCleaning = [
   "Dusting and high-touch surfaces",
   "Vacuuming, sweeping, and mopping",
   "Low-odor / non-toxic product options by request",
+  "Guest-ready turnover resets when quoted",
+  "Linen, towel, and restock checklist review",
 ];
 
 const specialtyAddOns = [
@@ -51,49 +56,8 @@ const specialtyAddOns = [
   "Upholstery or specialty surfaces after review",
   "First-time heavier reset quoted after walkthrough",
   "Daycare requests are common-area focused unless reviewed",
+  "Short-term rental work does not include guest messaging, repairs, pest treatment, biohazards, or property management unless separately reviewed",
   "No mold, biohazard, construction cleanup, or hazardous work",
-];
-
-const pricingCards = [
-  {
-    title: "Small recurring spaces",
-    price: "From $149/visit",
-    text: "A competitive starting point for smaller offices, studios, salons, and common-area resets. Final quote is presented as a clear per-visit price based on bathrooms, foot traffic, timing, and scope.",
-  },
-  {
-    title: "Weekly recurring plans",
-    price: "Often $595+/month",
-    text: "Useful planning range for small spaces that need reliable weekly service. Recurring plans are quoted up front so businesses know the expected monthly cost.",
-  },
-  {
-    title: "One-time commercial reset",
-    price: "From $225",
-    text: "For first-time catch-up, move-in prep, office reset, or heavier cleaning before recurring service begins. Photos help us quote a clear job price fairly.",
-  },
-];
-
-const squareFootRanges = [
-  { frequency: "1x per week", range: "$0.14–$0.20 / sq ft", note: "Best for small offices, studios, and light routine upkeep." },
-  { frequency: "2x per week", range: "$0.11–$0.17 / sq ft", note: "Helpful for restrooms, client-facing rooms, and higher traffic spaces." },
-  { frequency: "3x+ per week", range: "$0.09–$0.15 / sq ft", note: "Lower per-visit rate when the space stays on a steady routine." },
-  { frequency: "One-time light reset", range: "$0.22–$0.35 / sq ft", note: "For lighter first-time cleaning, move-in readiness, or catch-up resets." },
-  { frequency: "Heavier first-time reset", range: "$0.35–$0.50 / sq ft", note: "Used when the space needs more catch-up work before routine service makes sense." },
-];
-
-const addOnPricing = [
-  { service: "Carpet extraction", range: "$0.35–$0.55 / sq ft", note: "$199 minimum when available" },
-  { service: "Spot treatment", range: "$25–$65 / area", note: "Quoted after photo or walkthrough review" },
-  { service: "Floor scrub", range: "$0.30–$0.55 / sq ft", note: "$225 minimum when available" },
-  { service: "Buff / shine", range: "$0.45–$0.75 / sq ft", note: "$249 minimum when available" },
-  { service: "Wax / finish", range: "$0.65–$1.10 / sq ft", note: "$299 minimum when available" },
-  { service: "Strip & wax", range: "$1.50–$2.25 / sq ft", note: "$499 minimum; condition matters" },
-];
-
-const commercialPolicies = [
-  "Commercial Reset is routine janitorial-style support, not licensed childcare, medical, hazmat, biohazard, mold, construction cleanup, or regulated sanitation service.",
-  "Daycare and learning-space requests are focused on common areas unless a reviewed scope says otherwise.",
-  "NestHelper brings supplies and reviews product preferences before confirming what fits the surface and scope.",
-  "Final pricing, add-ons, schedule, access, and city endorsement needs are reviewed before checkout or recurring service begins.",
 ];
 
 export default function CommercialResetPage() {
@@ -102,7 +66,7 @@ export default function CommercialResetPage() {
       <PageHero
         eyebrow="Commercial Reset"
         title="Routine cleaning support for small local business spaces."
-        text="A separate NestHelper service page for small offices, studios, churches, daycare common areas, salons, and local business spaces that need reliable reset-style janitorial support. Commercial jobs are quoted after review, not forced into family-service pricing."
+        text="A separate NestHelper service page for small offices, studios, churches, daycare common areas, salons, short-term rental turnovers, and local business spaces that need reliable reset-style janitorial support. Commercial jobs are quoted after review, not forced into family-service pricing."
         cta={false}
       />
 
@@ -111,22 +75,22 @@ export default function CommercialResetPage() {
           <div className="relative overflow-hidden rounded-[2.5rem] border border-nest-gold/18 bg-white/88 p-6 shadow-soft backdrop-blur sm:p-8 lg:p-10">
             <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-nest-mint/45 blur-3xl" />
             <div className="relative">
-              <p className="pill-label mx-auto w-fit lg:mx-0"><Building2 size={15} /> Built separately from Parent Reset</p>
+              <p className="pill-label w-fit"><Building2 size={15} /> Built separately from Parent Reset</p>
               <h2 className="text-balance mt-4 text-3xl font-black leading-tight text-nest-teal sm:text-5xl">
                 Same NestHelper care, different service lane.
               </h2>
               <p className="mt-5 text-base font-medium leading-7 text-nest-ink/72 sm:text-lg sm:leading-8">
-                Commercial Reset keeps the family-focused homepage clean while giving small businesses and community spaces a professional place to ask for routine cleaning, first-time resets, recurring janitorial support, and product preferences such as low-odor or non-toxic options when appropriate.
+                Commercial Reset keeps the family-focused homepage clean while giving small businesses and community spaces a professional place to ask for routine cleaning, first-time resets, recurring janitorial support, short-term rental turnover cleaning, and product preferences such as low-odor or non-toxic options when appropriate.
               </p>
-              <div className="mt-7 rounded-2xl border border-nest-gold/14 bg-nest-cream/85 p-4 text-sm font-black leading-6 text-nest-teal shadow-sm">
-                Commercial requests are reviewed before checkout, so businesses can share the space, scope, timing, and preferences first.
+              <div className="mt-7">
+                <ButtonLink href="/commercial-reset/request">Request Commercial Reset</ButtonLink>
               </div>
             </div>
           </div>
 
           <div className="grid gap-4">
             <MiniProof icon={<ShieldCheck size={20} />} title="Insured local service" text="Commercial requests are reviewed for scope, schedule, address, and safety before any work is confirmed." />
-            <MiniProof icon={<ClipboardCheck size={20} />} title="Quote-first process" text="Pricing is customized around square footage, bathrooms, frequency, product preferences, access, and condition, then quoted clearly before work begins." />
+            <MiniProof icon={<ClipboardCheck size={20} />} title="Quote-first process" text="Pricing is customized around square footage, bathrooms, frequency, product preferences, access, and condition." />
             <MiniProof icon={<CalendarClock size={20} />} title="Recurring or one-time" text="Request a one-time reset, weekly service, or more frequent routine cleaning depending on the space." />
             <MiniProof icon={<SprayCan size={20} />} title="Product preferences" text="Non-toxic, low-odor, or fragrance-free options can be requested where appropriate for the surface and scope." />
           </div>
@@ -134,26 +98,47 @@ export default function CommercialResetPage() {
       </section>
 
       <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        <CommercialSectionIntro
-          icon={<Sparkles size={15} />}
-          label="Who it fits"
-          title="Small business spaces that need a reset, not a giant cleaning contract."
-          text="Commercial Reset is best for manageable local spaces where a clean, consistent environment matters: offices, client-facing rooms, studios, waiting areas, restrooms, staff common areas, and daycare or learning-space common areas."
-        />
+        <div className="grid gap-8 lg:grid-cols-[0.85fr_1.15fr] lg:items-end">
+          <div>
+            <p className="pill-label w-fit"><Sparkles size={15} /> Who it fits</p>
+            <h2 className="text-balance mt-4 text-3xl font-black leading-tight text-nest-teal sm:text-5xl">
+              Small business spaces that need a reset, not a giant cleaning contract.
+            </h2>
+          </div>
+          <p className="text-base font-medium leading-7 text-nest-ink/70 sm:text-lg sm:leading-8">
+            Commercial Reset is best for manageable local spaces where a clean, consistent environment matters: offices, client-facing rooms, studios, waiting areas, restrooms, staff common areas, daycare or learning-space common areas, and host-managed short-term rental spaces.
+          </p>
+        </div>
 
         <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {businessTypes.map((type) => (
-            <InfoCard key={type} icon={<Building2 size={20} />} title={type} text="Quote reviewed based on space, frequency, access, and cleaning scope." />
+            <InfoCard key={type} icon={type.includes("rental") ? <Home size={20} /> : <Building2 size={20} />} title={type} text="Quote reviewed based on space, frequency, access, and cleaning scope." />
           ))}
+        </div>
+
+        <div className="mt-10 overflow-hidden rounded-[2.5rem] border border-nest-gold/18 bg-gradient-to-br from-white via-nest-cream to-nest-mint/25 p-6 shadow-soft sm:p-8 lg:p-10">
+          <div className="mx-auto max-w-4xl text-center">
+            <p className="pill-label mx-auto w-fit"><BedDouble size={15} /> Short-Term Rental Turnovers</p>
+            <h2 className="text-balance mt-4 text-3xl font-black text-nest-teal sm:text-4xl">Guest-ready reset support for local hosts.</h2>
+            <p className="mx-auto mt-4 max-w-3xl font-medium leading-7 text-nest-ink/70">
+              For Airbnb-style or vacation rental spaces, NestHelper can review turnover cleaning requests as part of Commercial Reset. This can include reset cleaning between stays, linen/towel changeover, restock checklist notes, and optional photo notes after service when the scope is approved.
+            </p>
+          </div>
+          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <InfoCard icon={<BedDouble size={20} />} title="Between-stay reset" text="Kitchen, bath, floors, surfaces, trash, and guest-ready details based on the approved checklist." />
+            <InfoCard icon={<ClipboardCheck size={20} />} title="Host checklist" text="Add bed count, restock items, lockbox/access notes, parking, and must-check areas in the quote form." />
+            <InfoCard icon={<Camera size={20} />} title="Photo notes" text="Optional photos can help with quoting, walkthroughs, and documenting priority areas before service." />
+            <InfoCard icon={<ShieldCheck size={20} />} title="Clear boundaries" text="No repairs, guest communication, pest treatment, biohazards, or full property management unless separately reviewed." />
+          </div>
         </div>
       </section>
 
       <section className="soft-section px-4 py-14 sm:px-6 lg:px-8">
         <div className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-start">
           <div className="rounded-[2.5rem] border border-nest-gold/18 bg-white/86 p-6 shadow-soft sm:p-8">
-            <p className="pill-label mx-auto w-fit"><SprayCan size={15} /> Routine Scope</p>
-            <h2 className="mt-4 text-center text-3xl font-black text-nest-teal sm:text-4xl">What Commercial Reset can include.</h2>
-            <p className="mt-4 text-center font-medium leading-7 text-nest-ink/70">
+            <p className="pill-label w-fit"><SprayCan size={15} /> Routine Scope</p>
+            <h2 className="mt-4 text-3xl font-black text-nest-teal sm:text-4xl">What Commercial Reset can include.</h2>
+            <p className="mt-4 font-medium leading-7 text-nest-ink/70">
               Basic Commercial Reset is routine janitorial-style support. Specialty floor work and carpet work are not included by default and are quoted separately when available. Product preferences can be noted in the quote request.
             </p>
             <div className="mt-7 grid gap-3 sm:grid-cols-2">
@@ -162,9 +147,9 @@ export default function CommercialResetPage() {
           </div>
 
           <div className="rounded-[2.5rem] border border-nest-gold/18 bg-white/86 p-6 shadow-soft sm:p-8">
-            <p className="pill-label mx-auto w-fit"><DoorOpen size={15} /> Add-ons and Boundaries</p>
-            <h2 className="mt-4 text-center text-3xl font-black text-nest-teal sm:text-4xl">Quoted separately when the job needs more.</h2>
-            <p className="mt-4 text-center font-medium leading-7 text-nest-ink/70">
+            <p className="pill-label w-fit"><DoorOpen size={15} /> Add-ons and Boundaries</p>
+            <h2 className="mt-4 text-3xl font-black text-nest-teal sm:text-4xl">Quoted separately when the job needs more.</h2>
+            <p className="mt-4 font-medium leading-7 text-nest-ink/70">
               This keeps quotes honest and helps make sure the service scope, product preferences, safety boundaries, and specialty work are reviewed before anything is confirmed.
             </p>
             <div className="mt-7 grid gap-3">
@@ -175,27 +160,32 @@ export default function CommercialResetPage() {
       </section>
 
       <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
-        <CommercialSectionIntro
-          icon={<MapPin size={15} />}
-          label="Service Areas"
-          title="Now quoting select Pierce County, Eastside, and Northshore areas."
-          text="Service availability depends on schedule, scope, address, and local licensing/endorsement requirements. Some city-limit jobs may require a city endorsement before service begins."
-        />
-
-        <div className="mt-10 grid gap-5 lg:grid-cols-3">
-          <AreaCard
-            title="Pierce County focus"
-            text="Tacoma, Lakewood, Puyallup, University Place, Fife, Sumner, Bonney Lake, Gig Harbor, Spanaway, Parkland, Graham, Frederickson, South Hill, Midland, Summit-Waller, Elk Plain, and nearby unincorporated Pierce County areas."
-          />
-          <AreaCard
-            title="Eastside and Northshore"
-            text="Woodinville, Bothell, Kenmore, Kirkland, Redmond, Bellevue, Duvall, Mill Creek, and nearby Eastside/Northshore areas."
-          />
-          <div className="rounded-[2rem] border border-nest-gold/16 bg-nest-mint/20 p-6 text-center shadow-sm">
-            <h3 className="text-2xl font-black text-nest-teal">Nearby communities welcome</h3>
-            <p className="mt-3 font-medium leading-7 text-nest-ink/70">
-              We include nearby unincorporated Pierce County communities as service areas because many local businesses are outside city limits. Availability still depends on the address, schedule, scope, and any required local endorsements.
+        <div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:items-start">
+          <div className="lg:sticky lg:top-28">
+            <p className="pill-label w-fit"><MapPin size={15} /> Service Areas</p>
+            <h2 className="text-balance mt-4 text-3xl font-black leading-tight text-nest-teal sm:text-5xl">
+              Now quoting select Pierce County, Eastside, and Northshore areas.
+            </h2>
+            <p className="mt-5 font-medium leading-7 text-nest-ink/70">
+              Service availability depends on schedule, scope, address, and local licensing/endorsement requirements. Some city-limit jobs may require a city endorsement before service begins.
             </p>
+          </div>
+
+          <div className="grid gap-5">
+            <AreaCard
+              title="Pierce County focus"
+              text="Tacoma, Lakewood, Puyallup, University Place, Fife, Sumner, Bonney Lake, Gig Harbor, Spanaway, Parkland, Graham, Frederickson, South Hill, Midland, Summit-Waller, Elk Plain, and nearby unincorporated Pierce County areas."
+            />
+            <AreaCard
+              title="Eastside and Northshore"
+              text="Woodinville, Bothell, Kenmore, Kirkland, Redmond, Bellevue, Duvall, Mill Creek, and nearby Eastside/Northshore areas."
+            />
+            <div className="rounded-[2rem] border border-nest-gold/16 bg-nest-mint/20 p-6">
+              <h3 className="text-2xl font-black text-nest-teal">Nearby communities welcome</h3>
+              <p className="mt-3 font-medium leading-7 text-nest-ink/70">
+                We include nearby unincorporated Pierce County communities as service areas because many local businesses are outside city limits. Availability still depends on the address, schedule, scope, and any required local endorsements.
+              </p>
+            </div>
           </div>
         </div>
       </section>
@@ -203,80 +193,21 @@ export default function CommercialResetPage() {
       <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
         <div className="overflow-hidden rounded-[2.75rem] border border-nest-gold/18 bg-white/90 shadow-soft">
           <div className="bg-gradient-to-br from-nest-cream via-white to-nest-mint/35 p-6 sm:p-8 lg:p-10">
-            <CommercialSectionIntro
-              icon={<BadgeDollarSign size={15} />}
-              label="Pricing Guidance"
-              title="Competitive ranges, reviewed before anything is confirmed."
-              text="Commercial pricing stays quote-based because square footage, bathrooms, flooring, access, after-hours timing, current condition, product preferences, and optional photos can change the final scope. Customers receive a clear quoted visit price or recurring plan before service begins — not an open-ended hourly clock. These ranges are planning guidance, not guaranteed flat pricing."
-            />
-          </div>
-
-          <div className="border-t border-nest-gold/12 bg-white/78 px-6 py-5 text-center sm:px-8 lg:px-10">
-            <p className="mx-auto max-w-3xl text-sm font-black leading-6 text-nest-teal">
-              Trust note: commercial quotes are not open-ended hourly billing. You approve a clear visit price, recurring plan, or separately quoted add-on before service is scheduled.
+            <p className="pill-label w-fit"><CheckCircle2 size={15} /> Quote Guidance</p>
+            <h2 className="text-balance mt-4 text-3xl font-black text-nest-teal sm:text-5xl">Pricing is quoted clearly before service is scheduled.</h2>
+            <p className="mt-4 max-w-4xl text-lg font-medium leading-8 text-nest-ink/72">
+              Commercial pricing is not an open-ended hourly clock. NestHelper reviews the space, frequency, bathrooms, flooring, access, timing, current condition, product preferences, and optional photos, then sends a clear visit price or recurring plan before service is scheduled.
             </p>
           </div>
-
-          <div className="grid gap-4 p-6 sm:p-8 lg:grid-cols-3 lg:p-10">
-            {pricingCards.map((card) => (
-              <PricingCard key={card.title} title={card.title} price={card.price} text={card.text} />
-            ))}
+          <div className="grid gap-4 p-6 pb-0 sm:p-8 sm:pb-0 lg:grid-cols-3 lg:p-10 lg:pb-0">
+            <PricingCard title="Recurring commercial cleaning" price="From $149/visit" text="Quoted as a clear visit price or monthly plan. Small recurring accounts often start around $595/month depending on frequency, square footage, bathrooms, timing, and scope." />
+            <PricingCard title="One-time commercial reset" price="From $225" text="Best for first-time catch-up, move-in prep, office reset, or a deeper one-time clean before recurring service." />
+            <PricingCard title="Short-term rental turnover" price="From $129/turnover" text="Small studio/1-bed style turnovers may start here. Larger homes, laundry/linen handling, restock needs, tight windows, and photo reporting are quoted before scheduling." />
           </div>
-
-          <div className="border-t border-nest-gold/12 p-6 sm:p-8 lg:p-10">
-            <div className="grid gap-7 lg:grid-cols-[0.78fr_1.22fr] lg:items-start">
-              <div>
-                <p className="pill-label mx-auto w-fit lg:mx-0"><ListChecks size={15} /> Sq Ft Planning</p>
-                <h3 className="mt-4 text-center text-3xl font-black text-nest-teal lg:text-left">Routine cleaning by frequency.</h3>
-                <p className="mt-3 text-center font-medium leading-7 text-nest-ink/70 lg:text-left">
-                  More frequent service usually lowers the per-visit square-foot range because the space stays easier to maintain.
-                </p>
-              </div>
-              <div className="grid gap-3">
-                {squareFootRanges.map((item) => (
-                  <RangeRow key={item.frequency} title={item.frequency} range={item.range} note={item.note} />
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <div className="border-t border-nest-gold/12 bg-nest-cream/55 p-6 sm:p-8 lg:p-10">
-            <div className="grid gap-7 lg:grid-cols-[0.78fr_1.22fr] lg:items-start">
-              <div>
-                <p className="pill-label mx-auto w-fit lg:mx-0"><SprayCan size={15} /> Add-on Ranges</p>
-                <h3 className="mt-4 text-center text-3xl font-black text-nest-teal lg:text-left">Specialty items stay separate.</h3>
-                <p className="mt-3 text-center font-medium leading-7 text-nest-ink/70 lg:text-left">
-                  Basic Commercial Reset does not include carpet extraction, waxing, or specialty floor work by default. These are quoted separately when available.
-                </p>
-              </div>
-              <div className="grid gap-3 sm:grid-cols-2">
-                {addOnPricing.map((item) => (
-                  <AddOnPrice key={item.service} service={item.service} range={item.range} note={item.note} />
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
-        <div className="rounded-[2.75rem] border border-nest-gold/18 bg-gradient-to-br from-white via-nest-cream to-nest-mint/30 p-6 shadow-soft sm:p-8 lg:p-10">
-          <CommercialSectionIntro
-            icon={<FileText size={15} />}
-            label="Commercial Policies"
-            title="Clear boundaries for business spaces."
-            text="Commercial Reset has its own policy expectations so business customers understand scope, access, supplies, pricing, add-ons, and service boundaries before work begins."
-          />
-
-          <div className="mt-9 grid gap-4 md:grid-cols-2">
-            {commercialPolicies.map((policy) => (
-              <CheckTile key={policy}>{policy}</CheckTile>
-            ))}
-          </div>
-
-          <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-            <ButtonLink href="/policies/commercial-reset-policy" variant="secondary">Read Commercial Policy</ButtonLink>
-            <ButtonLink href="/policies/commercial-pricing-addons" variant="secondary">Read Pricing & Add-ons</ButtonLink>
+          <div className="grid gap-3 p-6 sm:p-8 lg:grid-cols-3 lg:p-10">
+            <PolicyLink href="/policies/commercial-reset-policy" title="Commercial Reset Policy" />
+            <PolicyLink href="/policies/commercial-pricing-add-ons" title="Commercial Pricing & Add-ons" />
+            <PolicyLink href="/policies/short-term-rental-turnover-policy" title="Short-Term Rental Policy" />
           </div>
         </div>
       </section>
@@ -285,30 +216,23 @@ export default function CommercialResetPage() {
         <div className="overflow-hidden rounded-[2.75rem] border border-nest-gold/18 bg-gradient-to-br from-nest-teal via-[#075c58] to-[#0b4f4b] p-6 text-white shadow-soft sm:p-8 lg:p-10">
           <div className="grid gap-8 lg:grid-cols-[1.15fr_0.85fr] lg:items-center">
             <div>
-              <p className="pill-label mx-auto w-fit border-white/20 bg-white/12 text-nest-gold2 lg:mx-0"><ClipboardCheck size={15} /> Commercial Quote</p>
+              <p className="pill-label w-fit border-white/20 bg-white/12 text-nest-gold2"><ClipboardCheck size={15} /> Commercial Quote</p>
               <h2 className="text-balance mt-4 text-3xl font-black sm:text-5xl">Ready for a reviewed commercial quote?</h2>
               <p className="mt-4 max-w-3xl text-base font-medium leading-7 text-white/78 sm:text-lg sm:leading-8">
-                Use the dedicated quote page when you are ready. Commercial Reset stays focused on business spaces, while Parent Reset remains separate for homes, laundry, errands, and family support.
+                Use the dedicated quote page when you are ready. Commercial Reset stays focused on business spaces, short-term rental turnovers, and routine cleaning support, while Parent Reset remains separate for homes, laundry, errands, and family support.
               </p>
             </div>
             <div className="flex flex-col gap-3 sm:flex-row lg:flex-col lg:items-stretch">
               <ButtonLink href="/commercial-reset/request" variant="secondary">Start Commercial Quote</ButtonLink>
               <ButtonLink href="/contact" variant="secondary">Ask a Question First</ButtonLink>
+              <Link href="/request" className="focus-ring inline-flex items-center justify-center gap-2 rounded-full border border-white/25 px-6 py-3.5 font-black text-white transition hover:-translate-y-0.5 hover:bg-white/10">
+                Need Parent Reset instead? <ArrowRight size={18} />
+              </Link>
             </div>
           </div>
         </div>
       </section>
     </>
-  );
-}
-
-function CommercialSectionIntro({ icon, label, title, text }: { icon: ReactNode; label: string; title: string; text: string }) {
-  return (
-    <div className="mx-auto max-w-4xl text-center">
-      <p className="pill-label mx-auto w-fit">{icon} {label}</p>
-      <h2 className="text-balance mt-4 text-3xl font-black leading-tight text-nest-teal sm:text-5xl">{title}</h2>
-      <p className="mx-auto mt-5 max-w-3xl text-base font-medium leading-7 text-nest-ink/70 sm:text-lg sm:leading-8">{text}</p>
-    </div>
   );
 }
 
@@ -352,23 +276,13 @@ function AreaCard({ title, text }: { title: string; text: string }) {
   );
 }
 
-function RangeRow({ title, range, note }: { title: string; range: string; note: string }) {
-  return (
-    <div className="grid gap-3 rounded-2xl border border-nest-gold/12 bg-white p-4 shadow-sm sm:grid-cols-[0.75fr_0.8fr_1.2fr] sm:items-center">
-      <div className="font-black text-nest-teal">{title}</div>
-      <div className="rounded-full bg-nest-mint/35 px-3 py-2 text-center text-sm font-black text-nest-teal">{range}</div>
-      <div className="text-sm font-medium leading-6 text-nest-ink/68">{note}</div>
-    </div>
-  );
-}
 
-function AddOnPrice({ service, range, note }: { service: string; range: string; note: string }) {
+function PolicyLink({ href, title }: { href: string; title: string }) {
   return (
-    <div className="rounded-2xl border border-nest-gold/12 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-sm">
-      <h4 className="font-black text-nest-teal">{service}</h4>
-      <p className="mt-2 text-2xl font-black text-nest-teal">{range}</p>
-      <p className="mt-2 text-sm font-medium leading-6 text-nest-ink/66">{note}</p>
-    </div>
+    <Link href={href} className="group inline-flex items-center justify-between gap-3 rounded-2xl border border-nest-gold/14 bg-white px-5 py-4 text-sm font-black text-nest-teal shadow-sm transition hover:-translate-y-0.5 hover:border-nest-gold/30 hover:shadow-soft">
+      {title}
+      <ArrowRight size={16} className="transition group-hover:translate-x-1" />
+    </Link>
   );
 }
 
