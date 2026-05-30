@@ -49,6 +49,7 @@ export function Footer() {
           links={[
             { href: "/", label: "Home" },
             { href: "/services", label: "Services & Pricing" },
+            { href: "/commercial-reset", label: "Commercial Reset" },
             { href: "/trust", label: "Trust & Safety" },
             { href: "/helpers", label: "Helpers & Partners" },
             { href: "/faq", label: "FAQ" },
@@ -60,6 +61,7 @@ export function Footer() {
           title="Explore"
           links={[
             { href: "/request", label: "Request Help" },
+            { href: "/commercial-reset#commercial-quote", label: "Request Commercial Quote" },
             { href: "/#how-it-works", label: "How It Works" },
             { href: "/#giving-back", label: "Giving Back" },
             { href: "/#service-area", label: "Service Area" },
@@ -80,7 +82,7 @@ export function Footer() {
       </div>
 
       <div className="relative border-t border-white/12 px-4 py-5 text-center text-sm text-white/70">
-        © {new Date().getFullYear()} NestHelper. All rights reserved. Household support only; not childcare, medical care, or emergency services.
+        © {new Date().getFullYear()} NestHelper. All rights reserved. Household support and routine commercial cleaning support only; not childcare, medical care, hazardous cleanup, or emergency services.
       </div>
     </footer>
   );

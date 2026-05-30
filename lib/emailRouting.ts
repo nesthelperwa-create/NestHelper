@@ -25,6 +25,22 @@ export function getPublicReplyEmail() {
   return emailAliases.hello;
 }
 
+
+function isCommercialService(payload: Record<string, unknown>) {
+  const combined = [
+    payload.service,
+    payload.selectedServiceTitle,
+    payload.serviceTitle,
+    payload.selectedPackage,
+    payload.packageType,
+    payload.requestType,
+  ]
+    .map(clean)
+    .join(" ");
+
+  return combined.includes("commercial");
+}
+
 function isLaundryService(payload: Record<string, unknown>) {
   const combined = [
     payload.service,
@@ -117,7 +133,11 @@ export function getContactTopicLabel(topic: unknown) {
 }
 
 export function getSubmissionRouteLabel(collection: SubmissionCollection, payload: Record<string, unknown>) {
-  if (collection === "serviceRequests") return isLaundryService(payload) ? "Laundry" : "Booking";
+  if (collection === "serviceRequests") {
+    if (isLaundryService(payload)) return "Laundry";
+    if (isCommercialService(payload)) return "Commercial";
+    return "Booking";
+  }
   if (collection === "helperApplications") return "Helpers";
   if (collection === "partnerApplications") return "Partners";
   if (collection === "contactMessages") return `Contact: ${getContactTopicLabel(payload.topic || payload.subject)}`;

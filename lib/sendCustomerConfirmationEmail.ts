@@ -35,17 +35,25 @@ function getConfirmationContent(collection: SubmissionCollection, payload: Recor
 
   if (collection === "serviceRequests") {
     const service = formatValue(payload.selectedServiceTitle || payload.service || "Service request");
+    const isCommercial = String(payload.service || payload.selectedServiceTitle || payload.packageType || payload.requestType || "").toLowerCase().includes("commercial");
     return {
-      subject: "We received your NestHelper request",
-      eyebrow: "Request received",
-      title: "Thanks — we received your NestHelper request.",
-      intro:
-        "We’ll review your service area, timing, scope, access notes, and safety details before anything is confirmed. No payment is due yet.",
-      nextSteps: [
-        "NestHelper will review the request details.",
-        "If the request is a good fit, we’ll follow up with availability, any questions, and a secure checkout link.",
-        "For Laundry Rescue, dry weight and any add-ons are confirmed before the final balance is charged.",
-      ],
+      subject: isCommercial ? "We received your NestHelper Commercial Reset request" : "We received your NestHelper request",
+      eyebrow: isCommercial ? "Commercial quote request received" : "Request received",
+      title: isCommercial ? "Thanks — we received your Commercial Reset quote request." : "Thanks — we received your NestHelper request.",
+      intro: isCommercial
+        ? "We’ll review the business address, square footage, bathrooms, frequency, access notes, supplies, and service fit before anything is confirmed. No payment is due yet."
+        : "We’ll review your service area, timing, scope, access notes, and safety details before anything is confirmed. No payment is due yet.",
+      nextSteps: isCommercial
+        ? [
+            "NestHelper will review the commercial request details.",
+            "If the request looks like a good fit, we’ll follow up with any questions, walkthrough needs, availability, and quote guidance.",
+            "After a quote is approved, we can send a secure checkout link before service is scheduled.",
+          ]
+        : [
+            "NestHelper will review the request details.",
+            "If the request is a good fit, we’ll follow up with availability, any questions, and a secure checkout link.",
+            "For Laundry Rescue, dry weight and any add-ons are confirmed before the final balance is charged.",
+          ],
       summary: {
         "Request ID": submissionId,
         Service: service,

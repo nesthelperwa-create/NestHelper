@@ -1,7 +1,8 @@
 import type { ReactNode } from "react";
-import { CheckCircle2, ClipboardCheck, CreditCard, Mail, Scale, ShieldCheck, Sparkles } from "lucide-react";
+import { Building2, CheckCircle2, ClipboardCheck, CreditCard, Mail, Scale, ShieldCheck, Sparkles } from "lucide-react";
 import { PageHero } from "@/components/PageHero";
 import { ServiceCard } from "@/components/ServiceCard";
+import { ButtonLink } from "@/components/ui/ButtonLink";
 import { services, laundryAddOns } from "@/lib/services";
 import { siteConfig } from "@/lib/siteConfig";
 
@@ -34,6 +35,24 @@ export default function ServicesPage() {
 
         <div className="grid items-start gap-6 md:grid-cols-2 lg:grid-cols-3">
           {services.map((service) => <ServiceCard key={service.id} service={service} />)}
+        </div>
+
+        <div className="mt-10 rounded-[2.5rem] border border-nest-gold/18 bg-gradient-to-br from-white via-nest-cream to-nest-mint/30 p-7 shadow-soft sm:p-8">
+          <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
+            <div>
+              <p className="pill-label w-fit"><Building2 size={15} /> Need business cleaning?</p>
+              <h2 className="mt-4 text-3xl font-black text-nest-teal sm:text-4xl">Commercial Reset is separate from Parent Reset.</h2>
+            </div>
+            <div>
+              <p className="font-medium leading-7 text-nest-ink/70">
+                For small offices, studios, churches, salons, and local business spaces, use the Commercial Reset page. Commercial work is quoted after review instead of listed as a guaranteed flat package.
+              </p>
+              <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+                <ButtonLink href="/commercial-reset" variant="secondary">View Commercial Reset</ButtonLink>
+                <ButtonLink href="/commercial-reset#commercial-quote" variant="secondary">Request Commercial Quote</ButtonLink>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div className="mt-10 rounded-[2.5rem] border border-nest-gold/20 bg-white p-7 shadow-soft sm:p-8">

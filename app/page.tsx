@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import Image from "next/image";
 import {
   CheckCircle2,
+  Building2,
   CalendarClock,
   ClipboardCheck,
   Heart,
@@ -195,6 +196,41 @@ export default function HomePage() {
           </div>
           <div className="mt-10 grid items-start gap-6 md:grid-cols-2 lg:grid-cols-3">
             {services.map((service) => <ServiceCard key={service.id} service={service} />)}
+          </div>
+        </div>
+      </AnimatedSection>
+
+      <AnimatedSection className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+        <div className="overflow-hidden rounded-[2.5rem] border border-nest-gold/18 bg-white/86 p-5 shadow-soft backdrop-blur sm:p-8 lg:p-10">
+          <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
+            <div>
+              <p className="pill-label w-fit"><Building2 size={15} /> For Local Businesses</p>
+              <h2 className="text-balance mt-4 text-3xl font-black leading-tight text-nest-teal sm:text-5xl">
+                Commercial Reset now has its own page.
+              </h2>
+              <p className="mt-5 text-base font-medium leading-7 text-nest-ink/72 sm:text-lg sm:leading-8">
+                Parent Reset stays focused on families. Commercial Reset is a separate quote-first service lane for small offices, studios, churches, salons, and local business spaces that need routine cleaning support.
+              </p>
+              <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+                <ButtonLink href="/commercial-reset">Explore Commercial Reset</ButtonLink>
+                <ButtonLink href="/commercial-reset#commercial-quote" variant="secondary">Request Commercial Quote</ButtonLink>
+              </div>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {[
+                "Small offices and studios",
+                "Churches and nonprofits",
+                "Salons, gyms, and local shops",
+                "Quoted after scope review",
+              ].map((item) => (
+                <div key={item} className="group flex gap-3 rounded-2xl border border-nest-gold/12 bg-nest-cream p-4 font-black text-nest-ink/78 shadow-sm transition hover:-translate-y-0.5 hover:bg-white hover:shadow-sm">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-nest-teal shadow-sm transition group-hover:bg-nest-teal group-hover:text-white">
+                    <Building2 size={17} />
+                  </span>
+                  {item}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </AnimatedSection>

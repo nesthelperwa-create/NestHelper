@@ -10,6 +10,7 @@ import { siteConfig } from "@/lib/siteConfig";
 const nav = [
   { href: "/", label: "Home" },
   { href: "/services", label: "Services" },
+  { href: "/commercial-reset", label: "Commercial" },
   { href: "/trust", label: "Trust" },
   { href: "/helpers", label: "Helpers" },
   { href: "/faq", label: "FAQ" },

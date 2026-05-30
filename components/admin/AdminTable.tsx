@@ -40,6 +40,8 @@ function centsToDollars(value: unknown) {
 function guessCheckoutMode(item: AdminDoc | null): CheckoutMode {
   const promo = String(item?.promoCode || "").toUpperCase();
   const paymentMode = String(item?.paymentMode || "").toLowerCase();
+  const rawService = String(item?.service || item?.selectedServiceTitle || item?.packageType || item?.requestType || "").toLowerCase();
+  if (rawService.includes("commercial")) return "custom";
   if (paymentMode === "custom" || paymentMode === "custom_initial" || item?.customInitialPayment) return "custom";
   return promo.includes("FOUNDING") || promo.includes("BETA") || paymentMode === "founding" ? "founding" : "standard";
 }
@@ -99,6 +101,12 @@ const SERVICE_LOOKS: Record<string, { label: string; badge: string; row: string;
     row: "border-l-8 border-l-rose-600 bg-rose-50/40 hover:bg-rose-100/80",
     dot: "bg-white ring-2 ring-rose-100",
   },
+  "commercial-reset": {
+    label: "Commercial Reset",
+    badge: "border-cyan-800 bg-cyan-700 text-white shadow-sm shadow-cyan-900/25",
+    row: "border-l-8 border-l-cyan-700 bg-cyan-50/50 hover:bg-cyan-100/80",
+    dot: "bg-white ring-2 ring-cyan-100",
+  },
 };
 
 const DEFAULT_SERVICE_LOOK = {
@@ -109,7 +117,8 @@ const DEFAULT_SERVICE_LOOK = {
 };
 
 function getServiceKey(item: AdminDoc | null | undefined) {
-  const raw = String(item?.service || item?.selectedServiceTitle || item?.packageType || "").toLowerCase();
+  const raw = String(item?.service || item?.selectedServiceTitle || item?.packageType || item?.requestType || "").toLowerCase();
+  if (raw.includes("commercial")) return "commercial-reset";
   if (raw.includes("parent-reset") || raw.includes("parent reset") || raw.includes("2-hour")) return "parent-reset-2hr";
   if (raw.includes("family-reset") || raw.includes("family reset") || raw.includes("3-hour")) return "family-reset-3hr";
   if (raw.includes("helper-block") || raw.includes("helper block") || raw.includes("4-hour")) return "helper-block-4hr";
@@ -588,7 +597,7 @@ export default function AdminTable({
                     <p className="text-xs font-black uppercase tracking-[0.2em] text-[#b98a2f]">Approval + payment</p>
                     <h4 className="mt-1 text-xl font-black text-[#075c58]">Create checkout after you approve the request</h4>
                     <p className="mt-2 text-sm leading-6 text-slate-700">
-                      This creates a Stripe Checkout Session tied to this request. Public checkout stays off; only admin can send payment after reviewing scope, service area, and availability.
+                      This creates a Stripe Checkout Session tied to this request. Public checkout stays off; only admin can send payment after reviewing scope, service area, and availability. Commercial Reset requests should use Custom initial amount after you quote the job.
                     </p>
                     {selected.service === "laundry-rescue" && (
                       <p className="mt-2 rounded-2xl bg-white px-4 py-3 text-sm font-bold text-[#075c58]">
@@ -635,7 +644,7 @@ export default function AdminTable({
                         <input
                           value={customInitialTitle}
                           onChange={(e) => setCustomInitialTitle(e.target.value)}
-                          placeholder={selected.service === "laundry-rescue" ? "Laundry Rescue custom deposit" : "Custom Parent Reset checkout"}
+                          placeholder={selected.service === "laundry-rescue" ? "Laundry Rescue custom deposit" : selected.service === "commercial-reset" ? "Commercial Reset approved quote" : "Custom Parent Reset checkout"}
                           className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]"
                         />
                       </label>
