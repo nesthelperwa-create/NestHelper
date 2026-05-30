@@ -202,21 +202,66 @@ function formatPhotoSize(bytes: unknown) {
 }
 
 function AdminPhotoUploads({ photos }: { photos: UploadedPhoto[] }) {
+  const [previewPhoto, setPreviewPhoto] = useState<{ photo: UploadedPhoto; index: number } | null>(null);
+
   if (!photos.length) return null;
+
   return (
     <div className="rounded-2xl border border-[#eadfc8] bg-white p-4 sm:col-span-2">
       <p className="text-xs font-bold uppercase tracking-widest text-[#b98a2f]">Uploaded photos</p>
+      <p className="mt-1 text-xs leading-5 text-slate-500">Tap a photo to preview it here. This avoids blank browser tabs from long compressed image links.</p>
       <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {photos.map((photo, index) => (
-          <a key={`${photo.name || "photo"}-${index}`} href={photo.dataUrl} target="_blank" rel="noreferrer" className="group overflow-hidden rounded-2xl border border-[#eadfc8] bg-[#fbf6ea] shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+          <button
+            key={`${photo.name || "photo"}-${index}`}
+            type="button"
+            onClick={() => setPreviewPhoto({ photo, index })}
+            className="group overflow-hidden rounded-2xl border border-[#eadfc8] bg-[#fbf6ea] text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+          >
             <img src={photo.dataUrl} alt={`Uploaded request photo ${index + 1}`} className="h-32 w-full object-cover" />
             <div className="p-3">
               <p className="truncate text-xs font-black text-[#075c58]" title={photo.name || `Photo ${index + 1}`}>{photo.name || `Photo ${index + 1}`}</p>
-              <p className="mt-1 text-xs font-semibold text-slate-500">{formatPhotoSize(photo.size)} · Open full preview</p>
+              <p className="mt-1 text-xs font-semibold text-slate-500">{formatPhotoSize(photo.size)} · View larger</p>
             </div>
-          </a>
+          </button>
         ))}
       </div>
+
+      {previewPhoto && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/75 p-4" role="dialog" aria-modal="true" aria-label="Uploaded photo preview">
+          <div className="max-h-[92vh] w-full max-w-5xl overflow-hidden rounded-3xl border border-white/20 bg-white shadow-2xl">
+            <div className="flex items-center justify-between gap-3 border-b border-[#eadfc8] bg-[#fbf6ea] px-4 py-3">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-black text-[#075c58]">{previewPhoto.photo.name || `Uploaded photo ${previewPhoto.index + 1}`}</p>
+                <p className="text-xs font-semibold text-slate-500">{formatPhotoSize(previewPhoto.photo.size)}</p>
+              </div>
+              <div className="flex shrink-0 items-center gap-2">
+                <a
+                  href={previewPhoto.photo.dataUrl}
+                  download={previewPhoto.photo.name || `nesthelper-request-photo-${previewPhoto.index + 1}.jpg`}
+                  className="rounded-full border border-[#0b6b66]/20 bg-white px-3 py-2 text-xs font-black text-[#075c58] transition hover:bg-[#eef8f6]"
+                >
+                  Download
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setPreviewPhoto(null)}
+                  className="rounded-full bg-[#0b6b66] px-4 py-2 text-xs font-black text-white shadow-sm transition hover:bg-[#075c58]"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+            <div className="max-h-[78vh] overflow-auto bg-slate-950 p-3">
+              <img
+                src={previewPhoto.photo.dataUrl}
+                alt={`Uploaded request photo ${previewPhoto.index + 1}`}
+                className="mx-auto max-h-[74vh] w-auto max-w-full rounded-2xl object-contain"
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
