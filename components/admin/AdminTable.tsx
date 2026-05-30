@@ -171,6 +171,9 @@ export default function AdminTable({
   const [selected, setSelected] = useState<AdminDoc | null>(null);
   const [filter, setFilter] = useState("");
   const [checkoutMode, setCheckoutMode] = useState<CheckoutMode>("standard");
+  const [customInitialAmount, setCustomInitialAmount] = useState("");
+  const [customInitialTitle, setCustomInitialTitle] = useState("");
+  const [customInitialNote, setCustomInitialNote] = useState("");
   const [checkoutBusy, setCheckoutBusy] = useState(false);
   const [checkoutMessage, setCheckoutMessage] = useState("");
   const [checkoutError, setCheckoutError] = useState("");
@@ -207,6 +210,9 @@ export default function AdminTable({
     setCheckoutMode(nextMode);
     setCheckoutMessage("");
     setCheckoutError("");
+    setCustomInitialAmount(selected?.customInitialAmount ? String(selected.customInitialAmount) : "");
+    setCustomInitialTitle(selected?.customInitialTitle ? String(selected.customInitialTitle) : "");
+    setCustomInitialNote(selected?.customInitialNote ? String(selected.customInitialNote) : "");
     setStatusValue(nextStatus);
     setStatusNote("");
     setNotifyCustomer(shouldNotifyByDefault(nextStatus));
@@ -294,7 +300,7 @@ export default function AdminTable({
     setAdditionalPaymentMessage("Additional payment checkout link copied.");
   }
 
-  async function createPaymentLink(sendEmail: boolean) {
+  async function createPaymentLink(sendEmail: boolean, customInitial = false) {
     if (!selected) return;
     setCheckoutBusy(true);
     setCheckoutMessage("");
@@ -305,7 +311,15 @@ export default function AdminTable({
       const res = await fetch("/api/admin/create-payment-link", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ requestId: selected.id, mode: checkoutMode, sendEmail }),
+        body: JSON.stringify({
+          requestId: selected.id,
+          mode: checkoutMode,
+          sendEmail,
+          customInitial,
+          customAmount: customInitial ? toNumber(customInitialAmount) : undefined,
+          customTitle: customInitial ? customInitialTitle : undefined,
+          customNote: customInitial ? customInitialNote : undefined,
+        }),
       });
       const data = await res.json().catch(() => ({}));
 
@@ -609,6 +623,67 @@ export default function AdminTable({
                   >
                     {selected.service === "laundry-rescue" ? "Create deposit link only" : "Create link only"}
                   </button>
+                </div>
+
+                <div className="mt-4 rounded-3xl border border-[#eadfc8] bg-white p-4">
+                  <div className="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
+                    <div>
+                      <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Custom initial checkout</p>
+                      <h5 className="mt-1 text-base font-black text-[#075c58]">Send a reviewed custom starting amount</h5>
+                      <p className="mt-1 text-sm leading-6 text-slate-700">
+                        Use this when the first payment should not match the standard package price, such as a custom approved scope, special deposit, extra starting time, or service-area adjustment.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="mt-4 grid gap-3 md:grid-cols-[0.7fr_1.3fr]">
+                    <label className="grid gap-2 text-sm font-bold text-slate-700">
+                      Amount
+                      <input
+                        value={customInitialAmount}
+                        onChange={(e) => setCustomInitialAmount(e.target.value)}
+                        inputMode="decimal"
+                        placeholder="149"
+                        className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]"
+                      />
+                    </label>
+                    <label className="grid gap-2 text-sm font-bold text-slate-700">
+                      Checkout title
+                      <input
+                        value={customInitialTitle}
+                        onChange={(e) => setCustomInitialTitle(e.target.value)}
+                        placeholder={selected.service === "laundry-rescue" ? "Laundry Rescue custom deposit" : "Custom Parent Reset checkout"}
+                        className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]"
+                      />
+                    </label>
+                  </div>
+                  <label className="mt-3 grid gap-2 text-sm font-bold text-slate-700">
+                    Optional customer note
+                    <textarea
+                      value={customInitialNote}
+                      onChange={(e) => setCustomInitialNote(e.target.value)}
+                      rows={3}
+                      placeholder="Example: Custom approved starting amount for 3.5 hours after request review. Any additional approved time or mileage would be billed separately."
+                      className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
+                    />
+                  </label>
+                  <div className="mt-4 grid gap-3 md:grid-cols-2">
+                    <button
+                      type="button"
+                      disabled={checkoutBusy}
+                      onClick={() => createPaymentLink(true, true)}
+                      className="rounded-2xl bg-[#075c58] px-5 py-3 text-sm font-black text-white shadow-lg shadow-[#075c58]/15 transition hover:-translate-y-0.5 hover:bg-[#064b48] disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {checkoutBusy ? "Creating..." : "Create + email custom link"}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={checkoutBusy}
+                      onClick={() => createPaymentLink(false, true)}
+                      className="rounded-2xl border-2 border-[#075c58] bg-white px-5 py-3 text-sm font-black text-[#075c58] transition hover:-translate-y-0.5 hover:bg-[#f4ecdc] disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      Create custom link only
+                    </button>
+                  </div>
                 </div>
 
                 {selected.checkoutUrl && (

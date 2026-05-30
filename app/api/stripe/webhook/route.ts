@@ -115,6 +115,7 @@ export async function POST(request: Request) {
         const paymentType = getString(session.metadata?.paymentType);
         const isAdditionalPayment = paymentType === "additional_payment";
         const isLaundryFinalBalance = paymentType === "laundry_final_balance";
+        const isCustomInitialPayment = getString(session.metadata?.customInitialPayment) === "true";
         const isLaundryDeposit = serviceId === "laundry-rescue" && !isLaundryFinalBalance && !isAdditionalPayment;
         const status = isAdditionalPayment ? "Additional Paid" : isLaundryFinalBalance ? "Fully Paid" : isLaundryDeposit ? "Deposit Paid" : "Paid";
         const paymentStatus = isAdditionalPayment ? "Additional Paid" : isLaundryFinalBalance ? "Final Balance Paid" : isLaundryDeposit ? "Deposit Paid" : "Paid";
@@ -134,6 +135,13 @@ export async function POST(request: Request) {
           updatePayload.paymentIntentId = typeof session.payment_intent === "string" ? session.payment_intent : "";
           updatePayload.stripeCustomerId = typeof session.customer === "string" ? session.customer : "";
           updatePayload.paidAt = FieldValue.serverTimestamp();
+
+          if (isCustomInitialPayment) {
+            updatePayload.customInitialPaymentPaid = true;
+            updatePayload.customInitialPaymentPaidAt = FieldValue.serverTimestamp();
+            updatePayload.customInitialPaymentPaidAmountTotal = session.amount_total ?? null;
+            updatePayload.customInitialPaymentPaidAmountSubtotal = session.amount_subtotal ?? null;
+          }
         }
 
         if (isAdditionalPayment) {
@@ -182,9 +190,11 @@ export async function POST(request: Request) {
           ? `Additional balance for ${getServiceTitle(existingData, session.metadata?.serviceTitle)}`
           : isLaundryFinalBalance
             ? "Laundry Rescue final balance"
-            : isLaundryDeposit
-              ? "Laundry Rescue deposit/minimum"
-              : getServiceTitle(existingData, session.metadata?.serviceTitle);
+            : isCustomInitialPayment
+              ? getString(session.metadata?.customInitialTitle) || getServiceTitle(existingData, session.metadata?.serviceTitle)
+              : isLaundryDeposit
+                ? "Laundry Rescue deposit/minimum"
+                : getServiceTitle(existingData, session.metadata?.serviceTitle);
 
         const confirmationFlag = isAdditionalPayment
           ? `additionalPaymentConfirmationEmailSent_${session.id}`
