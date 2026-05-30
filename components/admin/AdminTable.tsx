@@ -6,113 +6,12 @@ import { firebaseAuth, firestoreDb } from "@/lib/firebaseClient";
 import StatusBadge from "./StatusBadge";
 
 type AdminDoc = { id: string; status?: string; createdAt?: unknown; checkoutUrl?: string; promoCode?: string; [key: string]: any };
-type CheckoutMode = "standard" | "founding";
-
-function timestampToDate(value: unknown): Date | null {
-  if (!value) return null;
-
-  if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value;
-
-  if (typeof value === "number") {
-    const millis = value > 100000000000 ? value : value * 1000;
-    const date = new Date(millis);
-    return Number.isNaN(date.getTime()) ? null : date;
-  }
-
-  if (typeof value === "string") {
-    const trimmed = value.trim();
-    if (!trimmed) return null;
-
-    if (/^\d{10,13}$/.test(trimmed)) {
-      const raw = Number(trimmed);
-      const millis = trimmed.length === 13 ? raw : raw * 1000;
-      const date = new Date(millis);
-      return Number.isNaN(date.getTime()) ? null : date;
-    }
-
-    const parsed = new Date(trimmed);
-    return Number.isNaN(parsed.getTime()) ? null : parsed;
-  }
-
-  if (typeof value === "object") {
-    const maybeTimestamp = value as {
-      toDate?: () => Date;
-      seconds?: number;
-      nanoseconds?: number;
-      _seconds?: number;
-      _nanoseconds?: number;
-    };
-
-    if (typeof maybeTimestamp.toDate === "function") {
-      const date = maybeTimestamp.toDate();
-      return Number.isNaN(date.getTime()) ? null : date;
-    }
-
-    const seconds = typeof maybeTimestamp.seconds === "number" ? maybeTimestamp.seconds : maybeTimestamp._seconds;
-    const nanoseconds = typeof maybeTimestamp.nanoseconds === "number" ? maybeTimestamp.nanoseconds : maybeTimestamp._nanoseconds || 0;
-
-    if (typeof seconds === "number") {
-      const date = new Date(seconds * 1000 + Math.floor(nanoseconds / 1000000));
-      return Number.isNaN(date.getTime()) ? null : date;
-    }
-  }
-
-  return null;
-}
-
-function isDateLikeKey(key: string) {
-  const lower = key.toLowerCase();
-  return lower.endsWith("at") || lower.includes("date") || lower.includes("time");
-}
+type CheckoutMode = "standard" | "founding" | "custom";
 
 function formatDate(value: unknown) {
-  const date = timestampToDate(value);
-  if (!date) return value === null || value === undefined || value === "" ? "—" : String(value);
-
-  return new Intl.DateTimeFormat("en-US", {
-    timeZone: "America/Los_Angeles",
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-    timeZoneName: "short",
-  }).format(date);
-}
-
-function formatFieldLabel(key: string) {
-  const overrides: Record<string, string> = {
-    id: "Request ID",
-    checkoutUrl: "Checkout link",
-    checkoutSessionId: "Checkout session ID",
-    checkoutSentAt: "Checkout sent",
-    requestedAt: "Requested",
-    createdAt: "Created",
-    updatedAt: "Updated",
-    paidAt: "Paid",
-    paymentReceivedAt: "Payment received",
-    paymentEmailSentAt: "Payment email sent",
-    confirmationEmailSentAt: "Confirmation email sent",
-    adminEmailSentAt: "Admin email sent",
-    laundryDepositConfirmationEmailSentAt: "Laundry deposit confirmation email sent",
-    laundryDepositAdminPaymentEmailSentAt: "Laundry deposit admin payment email sent",
-    laundryFinalBalanceSentAt: "Laundry final balance sent",
-    laundryFinalBalancePaidAt: "Laundry final balance paid",
-    additionalPaymentSentAt: "Additional payment sent",
-    additionalPaymentPaidAt: "Additional payment paid",
-  };
-
-  if (overrides[key]) return overrides[key];
-
-  return key
-    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
-    .replace(/_/g, " ")
-    .replace(/\burl\b/gi, "URL")
-    .replace(/\bid\b/gi, "ID")
-    .replace(/\bapi\b/gi, "API")
-    .replace(/\bemail\b/gi, "Email")
-    .replace(/\bstripe\b/gi, "Stripe")
-    .replace(/\b([a-z])/g, (match) => match.toUpperCase());
+  if (!value) return "—";
+  if (typeof value === "object" && value && "toDate" in value && typeof value.toDate === "function") return value.toDate().toLocaleString();
+  return String(value);
 }
 
 function formatMoney(value: number) {
@@ -123,20 +22,8 @@ function formatMoney(value: number) {
 function formatValue(key: string, value: unknown) {
   if (Array.isArray(value)) return value.filter(Boolean).join(", ") || "—";
   if (typeof value === "boolean") return value ? "Yes" : "No";
-
-  const timestampDate = timestampToDate(value);
-  if (timestampDate || isDateLikeKey(key)) return formatDate(value);
-
+  if (key.toLowerCase().includes("created") || key.toLowerCase().includes("updated") || key.toLowerCase().includes("paidat")) return formatDate(value);
   if (value === null || value === undefined || value === "") return "—";
-
-  if (typeof value === "object") {
-    try {
-      return JSON.stringify(value, null, 2);
-    } catch {
-      return String(value);
-    }
-  }
-
   return String(value);
 }
 
@@ -153,6 +40,7 @@ function centsToDollars(value: unknown) {
 function guessCheckoutMode(item: AdminDoc | null): CheckoutMode {
   const promo = String(item?.promoCode || "").toUpperCase();
   const paymentMode = String(item?.paymentMode || "").toLowerCase();
+  if (paymentMode === "custom" || paymentMode === "custom_initial" || item?.customInitialPayment) return "custom";
   return promo.includes("FOUNDING") || promo.includes("BETA") || paymentMode === "founding" ? "founding" : "standard";
 }
 
@@ -413,8 +301,9 @@ export default function AdminTable({
     setAdditionalPaymentMessage("Additional payment checkout link copied.");
   }
 
-  async function createPaymentLink(sendEmail: boolean, customInitial = false) {
+  async function createPaymentLink(sendEmail: boolean) {
     if (!selected) return;
+    const useCustomInitial = checkoutMode === "custom";
     setCheckoutBusy(true);
     setCheckoutMessage("");
     setCheckoutError("");
@@ -426,12 +315,12 @@ export default function AdminTable({
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({
           requestId: selected.id,
-          mode: checkoutMode,
+          mode: useCustomInitial ? "standard" : checkoutMode,
           sendEmail,
-          customInitial,
-          customAmount: customInitial ? toNumber(customInitialAmount) : undefined,
-          customTitle: customInitial ? customInitialTitle : undefined,
-          customNote: customInitial ? customInitialNote : undefined,
+          customInitial: useCustomInitial,
+          customAmount: useCustomInitial ? toNumber(customInitialAmount) : undefined,
+          customTitle: useCustomInitial ? customInitialTitle : undefined,
+          customNote: useCustomInitial ? customInitialNote : undefined,
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -548,6 +437,7 @@ export default function AdminTable({
   const showPaymentActions = enablePaymentActions && collectionName === "serviceRequests" && selected;
   const showCustomerStatusActions = collectionName === "serviceRequests" && selected;
   const showLaundryFinalBalance = showPaymentActions && selected?.service === "laundry-rescue";
+  const isCustomCheckoutMode = checkoutMode === "custom";
 
   return (
     <section className="space-y-5">
@@ -715,9 +605,53 @@ export default function AdminTable({
                     >
                       <option value="standard">Standard price</option>
                       <option value="founding">Founding / beta price</option>
+                      <option value="custom">Custom initial amount</option>
                     </select>
                   </div>
                 </div>
+
+                {isCustomCheckoutMode && (
+                  <div className="mt-4 rounded-3xl border border-[#eadfc8] bg-white p-4">
+                    <div>
+                      <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Custom initial checkout</p>
+                      <h5 className="mt-1 text-base font-black text-[#075c58]">Reviewed custom starting amount</h5>
+                      <p className="mt-1 text-sm leading-6 text-slate-700">
+                        Use this when the first payment should not match the standard package price, such as a custom approved scope, special deposit, extra starting time, or service-area adjustment.
+                      </p>
+                    </div>
+                    <div className="mt-4 grid gap-3 md:grid-cols-[0.7fr_1.3fr]">
+                      <label className="grid gap-2 text-sm font-bold text-slate-700">
+                        Amount
+                        <input
+                          value={customInitialAmount}
+                          onChange={(e) => setCustomInitialAmount(e.target.value)}
+                          inputMode="decimal"
+                          placeholder="149"
+                          className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]"
+                        />
+                      </label>
+                      <label className="grid gap-2 text-sm font-bold text-slate-700">
+                        Checkout title
+                        <input
+                          value={customInitialTitle}
+                          onChange={(e) => setCustomInitialTitle(e.target.value)}
+                          placeholder={selected.service === "laundry-rescue" ? "Laundry Rescue custom deposit" : "Custom Parent Reset checkout"}
+                          className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]"
+                        />
+                      </label>
+                    </div>
+                    <label className="mt-3 grid gap-2 text-sm font-bold text-slate-700">
+                      Optional customer note
+                      <textarea
+                        value={customInitialNote}
+                        onChange={(e) => setCustomInitialNote(e.target.value)}
+                        rows={3}
+                        placeholder="Example: Custom approved starting amount for 3.5 hours after request review. Any additional approved time or mileage would be billed separately."
+                        className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
+                      />
+                    </label>
+                  </div>
+                )}
 
                 <div className="mt-4 grid gap-3 md:grid-cols-2">
                   <button
@@ -726,7 +660,13 @@ export default function AdminTable({
                     onClick={() => createPaymentLink(true)}
                     className="rounded-2xl bg-[#075c58] px-5 py-3 text-sm font-black text-white shadow-lg shadow-[#075c58]/15 transition hover:-translate-y-0.5 hover:bg-[#064b48] disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    {checkoutBusy ? "Creating..." : selected.service === "laundry-rescue" ? "Create + email deposit link" : "Create + email checkout link"}
+                    {checkoutBusy
+                      ? "Creating..."
+                      : isCustomCheckoutMode
+                        ? "Create + email custom link"
+                        : selected.service === "laundry-rescue"
+                          ? "Create + email deposit link"
+                          : "Create + email checkout link"}
                   </button>
                   <button
                     type="button"
@@ -734,70 +674,10 @@ export default function AdminTable({
                     onClick={() => createPaymentLink(false)}
                     className="rounded-2xl border-2 border-[#075c58] bg-white px-5 py-3 text-sm font-black text-[#075c58] transition hover:-translate-y-0.5 hover:bg-[#f4ecdc] disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    {selected.service === "laundry-rescue" ? "Create deposit link only" : "Create link only"}
+                    {isCustomCheckoutMode ? "Create custom link only" : selected.service === "laundry-rescue" ? "Create deposit link only" : "Create link only"}
                   </button>
                 </div>
 
-                <div className="mt-4 rounded-3xl border border-[#eadfc8] bg-white p-4">
-                  <div className="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
-                    <div>
-                      <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Custom initial checkout</p>
-                      <h5 className="mt-1 text-base font-black text-[#075c58]">Send a reviewed custom starting amount</h5>
-                      <p className="mt-1 text-sm leading-6 text-slate-700">
-                        Use this when the first payment should not match the standard package price, such as a custom approved scope, special deposit, extra starting time, or service-area adjustment.
-                      </p>
-                    </div>
-                  </div>
-                  <div className="mt-4 grid gap-3 md:grid-cols-[0.7fr_1.3fr]">
-                    <label className="grid gap-2 text-sm font-bold text-slate-700">
-                      Amount
-                      <input
-                        value={customInitialAmount}
-                        onChange={(e) => setCustomInitialAmount(e.target.value)}
-                        inputMode="decimal"
-                        placeholder="149"
-                        className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]"
-                      />
-                    </label>
-                    <label className="grid gap-2 text-sm font-bold text-slate-700">
-                      Checkout title
-                      <input
-                        value={customInitialTitle}
-                        onChange={(e) => setCustomInitialTitle(e.target.value)}
-                        placeholder={selected.service === "laundry-rescue" ? "Laundry Rescue custom deposit" : "Custom Parent Reset checkout"}
-                        className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]"
-                      />
-                    </label>
-                  </div>
-                  <label className="mt-3 grid gap-2 text-sm font-bold text-slate-700">
-                    Optional customer note
-                    <textarea
-                      value={customInitialNote}
-                      onChange={(e) => setCustomInitialNote(e.target.value)}
-                      rows={3}
-                      placeholder="Example: Custom approved starting amount for 3.5 hours after request review. Any additional approved time or mileage would be billed separately."
-                      className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
-                    />
-                  </label>
-                  <div className="mt-4 grid gap-3 md:grid-cols-2">
-                    <button
-                      type="button"
-                      disabled={checkoutBusy}
-                      onClick={() => createPaymentLink(true, true)}
-                      className="rounded-2xl bg-[#075c58] px-5 py-3 text-sm font-black text-white shadow-lg shadow-[#075c58]/15 transition hover:-translate-y-0.5 hover:bg-[#064b48] disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      {checkoutBusy ? "Creating..." : "Create + email custom link"}
-                    </button>
-                    <button
-                      type="button"
-                      disabled={checkoutBusy}
-                      onClick={() => createPaymentLink(false, true)}
-                      className="rounded-2xl border-2 border-[#075c58] bg-white px-5 py-3 text-sm font-black text-[#075c58] transition hover:-translate-y-0.5 hover:bg-[#f4ecdc] disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      Create custom link only
-                    </button>
-                  </div>
-                </div>
 
                 {selected.checkoutUrl && (
                   <div className="mt-4 rounded-2xl border border-[#eadfc8] bg-white p-4">
@@ -1018,7 +898,7 @@ export default function AdminTable({
             <div className="grid gap-3 sm:grid-cols-2">
               {Object.entries(selected).map(([key, value]) => (
                 <div key={key} className="rounded-2xl border border-[#eadfc8] bg-[#fbf6ea] p-4">
-                  <p className="text-xs font-bold uppercase tracking-widest text-[#b98a2f]">{formatFieldLabel(key)}</p>
+                  <p className="text-xs font-bold uppercase tracking-widest text-[#b98a2f]">{key}</p>
                   <p className="mt-1 whitespace-pre-wrap break-words text-sm text-slate-800">{formatValue(key, value)}</p>
                 </div>
               ))}
