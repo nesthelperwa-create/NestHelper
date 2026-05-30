@@ -81,7 +81,7 @@ export async function POST(request: Request) {
             preferredDate: getString(data.preferredDate),
             preferredWindow: getString(data.preferredWindow),
             city: getString(data.city),
-            replyToEmail: serviceId === "laundry-rescue" ? emailAliases.laundry : emailAliases.booking,
+            replyToEmail: serviceId === "laundry-rescue" ? emailAliases.laundry : serviceId === "commercial-reset" ? emailAliases.commercial : emailAliases.booking,
           });
           emailSent = true;
           updatePayload.lastStatusEmailSentAt = FieldValue.serverTimestamp();

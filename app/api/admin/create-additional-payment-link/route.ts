@@ -45,6 +45,7 @@ function getServiceTitle(data: Record<string, unknown>) {
 }
 
 function getAdditionalPaymentReplyEmail(serviceId: string) {
+  if (serviceId === "commercial-reset") return emailAliases.commercial;
   return serviceId === "laundry-rescue" ? emailAliases.laundry : emailAliases.billing;
 }
 

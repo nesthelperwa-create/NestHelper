@@ -159,7 +159,7 @@ export async function POST(request: Request) {
     });
 
     const checkoutUrl = session.url || "";
-    const replyToEmail = isLaundryRescue ? emailAliases.laundry : emailAliases.billing;
+    const replyToEmail = isLaundryRescue ? emailAliases.laundry : serviceId === "commercial-reset" ? emailAliases.commercial : emailAliases.billing;
     const servicePrice = useCustomInitial ? `${formatMoney(customAmount)} custom initial checkout` : getServicePriceLabel(serviceId, mode);
     let emailSent = false;
     let emailError = "";

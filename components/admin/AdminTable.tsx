@@ -8,6 +8,25 @@ import StatusBadge from "./StatusBadge";
 type AdminDoc = { id: string; status?: string; createdAt?: unknown; checkoutUrl?: string; promoCode?: string; [key: string]: any };
 type CheckoutMode = "standard" | "founding" | "custom";
 
+const COMMERCIAL_QUOTE_STATUSES = [
+  "Not quoted",
+  "Quote drafted",
+  "Quote sent",
+  "Quote approved",
+  "Initial paid",
+  "Additional sent",
+  "Additional paid",
+  "Completed",
+];
+
+const COMMERCIAL_QUOTE_TYPES = [
+  "Flat visit quote",
+  "Recurring monthly plan",
+  "Reviewed price range",
+  "Add-on quote",
+  "Short-term rental turnover",
+];
+
 function formatDate(value: unknown) {
   if (!value) return "—";
   if (typeof value === "object" && value && "toDate" in value && typeof value.toDate === "function") return value.toDate().toLocaleString();
@@ -133,6 +152,21 @@ function getServiceLook(item: AdminDoc | null | undefined) {
   return key ? SERVICE_LOOKS[key] || DEFAULT_SERVICE_LOOK : DEFAULT_SERVICE_LOOK;
 }
 
+function isCommercialRequest(item: AdminDoc | null | undefined) {
+  return getServiceKey(item) === "commercial-reset";
+}
+
+function getDefaultCommercialQuoteType(item: AdminDoc | null | undefined) {
+  const combined = String(`${item?.businessType || ""} ${item?.frequency || ""}`).toLowerCase();
+  if (combined.includes("rental") || combined.includes("vacation") || combined.includes("turnover")) return "Short-term rental turnover";
+  if (combined.includes("weekly") || combined.includes("monthly") || combined.includes("recurring") || combined.includes("twice") || combined.includes("three times") || combined.includes("five times")) return "Recurring monthly plan";
+  return "Flat visit quote";
+}
+
+function getCommercialQuoteStatus(item: AdminDoc | null | undefined) {
+  return String(item?.commercialQuoteStatus || "Not quoted");
+}
+
 function ServicePill({ item }: { item: AdminDoc }) {
   const look = getServiceLook(item);
   const rawService = String(item.service || "");
@@ -248,6 +282,15 @@ export default function AdminTable({
   const [additionalPaymentBusy, setAdditionalPaymentBusy] = useState(false);
   const [additionalPaymentMessage, setAdditionalPaymentMessage] = useState("");
   const [additionalPaymentError, setAdditionalPaymentError] = useState("");
+  const [commercialQuoteStatus, setCommercialQuoteStatus] = useState("Not quoted");
+  const [commercialQuoteType, setCommercialQuoteType] = useState("Flat visit quote");
+  const [commercialInitialAmount, setCommercialInitialAmount] = useState("");
+  const [commercialAdditionalAmount, setCommercialAdditionalAmount] = useState("");
+  const [commercialCustomerQuoteNote, setCommercialCustomerQuoteNote] = useState("");
+  const [commercialInternalQuoteNotes, setCommercialInternalQuoteNotes] = useState("");
+  const [commercialQuoteBusy, setCommercialQuoteBusy] = useState(false);
+  const [commercialQuoteMessage, setCommercialQuoteMessage] = useState("");
+  const [commercialQuoteError, setCommercialQuoteError] = useState("");
 
   useEffect(() => {
     const q = query(collection(firestoreDb, collectionName), orderBy("createdAt", "desc"));
@@ -277,10 +320,18 @@ export default function AdminTable({
     setLaundryFinalMessage("");
     setLaundryFinalError("");
     setAdditionalPaymentAmount(selected?.additionalPaymentAmount ? String(selected.additionalPaymentAmount) : "");
-    setAdditionalPaymentReason(selected?.additionalPaymentReason ? String(selected.additionalPaymentReason) : "Additional hours");
+    setAdditionalPaymentReason(selected?.additionalPaymentReason ? String(selected.additionalPaymentReason) : isCommercialRequest(selected) ? "Commercial approved add-on / additional scope" : "Additional hours");
     setAdditionalPaymentNote("");
     setAdditionalPaymentMessage("");
     setAdditionalPaymentError("");
+    setCommercialQuoteStatus(selected?.commercialQuoteStatus ? String(selected.commercialQuoteStatus) : "Not quoted");
+    setCommercialQuoteType(selected?.commercialQuoteType ? String(selected.commercialQuoteType) : getDefaultCommercialQuoteType(selected));
+    setCommercialInitialAmount(selected?.commercialInitialAmount ? String(selected.commercialInitialAmount) : selected?.customInitialAmount ? String(selected.customInitialAmount) : "");
+    setCommercialAdditionalAmount(selected?.commercialAdditionalAmount ? String(selected.commercialAdditionalAmount) : selected?.additionalPaymentAmount ? String(selected.additionalPaymentAmount) : "");
+    setCommercialCustomerQuoteNote(selected?.commercialCustomerQuoteNote ? String(selected.commercialCustomerQuoteNote) : selected?.customInitialNote ? String(selected.customInitialNote) : "");
+    setCommercialInternalQuoteNotes(selected?.commercialInternalQuoteNotes ? String(selected.commercialInternalQuoteNotes) : "");
+    setCommercialQuoteMessage("");
+    setCommercialQuoteError("");
   }, [selected?.id]);
 
   const filtered = useMemo(() => {
@@ -484,10 +535,72 @@ export default function AdminTable({
     }
   }
 
+  async function saveCommercialQuote() {
+    if (!selected) return;
+    setCommercialQuoteBusy(true);
+    setCommercialQuoteMessage("");
+    setCommercialQuoteError("");
+
+    try {
+      const token = await firebaseAuth.currentUser?.getIdToken();
+      const res = await fetch("/api/admin/update-commercial-quote", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          requestId: selected.id,
+          quoteStatus: commercialQuoteStatus,
+          quoteType: commercialQuoteType,
+          initialAmount: toNumber(commercialInitialAmount),
+          additionalAmount: toNumber(commercialAdditionalAmount),
+          customerQuoteNote: commercialCustomerQuoteNote,
+          internalQuoteNotes: commercialInternalQuoteNotes,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok || !data.ok) {
+        throw new Error(data.error || "Unable to save commercial quote details.");
+      }
+
+      setSelected((prev) => prev ? {
+        ...prev,
+        status: data.mappedStatus || prev.status,
+        commercialQuoteStatus,
+        commercialQuoteType,
+        commercialInitialAmount: toNumber(commercialInitialAmount),
+        commercialAdditionalAmount: toNumber(commercialAdditionalAmount),
+        commercialCustomerQuoteNote,
+        commercialInternalQuoteNotes,
+      } : prev);
+      if (data.mappedStatus) setStatusValue(data.mappedStatus);
+      setCommercialQuoteMessage("Commercial quote details saved.");
+    } catch (error) {
+      setCommercialQuoteError(error instanceof Error ? error.message : "Unable to save commercial quote details.");
+    } finally {
+      setCommercialQuoteBusy(false);
+    }
+  }
+
+  function applyCommercialInitialToCheckout() {
+    setCheckoutMode("custom");
+    setCustomInitialAmount(commercialInitialAmount);
+    setCustomInitialTitle(commercialQuoteType === "Short-term rental turnover" ? "Short-Term Rental Turnover approved quote" : commercialQuoteType === "Recurring monthly plan" ? "Commercial Reset recurring plan" : "Commercial Reset approved quote");
+    setCustomInitialNote(commercialCustomerQuoteNote || "Approved Commercial Reset quote. Any added scope or specialty add-ons will be reviewed before an additional payment is requested.");
+    setCheckoutMessage("Commercial initial amount copied into the checkout section below.");
+  }
+
+  function applyCommercialAdditionalToPayment() {
+    setAdditionalPaymentAmount(commercialAdditionalAmount);
+    setAdditionalPaymentReason("Commercial approved add-on / additional scope");
+    setAdditionalPaymentNote(commercialCustomerQuoteNote || "Approved commercial add-on or additional scope reviewed with the customer.");
+    setAdditionalPaymentMessage("Commercial additional amount copied into the additional payment section below.");
+  }
+
   const showPaymentActions = enablePaymentActions && collectionName === "serviceRequests" && selected;
   const showCustomerStatusActions = collectionName === "serviceRequests" && selected;
   const showLaundryFinalBalance = showPaymentActions && selected?.service === "laundry-rescue";
   const isCustomCheckoutMode = checkoutMode === "custom";
+  const showCommercialQuotePanel = showPaymentActions && isCommercialRequest(selected);
 
   return (
     <section className="space-y-5">
@@ -628,6 +741,136 @@ export default function AdminTable({
 
                 {statusMessage && <p className="mt-3 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">{statusMessage}</p>}
                 {statusError && <p className="mt-3 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{statusError}</p>}
+              </div>
+            )}
+
+            {showCommercialQuotePanel && (
+              <div className="mb-5 rounded-3xl border border-cyan-200 bg-cyan-50/45 p-5 shadow-sm">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="max-w-2xl">
+                    <p className="text-xs font-black uppercase tracking-[0.2em] text-[#b98a2f]">Commercial quote panel</p>
+                    <h4 className="mt-1 text-xl font-black text-[#075c58]">Build a clear visit price or recurring plan</h4>
+                    <p className="mt-2 text-sm leading-6 text-slate-700">
+                      Use this only for Commercial Reset requests. Save the quote details here first, then copy the initial amount into Stripe checkout or the additional amount into the add-on payment section below.
+                    </p>
+                  </div>
+                  <StatusBadge status={getCommercialQuoteStatus(selected)} />
+                </div>
+
+                <div className="mt-4 grid gap-3 md:grid-cols-3">
+                  <div className="rounded-2xl border border-cyan-200 bg-white p-4">
+                    <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Type</p>
+                    <p className="mt-1 text-sm font-bold text-[#075c58]">{formatValue("businessType", selected.businessType)}</p>
+                  </div>
+                  <div className="rounded-2xl border border-cyan-200 bg-white p-4">
+                    <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Size / layout</p>
+                    <p className="mt-1 text-sm font-bold text-[#075c58]">{formatValue("squareFootage", selected.squareFootage)} · {formatValue("bathrooms", selected.bathrooms)} restrooms</p>
+                    <p className="mt-1 text-xs font-semibold text-slate-600">Kitchen/breakroom: {formatValue("kitchens", selected.kitchens)} · Showers: {formatValue("showers", selected.showers)}</p>
+                  </div>
+                  <div className="rounded-2xl border border-cyan-200 bg-white p-4">
+                    <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Frequency</p>
+                    <p className="mt-1 text-sm font-bold text-[#075c58]">{formatValue("frequency", selected.frequency)}</p>
+                    <p className="mt-1 text-xs font-semibold text-slate-600">Condition: {formatValue("spaceCondition", selected.spaceCondition)}</p>
+                  </div>
+                </div>
+
+                <div className="mt-4 grid gap-3 md:grid-cols-2">
+                  <label className="grid gap-2 text-sm font-bold text-slate-700">
+                    Quote status
+                    <select
+                      value={commercialQuoteStatus}
+                      onChange={(e) => setCommercialQuoteStatus(e.target.value)}
+                      className="rounded-2xl border border-cyan-200 bg-white px-4 py-3 text-sm font-bold text-[#075c58] outline-none focus:border-[#075c58]"
+                    >
+                      {COMMERCIAL_QUOTE_STATUSES.map((status) => <option key={status}>{status}</option>)}
+                    </select>
+                  </label>
+                  <label className="grid gap-2 text-sm font-bold text-slate-700">
+                    Quote type
+                    <select
+                      value={commercialQuoteType}
+                      onChange={(e) => setCommercialQuoteType(e.target.value)}
+                      className="rounded-2xl border border-cyan-200 bg-white px-4 py-3 text-sm font-bold text-[#075c58] outline-none focus:border-[#075c58]"
+                    >
+                      {COMMERCIAL_QUOTE_TYPES.map((type) => <option key={type}>{type}</option>)}
+                    </select>
+                  </label>
+                </div>
+
+                <div className="mt-4 grid gap-3 md:grid-cols-2">
+                  <label className="grid gap-2 text-sm font-bold text-slate-700">
+                    Initial amount
+                    <input
+                      value={commercialInitialAmount}
+                      onChange={(e) => setCommercialInitialAmount(e.target.value)}
+                      inputMode="decimal"
+                      placeholder="149"
+                      className="rounded-2xl border border-cyan-200 bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]"
+                    />
+                    <span className="text-xs font-semibold leading-5 text-slate-500">First approved visit, first turnover, deposit, or first recurring-plan payment.</span>
+                  </label>
+                  <label className="grid gap-2 text-sm font-bold text-slate-700">
+                    Additional amount
+                    <input
+                      value={commercialAdditionalAmount}
+                      onChange={(e) => setCommercialAdditionalAmount(e.target.value)}
+                      inputMode="decimal"
+                      placeholder="0"
+                      className="rounded-2xl border border-cyan-200 bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]"
+                    />
+                    <span className="text-xs font-semibold leading-5 text-slate-500">Optional follow-up amount for approved add-ons, specialty floor work, linens, or added scope.</span>
+                  </label>
+                </div>
+
+                <label className="mt-4 grid gap-2 text-sm font-bold text-slate-700">
+                  Customer-facing quote note
+                  <textarea
+                    value={commercialCustomerQuoteNote}
+                    onChange={(e) => setCommercialCustomerQuoteNote(e.target.value)}
+                    rows={3}
+                    placeholder="Example: Approved flat visit quote for weekly Commercial Reset based on the submitted square footage range, restrooms, breakroom, and listed priorities. Specialty add-ons are quoted separately before work begins."
+                    className="rounded-2xl border border-cyan-200 bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
+                  />
+                </label>
+
+                <label className="mt-4 grid gap-2 text-sm font-bold text-slate-700">
+                  Internal quote notes
+                  <textarea
+                    value={commercialInternalQuoteNotes}
+                    onChange={(e) => setCommercialInternalQuoteNotes(e.target.value)}
+                    rows={3}
+                    placeholder="Private notes: walkthrough needed, friend/Pierce assignment, supply considerations, floor add-ons, tight turnover window, or pricing logic."
+                    className="rounded-2xl border border-cyan-200 bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
+                  />
+                </label>
+
+                <div className="mt-4 flex flex-wrap gap-3">
+                  <button
+                    type="button"
+                    disabled={commercialQuoteBusy}
+                    onClick={saveCommercialQuote}
+                    className="rounded-2xl bg-[#075c58] px-5 py-3 text-sm font-black text-white shadow-lg shadow-[#075c58]/15 transition hover:-translate-y-0.5 hover:bg-[#064b48] disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {commercialQuoteBusy ? "Saving..." : "Save commercial quote details"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={applyCommercialInitialToCheckout}
+                    className="rounded-2xl border-2 border-[#075c58] bg-white px-5 py-3 text-sm font-black text-[#075c58] transition hover:-translate-y-0.5 hover:bg-[#f4ecdc]"
+                  >
+                    Use initial amount for checkout
+                  </button>
+                  <button
+                    type="button"
+                    onClick={applyCommercialAdditionalToPayment}
+                    className="rounded-2xl border-2 border-cyan-700 bg-white px-5 py-3 text-sm font-black text-cyan-800 transition hover:-translate-y-0.5 hover:bg-white/70"
+                  >
+                    Use additional amount below
+                  </button>
+                </div>
+
+                {commercialQuoteMessage && <p className="mt-3 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">{commercialQuoteMessage}</p>}
+                {commercialQuoteError && <p className="mt-3 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{commercialQuoteError}</p>}
               </div>
             )}
 
@@ -891,10 +1134,22 @@ export default function AdminTable({
                       onChange={(e) => setAdditionalPaymentReason(e.target.value)}
                       className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-bold text-[#075c58] outline-none focus:border-[#075c58]"
                     >
-                      <option>Additional hours</option>
-                      <option>Extra miles / route time</option>
-                      <option>Additional approved task / add-on</option>
-                      <option>Other approved balance</option>
+                      {isCommercialRequest(selected) ? (
+                        <>
+                          <option>Commercial approved add-on / additional scope</option>
+                          <option>Specialty floor or carpet add-on</option>
+                          <option>Short-term rental linen / restock add-on</option>
+                          <option>Recurring plan adjustment</option>
+                          <option>Other approved commercial balance</option>
+                        </>
+                      ) : (
+                        <>
+                          <option>Additional hours</option>
+                          <option>Extra miles / route time</option>
+                          <option>Additional approved task / add-on</option>
+                          <option>Other approved balance</option>
+                        </>
+                      )}
                     </select>
                   </label>
                 </div>
