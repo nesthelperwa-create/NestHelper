@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import { Building2, CalendarClock, ClipboardCheck, MapPin, SprayCan } from "lucide-react";
+import { BedDouble, Building2, CalendarClock, ClipboardCheck, MapPin, SprayCan } from "lucide-react";
 import { CommercialResetForm } from "@/components/forms/CommercialResetForm";
 import { PageHero } from "@/components/PageHero";
 
 export const metadata: Metadata = {
   title: "Request Commercial Reset Quote | NestHelper",
   description:
-    "Request a reviewed Commercial Reset quote for small offices, studios, churches, daycare common areas, salons, and local small business spaces.",
+    "Request a reviewed Commercial Reset quote for small offices, studios, churches, daycare common areas, salons, short-term rental turnovers, and local small business spaces.",
 };
 
 export default function CommercialResetRequestPage() {
@@ -15,8 +15,8 @@ export default function CommercialResetRequestPage() {
     <>
       <PageHero
         eyebrow="Commercial Quote"
-        title="Tell us about the business space."
-        text="No payment is due when you submit. NestHelper reviews the address, scope, frequency, access, photos, product preferences, and service fit before confirming availability or sending a quote/payment link."
+        title="Tell us about the business space or rental turnover."
+        text="No payment is due when you submit. NestHelper reviews the address, space type, square footage range, restrooms, kitchens, showers, frequency, condition, turnover timing if applicable, access, photos, product preferences, and service fit before confirming availability or sending a quote/payment link."
         cta={false}
       />
 
@@ -25,12 +25,13 @@ export default function CommercialResetRequestPage() {
           <p className="pill-label w-fit"><ClipboardCheck size={15} /> Guided Intake</p>
           <h2 className="mt-4 text-3xl font-black text-nest-teal sm:text-4xl">Start with the basics.</h2>
           <p className="mt-3 font-medium leading-7 text-nest-ink/70">
-            This page is only for Commercial Reset. The form uses dropdowns, checkboxes, and optional photos to keep the request simple while still giving NestHelper enough information to review fit and quote accurately.
+            This page is only for Commercial Reset, including routine business cleaning and short-term rental turnovers. The form uses dropdowns, checkboxes, and optional photos to keep the request simple while still giving NestHelper enough detail to prepare a clear flat visit quote, recurring plan, or reviewed range before checkout.
           </p>
           <div className="mt-6 grid gap-3">
-            <SidebarPoint icon={<Building2 />} text="Business contact and type" />
+            <SidebarPoint icon={<Building2 />} text="Business, host, or property contact" />
             <SidebarPoint icon={<MapPin />} text="Pierce County or Eastside/Northshore area review" />
-            <SidebarPoint icon={<SprayCan />} text="Size, bathrooms, priorities, product preferences, and photos" />
+            <SidebarPoint icon={<SprayCan />} text="Size range, bathrooms, kitchens, showers, condition, priorities, and photos" />
+            <SidebarPoint icon={<BedDouble />} text="Optional turnover details for short-term rentals" />
             <SidebarPoint icon={<CalendarClock />} text="Frequency and preferred service windows" />
           </div>
           <p className="mt-5 rounded-2xl border border-nest-teal/15 bg-nest-mint/25 p-4 text-sm font-semibold leading-6 text-nest-ink/76">
