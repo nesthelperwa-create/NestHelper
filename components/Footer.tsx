@@ -61,7 +61,7 @@ export function Footer() {
           title="Explore"
           links={[
             { href: "/request", label: "Request Help" },
-            { href: "/commercial-reset#commercial-quote", label: "Request Commercial Quote" },
+            { href: "/commercial-reset/request", label: "Request Commercial Quote" },
             { href: "/#how-it-works", label: "How It Works" },
             { href: "/#giving-back", label: "Giving Back" },
             { href: "/#service-area", label: "Service Area" },

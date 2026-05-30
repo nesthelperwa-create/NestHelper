@@ -99,6 +99,7 @@ a { text-underline-offset: 4px; }
 .pill-label {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
   border-radius: 9999px;
   border: 1px solid rgba(193, 143, 55, 0.22);
@@ -109,7 +110,14 @@ a { text-underline-offset: 4px; }
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: #a67624;
+  text-align: center;
+  line-height: 1.1;
+  min-height: 2.1rem;
   box-shadow: 0 10px 30px rgba(0, 93, 86, 0.06);
+}
+
+.pill-label svg {
+  flex-shrink: 0;
 }
 
 .input {

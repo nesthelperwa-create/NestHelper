@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import type { FormEvent, ReactNode } from "react";
 import { useState } from "react";
 import { ArrowRight, Building2, CheckCircle2, ClipboardCheck, CreditCard, ShieldCheck } from "lucide-react";
@@ -283,8 +284,13 @@ export function CommercialQuoteMiniCard() {
           <p className="mt-2 text-sm font-medium leading-6 text-nest-ink/68">
             Commercial Reset requests are reviewed before checkout because every business has different square footage, frequency, access, supplies, and after-hours needs.
           </p>
-          <div className="mt-4 flex items-center gap-2 text-sm font-black text-nest-teal">
-            <CheckCircle2 size={16} /> Custom quote before payment
+          <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="flex items-center gap-2 text-sm font-black text-nest-teal">
+              <CheckCircle2 size={16} /> Custom quote before payment
+            </div>
+            <Link href="/commercial-reset/request" className="inline-flex w-fit items-center justify-center rounded-full bg-nest-teal px-4 py-2 text-xs font-black text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-nest-teal2">
+              Start quote
+            </Link>
           </div>
         </div>
       </div>

@@ -13,7 +13,7 @@ import {
   Sparkles,
   SprayCan,
 } from "lucide-react";
-import { CommercialQuoteMiniCard, CommercialResetForm } from "@/components/forms/CommercialResetForm";
+import { CommercialQuoteMiniCard } from "@/components/forms/CommercialResetForm";
 import { PageHero } from "@/components/PageHero";
 import { ButtonLink } from "@/components/ui/ButtonLink";
 
@@ -77,7 +77,7 @@ export default function CommercialResetPage() {
                 Commercial Reset keeps the family-focused homepage clean while giving small businesses and community spaces a professional place to ask for routine cleaning, first-time resets, recurring janitorial support, and product preferences such as low-odor or non-toxic options when appropriate.
               </p>
               <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-                <ButtonLink href="#commercial-quote">Request Commercial Quote</ButtonLink>
+                <ButtonLink href="/commercial-reset/request">Request Commercial Quote</ButtonLink>
                 <ButtonLink href="/services" variant="secondary">Family Services</ButtonLink>
               </div>
             </div>
@@ -184,27 +184,33 @@ export default function CommercialResetPage() {
           <div className="grid gap-4 p-6 sm:p-8 lg:grid-cols-3 lg:p-10">
             <PricingCard title="Recurring commercial cleaning" price="Starting at $175/visit" text="$499/month recurring minimum. Quote depends on square footage, bathrooms, frequency, timing, and supplies." />
             <PricingCard title="One-time commercial reset" price="Starting at $249" text="Best for first-time catch-up, move-in prep, office reset, or a deeper one-time clean before recurring service." />
-            <PricingCard title="Hourly quote planning" price="$75–$95/labor hour" text="Used internally for custom scopes, heavier resets, walkthrough-based quotes, and specialty add-ons." />
+            <PricingCard title="Hourly quote planning" price="$75–$95/labor hour" text="Used for custom scopes, heavier resets, walkthrough-based quotes, and specialty add-ons." />
           </div>
         </div>
       </section>
 
-      <section id="commercial-quote" className="mx-auto grid max-w-7xl scroll-mt-24 gap-8 px-4 py-14 sm:px-6 lg:grid-cols-[0.82fr_1.18fr] lg:px-8">
-        <div className="self-start rounded-[2.5rem] border border-nest-gold/18 bg-white/90 p-6 shadow-soft backdrop-blur lg:sticky lg:top-28">
-          <p className="pill-label w-fit"><ClipboardCheck size={15} /> Quote Request</p>
-          <h2 className="mt-4 text-3xl font-black text-nest-teal sm:text-4xl">Start with a reviewed request.</h2>
-          <p className="mt-3 font-medium leading-7 text-nest-ink/70">
-            Use this form to request a Commercial Reset quote. NestHelper reviews the address, scope, frequency, access, photos, product preferences, and service fit before confirming availability or sending any payment link.
-          </p>
-          <div className="mt-6 grid gap-3">
-            <SidebarPoint icon={<Building2 />} text="Business name, type, and contact" />
-            <SidebarPoint icon={<MapPin />} text="Address and service area review" />
-            <SidebarPoint icon={<SprayCan />} text="Square footage, bathrooms, floors, supplies, photos" />
-            <SidebarPoint icon={<CalendarClock />} text="Frequency and preferred service windows" />
+      <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
+        <div className="overflow-hidden rounded-[2.75rem] border border-nest-gold/18 bg-gradient-to-br from-nest-teal via-[#075c58] to-[#0b4f4b] p-6 text-white shadow-soft sm:p-8 lg:p-10">
+          <div className="grid gap-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
+            <div>
+              <p className="pill-label w-fit border-white/20 bg-white/12 text-nest-gold2"><ClipboardCheck size={15} /> Quote Request</p>
+              <h2 className="text-balance mt-4 text-3xl font-black sm:text-5xl">Ready to price a business space?</h2>
+              <p className="mt-4 max-w-3xl text-base font-medium leading-7 text-white/78 sm:text-lg sm:leading-8">
+                Use the dedicated Commercial Quote page so this overview stays clean and easy to scan. Tell us about the business, square footage, bathrooms, floors, access, schedule, supply preferences, and optional photos there.
+              </p>
+              <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+                <ButtonLink href="/commercial-reset/request" variant="secondary">Start Commercial Quote</ButtonLink>
+                <ButtonLink href="/contact" variant="secondary">Ask a Question First</ButtonLink>
+              </div>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <SidebarPoint icon={<Building2 />} text="Business name and type" />
+              <SidebarPoint icon={<MapPin />} text="Address and service area review" />
+              <SidebarPoint icon={<SprayCan />} text="Square footage, supplies, and photos" />
+              <SidebarPoint icon={<CalendarClock />} text="Frequency and preferred service windows" />
+            </div>
           </div>
         </div>
-
-        <CommercialResetForm />
       </section>
 
       <section className="mx-auto max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">

@@ -49,7 +49,7 @@ export default function ServicesPage() {
               </p>
               <div className="mt-5 flex flex-col gap-3 sm:flex-row">
                 <ButtonLink href="/commercial-reset" variant="secondary">View Commercial Reset</ButtonLink>
-                <ButtonLink href="/commercial-reset#commercial-quote" variant="secondary">Request Commercial Quote</ButtonLink>
+                <ButtonLink href="/commercial-reset/request" variant="secondary">Request Commercial Quote</ButtonLink>
               </div>
             </div>
           </div>

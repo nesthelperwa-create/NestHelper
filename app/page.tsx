@@ -198,12 +198,10 @@ export default function HomePage() {
 
       <AnimatedSection className="soft-section px-4 py-16 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
-          <div className="grid gap-8 lg:grid-cols-[0.75fr_1.25fr] lg:items-end">
-            <div>
-              <p className="pill-label w-fit"><Star size={15} /> Services</p>
-              <h2 className="text-balance mt-4 text-3xl font-black leading-tight text-nest-teal sm:text-5xl">Extra hands for busy parents.</h2>
-            </div>
-            <p className="text-base font-medium leading-7 text-nest-ink/70 sm:text-lg sm:leading-8">
+          <div className="mx-auto max-w-4xl text-center">
+            <p className="pill-label mx-auto w-fit"><Star size={15} /> Services</p>
+            <h2 className="text-balance mt-4 text-3xl font-black leading-tight text-nest-teal sm:text-5xl">Extra hands for busy parents.</h2>
+            <p className="mx-auto mt-5 max-w-3xl text-base font-medium leading-7 text-nest-ink/70 sm:text-lg sm:leading-8">
               Choose a package, submit the details, and NestHelper reviews the request before payment. Open each card for what fits, pricing notes, and next steps.
             </p>
           </div>
@@ -219,14 +217,14 @@ export default function HomePage() {
             <div>
               <p className="pill-label w-fit"><Building2 size={15} /> For Local Businesses</p>
               <h2 className="text-balance mt-4 text-3xl font-black leading-tight text-nest-teal sm:text-5xl">
-                Commercial Reset now has its own page.
+                Commercial Reset has its own page.
               </h2>
               <p className="mt-5 text-base font-medium leading-7 text-nest-ink/72 sm:text-lg sm:leading-8">
                 Parent Reset stays focused on families. Commercial Reset is a separate quote-first service lane for small offices, studios, churches, daycare common areas, salons, and local business spaces that need routine cleaning support — including non-toxic or low-odor product preferences when appropriate.
               </p>
               <div className="mt-7 flex flex-col gap-3 sm:flex-row">
                 <ButtonLink href="/commercial-reset">Explore Commercial Reset</ButtonLink>
-                <ButtonLink href="/commercial-reset#commercial-quote" variant="secondary">Request Commercial Quote</ButtonLink>
+                <ButtonLink href="/commercial-reset/request" variant="secondary">Request Commercial Quote</ButtonLink>
               </div>
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
@@ -306,14 +304,12 @@ function SectionIntro({
   description: string;
 }) {
   return (
-    <div className="grid gap-5 lg:grid-cols-[0.95fr_1.05fr] lg:items-end">
-      <div>
-        <p className="pill-label w-fit">{icon} {label}</p>
-        <h2 className="text-balance mt-4 text-3xl font-black leading-tight text-nest-teal sm:text-5xl">
-          {title}
-        </h2>
-      </div>
-      <p className="text-base font-medium leading-7 text-nest-ink/70 sm:text-lg sm:leading-8">
+    <div className="mx-auto max-w-4xl text-center">
+      <p className="pill-label mx-auto w-fit">{icon} {label}</p>
+      <h2 className="text-balance mt-4 text-3xl font-black leading-tight text-nest-teal sm:text-5xl">
+        {title}
+      </h2>
+      <p className="mx-auto mt-5 max-w-3xl text-base font-medium leading-7 text-nest-ink/70 sm:text-lg sm:leading-8">
         {description}
       </p>
     </div>
