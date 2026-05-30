@@ -6,6 +6,7 @@ import { useMemo, useState } from "react";
 import { ArrowRight, CheckCircle2, Clock, CreditCard, MapPin, ShieldCheck } from "lucide-react";
 import { services, laundryAddOns } from "@/lib/services";
 import { formatPhoneNumber } from "@/lib/formatPhoneNumber";
+import { PhotoUploadField, photoUploadSummary, type PhotoUpload } from "@/components/forms/PhotoUploadField";
 
 const defaultState = {
   fullName: "",
@@ -36,6 +37,7 @@ const defaultState = {
   reusableBagAck: false,
   consent: false,
   textConsent: false,
+  photoUploads: [] as PhotoUpload[],
 };
 
 type RequestFormState = typeof defaultState;
@@ -78,6 +80,11 @@ function cleanForSelectedService(form: RequestFormState) {
     parkingAccess: form.parkingAccess,
     consent: form.consent,
     textConsent: form.textConsent,
+    ...(form.photoUploads.length ? {
+      photoUploadCount: form.photoUploads.length,
+      photoUploadSummary: photoUploadSummary(form.photoUploads),
+      photoUploads: form.photoUploads,
+    } : {}),
     requestedAt: new Date().toISOString(),
   };
 
@@ -364,6 +371,18 @@ export function RequestForm() {
       {isLaundry && (
         <Section title="5. Laundry pickup and return notes" description="Only include the access details needed for laundry pickup and return.">
           <Field label="Pickup/return, parking, or access notes"><input className="input" placeholder="Example: porch pickup, apartment gate code, text on arrival, leave clean bags by front door" value={form.parkingAccess} onChange={(e) => update("parkingAccess", e.target.value)} /></Field>
+        </Section>
+      )}
+
+
+      {serviceCategory !== "none" && (
+        <Section title="6. Optional photos" description="Photos are optional, but they can help us understand the scope before we approve, quote, or schedule the request.">
+          <PhotoUploadField
+            photos={form.photoUploads}
+            onChange={(photos) => update("photoUploads", photos)}
+            label="Upload photos (optional)"
+            description="Add up to 4 optional photos. Useful for before photos, rooms/areas involved, laundry amount, access notes, or anything that helps us quote and plan accurately."
+          />
         </Section>
       )}
 

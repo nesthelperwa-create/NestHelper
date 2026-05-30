@@ -84,6 +84,11 @@ function isInternalAdminField(key: string) {
   ].includes(normalized);
 }
 
+function isPhotoDataField(key: string) {
+  const normalized = key.trim().toLowerCase().replaceAll("_", "").replaceAll("-", "");
+  return ["photouploads", "uploadedphotos", "photodataurls", "imagedataurls"].includes(normalized);
+}
+
 function isPromoCodeField(key: string) {
   const normalized = key.trim().toLowerCase().replaceAll(" ", "").replaceAll("_", "").replaceAll("-", "");
   return ["promocode", "promo", "discountcode", "couponcode"].includes(normalized);
@@ -100,7 +105,7 @@ function getPromoCode(rows: Record<string, unknown>) {
 
 function buildCustomerDetailsText(rows: Record<string, unknown>) {
   return Object.entries(rows)
-    .filter(([key, value]) => !isInternalAdminField(key) && formatValue(value).trim().length > 0)
+    .filter(([key, value]) => !isInternalAdminField(key) && !isPhotoDataField(key) && formatValue(value).trim().length > 0)
     .map(([key, value]) => `${key}: ${formatValue(value)}`)
     .join("\n");
 }
@@ -358,7 +363,7 @@ export async function sendAdminEmail({ subject, title, rows, adminPath = "/admin
 
   const resend = new Resend(apiKey);
   const rowsHtml = Object.entries(rows)
-    .filter(([, value]) => formatValue(value).trim().length > 0)
+    .filter(([key, value]) => !isPhotoDataField(key) && formatValue(value).trim().length > 0)
     .map(([key, value]) => {
       const isPromoRow = isPromoCodeField(key);
       const rowStyle = isPromoRow
@@ -375,7 +380,7 @@ export async function sendAdminEmail({ subject, title, rows, adminPath = "/admin
     .join("");
 
   const textRows = Object.entries(rows)
-    .filter(([, value]) => formatValue(value).trim().length > 0)
+    .filter(([key, value]) => !isPhotoDataField(key) && formatValue(value).trim().length > 0)
     .map(([key, value]) => `${key}: ${formatValue(value)}`)
     .join("\n");
 

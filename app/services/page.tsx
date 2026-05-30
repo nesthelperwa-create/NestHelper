@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Building2, CheckCircle2, ClipboardCheck, CreditCard, Mail, Scale, ShieldCheck, Sparkles } from "lucide-react";
+import { Building2, CheckCircle2, ClipboardCheck, CreditCard, Mail, Scale, ShieldCheck, Sparkles, SprayCan } from "lucide-react";
 import { PageHero } from "@/components/PageHero";
 import { ServiceCard } from "@/components/ServiceCard";
 import { ButtonLink } from "@/components/ui/ButtonLink";
@@ -45,7 +45,7 @@ export default function ServicesPage() {
             </div>
             <div>
               <p className="font-medium leading-7 text-nest-ink/70">
-                For small offices, studios, churches, salons, and local business spaces, use the Commercial Reset page. Commercial work is quoted after review instead of listed as a guaranteed flat package.
+                For small offices, studios, churches, daycare common areas, salons, and local business spaces, use the Commercial Reset page. Commercial work is quoted after review instead of listed as a guaranteed flat package, and supply preferences can be noted before quoting.
               </p>
               <div className="mt-5 flex flex-col gap-3 sm:flex-row">
                 <ButtonLink href="/commercial-reset" variant="secondary">View Commercial Reset</ButtonLink>
@@ -69,6 +69,7 @@ export default function ServicesPage() {
                 "Insured local service",
                 "Secure payment link",
                 "Follow-up after service",
+                "Product preferences reviewed",
               ].map((x) => (
                 <div key={x} className="group flex gap-3 rounded-2xl bg-nest-cream p-4 font-black text-nest-ink/76 transition hover:-translate-y-0.5 hover:bg-white hover:shadow-sm">
                   <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white text-nest-teal shadow-sm transition group-hover:bg-nest-teal group-hover:text-white">
@@ -77,6 +78,21 @@ export default function ServicesPage() {
                   {x}
                 </div>
               ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-10 rounded-[2.5rem] border border-nest-gold/18 bg-gradient-to-br from-nest-mint/25 via-white to-nest-cream p-7 shadow-soft sm:p-8">
+          <div className="grid gap-5 lg:grid-cols-[0.25fr_1.75fr] lg:items-center">
+            <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-white text-nest-teal shadow-sm">
+              <SprayCan size={30} />
+            </div>
+            <div>
+              <p className="pill-label w-fit">Supply preferences</p>
+              <h2 className="mt-3 text-3xl font-black text-nest-teal sm:text-4xl">Non-toxic, low-odor, and sensitive options can be requested.</h2>
+              <p className="mt-3 font-medium leading-7 text-nest-ink/70">
+                Tell us in the request if your family prefers non-toxic, low-odor, fragrance-free, baby/sensitive, or customer-provided products. We review the surface, task, supplies, and scope before confirming what fits the visit.
+              </p>
             </div>
           </div>
         </div>

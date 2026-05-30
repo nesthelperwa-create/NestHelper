@@ -19,7 +19,7 @@ import { ButtonLink } from "@/components/ui/ButtonLink";
 
 export const metadata: Metadata = {
   title: "Commercial Reset | NestHelper",
-  description: "Quote-first commercial cleaning and reset services for small offices, studios, churches, salons, and local small businesses in select Pierce County, Eastside, and Northshore areas.",
+  description: "Quote-first commercial cleaning and reset services for small offices, studios, churches, daycare common areas, salons, and local small businesses in select Pierce County, Eastside, and Northshore areas.",
 };
 
 const businessTypes = [
@@ -30,6 +30,7 @@ const businessTypes = [
   "Therapy or professional offices",
   "Real estate and insurance offices",
   "Daycare common areas",
+  "Schools and learning studios",
   "Local small businesses",
 ];
 
@@ -40,6 +41,7 @@ const routineCleaning = [
   "Common-area wipe-downs",
   "Dusting and high-touch surfaces",
   "Vacuuming, sweeping, and mopping",
+  "Low-odor / non-toxic product options by request",
 ];
 
 const specialtyAddOns = [
@@ -48,6 +50,7 @@ const specialtyAddOns = [
   "Floor scrub, buff, wax, or strip/wax by quote",
   "Upholstery or specialty surfaces after review",
   "First-time heavier reset quoted after walkthrough",
+  "Daycare requests are common-area focused unless reviewed",
   "No mold, biohazard, construction cleanup, or hazardous work",
 ];
 
@@ -57,7 +60,7 @@ export default function CommercialResetPage() {
       <PageHero
         eyebrow="Commercial Reset"
         title="Routine cleaning support for small local business spaces."
-        text="A separate NestHelper service page for small offices, studios, churches, salons, and local business spaces that need reliable reset-style janitorial support. Commercial jobs are quoted after review, not forced into family-service pricing."
+        text="A separate NestHelper service page for small offices, studios, churches, daycare common areas, salons, and local business spaces that need reliable reset-style janitorial support. Commercial jobs are quoted after review, not forced into family-service pricing."
         cta={false}
       />
 
@@ -71,7 +74,7 @@ export default function CommercialResetPage() {
                 Same NestHelper care, different service lane.
               </h2>
               <p className="mt-5 text-base font-medium leading-7 text-nest-ink/72 sm:text-lg sm:leading-8">
-                Commercial Reset keeps the family-focused homepage clean while giving small businesses a professional place to ask for routine cleaning, first-time resets, and recurring janitorial support.
+                Commercial Reset keeps the family-focused homepage clean while giving small businesses and community spaces a professional place to ask for routine cleaning, first-time resets, recurring janitorial support, and product preferences such as low-odor or non-toxic options when appropriate.
               </p>
               <div className="mt-7 flex flex-col gap-3 sm:flex-row">
                 <ButtonLink href="#commercial-quote">Request Commercial Quote</ButtonLink>
@@ -84,6 +87,7 @@ export default function CommercialResetPage() {
             <MiniProof icon={<ShieldCheck size={20} />} title="Insured local service" text="Commercial requests are reviewed for scope, schedule, address, and safety before any work is confirmed." />
             <MiniProof icon={<ClipboardCheck size={20} />} title="Quote-first process" text="Pricing is customized around square footage, bathrooms, frequency, supplies, access, and condition." />
             <MiniProof icon={<CalendarClock size={20} />} title="Recurring or one-time" text="Request a one-time reset, weekly service, or more frequent routine cleaning depending on the space." />
+            <MiniProof icon={<SprayCan size={20} />} title="Product preferences" text="Non-toxic, low-odor, or fragrance-free options can be requested where appropriate for the surface and scope." />
           </div>
         </div>
       </section>
@@ -97,7 +101,7 @@ export default function CommercialResetPage() {
             </h2>
           </div>
           <p className="text-base font-medium leading-7 text-nest-ink/70 sm:text-lg sm:leading-8">
-            Commercial Reset is best for manageable local spaces where a clean, consistent environment matters: offices, client-facing rooms, studios, waiting areas, restrooms, and staff common areas.
+            Commercial Reset is best for manageable local spaces where a clean, consistent environment matters: offices, client-facing rooms, studios, waiting areas, restrooms, staff common areas, and daycare or learning-space common areas.
           </p>
         </div>
 
@@ -114,7 +118,7 @@ export default function CommercialResetPage() {
             <p className="pill-label w-fit"><SprayCan size={15} /> Routine Scope</p>
             <h2 className="mt-4 text-3xl font-black text-nest-teal sm:text-4xl">What Commercial Reset can include.</h2>
             <p className="mt-4 font-medium leading-7 text-nest-ink/70">
-              Basic Commercial Reset is routine janitorial-style support. Specialty floor work and carpet work are not included by default and are quoted separately when available.
+              Basic Commercial Reset is routine janitorial-style support. Specialty floor work and carpet work are not included by default and are quoted separately when available. Product preferences can be noted in the quote request.
             </p>
             <div className="mt-7 grid gap-3 sm:grid-cols-2">
               {routineCleaning.map((item) => <CheckTile key={item}>{item}</CheckTile>)}
@@ -125,7 +129,7 @@ export default function CommercialResetPage() {
             <p className="pill-label w-fit"><DoorOpen size={15} /> Add-ons and Boundaries</p>
             <h2 className="mt-4 text-3xl font-black text-nest-teal sm:text-4xl">Quoted separately when the job needs more.</h2>
             <p className="mt-4 font-medium leading-7 text-nest-ink/70">
-              This keeps quotes honest and protects NestHelper from accidentally promising specialty work under a basic cleaning price.
+              This keeps quotes honest and helps make sure the service scope, supplies, safety boundaries, and specialty work are reviewed before anything is confirmed.
             </p>
             <div className="mt-7 grid gap-3">
               {specialtyAddOns.map((item) => <CheckTile key={item}>{item}</CheckTile>)}
@@ -159,9 +163,9 @@ export default function CommercialResetPage() {
               text="Woodinville, Bothell, Kenmore, Kirkland, Redmond, Bellevue, Duvall, Mill Creek, and nearby Eastside/Northshore areas."
             />
             <div className="rounded-[2rem] border border-nest-gold/16 bg-nest-mint/20 p-6">
-              <h3 className="text-2xl font-black text-nest-teal">Important wording for unincorporated areas</h3>
+              <h3 className="text-2xl font-black text-nest-teal">Nearby communities welcome</h3>
               <p className="mt-3 font-medium leading-7 text-nest-ink/70">
-                The page lists unincorporated Pierce County communities as service areas without calling them cities. That keeps the wording accurate while still helping local business owners recognize their area.
+                We include nearby unincorporated Pierce County communities as service areas because many local businesses are outside city limits. Availability still depends on the address, schedule, scope, and any required local endorsements.
               </p>
             </div>
           </div>
@@ -174,7 +178,7 @@ export default function CommercialResetPage() {
             <p className="pill-label w-fit"><CheckCircle2 size={15} /> Quote Guidance</p>
             <h2 className="text-balance mt-4 text-3xl font-black text-nest-teal sm:text-5xl">Pricing is shown as guidance, not a guaranteed flat rate.</h2>
             <p className="mt-4 max-w-4xl text-lg font-medium leading-8 text-nest-ink/72">
-              Commercial pricing should stay quote-based because square footage, bathrooms, flooring, access, after-hours timing, and current condition can change the real labor cost.
+              Commercial pricing stays quote-based because square footage, bathrooms, flooring, access, after-hours timing, current condition, supply preferences, and optional photos can change the real labor cost.
             </p>
           </div>
           <div className="grid gap-4 p-6 sm:p-8 lg:grid-cols-3 lg:p-10">
@@ -190,12 +194,12 @@ export default function CommercialResetPage() {
           <p className="pill-label w-fit"><ClipboardCheck size={15} /> Quote Request</p>
           <h2 className="mt-4 text-3xl font-black text-nest-teal sm:text-4xl">Start with a reviewed request.</h2>
           <p className="mt-3 font-medium leading-7 text-nest-ink/70">
-            This form sends the commercial request into the same private NestHelper admin dashboard, marked as Commercial Reset, so you can review it before quoting or sending any payment link.
+            Use this form to request a Commercial Reset quote. NestHelper reviews the address, scope, frequency, access, photos, product preferences, and service fit before confirming availability or sending any payment link.
           </p>
           <div className="mt-6 grid gap-3">
             <SidebarPoint icon={<Building2 />} text="Business name, type, and contact" />
             <SidebarPoint icon={<MapPin />} text="Address and service area review" />
-            <SidebarPoint icon={<SprayCan />} text="Square footage, bathrooms, floors, supplies" />
+            <SidebarPoint icon={<SprayCan />} text="Square footage, bathrooms, floors, supplies, photos" />
             <SidebarPoint icon={<CalendarClock />} text="Frequency and preferred service windows" />
           </div>
         </div>

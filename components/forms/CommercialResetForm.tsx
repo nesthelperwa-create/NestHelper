@@ -4,6 +4,7 @@ import type { FormEvent, ReactNode } from "react";
 import { useState } from "react";
 import { ArrowRight, Building2, CheckCircle2, ClipboardCheck, CreditCard, ShieldCheck } from "lucide-react";
 import { formatPhoneNumber } from "@/lib/formatPhoneNumber";
+import { PhotoUploadField, photoUploadSummary, type PhotoUpload } from "@/components/forms/PhotoUploadField";
 
 const defaultState = {
   businessName: "",
@@ -27,6 +28,7 @@ const defaultState = {
   photoNotes: "",
   consent: false,
   textConsent: false,
+  photoUploads: [] as PhotoUpload[],
 };
 
 type CommercialResetFormState = typeof defaultState;
@@ -40,6 +42,7 @@ const businessTypes = [
   "Therapy / professional office",
   "Real estate / insurance office",
   "Daycare common areas",
+  "Schools / learning studios",
   "Other small business",
 ];
 
@@ -79,6 +82,11 @@ function buildPayload(form: CommercialResetFormState) {
     accessInstructions: form.accessInstructions,
     specialNotes: form.specialNotes,
     photoNotes: form.photoNotes,
+    ...(form.photoUploads.length ? {
+      photoUploadCount: form.photoUploads.length,
+      photoUploadSummary: photoUploadSummary(form.photoUploads),
+      photoUploads: form.photoUploads,
+    } : {}),
     consent: form.consent,
     textConsent: form.textConsent,
     requestedAt: new Date().toISOString(),
@@ -126,11 +134,11 @@ export function CommercialResetForm() {
           <p className="text-xs font-black uppercase tracking-[0.22em] text-nest-gold">No payment due yet</p>
           <h2 className="mt-2 text-2xl font-black text-nest-teal sm:text-3xl">Request a Commercial Reset quote</h2>
           <p className="mt-3 max-w-2xl leading-7 text-nest-ink/72">
-            Tell us about the business space, schedule, and cleaning scope. NestHelper reviews commercial requests before quoting so pricing fits the real job instead of forcing every space into one package.
+            Tell us about the business space, schedule, photos, and cleaning scope. NestHelper reviews commercial requests before quoting so pricing fits the real job instead of forcing every space into one package.
           </p>
           <div className="mt-5 grid gap-3 sm:grid-cols-3">
             <Step icon={<ClipboardCheck className="h-5 w-5" />} title="1. Scope review" text="Business type, square footage, bathrooms, and frequency." />
-            <Step icon={<ShieldCheck className="h-5 w-5" />} title="2. Service fit" text="Address, access, timing, supplies, and boundaries." />
+            <Step icon={<ShieldCheck className="h-5 w-5" />} title="2. Service fit" text="Address, access, timing, supply preferences, and boundaries." />
             <Step icon={<CreditCard className="h-5 w-5" />} title="3. Quote + next steps" text="Custom quote first, secure payment link after approval." />
           </div>
         </div>
@@ -180,6 +188,8 @@ export function CommercialResetForm() {
           <Field label="Supplies preference">
             <select className="input" value={form.supplies} onChange={(e) => update("supplies", e.target.value)}>
               <option>NestHelper supplies preferred</option>
+              <option>Non-toxic / low-odor options requested where appropriate</option>
+              <option>Fragrance-free products requested where appropriate</option>
               <option>Business provides supplies</option>
               <option>Not sure yet</option>
             </select>
@@ -187,8 +197,17 @@ export function CommercialResetForm() {
           <Field label="Flooring types"><input className="input" placeholder="Example: LVP, tile, carpet, concrete" value={form.flooringTypes} onChange={(e) => update("flooringTypes", e.target.value)} /></Field>
         </div>
         <Field label="Access instructions"><textarea className="input min-h-28" required placeholder="Keys, lockbox, alarm, parking, suite number, after-hours entry, who will be onsite, etc." value={form.accessInstructions} onChange={(e) => update("accessInstructions", e.target.value)} /></Field>
-        <Field label="Cleaning needs / special notes"><textarea className="input min-h-32" required placeholder="Tell us what needs to be cleaned, current condition, priority areas, trash/recycling, restrooms, breakroom, waiting room, add-ons, or anything sensitive." value={form.specialNotes} onChange={(e) => update("specialNotes", e.target.value)} /></Field>
-        <Field label="Photos or walkthrough notes (optional)"><textarea className="input min-h-24" placeholder="Paste a link to photos or describe anything a walkthrough should cover." value={form.photoNotes} onChange={(e) => update("photoNotes", e.target.value)} /></Field>
+        <Field label="Cleaning needs / special notes"><textarea className="input min-h-32" required placeholder="Tell us what needs to be cleaned, current condition, priority areas, trash/recycling, restrooms, breakroom, waiting room, daycare/common-area notes, add-ons, or anything sensitive." value={form.specialNotes} onChange={(e) => update("specialNotes", e.target.value)} /></Field>
+        <div className="rounded-2xl border border-nest-gold/15 bg-nest-mint/20 p-4 text-sm font-semibold leading-6 text-nest-ink/72">
+          For daycare common areas, churches, studios, and family-facing spaces, non-toxic, low-odor, or fragrance-free product options can be requested where appropriate for the surface and scope. NestHelper still reviews each request before confirming products, timing, and boundaries.
+        </div>
+        <PhotoUploadField
+          photos={form.photoUploads}
+          onChange={(photos) => update("photoUploads", photos)}
+          label="Upload walkthrough photos (optional)"
+          description="Add up to 4 optional photos of the space, flooring, restrooms, trash/recycling area, priority areas, access points, or anything that helps us quote accurately."
+        />
+        <Field label="Photo links or walkthrough notes (optional)"><textarea className="input min-h-24" placeholder="Paste a link to additional photos or describe anything a walkthrough should cover." value={form.photoNotes} onChange={(e) => update("photoNotes", e.target.value)} /></Field>
       </Section>
 
       <div className="grid gap-4 rounded-[1.75rem] border border-nest-teal/15 bg-nest-mint/20 p-5">

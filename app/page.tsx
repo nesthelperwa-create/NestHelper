@@ -11,6 +11,7 @@ import {
   MessageCircle,
   ShieldCheck,
   Sparkles,
+  SprayCan,
   Star,
 } from "lucide-react";
 import { AnimatedSection } from "@/components/AnimatedSection";
@@ -107,6 +108,18 @@ export default function HomePage() {
             <ChoiceItem icon={<Heart size={20} />} title="Checked helper model" text="In-home requests are matched through a reviewed helper or partner process." />
             <ChoiceItem icon={<ClipboardCheck size={20} />} title="Clear scope before payment" text="Timing, location, access, pets, safety notes, and package fit are reviewed before checkout." />
             <ChoiceItem icon={<MessageCircle size={20} />} title="Coordination + follow-up" text="NestHelper stays involved from request to completion so families are not left guessing." />
+          </div>
+
+          <div className="mt-5 flex flex-col gap-4 rounded-[2rem] border border-nest-gold/16 bg-nest-mint/20 p-5 shadow-sm sm:flex-row sm:items-start">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-nest-teal shadow-sm">
+              <SprayCan size={22} />
+            </span>
+            <div>
+              <h3 className="text-xl font-black text-nest-teal">Product preferences available</h3>
+              <p className="mt-2 text-sm font-semibold leading-6 text-nest-ink/70">
+                Families can request non-toxic, low-odor, fragrance-free, baby/sensitive, or customer-provided product options where appropriate. We review product fit, surfaces, supplies, and scope before confirming the service.
+              </p>
+            </div>
           </div>
         </SectionShell>
       </AnimatedSection>
@@ -209,7 +222,7 @@ export default function HomePage() {
                 Commercial Reset now has its own page.
               </h2>
               <p className="mt-5 text-base font-medium leading-7 text-nest-ink/72 sm:text-lg sm:leading-8">
-                Parent Reset stays focused on families. Commercial Reset is a separate quote-first service lane for small offices, studios, churches, salons, and local business spaces that need routine cleaning support.
+                Parent Reset stays focused on families. Commercial Reset is a separate quote-first service lane for small offices, studios, churches, daycare common areas, salons, and local business spaces that need routine cleaning support — including non-toxic or low-odor product preferences when appropriate.
               </p>
               <div className="mt-7 flex flex-col gap-3 sm:flex-row">
                 <ButtonLink href="/commercial-reset">Explore Commercial Reset</ButtonLink>
@@ -222,6 +235,7 @@ export default function HomePage() {
                 "Churches and nonprofits",
                 "Salons, gyms, and local shops",
                 "Quoted after scope review",
+                "Non-toxic / low-odor options by request",
               ].map((item) => (
                 <div key={item} className="group flex gap-3 rounded-2xl border border-nest-gold/12 bg-nest-cream p-4 font-black text-nest-ink/78 shadow-sm transition hover:-translate-y-0.5 hover:bg-white hover:shadow-sm">
                   <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-nest-teal shadow-sm transition group-hover:bg-nest-teal group-hover:text-white">

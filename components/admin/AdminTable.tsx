@@ -20,6 +20,7 @@ function formatMoney(value: number) {
 }
 
 function formatValue(key: string, value: unknown) {
+  if (isPhotoDataField(key) && Array.isArray(value)) return `${value.length} uploaded photo${value.length === 1 ? "" : "s"}`;
   if (Array.isArray(value)) return value.filter(Boolean).join(", ") || "—";
   if (typeof value === "boolean") return value ? "Yes" : "No";
   if (key.toLowerCase().includes("created") || key.toLowerCase().includes("updated") || key.toLowerCase().includes("paidat")) return formatDate(value);
@@ -143,6 +144,46 @@ function ServicePill({ item }: { item: AdminDoc }) {
         <span className="font-bold opacity-60">{rawService}</span>
       )}
     </span>
+  );
+}
+
+function isPhotoDataField(key: string) {
+  const normalized = key.trim().toLowerCase().replaceAll("_", "").replaceAll("-", "");
+  return ["photouploads", "uploadedphotos", "photodataurls", "imagedataurls"].includes(normalized);
+}
+
+type UploadedPhoto = { name?: string; type?: string; size?: number; dataUrl?: string };
+
+function getPhotoUploads(item: AdminDoc | null | undefined): UploadedPhoto[] {
+  const value = item?.photoUploads;
+  if (!Array.isArray(value)) return [];
+  return value.filter((photo) => photo && typeof photo === "object" && typeof photo.dataUrl === "string" && photo.dataUrl.startsWith("data:image/"));
+}
+
+function formatPhotoSize(bytes: unknown) {
+  const next = Number(bytes);
+  if (!Number.isFinite(next) || next <= 0) return "compressed preview";
+  if (next < 1024) return `${Math.round(next)} B`;
+  return `${Math.round(next / 1024)} KB`;
+}
+
+function AdminPhotoUploads({ photos }: { photos: UploadedPhoto[] }) {
+  if (!photos.length) return null;
+  return (
+    <div className="rounded-2xl border border-[#eadfc8] bg-white p-4 sm:col-span-2">
+      <p className="text-xs font-bold uppercase tracking-widest text-[#b98a2f]">Uploaded photos</p>
+      <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {photos.map((photo, index) => (
+          <a key={`${photo.name || "photo"}-${index}`} href={photo.dataUrl} target="_blank" rel="noreferrer" className="group overflow-hidden rounded-2xl border border-[#eadfc8] bg-[#fbf6ea] shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+            <img src={photo.dataUrl} alt={`Uploaded request photo ${index + 1}`} className="h-32 w-full object-cover" />
+            <div className="p-3">
+              <p className="truncate text-xs font-black text-[#075c58]" title={photo.name || `Photo ${index + 1}`}>{photo.name || `Photo ${index + 1}`}</p>
+              <p className="mt-1 text-xs font-semibold text-slate-500">{formatPhotoSize(photo.size)} · Open full preview</p>
+            </div>
+          </a>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -905,7 +946,8 @@ export default function AdminTable({
             )}
 
             <div className="grid gap-3 sm:grid-cols-2">
-              {Object.entries(selected).map(([key, value]) => (
+              <AdminPhotoUploads photos={getPhotoUploads(selected)} />
+              {Object.entries(selected).filter(([key]) => !isPhotoDataField(key)).map(([key, value]) => (
                 <div key={key} className="rounded-2xl border border-[#eadfc8] bg-[#fbf6ea] p-4">
                   <p className="text-xs font-bold uppercase tracking-widest text-[#b98a2f]">{key}</p>
                   <p className="mt-1 whitespace-pre-wrap break-words text-sm text-slate-800">{formatValue(key, value)}</p>
