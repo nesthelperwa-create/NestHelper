@@ -573,7 +573,7 @@ export default function AdminTable({
         commercialInternalQuoteNotes,
       } : prev);
       if (data.mappedStatus) setStatusValue(data.mappedStatus);
-      setCommercialQuoteMessage("Commercial quote details saved.");
+      setCommercialQuoteMessage("Saved. Next: use the amount buttons to fill the payment section, then create/email the Stripe link.");
     } catch (error) {
       setCommercialQuoteError(error instanceof Error ? error.message : "Unable to save commercial quote details.");
     } finally {
@@ -586,21 +586,22 @@ export default function AdminTable({
     setCustomInitialAmount(commercialInitialAmount);
     setCustomInitialTitle(commercialQuoteType === "Short-term rental turnover" ? "Short-Term Rental Turnover approved quote" : commercialQuoteType === "Recurring monthly plan" ? "Commercial Reset recurring plan" : "Commercial Reset approved quote");
     setCustomInitialNote(commercialCustomerQuoteNote || "Approved Commercial Reset quote. Any added scope or specialty add-ons will be reviewed before an additional payment is requested.");
-    setCheckoutMessage("Commercial initial amount copied into the checkout section below.");
+    setCheckoutMessage("Commercial amount copied below. Next: review the first payment link section and create/email the Stripe link.");
   }
 
   function applyCommercialAdditionalToPayment() {
     setAdditionalPaymentAmount(commercialAdditionalAmount);
     setAdditionalPaymentReason("Commercial approved add-on / additional scope");
     setAdditionalPaymentNote(commercialCustomerQuoteNote || "Approved commercial add-on or additional scope reviewed with the customer.");
-    setAdditionalPaymentMessage("Commercial additional amount copied into the additional payment section below.");
+    setAdditionalPaymentMessage("Commercial later/add-on amount copied below. Use it only after the customer approves the extra scope.");
   }
 
   const showPaymentActions = enablePaymentActions && collectionName === "serviceRequests" && selected;
   const showCustomerStatusActions = collectionName === "serviceRequests" && selected;
   const showLaundryFinalBalance = showPaymentActions && selected?.service === "laundry-rescue";
+  const selectedIsCommercial = isCommercialRequest(selected);
   const isCustomCheckoutMode = checkoutMode === "custom";
-  const showCommercialQuotePanel = showPaymentActions && isCommercialRequest(selected);
+  const showCommercialQuotePanel = showPaymentActions && selectedIsCommercial;
 
   return (
     <section className="space-y-5">
@@ -747,130 +748,172 @@ export default function AdminTable({
             {showCommercialQuotePanel && (
               <div className="mb-5 rounded-3xl border border-cyan-200 bg-cyan-50/45 p-5 shadow-sm">
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                  <div className="max-w-2xl">
-                    <p className="text-xs font-black uppercase tracking-[0.2em] text-[#b98a2f]">Commercial quote panel</p>
-                    <h4 className="mt-1 text-xl font-black text-[#075c58]">Build a clear visit price or recurring plan</h4>
+                  <div className="max-w-3xl">
+                    <p className="text-xs font-black uppercase tracking-[0.2em] text-[#b98a2f]">Commercial quote workflow</p>
+                    <h4 className="mt-1 text-xl font-black text-[#075c58]">Review, quote, then send the payment link</h4>
                     <p className="mt-2 text-sm leading-6 text-slate-700">
-                      Use this only for Commercial Reset requests. Save the quote details here first, then copy the initial amount into Stripe checkout or the additional amount into the add-on payment section below.
+                      This section is a guide for Commercial Reset only. Start by reviewing the space details, enter the approved quote amount, save it, then use the green buttons to fill the Stripe payment sections below.
                     </p>
                   </div>
                   <StatusBadge status={getCommercialQuoteStatus(selected)} />
                 </div>
 
-                <div className="mt-4 grid gap-3 md:grid-cols-3">
+                <div className="mt-4 grid gap-3 md:grid-cols-4">
                   <div className="rounded-2xl border border-cyan-200 bg-white p-4">
-                    <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Type</p>
-                    <p className="mt-1 text-sm font-bold text-[#075c58]">{formatValue("businessType", selected.businessType)}</p>
+                    <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Step 1</p>
+                    <p className="mt-1 text-sm font-black text-[#075c58]">Review the request</p>
+                    <p className="mt-1 text-xs leading-5 text-slate-600">Check the space type, size, bathrooms, photos, timing, and requested priorities.</p>
                   </div>
                   <div className="rounded-2xl border border-cyan-200 bg-white p-4">
-                    <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Size / layout</p>
-                    <p className="mt-1 text-sm font-bold text-[#075c58]">{formatValue("squareFootage", selected.squareFootage)} · {formatValue("bathrooms", selected.bathrooms)} restrooms</p>
-                    <p className="mt-1 text-xs font-semibold text-slate-600">Kitchen/breakroom: {formatValue("kitchens", selected.kitchens)} · Showers: {formatValue("showers", selected.showers)}</p>
+                    <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Step 2</p>
+                    <p className="mt-1 text-sm font-black text-[#075c58]">Prepare the quote</p>
+                    <p className="mt-1 text-xs leading-5 text-slate-600">Use a flat visit price, recurring plan, turnover price, or reviewed range.</p>
                   </div>
                   <div className="rounded-2xl border border-cyan-200 bg-white p-4">
-                    <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Frequency</p>
-                    <p className="mt-1 text-sm font-bold text-[#075c58]">{formatValue("frequency", selected.frequency)}</p>
-                    <p className="mt-1 text-xs font-semibold text-slate-600">Condition: {formatValue("spaceCondition", selected.spaceCondition)}</p>
+                    <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Step 3</p>
+                    <p className="mt-1 text-sm font-black text-[#075c58]">Send first payment</p>
+                    <p className="mt-1 text-xs leading-5 text-slate-600">Copy the amount into checkout below, then create and email the Stripe link.</p>
+                  </div>
+                  <div className="rounded-2xl border border-cyan-200 bg-white p-4">
+                    <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Optional</p>
+                    <p className="mt-1 text-sm font-black text-[#075c58]">Add-on balance</p>
+                    <p className="mt-1 text-xs leading-5 text-slate-600">Use only for customer-approved extras, floor work, linen handling, or added scope.</p>
                   </div>
                 </div>
 
-                <div className="mt-4 grid gap-3 md:grid-cols-2">
-                  <label className="grid gap-2 text-sm font-bold text-slate-700">
-                    Quote status
-                    <select
-                      value={commercialQuoteStatus}
-                      onChange={(e) => setCommercialQuoteStatus(e.target.value)}
-                      className="rounded-2xl border border-cyan-200 bg-white px-4 py-3 text-sm font-bold text-[#075c58] outline-none focus:border-[#075c58]"
-                    >
-                      {COMMERCIAL_QUOTE_STATUSES.map((status) => <option key={status}>{status}</option>)}
-                    </select>
-                  </label>
-                  <label className="grid gap-2 text-sm font-bold text-slate-700">
-                    Quote type
-                    <select
-                      value={commercialQuoteType}
-                      onChange={(e) => setCommercialQuoteType(e.target.value)}
-                      className="rounded-2xl border border-cyan-200 bg-white px-4 py-3 text-sm font-bold text-[#075c58] outline-none focus:border-[#075c58]"
-                    >
-                      {COMMERCIAL_QUOTE_TYPES.map((type) => <option key={type}>{type}</option>)}
-                    </select>
-                  </label>
+                <div className="mt-4 rounded-3xl border border-cyan-200 bg-white p-4">
+                  <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                    <div>
+                      <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Request snapshot</p>
+                      <h5 className="mt-1 text-base font-black text-[#075c58]">Key details to check before quoting</h5>
+                    </div>
+                    <p className="rounded-full bg-cyan-50 px-3 py-1 text-xs font-black uppercase tracking-[0.14em] text-cyan-800">Commercial</p>
+                  </div>
+                  <div className="mt-3 grid gap-3 md:grid-cols-3">
+                    <div className="rounded-2xl border border-cyan-100 bg-cyan-50/40 p-4">
+                      <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Space type</p>
+                      <p className="mt-1 text-sm font-bold text-[#075c58]">{formatValue("businessType", selected.businessType)}</p>
+                      <p className="mt-1 text-xs font-semibold text-slate-600">Frequency: {formatValue("frequency", selected.frequency)}</p>
+                    </div>
+                    <div className="rounded-2xl border border-cyan-100 bg-cyan-50/40 p-4">
+                      <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Size + layout</p>
+                      <p className="mt-1 text-sm font-bold text-[#075c58]">{formatValue("squareFootage", selected.squareFootage)}</p>
+                      <p className="mt-1 text-xs font-semibold text-slate-600">Restrooms: {formatValue("bathrooms", selected.bathrooms)} · Kitchens/breakrooms: {formatValue("kitchens", selected.kitchens)} · Showers: {formatValue("showers", selected.showers)}</p>
+                    </div>
+                    <div className="rounded-2xl border border-cyan-100 bg-cyan-50/40 p-4">
+                      <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Condition</p>
+                      <p className="mt-1 text-sm font-bold text-[#075c58]">{formatValue("spaceCondition", selected.spaceCondition)}</p>
+                      <p className="mt-1 text-xs font-semibold text-slate-600">Traffic: {formatValue("trafficLevel", selected.trafficLevel)}</p>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="mt-4 grid gap-3 md:grid-cols-2">
-                  <label className="grid gap-2 text-sm font-bold text-slate-700">
-                    Initial amount
-                    <input
-                      value={commercialInitialAmount}
-                      onChange={(e) => setCommercialInitialAmount(e.target.value)}
-                      inputMode="decimal"
-                      placeholder="149"
-                      className="rounded-2xl border border-cyan-200 bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]"
+                <div className="mt-4 rounded-3xl border border-cyan-200 bg-white p-4">
+                  <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Step 2 — Prepare quote</p>
+                  <h5 className="mt-1 text-base font-black text-[#075c58]">What are you offering the customer?</h5>
+                  <p className="mt-1 text-sm leading-6 text-slate-700">
+                    Enter the amount you want to collect before work is scheduled. Add a later amount only if there is an approved add-on or balance.
+                  </p>
+
+                  <div className="mt-4 grid gap-3 md:grid-cols-2">
+                    <label className="grid gap-2 text-sm font-bold text-slate-700">
+                      Quote progress
+                      <select
+                        value={commercialQuoteStatus}
+                        onChange={(e) => setCommercialQuoteStatus(e.target.value)}
+                        className="rounded-2xl border border-cyan-200 bg-white px-4 py-3 text-sm font-bold text-[#075c58] outline-none focus:border-[#075c58]"
+                      >
+                        {COMMERCIAL_QUOTE_STATUSES.map((status) => <option key={status}>{status}</option>)}
+                      </select>
+                    </label>
+                    <label className="grid gap-2 text-sm font-bold text-slate-700">
+                      Pricing style
+                      <select
+                        value={commercialQuoteType}
+                        onChange={(e) => setCommercialQuoteType(e.target.value)}
+                        className="rounded-2xl border border-cyan-200 bg-white px-4 py-3 text-sm font-bold text-[#075c58] outline-none focus:border-[#075c58]"
+                      >
+                        {COMMERCIAL_QUOTE_TYPES.map((type) => <option key={type}>{type}</option>)}
+                      </select>
+                    </label>
+                  </div>
+
+                  <div className="mt-4 grid gap-3 md:grid-cols-2">
+                    <label className="grid gap-2 text-sm font-bold text-slate-700">
+                      Amount to collect now
+                      <input
+                        value={commercialInitialAmount}
+                        onChange={(e) => setCommercialInitialAmount(e.target.value)}
+                        inputMode="decimal"
+                        placeholder="149"
+                        className="rounded-2xl border border-cyan-200 bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]"
+                      />
+                      <span className="text-xs font-semibold leading-5 text-slate-500">Use this for the first approved visit, first turnover, deposit, or first recurring-plan payment.</span>
+                    </label>
+                    <label className="grid gap-2 text-sm font-bold text-slate-700">
+                      Later/add-on amount, optional
+                      <input
+                        value={commercialAdditionalAmount}
+                        onChange={(e) => setCommercialAdditionalAmount(e.target.value)}
+                        inputMode="decimal"
+                        placeholder="0"
+                        className="rounded-2xl border border-cyan-200 bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]"
+                      />
+                      <span className="text-xs font-semibold leading-5 text-slate-500">Leave blank/0 unless the customer approved extra add-ons, specialty floor work, linens, or added scope.</span>
+                    </label>
+                  </div>
+
+                  <label className="mt-4 grid gap-2 text-sm font-bold text-slate-700">
+                    Customer quote message
+                    <textarea
+                      value={commercialCustomerQuoteNote}
+                      onChange={(e) => setCommercialCustomerQuoteNote(e.target.value)}
+                      rows={3}
+                      placeholder="Example: Approved Commercial Reset quote based on the submitted square footage range, restrooms, breakroom, and listed priorities. Specialty add-ons are reviewed before any additional charge."
+                      className="rounded-2xl border border-cyan-200 bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
                     />
-                    <span className="text-xs font-semibold leading-5 text-slate-500">First approved visit, first turnover, deposit, or first recurring-plan payment.</span>
+                    <span className="text-xs font-semibold leading-5 text-slate-500">This can be copied into the Stripe checkout note so the customer understands what the payment is for.</span>
                   </label>
-                  <label className="grid gap-2 text-sm font-bold text-slate-700">
-                    Additional amount
-                    <input
-                      value={commercialAdditionalAmount}
-                      onChange={(e) => setCommercialAdditionalAmount(e.target.value)}
-                      inputMode="decimal"
-                      placeholder="0"
-                      className="rounded-2xl border border-cyan-200 bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]"
+
+                  <label className="mt-4 grid gap-2 text-sm font-bold text-slate-700">
+                    Private admin notes
+                    <textarea
+                      value={commercialInternalQuoteNotes}
+                      onChange={(e) => setCommercialInternalQuoteNotes(e.target.value)}
+                      rows={3}
+                      placeholder="Private notes: walkthrough needed, Pierce assignment, supply considerations, floor add-ons, tight turnover window, or pricing logic."
+                      className="rounded-2xl border border-cyan-200 bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
                     />
-                    <span className="text-xs font-semibold leading-5 text-slate-500">Optional follow-up amount for approved add-ons, specialty floor work, linens, or added scope.</span>
                   </label>
+
+                  <div className="mt-4 grid gap-3 lg:grid-cols-3">
+                    <button
+                      type="button"
+                      disabled={commercialQuoteBusy}
+                      onClick={saveCommercialQuote}
+                      className="rounded-2xl bg-[#075c58] px-5 py-3 text-sm font-black text-white shadow-lg shadow-[#075c58]/15 transition hover:-translate-y-0.5 hover:bg-[#064b48] disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {commercialQuoteBusy ? "Saving..." : "1. Save quote details"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={applyCommercialInitialToCheckout}
+                      className="rounded-2xl border-2 border-[#075c58] bg-white px-5 py-3 text-sm font-black text-[#075c58] transition hover:-translate-y-0.5 hover:bg-[#f4ecdc]"
+                    >
+                      2. Fill first payment link
+                    </button>
+                    <button
+                      type="button"
+                      onClick={applyCommercialAdditionalToPayment}
+                      className="rounded-2xl border-2 border-cyan-700 bg-white px-5 py-3 text-sm font-black text-cyan-800 transition hover:-translate-y-0.5 hover:bg-white/70"
+                    >
+                      Fill optional add-on link
+                    </button>
+                  </div>
+
+                  {commercialQuoteMessage && <p className="mt-3 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">{commercialQuoteMessage}</p>}
+                  {commercialQuoteError && <p className="mt-3 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{commercialQuoteError}</p>}
                 </div>
-
-                <label className="mt-4 grid gap-2 text-sm font-bold text-slate-700">
-                  Customer-facing quote note
-                  <textarea
-                    value={commercialCustomerQuoteNote}
-                    onChange={(e) => setCommercialCustomerQuoteNote(e.target.value)}
-                    rows={3}
-                    placeholder="Example: Approved flat visit quote for weekly Commercial Reset based on the submitted square footage range, restrooms, breakroom, and listed priorities. Specialty add-ons are quoted separately before work begins."
-                    className="rounded-2xl border border-cyan-200 bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
-                  />
-                </label>
-
-                <label className="mt-4 grid gap-2 text-sm font-bold text-slate-700">
-                  Internal quote notes
-                  <textarea
-                    value={commercialInternalQuoteNotes}
-                    onChange={(e) => setCommercialInternalQuoteNotes(e.target.value)}
-                    rows={3}
-                    placeholder="Private notes: walkthrough needed, friend/Pierce assignment, supply considerations, floor add-ons, tight turnover window, or pricing logic."
-                    className="rounded-2xl border border-cyan-200 bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
-                  />
-                </label>
-
-                <div className="mt-4 flex flex-wrap gap-3">
-                  <button
-                    type="button"
-                    disabled={commercialQuoteBusy}
-                    onClick={saveCommercialQuote}
-                    className="rounded-2xl bg-[#075c58] px-5 py-3 text-sm font-black text-white shadow-lg shadow-[#075c58]/15 transition hover:-translate-y-0.5 hover:bg-[#064b48] disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {commercialQuoteBusy ? "Saving..." : "Save commercial quote details"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={applyCommercialInitialToCheckout}
-                    className="rounded-2xl border-2 border-[#075c58] bg-white px-5 py-3 text-sm font-black text-[#075c58] transition hover:-translate-y-0.5 hover:bg-[#f4ecdc]"
-                  >
-                    Use initial amount for checkout
-                  </button>
-                  <button
-                    type="button"
-                    onClick={applyCommercialAdditionalToPayment}
-                    className="rounded-2xl border-2 border-cyan-700 bg-white px-5 py-3 text-sm font-black text-cyan-800 transition hover:-translate-y-0.5 hover:bg-white/70"
-                  >
-                    Use additional amount below
-                  </button>
-                </div>
-
-                {commercialQuoteMessage && <p className="mt-3 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">{commercialQuoteMessage}</p>}
-                {commercialQuoteError && <p className="mt-3 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{commercialQuoteError}</p>}
               </div>
             )}
 
@@ -878,10 +921,12 @@ export default function AdminTable({
               <div className="mb-5 rounded-3xl border border-[#d8c18f] bg-[#fbf6ea] p-5 shadow-sm">
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                   <div className="max-w-2xl">
-                    <p className="text-xs font-black uppercase tracking-[0.2em] text-[#b98a2f]">Approval + payment</p>
-                    <h4 className="mt-1 text-xl font-black text-[#075c58]">Create checkout after you approve the request</h4>
+                    <p className="text-xs font-black uppercase tracking-[0.2em] text-[#b98a2f]">{selectedIsCommercial ? "Step 3 — first payment" : "Approval + payment"}</p>
+                    <h4 className="mt-1 text-xl font-black text-[#075c58]">{selectedIsCommercial ? "Create the first Commercial Reset payment link" : "Create checkout after you approve the request"}</h4>
                     <p className="mt-2 text-sm leading-6 text-slate-700">
-                      This creates a Stripe Checkout Session tied to this request. Public checkout stays off; only admin can send payment after reviewing scope, service area, and availability. Commercial Reset requests should use Custom initial amount after you quote the job.
+                      {selectedIsCommercial
+                        ? "For Commercial Reset, use the amount you prepared above. Review the custom checkout details here, then create and email the Stripe payment link when you are ready."
+                        : "This creates a Stripe Checkout Session tied to this request. Public checkout stays off; only admin can send payment after reviewing scope, service area, and availability."}
                     </p>
                     {selected.service === "laundry-rescue" && (
                       <p className="mt-2 rounded-2xl bg-white px-4 py-3 text-sm font-bold text-[#075c58]">
@@ -889,32 +934,40 @@ export default function AdminTable({
                       </p>
                     )}
                   </div>
-                  <div className="grid min-w-72 gap-2">
-                    <label className="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Price mode</label>
-                    <select
-                      value={checkoutMode}
-                      onChange={(e) => setCheckoutMode(e.target.value as CheckoutMode)}
-                      className="rounded-2xl border border-[#d8c18f] bg-white px-4 py-3 text-sm font-bold text-[#075c58] outline-none focus:border-[#075c58]"
-                    >
-                      <option value="standard">Standard price</option>
-                      <option value="founding">Founding / beta price</option>
-                      <option value="custom">Custom initial amount</option>
-                    </select>
-                  </div>
+                  {selectedIsCommercial ? (
+                    <div className="rounded-2xl border border-[#d8c18f] bg-white px-4 py-3 text-sm font-bold text-[#075c58] lg:min-w-80">
+                      Commercial uses a custom reviewed amount. Use the quote panel above to fill this section.
+                    </div>
+                  ) : (
+                    <div className="grid min-w-72 gap-2">
+                      <label className="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Price mode</label>
+                      <select
+                        value={checkoutMode}
+                        onChange={(e) => setCheckoutMode(e.target.value as CheckoutMode)}
+                        className="rounded-2xl border border-[#d8c18f] bg-white px-4 py-3 text-sm font-bold text-[#075c58] outline-none focus:border-[#075c58]"
+                      >
+                        <option value="standard">Standard price</option>
+                        <option value="founding">Founding / beta price</option>
+                        <option value="custom">Custom initial amount</option>
+                      </select>
+                    </div>
+                  )}
                 </div>
 
                 {isCustomCheckoutMode && (
                   <div className="mt-4 rounded-3xl border border-[#eadfc8] bg-white p-4">
                     <div>
-                      <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Custom initial checkout</p>
-                      <h5 className="mt-1 text-base font-black text-[#075c58]">Reviewed custom starting amount</h5>
+                      <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">{selectedIsCommercial ? "First payment link" : "Custom initial checkout"}</p>
+                      <h5 className="mt-1 text-base font-black text-[#075c58]">{selectedIsCommercial ? "Amount the customer pays before scheduling" : "Reviewed custom starting amount"}</h5>
                       <p className="mt-1 text-sm leading-6 text-slate-700">
-                        Use this when the first payment should not match the standard package price, such as a custom approved scope, special deposit, extra starting time, or service-area adjustment.
+                        {selectedIsCommercial
+                          ? "This should match the approved Commercial Reset quote amount. It is the amount collected before the first visit, first turnover, or first recurring plan begins."
+                          : "Use this when the first payment should not match the standard package price, such as a custom approved scope, special deposit, extra starting time, or service-area adjustment."}
                       </p>
                     </div>
                     <div className="mt-4 grid gap-3 md:grid-cols-[0.7fr_1.3fr]">
                       <label className="grid gap-2 text-sm font-bold text-slate-700">
-                        Amount
+                        {selectedIsCommercial ? "Amount to collect now" : "Amount"}
                         <input
                           value={customInitialAmount}
                           onChange={(e) => setCustomInitialAmount(e.target.value)}
@@ -939,7 +992,7 @@ export default function AdminTable({
                         value={customInitialNote}
                         onChange={(e) => setCustomInitialNote(e.target.value)}
                         rows={3}
-                        placeholder="Example: Custom approved starting amount for 3.5 hours after request review. Any additional approved time or mileage would be billed separately."
+                        placeholder={selectedIsCommercial ? "Example: Approved Commercial Reset quote. Add-ons or scope changes are reviewed before any additional charge." : "Example: Custom approved starting amount for 3.5 hours after request review. Any additional approved time or mileage would be billed separately."}
                         className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
                       />
                     </label>
@@ -956,7 +1009,7 @@ export default function AdminTable({
                     {checkoutBusy
                       ? "Creating..."
                       : isCustomCheckoutMode
-                        ? "Create + email custom link"
+                        ? selectedIsCommercial ? "Create + email first payment link" : "Create + email custom link"
                         : selected.service === "laundry-rescue"
                           ? "Create + email deposit link"
                           : "Create + email checkout link"}
@@ -967,7 +1020,7 @@ export default function AdminTable({
                     onClick={() => createPaymentLink(false)}
                     className="rounded-2xl border-2 border-[#075c58] bg-white px-5 py-3 text-sm font-black text-[#075c58] transition hover:-translate-y-0.5 hover:bg-[#f4ecdc] disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    {isCustomCheckoutMode ? "Create custom link only" : selected.service === "laundry-rescue" ? "Create deposit link only" : "Create link only"}
+                    {isCustomCheckoutMode ? selectedIsCommercial ? "Create first payment link only" : "Create custom link only" : selected.service === "laundry-rescue" ? "Create deposit link only" : "Create link only"}
                   </button>
                 </div>
 
@@ -1107,10 +1160,12 @@ export default function AdminTable({
               <div className="mb-5 rounded-3xl border border-[#d8c18f] bg-[#fbf6ea] p-5 shadow-sm">
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                   <div className="max-w-2xl">
-                    <p className="text-xs font-black uppercase tracking-[0.2em] text-[#b98a2f]">Additional payment</p>
-                    <h4 className="mt-1 text-xl font-black text-[#075c58]">Send an extra Stripe link for approved add-ons</h4>
+                    <p className="text-xs font-black uppercase tracking-[0.2em] text-[#b98a2f]">{selectedIsCommercial ? "Optional later/add-on payment" : "Additional payment"}</p>
+                    <h4 className="mt-1 text-xl font-black text-[#075c58]">{selectedIsCommercial ? "Send only if the customer approves extra commercial scope" : "Send an extra Stripe link for approved add-ons"}</h4>
                     <p className="mt-2 text-sm leading-6 text-slate-700">
-                      Use this after the first payment if the job needs approved extra hours, extra miles, route changes, or another added balance. This creates a separate Stripe Checkout link tied to the same request.
+                      {selectedIsCommercial
+                        ? "Use this after the first payment only for approved add-ons, floor/carpet work, linen/restock handling, recurring-plan changes, or added scope. Do not use it as an open-ended hourly charge."
+                        : "Use this after the first payment if the job needs approved extra hours, extra miles, route changes, or another added balance. This creates a separate Stripe Checkout link tied to the same request."}
                     </p>
                   </div>
                   <StatusBadge status={String(selected.additionalPaymentStatus || "Optional")} />
