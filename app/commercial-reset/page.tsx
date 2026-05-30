@@ -189,46 +189,21 @@ export default function CommercialResetPage() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
+      <section className="mx-auto max-w-7xl px-4 pb-16 pt-10 sm:px-6 lg:px-8">
         <div className="overflow-hidden rounded-[2.75rem] border border-nest-gold/18 bg-gradient-to-br from-nest-teal via-[#075c58] to-[#0b4f4b] p-6 text-white shadow-soft sm:p-8 lg:p-10">
-          <div className="grid gap-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
+          <div className="grid gap-8 lg:grid-cols-[1.15fr_0.85fr] lg:items-center">
             <div>
-              <p className="pill-label w-fit border-white/20 bg-white/12 text-nest-gold2"><ClipboardCheck size={15} /> Next Step</p>
+              <p className="pill-label w-fit border-white/20 bg-white/12 text-nest-gold2"><ClipboardCheck size={15} /> Commercial Quote</p>
               <h2 className="text-balance mt-4 text-3xl font-black sm:text-5xl">Ready for a reviewed commercial quote?</h2>
               <p className="mt-4 max-w-3xl text-base font-medium leading-7 text-white/78 sm:text-lg sm:leading-8">
-                Use the dedicated Commercial Quote page when you are ready. The form stays separate from this overview and uses quick dropdowns, checkboxes, and optional photos so it does not feel like a long intake packet.
-              </p>
-              <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-                <ButtonLink href="/commercial-reset/request" variant="secondary">Start Quote Request</ButtonLink>
-                <ButtonLink href="/contact" variant="secondary">Ask a Question First</ButtonLink>
-              </div>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <SidebarPoint icon={<Building2 />} text="Business name and type" />
-              <SidebarPoint icon={<MapPin />} text="Address and service area review" />
-              <SidebarPoint icon={<SprayCan />} text="Square footage, supplies, and photos" />
-              <SidebarPoint icon={<CalendarClock />} text="Frequency and preferred service windows" />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="mx-auto max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">
-        <div className="rounded-[2.5rem] border border-nest-gold/18 bg-nest-teal p-6 text-white shadow-soft sm:p-8 lg:p-10">
-          <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr] lg:items-center">
-            <div>
-              <p className="text-sm font-black uppercase tracking-[0.22em] text-nest-gold2">Parent Reset still stays separate</p>
-              <h2 className="mt-3 text-3xl font-black sm:text-4xl">Looking for home help instead?</h2>
-              <p className="mt-3 max-w-3xl leading-7 text-white/80">
-                Commercial Reset is for business spaces. Parent Reset services stay focused on families, homes, laundry, errands, and household support.
+                Use the dedicated quote page when you are ready. Commercial Reset stays focused on business spaces, while Parent Reset remains separate for homes, laundry, errands, and family support.
               </p>
             </div>
-            <div className="flex flex-col gap-3 sm:flex-row lg:justify-end">
-              <Link href="/request" className="focus-ring inline-flex items-center justify-center gap-2 rounded-full bg-white px-6 py-3.5 font-black text-nest-teal shadow-soft transition hover:-translate-y-0.5 hover:bg-nest-cream">
-                Request Parent Reset <ArrowRight size={18} />
-              </Link>
-              <Link href="/" className="focus-ring inline-flex items-center justify-center gap-2 rounded-full border border-white/25 px-6 py-3.5 font-black text-white transition hover:-translate-y-0.5 hover:bg-white/10">
-                Back Home
+            <div className="flex flex-col gap-3 sm:flex-row lg:flex-col lg:items-stretch">
+              <ButtonLink href="/commercial-reset/request" variant="secondary">Start Commercial Quote</ButtonLink>
+              <ButtonLink href="/contact" variant="secondary">Ask a Question First</ButtonLink>
+              <Link href="/request" className="focus-ring inline-flex items-center justify-center gap-2 rounded-full border border-white/25 px-6 py-3.5 font-black text-white transition hover:-translate-y-0.5 hover:bg-white/10">
+                Need Parent Reset instead? <ArrowRight size={18} />
               </Link>
             </div>
           </div>
@@ -288,11 +263,3 @@ function PricingCard({ title, price, text }: { title: string; price: string; tex
   );
 }
 
-function SidebarPoint({ icon, text }: { icon: ReactNode; text: string }) {
-  return (
-    <div className="flex items-center gap-3 rounded-2xl bg-nest-cream p-4 font-black text-nest-ink/76">
-      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-nest-teal shadow-sm">{icon}</span>
-      {text}
-    </div>
-  );
-}
