@@ -8,10 +8,111 @@ import StatusBadge from "./StatusBadge";
 type AdminDoc = { id: string; status?: string; createdAt?: unknown; checkoutUrl?: string; promoCode?: string; [key: string]: any };
 type CheckoutMode = "standard" | "founding";
 
+function timestampToDate(value: unknown): Date | null {
+  if (!value) return null;
+
+  if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value;
+
+  if (typeof value === "number") {
+    const millis = value > 100000000000 ? value : value * 1000;
+    const date = new Date(millis);
+    return Number.isNaN(date.getTime()) ? null : date;
+  }
+
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+
+    if (/^\d{10,13}$/.test(trimmed)) {
+      const raw = Number(trimmed);
+      const millis = trimmed.length === 13 ? raw : raw * 1000;
+      const date = new Date(millis);
+      return Number.isNaN(date.getTime()) ? null : date;
+    }
+
+    const parsed = new Date(trimmed);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }
+
+  if (typeof value === "object") {
+    const maybeTimestamp = value as {
+      toDate?: () => Date;
+      seconds?: number;
+      nanoseconds?: number;
+      _seconds?: number;
+      _nanoseconds?: number;
+    };
+
+    if (typeof maybeTimestamp.toDate === "function") {
+      const date = maybeTimestamp.toDate();
+      return Number.isNaN(date.getTime()) ? null : date;
+    }
+
+    const seconds = typeof maybeTimestamp.seconds === "number" ? maybeTimestamp.seconds : maybeTimestamp._seconds;
+    const nanoseconds = typeof maybeTimestamp.nanoseconds === "number" ? maybeTimestamp.nanoseconds : maybeTimestamp._nanoseconds || 0;
+
+    if (typeof seconds === "number") {
+      const date = new Date(seconds * 1000 + Math.floor(nanoseconds / 1000000));
+      return Number.isNaN(date.getTime()) ? null : date;
+    }
+  }
+
+  return null;
+}
+
+function isDateLikeKey(key: string) {
+  const lower = key.toLowerCase();
+  return lower.endsWith("at") || lower.includes("date") || lower.includes("time");
+}
+
 function formatDate(value: unknown) {
-  if (!value) return "—";
-  if (typeof value === "object" && value && "toDate" in value && typeof value.toDate === "function") return value.toDate().toLocaleString();
-  return String(value);
+  const date = timestampToDate(value);
+  if (!date) return value === null || value === undefined || value === "" ? "—" : String(value);
+
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Los_Angeles",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    timeZoneName: "short",
+  }).format(date);
+}
+
+function formatFieldLabel(key: string) {
+  const overrides: Record<string, string> = {
+    id: "Request ID",
+    checkoutUrl: "Checkout link",
+    checkoutSessionId: "Checkout session ID",
+    checkoutSentAt: "Checkout sent",
+    requestedAt: "Requested",
+    createdAt: "Created",
+    updatedAt: "Updated",
+    paidAt: "Paid",
+    paymentReceivedAt: "Payment received",
+    paymentEmailSentAt: "Payment email sent",
+    confirmationEmailSentAt: "Confirmation email sent",
+    adminEmailSentAt: "Admin email sent",
+    laundryDepositConfirmationEmailSentAt: "Laundry deposit confirmation email sent",
+    laundryDepositAdminPaymentEmailSentAt: "Laundry deposit admin payment email sent",
+    laundryFinalBalanceSentAt: "Laundry final balance sent",
+    laundryFinalBalancePaidAt: "Laundry final balance paid",
+    additionalPaymentSentAt: "Additional payment sent",
+    additionalPaymentPaidAt: "Additional payment paid",
+  };
+
+  if (overrides[key]) return overrides[key];
+
+  return key
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+    .replace(/_/g, " ")
+    .replace(/\burl\b/gi, "URL")
+    .replace(/\bid\b/gi, "ID")
+    .replace(/\bapi\b/gi, "API")
+    .replace(/\bemail\b/gi, "Email")
+    .replace(/\bstripe\b/gi, "Stripe")
+    .replace(/\b([a-z])/g, (match) => match.toUpperCase());
 }
 
 function formatMoney(value: number) {
@@ -22,8 +123,20 @@ function formatMoney(value: number) {
 function formatValue(key: string, value: unknown) {
   if (Array.isArray(value)) return value.filter(Boolean).join(", ") || "—";
   if (typeof value === "boolean") return value ? "Yes" : "No";
-  if (key.toLowerCase().includes("created") || key.toLowerCase().includes("updated") || key.toLowerCase().includes("paidat")) return formatDate(value);
+
+  const timestampDate = timestampToDate(value);
+  if (timestampDate || isDateLikeKey(key)) return formatDate(value);
+
   if (value === null || value === undefined || value === "") return "—";
+
+  if (typeof value === "object") {
+    try {
+      return JSON.stringify(value, null, 2);
+    } catch {
+      return String(value);
+    }
+  }
+
   return String(value);
 }
 
@@ -905,7 +1018,7 @@ export default function AdminTable({
             <div className="grid gap-3 sm:grid-cols-2">
               {Object.entries(selected).map(([key, value]) => (
                 <div key={key} className="rounded-2xl border border-[#eadfc8] bg-[#fbf6ea] p-4">
-                  <p className="text-xs font-bold uppercase tracking-widest text-[#b98a2f]">{key}</p>
+                  <p className="text-xs font-bold uppercase tracking-widest text-[#b98a2f]">{formatFieldLabel(key)}</p>
                   <p className="mt-1 whitespace-pre-wrap break-words text-sm text-slate-800">{formatValue(key, value)}</p>
                 </div>
               ))}
