@@ -23,7 +23,7 @@ const defaultState = {
   frequency: "",
   preferredDate: "",
   preferredDaysTimes: "",
-  supplies: "NestHelper supplies preferred",
+  supplies: "NestHelper brings standard supplies",
   flooringTypes: [] as string[],
   accessType: "Someone can let NestHelper in",
   accessInstructions: "",
@@ -182,7 +182,7 @@ export function CommercialResetForm() {
           </p>
           <div className="mt-5 grid gap-3 sm:grid-cols-3">
             <Step icon={<ClipboardCheck className="h-5 w-5" />} title="1. Scope review" text="Business type, square footage, bathrooms, and frequency." />
-            <Step icon={<ShieldCheck className="h-5 w-5" />} title="2. Service fit" text="Address, access, timing, supply preferences, and boundaries." />
+            <Step icon={<ShieldCheck className="h-5 w-5" />} title="2. Service fit" text="Address, access, timing, product preferences, and boundaries." />
             <Step icon={<CreditCard className="h-5 w-5" />} title="3. Quote + next steps" text="Custom quote first, secure payment link after approval." />
           </div>
         </div>
@@ -249,10 +249,9 @@ export function CommercialResetForm() {
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Supplies preference">
             <select className="input" value={form.supplies} onChange={(e) => update("supplies", e.target.value)}>
-              <option>NestHelper supplies preferred</option>
+              <option>NestHelper brings standard supplies</option>
               <option>Non-toxic / low-odor options requested where appropriate</option>
               <option>Fragrance-free products requested where appropriate</option>
-              <option>Business provides supplies</option>
               <option>Discuss with me first</option>
               <option>Not sure yet</option>
             </select>
@@ -381,7 +380,7 @@ export function CommercialQuoteMiniCard() {
         <div>
           <h3 className="text-xl font-black text-nest-teal">Commercial quote before checkout</h3>
           <p className="mt-2 text-sm font-medium leading-6 text-nest-ink/68">
-            For business spaces, NestHelper reviews the address, square footage, frequency, access, supplies, and photos before quoting or sending a payment link.
+            For business spaces, NestHelper reviews the address, square footage, frequency, access, product preferences, and photos before quoting or sending a payment link.
           </p>
           <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
             <div className="flex items-center gap-2 text-sm font-black text-nest-teal">

@@ -24,7 +24,7 @@ const defaultState = {
   homeType: "Single-family home",
   pets: "No pets",
   parkingAccess: "",
-  supplyPreference: "NestHelper standard supplies are okay",
+  supplyPreference: "NestHelper brings standard supplies",
   homePriorities: [] as string[],
   homeAreas: [] as string[],
   requestDetails: "",
@@ -336,11 +336,10 @@ export function RequestForm() {
             </Field>
             <Field label="Product preference">
               <select className="input" value={form.supplyPreference} onChange={(e) => update("supplyPreference", e.target.value)}>
-                <option>NestHelper standard supplies are okay</option>
+                <option>NestHelper brings standard supplies</option>
                 <option>Non-toxic / low-odor options requested where appropriate</option>
                 <option>Fragrance-free / sensitive products requested</option>
                 <option>Baby/sensitive product preference</option>
-                <option>I will provide products</option>
                 <option>Not sure yet</option>
               </select>
             </Field>
@@ -430,7 +429,6 @@ export function RequestForm() {
                 <option>Standard detergent</option>
                 <option>Baby & Sensitive Skin Detergent +$5</option>
                 <option>Fragrance-free detergent +$5</option>
-                <option>Customer-provided detergent</option>
                 <option>No preference</option>
               </select>
             </Field>

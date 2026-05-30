@@ -117,7 +117,7 @@ export default function HomePage() {
             <div>
               <h3 className="text-xl font-black text-nest-teal">Product preferences available</h3>
               <p className="mt-2 text-sm font-semibold leading-6 text-nest-ink/70">
-                Families can request non-toxic, low-odor, fragrance-free, baby/sensitive, or customer-provided product options where appropriate. We review product fit, surfaces, supplies, and scope before confirming the service.
+                NestHelper brings the supplies. Families can request non-toxic, low-odor, fragrance-free, or baby/sensitive product options where appropriate. We review product fit, surfaces, supplies, and scope before confirming the service.
               </p>
             </div>
           </div>

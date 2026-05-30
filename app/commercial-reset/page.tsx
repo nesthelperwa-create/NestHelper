@@ -85,7 +85,7 @@ export default function CommercialResetPage() {
 
           <div className="grid gap-4">
             <MiniProof icon={<ShieldCheck size={20} />} title="Insured local service" text="Commercial requests are reviewed for scope, schedule, address, and safety before any work is confirmed." />
-            <MiniProof icon={<ClipboardCheck size={20} />} title="Quote-first process" text="Pricing is customized around square footage, bathrooms, frequency, supplies, access, and condition." />
+            <MiniProof icon={<ClipboardCheck size={20} />} title="Quote-first process" text="Pricing is customized around square footage, bathrooms, frequency, product preferences, access, and condition." />
             <MiniProof icon={<CalendarClock size={20} />} title="Recurring or one-time" text="Request a one-time reset, weekly service, or more frequent routine cleaning depending on the space." />
             <MiniProof icon={<SprayCan size={20} />} title="Product preferences" text="Non-toxic, low-odor, or fragrance-free options can be requested where appropriate for the surface and scope." />
           </div>
@@ -129,7 +129,7 @@ export default function CommercialResetPage() {
             <p className="pill-label w-fit"><DoorOpen size={15} /> Add-ons and Boundaries</p>
             <h2 className="mt-4 text-3xl font-black text-nest-teal sm:text-4xl">Quoted separately when the job needs more.</h2>
             <p className="mt-4 font-medium leading-7 text-nest-ink/70">
-              This keeps quotes honest and helps make sure the service scope, supplies, safety boundaries, and specialty work are reviewed before anything is confirmed.
+              This keeps quotes honest and helps make sure the service scope, product preferences, safety boundaries, and specialty work are reviewed before anything is confirmed.
             </p>
             <div className="mt-7 grid gap-3">
               {specialtyAddOns.map((item) => <CheckTile key={item}>{item}</CheckTile>)}
@@ -178,11 +178,11 @@ export default function CommercialResetPage() {
             <p className="pill-label w-fit"><CheckCircle2 size={15} /> Quote Guidance</p>
             <h2 className="text-balance mt-4 text-3xl font-black text-nest-teal sm:text-5xl">Pricing is shown as guidance, not a guaranteed flat rate.</h2>
             <p className="mt-4 max-w-4xl text-lg font-medium leading-8 text-nest-ink/72">
-              Commercial pricing stays quote-based because square footage, bathrooms, flooring, access, after-hours timing, current condition, supply preferences, and optional photos can change the real labor cost.
+              Commercial pricing stays quote-based because square footage, bathrooms, flooring, access, after-hours timing, current condition, product preferences, and optional photos can change the real labor cost.
             </p>
           </div>
           <div className="grid gap-4 p-6 sm:p-8 lg:grid-cols-3 lg:p-10">
-            <PricingCard title="Recurring commercial cleaning" price="Starting at $175/visit" text="$499/month recurring minimum. Quote depends on square footage, bathrooms, frequency, timing, and supplies." />
+            <PricingCard title="Recurring commercial cleaning" price="Starting at $175/visit" text="$499/month recurring minimum. Quote depends on square footage, bathrooms, frequency, timing, and product preferences." />
             <PricingCard title="One-time commercial reset" price="Starting at $249" text="Best for first-time catch-up, move-in prep, office reset, or a deeper one-time clean before recurring service." />
             <PricingCard title="Hourly quote planning" price="$75–$95/labor hour" text="Used for custom scopes, heavier resets, walkthrough-based quotes, and specialty add-ons." />
           </div>

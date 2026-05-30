@@ -30,11 +30,11 @@ export default function CommercialResetRequestPage() {
           <div className="mt-6 grid gap-3">
             <SidebarPoint icon={<Building2 />} text="Business contact and type" />
             <SidebarPoint icon={<MapPin />} text="Pierce County or Eastside/Northshore area review" />
-            <SidebarPoint icon={<SprayCan />} text="Size, bathrooms, priorities, supplies, and photos" />
+            <SidebarPoint icon={<SprayCan />} text="Size, bathrooms, priorities, product preferences, and photos" />
             <SidebarPoint icon={<CalendarClock />} text="Frequency and preferred service windows" />
           </div>
           <p className="mt-5 rounded-2xl border border-nest-teal/15 bg-nest-mint/25 p-4 text-sm font-semibold leading-6 text-nest-ink/76">
-            Non-toxic, low-odor, fragrance-free, or customer-provided product preferences can be requested where appropriate for the surface and scope.
+            NestHelper brings the supplies. Non-toxic, low-odor, or fragrance-free product preferences can be requested where appropriate for the surface and scope.
           </p>
         </aside>
 

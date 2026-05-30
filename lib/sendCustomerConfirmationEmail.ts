@@ -41,7 +41,7 @@ function getConfirmationContent(collection: SubmissionCollection, payload: Recor
       eyebrow: isCommercial ? "Commercial quote request received" : "Request received",
       title: isCommercial ? "Thanks — we received your Commercial Reset quote request." : "Thanks — we received your NestHelper request.",
       intro: isCommercial
-        ? "We’ll review the business address, square footage, bathrooms, frequency, access notes, supplies, and service fit before anything is confirmed. No payment is due yet."
+        ? "We’ll review the business address, square footage, bathrooms, frequency, access notes, product preferences, and service fit before anything is confirmed. No payment is due yet."
         : "We’ll review your service area, timing, scope, access notes, and safety details before anything is confirmed. No payment is due yet.",
       nextSteps: isCommercial
         ? [
