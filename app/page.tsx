@@ -215,7 +215,7 @@ export default function HomePage() {
         <div className="overflow-hidden rounded-[2.5rem] border border-nest-gold/18 bg-white/86 p-5 shadow-soft backdrop-blur sm:p-8 lg:p-10">
           <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
             <div>
-              <p className="pill-label w-fit"><Building2 size={15} /> For Local Businesses</p>
+              <p className="pill-label mx-auto w-fit"><Building2 size={15} /> For Local Businesses</p>
               <h2 className="text-balance mt-4 text-3xl font-black leading-tight text-nest-teal sm:text-5xl">
                 Commercial Reset has its own page.
               </h2>
