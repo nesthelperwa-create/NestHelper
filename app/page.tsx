@@ -212,37 +212,35 @@ export default function HomePage() {
       </AnimatedSection>
 
       <AnimatedSection className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        <div className="overflow-hidden rounded-[2.5rem] border border-nest-gold/18 bg-white/86 p-5 shadow-soft backdrop-blur sm:p-8 lg:p-10">
-          <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
-            <div>
-              <p className="pill-label mx-auto w-fit"><Building2 size={15} /> For Local Businesses</p>
-              <h2 className="text-balance mt-4 text-3xl font-black leading-tight text-nest-teal sm:text-5xl">
-                Commercial Reset has its own page.
-              </h2>
-              <p className="mt-5 text-base font-medium leading-7 text-nest-ink/72 sm:text-lg sm:leading-8">
-                Parent Reset stays focused on families. Commercial Reset is a separate quote-first service lane for small offices, studios, churches, daycare common areas, salons, and local business spaces in select Pierce County, Eastside, and Northshore areas that need routine cleaning support — including non-toxic or low-odor product preferences when appropriate.
-              </p>
-              <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-                <ButtonLink href="/commercial-reset">Explore Commercial Reset</ButtonLink>
-                <ButtonLink href="/commercial-reset/request" variant="secondary">Start Quote Request</ButtonLink>
+        <div className="overflow-hidden rounded-[2.5rem] border border-nest-gold/18 bg-white/86 p-5 text-center shadow-soft backdrop-blur sm:p-8 lg:p-10">
+          <div className="mx-auto max-w-4xl">
+            <p className="pill-label mx-auto w-fit"><Building2 size={15} /> For Local Businesses</p>
+            <h2 className="text-balance mt-4 text-3xl font-black leading-tight text-nest-teal sm:text-5xl">
+              Commercial Reset has its own page.
+            </h2>
+            <p className="mx-auto mt-5 max-w-3xl text-base font-medium leading-7 text-nest-ink/72 sm:text-lg sm:leading-8">
+              Parent Reset stays focused on families. Commercial Reset is a separate quote-first service lane for small offices, studios, churches, daycare common areas, salons, and local business spaces in select Pierce County, Eastside, and Northshore areas that need routine cleaning support — including non-toxic or low-odor product preferences when appropriate.
+            </p>
+            <div className="mx-auto mt-7 flex max-w-sm flex-col justify-center gap-3 sm:max-w-none sm:flex-row">
+              <ButtonLink href="/commercial-reset">Explore Commercial Reset</ButtonLink>
+              <ButtonLink href="/commercial-reset/request" variant="secondary">Start Quote Request</ButtonLink>
+            </div>
+          </div>
+          <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+            {[
+              "Small offices and studios",
+              "Churches and nonprofits",
+              "Salons, gyms, and local shops",
+              "Quoted after scope review",
+              "Non-toxic / low-odor options by request",
+            ].map((item) => (
+              <div key={item} className="group flex h-full items-center gap-3 rounded-2xl border border-nest-gold/12 bg-nest-cream p-4 text-left font-black text-nest-ink/78 shadow-sm transition hover:-translate-y-0.5 hover:bg-white hover:shadow-sm">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-nest-teal shadow-sm transition group-hover:bg-nest-teal group-hover:text-white">
+                  <Building2 size={17} />
+                </span>
+                {item}
               </div>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {[
-                "Small offices and studios",
-                "Churches and nonprofits",
-                "Salons, gyms, and local shops",
-                "Quoted after scope review",
-                "Non-toxic / low-odor options by request",
-              ].map((item) => (
-                <div key={item} className="group flex gap-3 rounded-2xl border border-nest-gold/12 bg-nest-cream p-4 font-black text-nest-ink/78 shadow-sm transition hover:-translate-y-0.5 hover:bg-white hover:shadow-sm">
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-nest-teal shadow-sm transition group-hover:bg-nest-teal group-hover:text-white">
-                    <Building2 size={17} />
-                  </span>
-                  {item}
-                </div>
-              ))}
-            </div>
+            ))}
           </div>
         </div>
       </AnimatedSection>

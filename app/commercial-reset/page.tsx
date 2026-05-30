@@ -69,7 +69,7 @@ export default function CommercialResetPage() {
           <div className="relative overflow-hidden rounded-[2.5rem] border border-nest-gold/18 bg-white/88 p-6 shadow-soft backdrop-blur sm:p-8 lg:p-10">
             <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-nest-mint/45 blur-3xl" />
             <div className="relative">
-              <p className="pill-label w-fit"><Building2 size={15} /> Built separately from Parent Reset</p>
+              <p className="pill-label mx-auto w-fit lg:mx-0"><Building2 size={15} /> Built separately from Parent Reset</p>
               <h2 className="text-balance mt-4 text-3xl font-black leading-tight text-nest-teal sm:text-5xl">
                 Same NestHelper care, different service lane.
               </h2>
@@ -93,17 +93,12 @@ export default function CommercialResetPage() {
       </section>
 
       <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        <div className="grid gap-8 lg:grid-cols-[0.85fr_1.15fr] lg:items-end">
-          <div>
-            <p className="pill-label w-fit"><Sparkles size={15} /> Who it fits</p>
-            <h2 className="text-balance mt-4 text-3xl font-black leading-tight text-nest-teal sm:text-5xl">
-              Small business spaces that need a reset, not a giant cleaning contract.
-            </h2>
-          </div>
-          <p className="text-base font-medium leading-7 text-nest-ink/70 sm:text-lg sm:leading-8">
-            Commercial Reset is best for manageable local spaces where a clean, consistent environment matters: offices, client-facing rooms, studios, waiting areas, restrooms, staff common areas, and daycare or learning-space common areas.
-          </p>
-        </div>
+        <CommercialSectionIntro
+          icon={<Sparkles size={15} />}
+          label="Who it fits"
+          title="Small business spaces that need a reset, not a giant cleaning contract."
+          text="Commercial Reset is best for manageable local spaces where a clean, consistent environment matters: offices, client-facing rooms, studios, waiting areas, restrooms, staff common areas, and daycare or learning-space common areas."
+        />
 
         <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {businessTypes.map((type) => (
@@ -115,9 +110,9 @@ export default function CommercialResetPage() {
       <section className="soft-section px-4 py-14 sm:px-6 lg:px-8">
         <div className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-start">
           <div className="rounded-[2.5rem] border border-nest-gold/18 bg-white/86 p-6 shadow-soft sm:p-8">
-            <p className="pill-label w-fit"><SprayCan size={15} /> Routine Scope</p>
-            <h2 className="mt-4 text-3xl font-black text-nest-teal sm:text-4xl">What Commercial Reset can include.</h2>
-            <p className="mt-4 font-medium leading-7 text-nest-ink/70">
+            <p className="pill-label mx-auto w-fit"><SprayCan size={15} /> Routine Scope</p>
+            <h2 className="mt-4 text-center text-3xl font-black text-nest-teal sm:text-4xl">What Commercial Reset can include.</h2>
+            <p className="mt-4 text-center font-medium leading-7 text-nest-ink/70">
               Basic Commercial Reset is routine janitorial-style support. Specialty floor work and carpet work are not included by default and are quoted separately when available. Product preferences can be noted in the quote request.
             </p>
             <div className="mt-7 grid gap-3 sm:grid-cols-2">
@@ -126,9 +121,9 @@ export default function CommercialResetPage() {
           </div>
 
           <div className="rounded-[2.5rem] border border-nest-gold/18 bg-white/86 p-6 shadow-soft sm:p-8">
-            <p className="pill-label w-fit"><DoorOpen size={15} /> Add-ons and Boundaries</p>
-            <h2 className="mt-4 text-3xl font-black text-nest-teal sm:text-4xl">Quoted separately when the job needs more.</h2>
-            <p className="mt-4 font-medium leading-7 text-nest-ink/70">
+            <p className="pill-label mx-auto w-fit"><DoorOpen size={15} /> Add-ons and Boundaries</p>
+            <h2 className="mt-4 text-center text-3xl font-black text-nest-teal sm:text-4xl">Quoted separately when the job needs more.</h2>
+            <p className="mt-4 text-center font-medium leading-7 text-nest-ink/70">
               This keeps quotes honest and helps make sure the service scope, product preferences, safety boundaries, and specialty work are reviewed before anything is confirmed.
             </p>
             <div className="mt-7 grid gap-3">
@@ -139,18 +134,16 @@ export default function CommercialResetPage() {
       </section>
 
       <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
-        <div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:items-start">
+        <CommercialSectionIntro
+          icon={<MapPin size={15} />}
+          label="Service Areas"
+          title="Now quoting select Pierce County, Eastside, and Northshore areas."
+          text="Service availability depends on schedule, scope, address, and local licensing/endorsement requirements. Some city-limit jobs may require a city endorsement before service begins."
+        />
+
+        <div className="mt-10 grid gap-8 lg:grid-cols-[0.82fr_1.18fr] lg:items-start">
           <div className="lg:sticky lg:top-28">
-            <p className="pill-label w-fit"><MapPin size={15} /> Service Areas</p>
-            <h2 className="text-balance mt-4 text-3xl font-black leading-tight text-nest-teal sm:text-5xl">
-              Now quoting select Pierce County, Eastside, and Northshore areas.
-            </h2>
-            <p className="mt-5 font-medium leading-7 text-nest-ink/70">
-              Service availability depends on schedule, scope, address, and local licensing/endorsement requirements. Some city-limit jobs may require a city endorsement before service begins.
-            </p>
-            <div className="mt-7">
-              <CommercialQuoteMiniCard />
-            </div>
+            <CommercialQuoteMiniCard />
           </div>
 
           <div className="grid gap-5">
@@ -162,7 +155,7 @@ export default function CommercialResetPage() {
               title="Eastside and Northshore"
               text="Woodinville, Bothell, Kenmore, Kirkland, Redmond, Bellevue, Duvall, Mill Creek, and nearby Eastside/Northshore areas."
             />
-            <div className="rounded-[2rem] border border-nest-gold/16 bg-nest-mint/20 p-6">
+            <div className="rounded-[2rem] border border-nest-gold/16 bg-nest-mint/20 p-6 text-center shadow-sm sm:text-left">
               <h3 className="text-2xl font-black text-nest-teal">Nearby communities welcome</h3>
               <p className="mt-3 font-medium leading-7 text-nest-ink/70">
                 We include nearby unincorporated Pierce County communities as service areas because many local businesses are outside city limits. Availability still depends on the address, schedule, scope, and any required local endorsements.
@@ -175,11 +168,12 @@ export default function CommercialResetPage() {
       <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
         <div className="overflow-hidden rounded-[2.75rem] border border-nest-gold/18 bg-white/90 shadow-soft">
           <div className="bg-gradient-to-br from-nest-cream via-white to-nest-mint/35 p-6 sm:p-8 lg:p-10">
-            <p className="pill-label w-fit"><CheckCircle2 size={15} /> Quote Guidance</p>
-            <h2 className="text-balance mt-4 text-3xl font-black text-nest-teal sm:text-5xl">Pricing is shown as guidance, not a guaranteed flat rate.</h2>
-            <p className="mt-4 max-w-4xl text-lg font-medium leading-8 text-nest-ink/72">
-              Commercial pricing stays quote-based because square footage, bathrooms, flooring, access, after-hours timing, current condition, product preferences, and optional photos can change the real labor cost.
-            </p>
+            <CommercialSectionIntro
+              icon={<CheckCircle2 size={15} />}
+              label="Quote Guidance"
+              title="Pricing is shown as guidance, not a guaranteed flat rate."
+              text="Commercial pricing stays quote-based because square footage, bathrooms, flooring, access, after-hours timing, current condition, product preferences, and optional photos can change the real labor cost."
+            />
           </div>
           <div className="grid gap-4 p-6 sm:p-8 lg:grid-cols-3 lg:p-10">
             <PricingCard title="Recurring commercial cleaning" price="Starting at $175/visit" text="$499/month recurring minimum. Quote depends on square footage, bathrooms, frequency, timing, and product preferences." />
@@ -193,7 +187,7 @@ export default function CommercialResetPage() {
         <div className="overflow-hidden rounded-[2.75rem] border border-nest-gold/18 bg-gradient-to-br from-nest-teal via-[#075c58] to-[#0b4f4b] p-6 text-white shadow-soft sm:p-8 lg:p-10">
           <div className="grid gap-8 lg:grid-cols-[1.15fr_0.85fr] lg:items-center">
             <div>
-              <p className="pill-label w-fit border-white/20 bg-white/12 text-nest-gold2"><ClipboardCheck size={15} /> Commercial Quote</p>
+              <p className="pill-label mx-auto w-fit border-white/20 bg-white/12 text-nest-gold2 lg:mx-0"><ClipboardCheck size={15} /> Commercial Quote</p>
               <h2 className="text-balance mt-4 text-3xl font-black sm:text-5xl">Ready for a reviewed commercial quote?</h2>
               <p className="mt-4 max-w-3xl text-base font-medium leading-7 text-white/78 sm:text-lg sm:leading-8">
                 Use the dedicated quote page when you are ready. Commercial Reset stays focused on business spaces, while Parent Reset remains separate for homes, laundry, errands, and family support.
@@ -210,6 +204,16 @@ export default function CommercialResetPage() {
         </div>
       </section>
     </>
+  );
+}
+
+function CommercialSectionIntro({ icon, label, title, text }: { icon: ReactNode; label: string; title: string; text: string }) {
+  return (
+    <div className="mx-auto max-w-4xl text-center">
+      <p className="pill-label mx-auto w-fit">{icon} {label}</p>
+      <h2 className="text-balance mt-4 text-3xl font-black leading-tight text-nest-teal sm:text-5xl">{title}</h2>
+      <p className="mx-auto mt-5 max-w-3xl text-base font-medium leading-7 text-nest-ink/70 sm:text-lg sm:leading-8">{text}</p>
+    </div>
   );
 }
 
