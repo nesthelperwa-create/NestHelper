@@ -207,33 +207,33 @@ export default function CommercialResetPage() {
         </div>
       </section>
 
-      <section className="soft-section px-4 py-14 sm:px-6 lg:px-8">
-        <div className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-start">
-          <div className="rounded-[2.5rem] border border-nest-gold/18 bg-white/86 p-6 shadow-soft sm:p-8">
+      <section id="commercial-scope" className="soft-section scroll-mt-28 px-4 py-14 sm:px-6 lg:px-8">
+        <div className="mx-auto grid max-w-7xl items-stretch gap-8 lg:grid-cols-[0.95fr_1.05fr]">
+          <div className="flex h-full flex-col rounded-[2.5rem] border border-nest-gold/18 bg-white/86 p-6 shadow-soft sm:p-8">
             <p className="pill-label w-fit"><SprayCan size={15} /> Routine Scope</p>
             <h2 className="mt-4 text-3xl font-black text-nest-teal sm:text-4xl">What Commercial Reset can include.</h2>
             <p className="mt-4 font-medium leading-7 text-nest-ink/70">
               Basic Commercial Reset is routine janitorial-style support. Specialty floor work and carpet work are not included by default and are quoted separately when available. Product preferences can be noted in the quote request.
             </p>
-            <div className="mt-7 grid gap-3 sm:grid-cols-2">
+            <div className="mt-7 grid flex-1 auto-rows-fr gap-3 sm:grid-cols-2">
               {routineCleaning.map((item) => <CheckTile key={item}>{item}</CheckTile>)}
             </div>
           </div>
 
-          <div className="rounded-[2.5rem] border border-nest-gold/18 bg-white/86 p-6 shadow-soft sm:p-8">
+          <div className="flex h-full flex-col rounded-[2.5rem] border border-nest-gold/18 bg-white/86 p-6 shadow-soft sm:p-8">
             <p className="pill-label w-fit"><DoorOpen size={15} /> Add-ons and Boundaries</p>
             <h2 className="mt-4 text-3xl font-black text-nest-teal sm:text-4xl">Quoted separately when the job needs more.</h2>
             <p className="mt-4 font-medium leading-7 text-nest-ink/70">
               This keeps quotes honest and helps make sure the service scope, product preferences, safety boundaries, and specialty work are reviewed before anything is confirmed.
             </p>
-            <div className="mt-7 grid gap-3">
+            <div className="mt-7 grid flex-1 auto-rows-fr gap-3">
               {specialtyAddOns.map((item) => <CheckTile key={item}>{item}</CheckTile>)}
             </div>
           </div>
         </div>
 
-        <div className="mx-auto mt-8 grid max-w-7xl gap-5 lg:grid-cols-[1fr_0.95fr]">
-          <div className="rounded-[2.25rem] border border-nest-gold/18 bg-gradient-to-br from-white via-nest-cream to-nest-mint/25 p-6 shadow-soft sm:p-8">
+        <div className="mx-auto mt-8 grid max-w-7xl items-stretch gap-5 lg:grid-cols-[1fr_0.95fr]">
+          <div className="flex h-full flex-col rounded-[2.25rem] border border-nest-gold/18 bg-gradient-to-br from-white via-nest-cream to-nest-mint/25 p-6 shadow-soft sm:p-8">
             <p className="pill-label w-fit"><Home size={15} /> Host-managed turnovers</p>
             <h3 className="mt-4 text-2xl font-black text-nest-teal sm:text-3xl">Short-term rentals can be reviewed as a commercial add-on lane.</h3>
             <p className="mt-4 font-medium leading-7 text-nest-ink/70">
@@ -244,7 +244,7 @@ export default function CommercialResetPage() {
             </p>
           </div>
 
-          <div className="rounded-[2.25rem] border border-nest-gold/18 bg-white/86 p-6 shadow-soft sm:p-8">
+          <div id="commercial-policy-details" className="flex h-full scroll-mt-28 flex-col rounded-[2.25rem] border border-nest-gold/18 bg-white/86 p-6 shadow-soft sm:p-8">
             <p className="pill-label w-fit"><ClipboardCheck size={15} /> Scope details</p>
             <h3 className="mt-4 text-2xl font-black text-nest-teal sm:text-3xl">Routine scope and special-case boundaries.</h3>
             <p className="mt-4 font-medium leading-7 text-nest-ink/70">
@@ -364,7 +364,7 @@ function InfoCard({ icon, title, text }: { icon: ReactNode; title: string; text:
 
 function CheckTile({ children }: { children: ReactNode }) {
   return (
-    <div className="group flex gap-3 rounded-2xl border border-nest-gold/12 bg-white p-4 font-black text-nest-ink/78 shadow-sm transition hover:-translate-y-0.5 hover:border-nest-gold/28 hover:shadow-sm">
+    <div className="group flex h-full items-start gap-3 rounded-2xl border border-nest-gold/12 bg-white p-4 font-black text-nest-ink/78 shadow-sm transition hover:-translate-y-0.5 hover:border-nest-gold/28 hover:shadow-sm">
       <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-nest-mint/35 text-nest-teal transition group-hover:bg-nest-teal group-hover:text-white">
         <CheckCircle2 size={18} />
       </span>
@@ -394,7 +394,7 @@ function ActionLink({ href, title }: { href: string; title: string }) {
 
 function PricingCard({ title, price, text }: { title: string; price: string; text: string }) {
   return (
-    <div className="rounded-[2rem] border border-nest-gold/16 bg-nest-cream p-6 transition hover:-translate-y-1 hover:bg-white hover:shadow-sm">
+    <div className="h-full rounded-[2rem] border border-nest-gold/16 bg-nest-cream p-6 transition hover:-translate-y-1 hover:bg-white hover:shadow-sm">
       <h3 className="text-xl font-black text-nest-teal">{title}</h3>
       <p className="mt-3 text-3xl font-black text-nest-teal">{price}</p>
       <p className="mt-3 text-sm font-medium leading-6 text-nest-ink/68">{text}</p>
