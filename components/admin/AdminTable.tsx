@@ -1122,29 +1122,32 @@ export default function AdminTable({
       />
 
       <div className="overflow-hidden rounded-3xl border border-[#eadfc8] bg-white shadow-xl shadow-[#075c58]/5">
+        <div className="border-b border-[#eadfc8] bg-[#fbf6ea] px-4 py-3 text-xs font-bold text-slate-600 sm:hidden">
+          Swipe sideways to see all columns. The Actions column stays on the right.
+        </div>
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-[#eadfc8] text-sm">
+          <table className="min-w-[1240px] divide-y divide-[#eadfc8] text-sm">
             <thead className="bg-[#f4ecdc] text-left text-xs uppercase tracking-wider text-[#075c58]">
               <tr>
-                <th className="px-4 py-4">Status</th>
+                <th className="min-w-[120px] px-4 py-4">Status</th>
                 {columns.map((col) => (
                   <th key={col.key} className="px-4 py-4">{col.label}</th>
                 ))}
                 <th className="px-4 py-4">Created</th>
-                <th className="px-4 py-4">Actions</th>
+                <th className="sticky right-0 z-20 min-w-[190px] bg-[#f4ecdc] px-4 py-4 shadow-[-14px_0_24px_-24px_rgba(15,23,42,0.55)]">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#f0e7d7]">
               {filtered.map((item) => (
                 <tr key={item.id} className={`transition-colors ${getServiceLook(item).row}`}>
-                  <td className="px-4 py-4"><StatusBadge status={item.status} /></td>
+                  <td className="min-w-[120px] px-4 py-4"><StatusBadge status={item.status} /></td>
                   {columns.map((col) => (
                     <td key={col.key} className="max-w-[220px] truncate px-4 py-4 text-slate-700">{renderAdminCell(col.key, item)}</td>
                   ))}
-                  <td className="px-4 py-4 text-slate-500">{formatDate(item.createdAt)}</td>
-                  <td className="px-4 py-4">
-                    <div className="flex flex-wrap gap-2">
-                      <button onClick={() => setSelected(item)} className="rounded-full bg-[#075c58] px-4 py-2 text-xs font-black text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-[#064b48] focus:outline-none focus:ring-4 focus:ring-[#075c58]/20">Open details</button>
+                  <td className="min-w-[150px] px-4 py-4 text-slate-500">{formatDate(item.createdAt)}</td>
+                  <td className="sticky right-0 z-10 min-w-[190px] bg-inherit px-4 py-4 align-top shadow-[-14px_0_24px_-24px_rgba(15,23,42,0.45)]">
+                    <div className="flex min-w-[160px] flex-col items-stretch gap-2">
+                      <button onClick={() => setSelected(item)} className="w-full whitespace-nowrap rounded-full bg-[#075c58] px-4 py-2 text-xs font-black text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-[#064b48] focus:outline-none focus:ring-4 focus:ring-[#075c58]/20">Open details</button>
                       <select
                         value={item.status || "New"}
                         onChange={async (e) => {
@@ -1164,8 +1167,8 @@ export default function AdminTable({
                             setActiveAction("");
                           }
                         }}
-                        className="rounded-full border border-[#d8c18f] bg-white px-3 py-2 text-xs font-bold text-slate-700 shadow-sm outline-none transition hover:border-[#075c58] focus:border-[#075c58] focus:ring-4 focus:ring-[#075c58]/15"
-                        title="Quick internal status update. Open View to send a customer email."
+                        className="w-full rounded-full border border-[#d8c18f] bg-white px-3 py-2 text-xs font-bold text-slate-700 shadow-sm outline-none transition hover:border-[#075c58] focus:border-[#075c58] focus:ring-4 focus:ring-[#075c58]/15"
+                        title="Quick internal status update. Open details to send a customer email."
                       >
                         {statuses.map((status) => <option key={status}>{status}</option>)}
                       </select>
