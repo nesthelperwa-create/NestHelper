@@ -4,6 +4,7 @@ import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
 import { useEffect, useMemo, useState } from "react";
 import { firebaseAuth, firestoreDb } from "@/lib/firebaseClient";
 import StatusBadge from "./StatusBadge";
+import CommercialQuoteBreakdownBuilder from "./CommercialQuoteBreakdownBuilder";
 
 type AdminDoc = { id: string; status?: string; createdAt?: unknown; checkoutUrl?: string; promoCode?: string; [key: string]: any };
 type CheckoutMode = "standard" | "founding" | "custom";
@@ -634,11 +635,28 @@ export default function AdminTable({
     setCheckoutMessage("Commercial amount copied below. Next: review the first payment link section and create/email the Stripe link.");
   }
 
+  function applyCommercialQuoteBuilderFirstPayment(amount: number, title: string, note: string) {
+    setCheckoutMode("custom");
+    setCustomInitialAmount(String(amount || 0));
+    setCustomInitialTitle(title || "Commercial Reset approved quote");
+    setCustomInitialNote(note || "Approved Commercial Reset quote. Any added scope or specialty add-ons will be reviewed before an additional payment is requested.");
+    setCommercialInitialAmount(String(amount || 0));
+    setCheckoutMessage("Quote builder amount copied below. Next: create/email the Stripe first payment link.");
+  }
+
   function applyCommercialAdditionalToPayment() {
     setAdditionalPaymentAmount(commercialAdditionalAmount);
     setAdditionalPaymentReason("Commercial approved add-on / additional scope");
     setAdditionalPaymentNote(commercialCustomerQuoteNote || "Approved commercial add-on or additional scope reviewed with the customer.");
     setAdditionalPaymentMessage("Commercial later/add-on amount copied below. Use it only after the customer approves the extra scope.");
+  }
+
+  function applyCommercialQuoteBuilderAdditionalPayment(amount: number, note: string) {
+    setAdditionalPaymentAmount(String(amount || 0));
+    setCommercialAdditionalAmount(String(amount || 0));
+    setAdditionalPaymentReason("Commercial approved add-on / additional scope");
+    setAdditionalPaymentNote(note || "Approved commercial add-on or additional scope reviewed with the customer.");
+    setAdditionalPaymentMessage("Quote builder later/add-on amount copied below. Use it only after the customer approves the extra scope.");
   }
 
   const showPaymentActions = enablePaymentActions && collectionName === "serviceRequests" && selected;
@@ -894,6 +912,25 @@ export default function AdminTable({
                       </div>
                     </div>
                   )}
+                </div>
+
+                <div className="mt-4">
+                  <CommercialQuoteBreakdownBuilder
+                    item={selected}
+                    formatMoney={formatMoney}
+                    onSaved={(updates) => {
+                      setSelected((prev) => (prev ? { ...prev, ...updates } : prev));
+                      if (updates.commercialInitialAmount !== undefined) setCommercialInitialAmount(String(updates.commercialInitialAmount));
+                      if (updates.commercialAdditionalAmount !== undefined) setCommercialAdditionalAmount(String(updates.commercialAdditionalAmount));
+                      if (updates.commercialQuoteStatus) setCommercialQuoteStatus(String(updates.commercialQuoteStatus));
+                      if (updates.commercialQuoteType) setCommercialQuoteType(String(updates.commercialQuoteType));
+                      if (updates.commercialCustomerQuoteNote) setCommercialCustomerQuoteNote(String(updates.commercialCustomerQuoteNote));
+                      if (updates.commercialInternalQuoteNotes) setCommercialInternalQuoteNotes(String(updates.commercialInternalQuoteNotes));
+                      if (updates.status) setStatusValue(String(updates.status));
+                    }}
+                    onApplyFirstPayment={applyCommercialQuoteBuilderFirstPayment}
+                    onApplyAdditionalPayment={applyCommercialQuoteBuilderAdditionalPayment}
+                  />
                 </div>
 
                 <div className="mt-4 rounded-3xl border border-cyan-200 bg-white p-4">

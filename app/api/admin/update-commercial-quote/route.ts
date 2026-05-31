@@ -15,6 +15,8 @@ type UpdateCommercialQuoteBody = {
   additionalAmount?: number | string;
   customerQuoteNote?: string;
   internalQuoteNotes?: string;
+  quoteBreakdown?: unknown;
+  refundTracking?: unknown;
 };
 
 function getString(value: unknown) {
@@ -28,6 +30,23 @@ function cleanNumber(value: unknown) {
 
 function moneyToCents(value: number) {
   return Math.round(Math.max(0, value) * 100);
+}
+
+
+function cleanJsonValue(value: unknown, depth = 0): unknown {
+  if (depth > 6) return null;
+  if (value === null) return null;
+  if (["string", "number", "boolean"].includes(typeof value)) return value;
+  if (Array.isArray(value)) return value.map((item) => cleanJsonValue(item, depth + 1)).filter((item) => item !== undefined);
+  if (typeof value === "object") {
+    const output: Record<string, unknown> = {};
+    for (const [key, nextValue] of Object.entries(value as Record<string, unknown>)) {
+      if (!key || nextValue === undefined || typeof nextValue === "function") continue;
+      output[key] = cleanJsonValue(nextValue, depth + 1);
+    }
+    return output;
+  }
+  return null;
 }
 
 function isCommercialRequest(data: Record<string, unknown>) {
@@ -82,6 +101,8 @@ export async function POST(request: Request) {
     const customerQuoteNote = getString(body?.customerQuoteNote);
     const internalQuoteNotes = getString(body?.internalQuoteNotes);
     const mappedStatus = getMappedRequestStatus(quoteStatus);
+    const quoteBreakdown = cleanJsonValue(body?.quoteBreakdown);
+    const refundTracking = cleanJsonValue(body?.refundTracking);
 
     const updatePayload: Record<string, unknown> = {
       commercialQuoteStatus: quoteStatus,
@@ -97,6 +118,14 @@ export async function POST(request: Request) {
       updatedAt: FieldValue.serverTimestamp(),
       updatedBy: decoded.email || "admin",
     };
+
+    if (quoteBreakdown && typeof quoteBreakdown === "object") {
+      updatePayload.commercialQuoteBreakdown = quoteBreakdown;
+    }
+
+    if (refundTracking && typeof refundTracking === "object") {
+      updatePayload.commercialRefundTracking = refundTracking;
+    }
 
     if (mappedStatus) {
       updatePayload.status = mappedStatus;
