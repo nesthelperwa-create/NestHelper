@@ -87,6 +87,9 @@ export async function POST(request: Request) {
     const serviceId = getString(data.service);
     const serviceTitle = getString(data.selectedServiceTitle) || services.find((item) => item.id === serviceId)?.title || serviceId || "NestHelper service";
     const isLaundryRescue = serviceId === "laundry-rescue";
+    const isCommercialReset = serviceId === "commercial-reset";
+    const savedCommercialBreakdown = (data.commercialQuoteBreakdown || {}) as Record<string, unknown>;
+    const savedCommercialBreakdownText = isCommercialReset ? getString(savedCommercialBreakdown.customerBreakdownText) : "";
 
     if (!serviceId) {
       return NextResponse.json({ ok: false, error: "Missing service selection for this request." }, { status: 400 });
@@ -159,7 +162,7 @@ export async function POST(request: Request) {
     });
 
     const checkoutUrl = session.url || "";
-    const replyToEmail = isLaundryRescue ? emailAliases.laundry : serviceId === "commercial-reset" ? emailAliases.commercial : emailAliases.billing;
+    const replyToEmail = isLaundryRescue ? emailAliases.laundry : isCommercialReset ? emailAliases.commercial : emailAliases.billing;
     const servicePrice = useCustomInitial ? `${formatMoney(customAmount)} custom initial checkout` : getServicePriceLabel(serviceId, mode);
     let emailSent = false;
     let emailError = "";
@@ -177,6 +180,8 @@ export async function POST(request: Request) {
           preferredWindow: getString(data.preferredWindow),
           city: getString(data.city),
           replyToEmail,
+          quoteBreakdownText: isCommercialReset && useCustomInitial ? savedCommercialBreakdownText : "",
+          quoteBreakdownTitle: isCommercialReset ? "Commercial Reset quote breakdown" : undefined,
         });
         emailSent = true;
       } catch (error) {
@@ -197,6 +202,7 @@ export async function POST(request: Request) {
       checkoutSentAt: emailSent ? FieldValue.serverTimestamp() : null,
       checkoutEmailSent: emailSent,
       checkoutEmailError: emailError,
+      checkoutIncludedQuoteBreakdown: Boolean(isCommercialReset && useCustomInitial && savedCommercialBreakdownText),
       checkoutCreatedBy: decoded.email || "admin",
       updatedAt: FieldValue.serverTimestamp(),
       updatedBy: decoded.email || "admin",
@@ -214,7 +220,7 @@ export async function POST(request: Request) {
 
     await requestRef.update(updatePayload);
 
-    return NextResponse.json({ ok: true, url: checkoutUrl, sessionId: session.id, emailSent, emailError, customInitial: useCustomInitial });
+    return NextResponse.json({ ok: true, url: checkoutUrl, sessionId: session.id, emailSent, emailError, customInitial: useCustomInitial, includedQuoteBreakdown: Boolean(isCommercialReset && useCustomInitial && savedCommercialBreakdownText) });
   } catch (error) {
     console.error(error);
     return NextResponse.json({ ok: false, error: "Unable to create payment link." }, { status: 500 });

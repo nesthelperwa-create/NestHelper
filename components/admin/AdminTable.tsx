@@ -476,9 +476,21 @@ export default function AdminTable({
         throw new Error(data.error || "Unable to create checkout link.");
       }
 
-      setSelected((prev) => prev ? { ...prev, checkoutUrl: data.url, checkoutSessionId: data.sessionId, status: "Checkout Sent", paymentStatus: selected.service === "laundry-rescue" ? "Deposit Checkout Sent" : "Checkout Sent" } : prev);
+      setSelected((prev) => prev ? {
+        ...prev,
+        checkoutUrl: data.url,
+        checkoutSessionId: data.sessionId,
+        status: "Checkout Sent",
+        paymentStatus: selected.service === "laundry-rescue" ? "Deposit Checkout Sent" : "Checkout Sent",
+        checkoutIncludedQuoteBreakdown: data.includedQuoteBreakdown ?? prev.checkoutIncludedQuoteBreakdown,
+      } : prev);
       setStatusValue("Checkout Sent");
-      setCheckoutMessage(data.emailError || (data.emailSent ? "Checkout link created and emailed to the customer." : "Checkout link created. Copy it and send it manually."));
+      const commercialBreakdownNotice = selected.service === "commercial-reset" && useCustomInitial
+        ? data.includedQuoteBreakdown
+          ? " Saved quote breakdown was included in the customer email."
+          : " No saved quote breakdown was found, so the email only includes the payment link and notes. Save the quote builder draft first if you want the breakdown included."
+        : "";
+      setCheckoutMessage(data.emailError || (data.emailSent ? `Checkout link created and emailed to the customer.${commercialBreakdownNotice}` : `Checkout link created. Copy it and send it manually.${commercialBreakdownNotice}`));
     } catch (error) {
       setCheckoutError(error instanceof Error ? error.message : "Unable to create checkout link.");
     } finally {
@@ -813,7 +825,7 @@ export default function AdminTable({
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                   <div className="max-w-3xl">
                     <p className="text-xs font-black uppercase tracking-[0.2em] text-[#b98a2f]">Commercial quote workflow</p>
-                    <h4 className="mt-1 text-xl font-black text-[#075c58]">Review, quote, then send the payment link</h4>
+                    <h4 className="mt-1 text-xl font-black text-[#075c58]">Review, quote, then email the breakdown with checkout</h4>
                     <p className="mt-2 text-sm leading-6 text-slate-700">
                       This section is a guide for Commercial Reset only. Start by reviewing the space details, enter the approved quote amount, save it, then use the green buttons to fill the Stripe payment sections below.
                     </p>
@@ -1050,7 +1062,7 @@ export default function AdminTable({
                     <h4 className="mt-1 text-xl font-black text-[#075c58]">{selectedIsCommercial ? "Create the first Commercial Reset payment link" : "Create checkout after you approve the request"}</h4>
                     <p className="mt-2 text-sm leading-6 text-slate-700">
                       {selectedIsCommercial
-                        ? "For Commercial Reset, use the amount you prepared above. Review the custom checkout details here, then create and email the Stripe payment link when you are ready."
+                        ? "For Commercial Reset, save the quote/breakdown first, use the calculated amount here, then create and email the Stripe payment link. The saved breakdown is included in the customer email with the checkout link."
                         : "This creates a Stripe Checkout Session tied to this request. Public checkout stays off; only admin can send payment after reviewing scope, service area, and availability."}
                     </p>
                     {selected.service === "laundry-rescue" && (

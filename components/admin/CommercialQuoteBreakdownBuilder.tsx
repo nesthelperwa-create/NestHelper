@@ -308,6 +308,15 @@ function safeString(value: unknown) {
   return typeof value === "string" ? value : "";
 }
 
+function escapeHtml(value: unknown) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
 function getInitialLines(item: AdminDoc) {
   const existing = item.commercialQuoteBreakdown?.lineItems;
   if (Array.isArray(existing) && existing.length) {
@@ -492,28 +501,98 @@ export default function CommercialQuoteBreakdownBuilder({ item, formatMoney, onS
     setMessage("Customer breakdown copied.");
   }
 
+  function getPrintableBreakdownHtml() {
+    const rows = lineItems.map((line) => {
+      const multiplier = toNumber(line.multiplier || "1");
+      const mathText = line.unit !== "flat"
+        ? `${line.quantity} ${line.unit} × ${line.rate}${multiplier !== 1 ? ` × ${line.multiplier} ${line.multiplierLabel || "multiplier"}` : ""}`
+        : "Flat approved amount";
+      return `<div class="line-row"><div><strong>${escapeHtml(line.label)}</strong><br/><span>${escapeHtml(line.description || "")}</span><br/><small>${escapeHtml(mathText)}</small>${line.note ? `<br/><small>${escapeHtml(line.note)}</small>` : ""}</div><div class="amount">${escapeHtml(formatMoney(calculateLineAmount(line)))}</div></div>`;
+    }).join("");
+
+    return `<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>NestHelper Commercial Reset quote</title>
+  <style>
+    *{box-sizing:border-box}body{font-family:Arial,sans-serif;color:#173b37;line-height:1.45;padding:32px;background:#faf7ef}.card{max-width:820px;margin:auto;background:#fff;border:1px solid #eadfc8;border-radius:24px;overflow:hidden}.header{background:#075c58;color:#fff;padding:26px}.eyebrow{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:#f1c96b;font-weight:800}h1{margin:8px 0 4px;font-size:28px;line-height:1.15}.muted{color:#64748b}.body{padding:26px}.meta{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:0 0 22px}.meta div{background:#fbf6ea;border:1px solid #eadfc8;border-radius:16px;padding:12px}.meta strong{display:block;color:#075c58;font-size:12px;text-transform:uppercase;letter-spacing:.12em}.line-row{display:flex;justify-content:space-between;gap:18px;border-bottom:1px solid #e8e2d6;padding:15px 0}.line-row span,.line-row small{color:#64748b}.amount{font-weight:800;white-space:nowrap;color:#075c58}.summary{margin-top:18px;border:1px solid #eadfc8;border-radius:18px;overflow:hidden}.summary-row{display:flex;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #eadfc8}.summary-row:last-child{border-bottom:0}.total{background:#075c58;color:#fff;font-size:18px;font-weight:900}.note{background:#fbf6ea;border:1px solid #eadfc8;border-radius:16px;padding:16px;margin-top:18px;white-space:pre-wrap}.fine{font-size:12px;color:#64748b;margin-top:18px}@media print{body{background:#fff;padding:0}.card{border:0;border-radius:0}.no-print{display:none}}@media(max-width:640px){body{padding:14px}.meta{grid-template-columns:1fr}.line-row{display:block}.amount{margin-top:8px}}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="header"><div class="eyebrow">NestHelper Commercial Reset</div><h1>Quote breakdown</h1><div>${escapeHtml(quoteTitle)}</div></div>
+    <div class="body">
+      <div class="meta">
+        <div><strong>Customer</strong>${escapeHtml(item.fullName || item.name || item.contactName || "Customer")}</div>
+        <div><strong>Pricing style</strong>${escapeHtml(quoteType)}</div>
+        <div><strong>Status</strong>${escapeHtml(quoteStatus)}</div>
+        <div><strong>Valid / review date</strong>${escapeHtml(validUntil || "Reviewed before scheduling")}</div>
+      </div>
+      ${rows}
+      <div class="summary">
+        <div class="summary-row"><span>Subtotal</span><strong>${escapeHtml(formatMoney(subtotal))}</strong></div>
+        ${discount > 0 ? `<div class="summary-row"><span>Discount / credit</span><strong>-${escapeHtml(formatMoney(discount))}</strong></div>` : ""}
+        <div class="summary-row total"><span>Amount due now</span><span>${escapeHtml(formatMoney(amountDueNow))}</span></div>
+        ${laterAmount > 0 ? `<div class="summary-row"><span>Possible later/add-on amount</span><strong>${escapeHtml(formatMoney(laterAmount))}</strong></div>` : ""}
+      </div>
+      <div class="note">${escapeHtml(customerNote)}</div>
+      <p class="fine">Sales tax, if applicable, is shown at checkout or invoice. Final service is based on approved scope, access, condition, schedule, and any reviewed add-ons. Heavy furniture, equipment, fragile items, or blocked areas may require customer preparation or a separate labor quote.</p>
+    </div>
+  </div>
+</body>
+</html>`;
+  }
+
   function downloadBreakdown() {
-    const blob = new Blob([customerBreakdownText], { type: "text/plain;charset=utf-8" });
+    const html = getPrintableBreakdownHtml();
+    const blob = new Blob([html], { type: "text/html;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `nesthelper-commercial-quote-${item.id}.txt`;
+    a.download = `nesthelper-commercial-quote-${item.id}.html`;
     document.body.appendChild(a);
     a.click();
     a.remove();
     URL.revokeObjectURL(url);
-    setMessage("Breakdown downloaded.");
+    setMessage("Printable quote downloaded as an HTML file. Open it in a browser to print or save as PDF.");
   }
 
   function printBreakdown() {
-    const html = `<!doctype html><html><head><title>NestHelper Commercial Reset quote</title><style>body{font-family:Arial,sans-serif;color:#123;line-height:1.45;padding:32px}.card{max-width:760px;margin:auto;border:1px solid #ddd;border-radius:18px;padding:28px}h1{color:#075c58;margin:0 0 6px}.muted{color:#64748b}.row{display:flex;justify-content:space-between;border-bottom:1px solid #eee;padding:10px 0}.total{font-size:20px;font-weight:800;color:#075c58}.note{background:#fbf6ea;border-radius:14px;padding:14px;margin-top:16px;white-space:pre-wrap}</style></head><body><div class="card"><h1>NestHelper Commercial Reset quote</h1><p class="muted">${quoteTitle}</p>${lineItems.map((line) => `<div class="row"><div><strong>${line.label}</strong><br><span class="muted">${line.description || ""}${line.unit !== "flat" ? `<br>${line.quantity} ${line.unit} × ${line.rate}${toNumber(line.multiplier || "1") !== 1 ? ` × ${line.multiplier} ${line.multiplierLabel || "multiplier"}` : ""}` : ""}${line.note ? `<br>${line.note}` : ""}</span></div><div>${formatMoney(calculateLineAmount(line))}</div></div>`).join("")}<div class="row"><strong>Subtotal</strong><strong>${formatMoney(subtotal)}</strong></div>${discount > 0 ? `<div class="row"><strong>Discount / credit</strong><strong>-${formatMoney(discount)}</strong></div>` : ""}<div class="row total"><span>Amount due now</span><span>${formatMoney(amountDueNow)}</span></div>${laterAmount > 0 ? `<div class="row"><strong>Possible later/add-on amount</strong><strong>${formatMoney(laterAmount)}</strong></div>` : ""}<div class="note">${customerNote.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</div><p class="muted">Sales tax, if applicable, is shown at checkout or invoice. Final service is based on approved scope and access.</p></div><script>window.print();</script></body></html>`;
-    const printWindow = window.open("", "_blank", "noopener,noreferrer");
-    if (!printWindow) {
-      setError("Pop-up blocked. Allow pop-ups to print the quote.");
+    const html = getPrintableBreakdownHtml();
+    const iframe = document.createElement("iframe");
+    iframe.style.position = "fixed";
+    iframe.style.right = "0";
+    iframe.style.bottom = "0";
+    iframe.style.width = "0";
+    iframe.style.height = "0";
+    iframe.style.border = "0";
+    iframe.setAttribute("aria-hidden", "true");
+    document.body.appendChild(iframe);
+
+    const printWindow = iframe.contentWindow;
+    const printDocument = printWindow?.document;
+    if (!printWindow || !printDocument) {
+      iframe.remove();
+      setError("Unable to open the print preview. Use Download, then print the downloaded quote from your browser.");
       return;
     }
-    printWindow.document.write(html);
-    printWindow.document.close();
+
+    printDocument.open();
+    printDocument.write(html);
+    printDocument.close();
+
+    window.setTimeout(() => {
+      try {
+        printWindow.focus();
+        printWindow.print();
+        setMessage("Print dialog opened.");
+      } catch {
+        setError("Print did not open. Use Download, then print the downloaded quote from your browser.");
+      }
+      window.setTimeout(() => iframe.remove(), 1200);
+    }, 400);
   }
 
   async function saveBreakdown() {
@@ -592,7 +671,7 @@ export default function CommercialQuoteBreakdownBuilder({ item, formatMoney, onS
         <div>
           <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Professional quote builder</p>
           <h5 className="mt-1 text-base font-black text-[#075c58]">Build a customer-ready breakdown</h5>
-          <p className="mt-1 text-sm leading-6 text-slate-700">Use sq-ft calculators for routine commercial service, plus dropdown line items for recurring plans, add-ons, credits, and refund notes.</p>
+          <p className="mt-1 text-sm leading-6 text-slate-700">Use sq-ft calculators for routine commercial service, plus dropdown line items for recurring plans, add-ons, credits, and refund notes. Save the breakdown first; when you create + email the first Commercial Reset payment link, the saved breakdown is included in the customer email.</p>
         </div>
         <button
           type="button"
@@ -617,11 +696,11 @@ export default function CommercialQuoteBreakdownBuilder({ item, formatMoney, onS
               <div>
                 <p className="text-xs font-black uppercase tracking-[0.2em] text-[#b98a2f]">Commercial Reset quote builder</p>
                 <h3 className="text-2xl font-black text-[#075c58]">Professional breakdown</h3>
-                <p className="mt-1 text-sm font-semibold text-slate-600">Clicking outside will not close this. Use Save draft or Close.</p>
+                <p className="mt-1 text-sm font-semibold text-slate-600">Clicking outside will not close this. Save draft before sending a payment link so the customer email includes the latest breakdown.</p>
               </div>
               <div className="flex flex-wrap gap-2">
-                <button type="button" onClick={copyBreakdown} className="rounded-full border border-[#075c58] px-4 py-2 text-xs font-black text-[#075c58]">Copy</button>
-                <button type="button" onClick={downloadBreakdown} className="rounded-full border border-[#075c58] px-4 py-2 text-xs font-black text-[#075c58]">Download</button>
+                <button type="button" onClick={copyBreakdown} className="rounded-full border border-[#075c58] px-4 py-2 text-xs font-black text-[#075c58]">Copy breakdown</button>
+                <button type="button" onClick={downloadBreakdown} className="rounded-full border border-[#075c58] px-4 py-2 text-xs font-black text-[#075c58]">Download quote</button>
                 <button type="button" onClick={printBreakdown} className="rounded-full border border-[#075c58] px-4 py-2 text-xs font-black text-[#075c58]">Print</button>
                 <button type="button" disabled={busy} onClick={saveBreakdown} className="rounded-full bg-[#075c58] px-4 py-2 text-xs font-black text-white disabled:opacity-60">{busy ? "Saving..." : "Save draft"}</button>
                 <button type="button" onClick={attemptClose} className="rounded-full bg-slate-900 px-4 py-2 text-xs font-black text-white">Close</button>

@@ -12,6 +12,8 @@ type PaymentLinkEmailInput = {
   preferredWindow?: string;
   city?: string;
   replyToEmail?: string;
+  quoteBreakdownText?: string;
+  quoteBreakdownTitle?: string;
 };
 
 function escapeHtml(value: unknown) {
@@ -44,6 +46,8 @@ export async function sendPaymentLinkEmail({
   preferredWindow,
   city,
   replyToEmail,
+  quoteBreakdownText,
+  quoteBreakdownTitle,
 }: PaymentLinkEmailInput) {
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.NOTIFICATION_FROM_EMAIL || "NestHelper <onboarding@resend.dev>";
@@ -65,6 +69,13 @@ export async function sendPaymentLinkEmail({
     "Preferred window": preferredWindow,
     City: city,
   });
+  const cleanQuoteBreakdown = String(quoteBreakdownText || "").trim();
+  const quoteBreakdownHtml = cleanQuoteBreakdown
+    ? `<div style="margin:0 0 22px 0;padding:16px 14px;border-radius:14px;background:#fbf6ea;border:1px solid #eadfc8;box-sizing:border-box;overflow-wrap:anywhere;word-break:break-word;">
+        <div style="font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#b98a2f;font-weight:800;margin-bottom:8px;">${escapeHtml(quoteBreakdownTitle || "Quote breakdown")}</div>
+        <div style="white-space:pre-wrap;font-size:14px;line-height:1.55;color:#233;overflow-wrap:anywhere;word-break:break-word;">${escapeHtml(cleanQuoteBreakdown)}</div>
+      </div>`
+    : "";
 
   const html = `
     <div style="font-family:Arial,sans-serif;background:#faf7ef;padding:14px;margin:0;width:100%;max-width:100%;box-sizing:border-box;">
@@ -75,8 +86,9 @@ export async function sendPaymentLinkEmail({
         </div>
         <div style="padding:22px 18px;color:#233;line-height:1.6;box-sizing:border-box;overflow-wrap:anywhere;word-break:break-word;">
           <p style="margin:0 0 16px 0;">${escapeHtml(greeting)}</p>
-          <p style="margin:0 0 18px 0;">We reviewed your request and the next step is secure checkout. Your visit is not confirmed until payment is completed and NestHelper follows up with scheduling details.</p>
+          <p style="margin:0 0 18px 0;">We reviewed your request and the next step is secure checkout. If a quote breakdown is included below, please review it before paying. Your visit is not confirmed until payment is completed and NestHelper follows up with scheduling details.</p>
           ${summaryRows ? `<div style="width:100%;box-sizing:border-box;border:1px solid #eee;border-radius:14px;overflow:hidden;margin:0 0 22px 0;">${summaryRows}</div>` : ""}
+          ${quoteBreakdownHtml}
           <p style="margin:22px 0;"><a href="${escapeHtml(paymentUrl)}" style="display:inline-block;background:#075c58;color:#fff;text-decoration:none;padding:13px 20px;border-radius:999px;font-weight:800;max-width:100%;box-sizing:border-box;white-space:normal;text-align:center;">Pay securely with Stripe</a></p>
           <p style="margin:0 0 14px 0;font-size:14px;color:#556;">If the button does not work, copy and paste this secure checkout link into your browser:</p>
           <p style="word-break:break-all;font-size:13px;color:#075c58;margin:0 0 18px 0;">${escapeHtml(paymentUrl)}</p>
@@ -93,7 +105,26 @@ export async function sendPaymentLinkEmail({
       </div>
     </div>`;
 
-  const text = `${greeting}\n\nWe reviewed your NestHelper request and it is ready for secure checkout. Your visit is not confirmed until payment is completed and NestHelper follows up with scheduling details.\n\nService: ${serviceTitle}\nRequest ID: ${requestId}\n${servicePrice ? `Price / deposit: ${servicePrice}\n` : ""}\nPay securely with Stripe: ${paymentUrl}\n\nAfter payment, NestHelper will confirm timing and prep notes. For Laundry Rescue, dry weight and add-ons are confirmed before any final balance.\n\nQuestions or changes? Reply to this email or contact us at ${customerSupportEmail}.\n\nNestHelper: ${siteUrl}`;
+  const quoteBreakdownTextBlock = cleanQuoteBreakdown ? `
+
+${quoteBreakdownTitle || "Quote breakdown"}:
+${cleanQuoteBreakdown}` : "";
+  const text = `${greeting}
+
+We reviewed your NestHelper request and it is ready for secure checkout. If a quote breakdown is included, please review it before paying. Your visit is not confirmed until payment is completed and NestHelper follows up with scheduling details.
+
+Service: ${serviceTitle}
+Request ID: ${requestId}
+${servicePrice ? `Price / deposit: ${servicePrice}
+` : ""}${quoteBreakdownTextBlock}
+
+Pay securely with Stripe: ${paymentUrl}
+
+After payment, NestHelper will confirm timing and prep notes. For Laundry Rescue, dry weight and add-ons are confirmed before any final balance.
+
+Questions or changes? Reply to this email or contact us at ${customerSupportEmail}.
+
+NestHelper: ${siteUrl}`;
 
   const resend = new Resend(apiKey);
   return resend.emails.send({
