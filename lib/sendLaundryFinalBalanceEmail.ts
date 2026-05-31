@@ -5,7 +5,9 @@ type LaundryFinalBalanceEmailInput = {
   to: string;
   customerName?: string;
   requestId: string;
-  paymentUrl: string;
+  invoiceUrl: string;
+  invoicePdf?: string;
+  invoiceNumber?: string;
   dryWeightLbs: number;
   ratePerLb: number;
   addOnsAmount: number;
@@ -48,7 +50,9 @@ export async function sendLaundryFinalBalanceEmail({
   to,
   customerName,
   requestId,
-  paymentUrl,
+  invoiceUrl,
+  invoicePdf,
+  invoiceNumber,
   dryWeightLbs,
   ratePerLb,
   addOnsAmount,
@@ -64,8 +68,8 @@ export async function sendLaundryFinalBalanceEmail({
   const customerSupportEmail = emailAliases.laundry;
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
-  if (!apiKey || !to || !paymentUrl) {
-    console.warn("Skipping laundry final balance email. Missing RESEND_API_KEY, customer email, or payment URL.");
+  if (!apiKey || !to || !invoiceUrl) {
+    console.warn("Skipping laundry final balance email. Missing RESEND_API_KEY, customer email, or invoice URL.");
     return { skipped: true };
   }
 
@@ -73,6 +77,7 @@ export async function sendLaundryFinalBalanceEmail({
   const laundrySubtotal = dryWeightLbs * ratePerLb + addOnsAmount;
   const summaryRows = buildSummaryRows({
     "Request ID": requestId,
+    "Invoice number": invoiceNumber,
     Service: "Laundry Rescue final balance",
     "Dry weight": `${formatNumber(dryWeightLbs)} lb`,
     "Rate per lb": formatMoney(ratePerLb),
@@ -98,16 +103,17 @@ export async function sendLaundryFinalBalanceEmail({
         </div>
         <div style="padding:22px 18px;color:#233;line-height:1.6;box-sizing:border-box;overflow-wrap:anywhere;word-break:break-word;">
           <p style="margin:0 0 16px 0;">${escapeHtml(greeting)}</p>
-          <p style="margin:0 0 18px 0;">Your laundry was dry-weighed and your deposit has been credited. The remaining balance is ready for secure checkout.</p>
+          <p style="margin:0 0 18px 0;">Your laundry was dry-weighed and your deposit has been credited. The remaining balance is ready on a Stripe invoice with the final breakdown.</p>
           ${noteHtml}
           ${summaryRows ? `<div style="width:100%;box-sizing:border-box;border:1px solid #eee;border-radius:14px;overflow:hidden;margin:0 0 22px 0;">${summaryRows}</div>` : ""}
-          <p style="margin:22px 0;"><a href="${escapeHtml(paymentUrl)}" style="display:inline-block;background:#075c58;color:#fff;text-decoration:none;padding:13px 20px;border-radius:999px;font-weight:800;max-width:100%;box-sizing:border-box;white-space:normal;text-align:center;">Pay final balance securely</a></p>
-          <p style="margin:0 0 14px 0;font-size:14px;color:#556;">If the button does not work, copy and paste this secure checkout link into your browser:</p>
-          <p style="word-break:break-all;font-size:13px;color:#075c58;margin:0 0 18px 0;">${escapeHtml(paymentUrl)}</p>
+          <p style="margin:22px 0;"><a href="${escapeHtml(invoiceUrl)}" style="display:inline-block;background:#075c58;color:#fff;text-decoration:none;padding:13px 20px;border-radius:999px;font-weight:800;max-width:100%;box-sizing:border-box;white-space:normal;text-align:center;">View and pay final invoice</a></p>
+          <p style="margin:0 0 14px 0;font-size:14px;color:#556;">If the button does not work, copy and paste this secure invoice link into your browser:</p>
+          <p style="word-break:break-all;font-size:13px;color:#075c58;margin:0 0 18px 0;">${escapeHtml(invoiceUrl)}</p>
+          ${invoicePdf ? `<p style="margin:0 0 18px 0;"><a href="${escapeHtml(invoicePdf)}" style="display:inline-block;background:#fff;color:#075c58;text-decoration:none;padding:11px 16px;border-radius:999px;border:1px solid #075c58;font-weight:800;max-width:100%;box-sizing:border-box;white-space:normal;text-align:center;">Download invoice PDF</a></p>` : ""}
           <h2 style="font-size:18px;margin:0 0 10px 0;color:#0f4f4a;">What happens after payment</h2>
           <ol style="margin:0 0 18px 20px;padding:0;">
-            <li style="margin:0 0 8px 0;">Stripe confirms the final balance securely.</li>
-            <li style="margin:0 0 8px 0;">NestHelper marks the Laundry Rescue request fully paid.</li>
+            <li style="margin:0 0 8px 0;">Stripe confirms the final invoice payment securely.</li>
+            <li style="margin:0 0 8px 0;">NestHelper marks the Laundry Rescue request fully paid after Stripe confirms the invoice payment.</li>
             <li style="margin:0 0 8px 0;">Reply right away if you have questions about the weight, add-ons, or return details.</li>
           </ol>
           <p style="margin:0 0 18px 0;">Questions or changes? Reply to this email or contact us at ${escapeHtml(customerSupportEmail)}.</p>
@@ -116,8 +122,8 @@ export async function sendLaundryFinalBalanceEmail({
       </div>
     </div>`;
 
-  const text = `${greeting}\n\nYour laundry was dry-weighed and your deposit has been credited. The remaining balance is ready for secure checkout.\n\nRequest ID: ${requestId}\nDry weight: ${formatNumber(dryWeightLbs)} lb\nRate per lb: ${formatMoney(ratePerLb)}\nLaundry subtotal: ${formatMoney(laundrySubtotal)}\nAdd-ons / bulky items: ${addOnsAmount > 0 ? formatMoney(addOnsAmount) : "None"}\nDeposit credit: -${formatMoney(depositCredit)}\nFinal balance due: ${formatMoney(balanceDue)}${note?.trim() ? `\n\nNote from NestHelper:\n${note.trim()}` : ""}\n\nPay securely: ${paymentUrl}\n\nQuestions or changes? Reply to this email or contact us at ${customerSupportEmail}.\n\nNestHelper: ${siteUrl}`;
+  const text = `${greeting}\n\nYour laundry was dry-weighed and your deposit has been credited. The remaining balance is ready on a Stripe invoice with the final breakdown.\n\nRequest ID: ${requestId}\nDry weight: ${formatNumber(dryWeightLbs)} lb\nRate per lb: ${formatMoney(ratePerLb)}\nLaundry subtotal: ${formatMoney(laundrySubtotal)}\nAdd-ons / bulky items: ${addOnsAmount > 0 ? formatMoney(addOnsAmount) : "None"}\nDeposit credit: -${formatMoney(depositCredit)}\nFinal balance due: ${formatMoney(balanceDue)}${note?.trim() ? `\n\nNote from NestHelper:\n${note.trim()}` : ""}\n\nPay securely: ${invoiceUrl}\n\nQuestions or changes? Reply to this email or contact us at ${customerSupportEmail}.\n\nNestHelper: ${siteUrl}`;
 
   const resend = new Resend(apiKey);
-  return resend.emails.send({ from, to, subject: "Laundry Rescue final balance is ready", html, text, replyTo: customerSupportEmail });
+  return resend.emails.send({ from, to, subject: "Laundry Rescue final invoice is ready", html, text, replyTo: customerSupportEmail });
 }
