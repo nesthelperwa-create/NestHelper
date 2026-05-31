@@ -1577,6 +1577,9 @@ export default function AdminTable({
                         <option value="founding">Founding / beta price</option>
                         <option value="custom">Custom initial amount</option>
                       </select>
+                      <p className="rounded-2xl bg-amber-50 px-3 py-2 text-xs font-bold leading-5 text-amber-800">
+                        Price mode applies to quick checkout links only. Stripe invoices use the saved Family Payment Breakdown line items, so enter any beta, custom, discount, or credit amount in the builder before creating an invoice.
+                      </p>
                     </div>
                   )}
                 </div>
@@ -1699,6 +1702,9 @@ export default function AdminTable({
                         <p className="mt-1 text-sm leading-6 text-slate-700">
                           Use this when you want a formal invoice/PDF instead of only a checkout receipt: Errand Helper, custom family quotes, recurring family help, Laundry Rescue balance, approved add-ons, or refund/credit documentation.
                         </p>
+                        <p className="mt-2 rounded-2xl bg-amber-50 px-4 py-3 text-xs font-bold leading-5 text-amber-800">
+                          Invoices do not use the Standard / Founding / Beta price dropdown above. They use the saved Family Payment Breakdown. Open the builder, confirm the package/beta/custom line amounts, then save before creating an invoice.
+                        </p>
                       </div>
                       <div className="flex flex-col gap-2 sm:flex-row lg:flex-col">
                         <button type="button" disabled={familyInvoiceBusy || !hasSavedFamilyPaymentBreakdown} onClick={() => createFamilyInvoice(true)} className={getAdminActionClass("primary")}>
@@ -1743,7 +1749,7 @@ export default function AdminTable({
                       <span>
                         <span className="block text-[#075c58]">Include saved family payment breakdown in the customer checkout email</span>
                         <span className="mt-1 block text-xs font-semibold leading-5 text-slate-600">
-                          Use this when you want the customer to see the package, custom amount, recurring plan, laundry note, discount, or credit details before paying.
+                          Use this when you want the customer to see the package, custom amount, recurring plan, laundry note, discount, or credit details before paying. For invoices, the saved breakdown becomes the invoice line-item source.
                         </span>
                       </span>
                     </label>
