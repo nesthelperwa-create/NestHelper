@@ -111,44 +111,62 @@ export async function POST(request: Request) {
         const requestRef = db.collection("serviceRequests").doc(requestId);
         const requestSnap = await requestRef.get();
         const existingData = requestSnap.exists ? requestSnap.data() || {} : {};
+        const paymentType = getString(invoice.metadata?.paymentType);
+        const serviceId = getString(invoice.metadata?.serviceId) || getString(existingData.service);
+        const isFamilyInvoice = paymentType === "family_invoice" || (serviceId && serviceId !== "commercial-reset");
 
         // Stripe marks $0 finalized invoices as paid immediately. Ignore those so a draft/test
         // invoice mistake does not mark a real NestHelper request as paid or email the customer.
         if ((invoice.amount_paid ?? 0) <= 0) {
           await requestRef.update({
-            commercialInvoiceZeroDollarPaidEventIgnored: true,
-            commercialInvoiceZeroDollarPaidEventIgnoredAt: FieldValue.serverTimestamp(),
-            commercialInvoiceZeroDollarPaidEventInvoiceId: invoice.id,
-            commercialInvoiceZeroDollarPaidEventAmountPaid: invoice.amount_paid ?? null,
+            [isFamilyInvoice ? "familyInvoiceZeroDollarPaidEventIgnored" : "commercialInvoiceZeroDollarPaidEventIgnored"]: true,
+            [isFamilyInvoice ? "familyInvoiceZeroDollarPaidEventIgnoredAt" : "commercialInvoiceZeroDollarPaidEventIgnoredAt"]: FieldValue.serverTimestamp(),
+            [isFamilyInvoice ? "familyInvoiceZeroDollarPaidEventInvoiceId" : "commercialInvoiceZeroDollarPaidEventInvoiceId"]: invoice.id,
+            [isFamilyInvoice ? "familyInvoiceZeroDollarPaidEventAmountPaid" : "commercialInvoiceZeroDollarPaidEventAmountPaid"]: invoice.amount_paid ?? null,
             updatedAt: FieldValue.serverTimestamp(),
             updatedBy: "stripe-webhook",
           });
           return NextResponse.json({ received: true, ignored: "zero-dollar-invoice-paid" });
         }
 
-        const serviceId = getString(invoice.metadata?.serviceId) || getString(existingData.service) || "commercial-reset";
-        const serviceTitle = getServiceTitle(existingData, "Commercial Reset invoice");
+        const serviceTitle = getServiceTitle(existingData, isFamilyInvoice ? "NestHelper invoice" : "Commercial Reset invoice");
         const paymentStatus = "Invoice Paid";
 
-        await requestRef.update({
+        const updatePayload: Record<string, unknown> = {
           status: "Invoice Paid",
           paymentStatus,
-          commercialInvoiceStatus: paymentStatus,
-          commercialInvoiceId: invoice.id,
-          commercialInvoicePaidAt: FieldValue.serverTimestamp(),
-          commercialInvoiceAmountPaid: invoice.amount_paid ?? null,
-          commercialInvoiceAmountDue: invoice.amount_due ?? null,
-          commercialInvoiceHostedUrl: invoice.hosted_invoice_url || existingData.commercialInvoiceUrl || "",
-          commercialInvoicePdf: invoice.invoice_pdf || existingData.commercialInvoicePdf || "",
           stripeCustomerId: typeof invoice.customer === "string" ? invoice.customer : "",
           updatedAt: FieldValue.serverTimestamp(),
           updatedBy: "stripe-webhook",
-        });
+        };
+
+        if (isFamilyInvoice) {
+          updatePayload.familyInvoiceStatus = paymentStatus;
+          updatePayload.familyInvoiceId = invoice.id;
+          updatePayload.familyInvoicePaidAt = FieldValue.serverTimestamp();
+          updatePayload.familyInvoiceAmountPaid = invoice.amount_paid ?? null;
+          updatePayload.familyInvoiceAmountDue = invoice.amount_due ?? null;
+          updatePayload.familyInvoiceHostedUrl = invoice.hosted_invoice_url || existingData.familyInvoiceUrl || "";
+          updatePayload.familyInvoicePdf = invoice.invoice_pdf || existingData.familyInvoicePdf || "";
+        } else {
+          updatePayload.commercialInvoiceStatus = paymentStatus;
+          updatePayload.commercialInvoiceId = invoice.id;
+          updatePayload.commercialInvoicePaidAt = FieldValue.serverTimestamp();
+          updatePayload.commercialInvoiceAmountPaid = invoice.amount_paid ?? null;
+          updatePayload.commercialInvoiceAmountDue = invoice.amount_due ?? null;
+          updatePayload.commercialInvoiceHostedUrl = invoice.hosted_invoice_url || existingData.commercialInvoiceUrl || "";
+          updatePayload.commercialInvoicePdf = invoice.invoice_pdf || existingData.commercialInvoicePdf || "";
+        }
+
+        await requestRef.update(updatePayload);
 
         const email = getString(existingData.email);
         const customerName = getString(existingData.fullName) || getString(existingData.contactName);
+        const customerFlag = isFamilyInvoice ? "familyInvoicePaymentConfirmationEmailSent" : "commercialInvoicePaymentConfirmationEmailSent";
+        const customerFlagAt = isFamilyInvoice ? "familyInvoicePaymentConfirmationEmailSentAt" : "commercialInvoicePaymentConfirmationEmailSentAt";
+        const customerErrorField = isFamilyInvoice ? "familyInvoicePaymentConfirmationEmailError" : "commercialInvoicePaymentConfirmationEmailError";
 
-        if (email && !existingData.commercialInvoicePaymentConfirmationEmailSent) {
+        if (email && !existingData[customerFlag]) {
           try {
             await sendPaymentReceivedEmail({
               to: email,
@@ -158,32 +176,38 @@ export async function POST(request: Request) {
               amountTotal: invoice.amount_paid,
               currency: invoice.currency,
               paymentStatus,
-              replyToEmail: emailAliases.commercial || emailAliases.billing,
+              replyToEmail: isFamilyInvoice ? emailAliases.billing : emailAliases.commercial || emailAliases.billing,
             });
             await requestRef.update({
-              commercialInvoicePaymentConfirmationEmailSent: true,
-              commercialInvoicePaymentConfirmationEmailSentAt: FieldValue.serverTimestamp(),
-              commercialInvoicePaymentConfirmationEmailError: "",
+              [customerFlag]: true,
+              [customerFlagAt]: FieldValue.serverTimestamp(),
+              [customerErrorField]: "",
             });
           } catch (error) {
-            console.error("Commercial invoice paid confirmation email failed", error);
+            console.error("Invoice paid confirmation email failed", error);
             await requestRef.update({
-              commercialInvoicePaymentConfirmationEmailSent: false,
-              commercialInvoicePaymentConfirmationEmailError: "Payment was recorded, but the NestHelper payment confirmation email failed.",
+              [customerFlag]: false,
+              [customerErrorField]: "Payment was recorded, but the NestHelper payment confirmation email failed.",
             });
           }
         }
 
-        if (!existingData.commercialInvoiceAdminPaymentEmailSent) {
+        const adminFlag = isFamilyInvoice ? "familyInvoiceAdminPaymentEmailSent" : "commercialInvoiceAdminPaymentEmailSent";
+        const adminFlagAt = isFamilyInvoice ? "familyInvoiceAdminPaymentEmailSentAt" : "commercialInvoiceAdminPaymentEmailSentAt";
+        const adminErrorField = isFamilyInvoice ? "familyInvoiceAdminPaymentEmailError" : "commercialInvoiceAdminPaymentEmailError";
+
+        if (!existingData[adminFlag]) {
           try {
-            const routedPaymentInbox = emailAliases.commercial || emailAliases.billing;
+            const routedPaymentInbox = isFamilyInvoice ? emailAliases.billing : emailAliases.commercial || emailAliases.billing;
             const result = await sendAdminEmail({
               subject: `Stripe Invoice Paid: ${serviceTitle}`,
-              title: "Commercial invoice paid — ready to schedule",
-              intro: "A customer paid a Commercial Reset Stripe invoice. The request is now marked Invoice Paid in the admin dashboard.",
+              title: isFamilyInvoice ? "Family invoice paid — ready to schedule" : "Commercial invoice paid — ready to schedule",
+              intro: isFamilyInvoice
+                ? "A customer paid a NestHelper family Stripe invoice. The request is now marked Invoice Paid in the admin dashboard."
+                : "A customer paid a Commercial Reset Stripe invoice. The request is now marked Invoice Paid in the admin dashboard.",
               adminPath: "/admin/requests",
               to: routedPaymentInbox,
-              routeLabel: "Commercial",
+              routeLabel: isFamilyInvoice ? "Family" : "Commercial",
               routedToText: routedPaymentInbox,
               rows: {
                 "Dashboard ID": requestId,
@@ -196,13 +220,13 @@ export async function POST(request: Request) {
               },
             });
             await requestRef.update({
-              commercialInvoiceAdminPaymentEmailSent: true,
-              commercialInvoiceAdminPaymentEmailSentAt: FieldValue.serverTimestamp(),
-              commercialInvoiceAdminPaymentEmailError: result && "error" in result && result.error ? String(result.error) : "",
+              [adminFlag]: true,
+              [adminFlagAt]: FieldValue.serverTimestamp(),
+              [adminErrorField]: result && "error" in result && result.error ? String(result.error) : "",
             });
           } catch (error) {
-            console.error("Commercial invoice admin alert failed", error);
-            await requestRef.update({ commercialInvoiceAdminPaymentEmailError: "Invoice was recorded, but the admin alert failed." });
+            console.error("Invoice admin alert failed", error);
+            await requestRef.update({ [adminErrorField]: "Invoice was recorded, but the admin alert failed." });
           }
         }
       }

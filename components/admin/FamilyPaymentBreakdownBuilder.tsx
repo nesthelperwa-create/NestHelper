@@ -25,11 +25,13 @@ type FamilyBreakdownBuilderProps = {
   onApplyAdditionalPayment: (payload: { amount: number; reason: string; note: string }) => void;
 };
 
-const PACKAGE_PRESETS = [
+type ButtonVariant = "primary" | "secondary" | "quiet" | "danger";
+
+const FAMILY_PRESETS = [
   {
     id: "parent-reset-standard",
     label: "2-Hour Parent Reset",
-    description: "One-time 2-hour Parent Reset package.",
+    description: "One-time 2-hour Parent Reset package based on the customer request.",
     unit: "flat",
     rate: "129",
     amount: "129",
@@ -37,7 +39,7 @@ const PACKAGE_PRESETS = [
   {
     id: "family-reset-standard",
     label: "3-Hour Family Reset",
-    description: "One-time 3-hour Family Reset package.",
+    description: "One-time 3-hour Family Reset package based on the customer request.",
     unit: "flat",
     rate: "179",
     amount: "179",
@@ -45,7 +47,7 @@ const PACKAGE_PRESETS = [
   {
     id: "helper-block-standard",
     label: "4-Hour Helper Block",
-    description: "One-time 4-hour Helper Block package.",
+    description: "One-time 4-hour Helper Block package based on the customer request.",
     unit: "flat",
     rate: "239",
     amount: "239",
@@ -53,7 +55,7 @@ const PACKAGE_PRESETS = [
   {
     id: "errand-helper-standard",
     label: "Errand Helper",
-    description: "Errand Helper base visit, before approved extra stops, mileage, reimbursements, or wait time.",
+    description: "Errand Helper base visit. Extra distance, complex stops, reimbursements, or wait time can be added separately after review.",
     unit: "flat",
     rate: "109",
     amount: "109",
@@ -61,31 +63,71 @@ const PACKAGE_PRESETS = [
   {
     id: "laundry-deposit-standard",
     label: "Laundry Rescue deposit / minimum",
-    description: "Laundry Rescue deposit or minimum. Final balance may be sent after dry weight, deposit credit, and add-ons are reviewed.",
+    description: "Laundry Rescue deposit or minimum. Deposit is credited toward the final total after dry weight, add-ons, bulky items, or approved changes are reviewed.",
     unit: "flat",
     rate: "59",
     amount: "59",
   },
   {
-    id: "extra-half-hour",
+    id: "laundry-final-weight",
+    label: "Laundry dry weight charge",
+    description: "Laundry final-balance calculation based on dry weight at pickup.",
+    unit: "lb",
+    rate: "2.99",
+    amount: "0",
+  },
+  {
+    id: "detergent-addon",
+    label: "Laundry detergent add-on",
+    description: "Approved baby/sensitive or fragrance-free detergent add-on.",
+    unit: "flat",
+    rate: "5",
+    amount: "5",
+  },
+  {
+    id: "low-heat-addon",
+    label: "Low heat dry add-on",
+    description: "Approved low-heat dry preference.",
+    unit: "flat",
+    rate: "3",
+    amount: "3",
+  },
+  {
+    id: "hang-dry-addon",
+    label: "Hang dry item add-on",
+    description: "Hang-dry handling. Final amount depends on item count and drying instructions.",
+    unit: "flat",
+    rate: "5",
+    amount: "5",
+  },
+  {
+    id: "rush-return-addon",
+    label: "Rush return add-on",
+    description: "Rush return when approved and available.",
+    unit: "flat",
+    rate: "15",
+    amount: "15",
+  },
+  {
+    id: "approved-extra-half-hour",
     label: "Approved extra 30 minutes",
-    description: "Approved extra time added to the original family service scope.",
+    description: "Approved extra time added to the family service scope.",
     unit: "half-hour",
     rate: "30",
     amount: "30",
   },
   {
-    id: "extra-hour",
+    id: "approved-extra-hour",
     label: "Approved extra hour",
-    description: "Approved extra time added to the original family service scope.",
+    description: "Approved extra time added to the family service scope.",
     unit: "hour",
     rate: "60",
     amount: "60",
   },
   {
-    id: "recurring-weekly-family",
-    label: "Recurring Family Reset visit",
-    description: "Per-visit recurring family service. Weekly or biweekly schedule confirmed after review.",
+    id: "recurring-family-visit",
+    label: "Recurring family reset visit",
+    description: "Per-visit amount for recurring weekly or biweekly family help. Schedule is confirmed by NestHelper.",
     unit: "visit",
     rate: "169",
     amount: "169",
@@ -97,6 +139,22 @@ const PACKAGE_PRESETS = [
     unit: "stop",
     rate: "15",
     amount: "15",
+  },
+  {
+    id: "errand-extra-mileage",
+    label: "Approved extra mileage / distance",
+    description: "Extra distance beyond the included errand mileage after review.",
+    unit: "mile",
+    rate: "1.50",
+    amount: "0",
+  },
+  {
+    id: "customer-credit",
+    label: "Customer credit / adjustment",
+    description: "Credit, discount, or courtesy adjustment entered below as a discount/credit amount.",
+    unit: "flat",
+    rate: "0",
+    amount: "0",
   },
   {
     id: "custom-approved-line",
@@ -121,8 +179,23 @@ function makeId() {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 }
 
+function getButtonClass(variant: ButtonVariant = "primary") {
+  const base = "inline-flex min-h-10 items-center justify-center gap-2 rounded-2xl px-4 py-2 text-xs font-black shadow-sm transition-all duration-150 focus:outline-none focus:ring-4 disabled:cursor-not-allowed disabled:opacity-55";
+  const variants: Record<ButtonVariant, string> = {
+    primary: "bg-[#075c58] text-white hover:-translate-y-0.5 hover:bg-[#064b48] focus:ring-[#075c58]/25 active:translate-y-0 active:scale-[0.99]",
+    secondary: "border-2 border-[#075c58] bg-white text-[#075c58] hover:-translate-y-0.5 hover:bg-[#f4ecdc] focus:ring-[#075c58]/20 active:translate-y-0 active:scale-[0.99]",
+    quiet: "border border-[#d8c18f] bg-white text-slate-700 hover:-translate-y-0.5 hover:border-[#075c58] hover:text-[#075c58] focus:ring-[#075c58]/15 active:translate-y-0 active:scale-[0.99]",
+    danger: "border border-red-200 bg-white text-red-700 hover:-translate-y-0.5 hover:bg-red-50 focus:ring-red-700/15 active:translate-y-0 active:scale-[0.99]",
+  };
+  return `${base} ${variants[variant]}`;
+}
+
+function BuilderSpinner() {
+  return <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" aria-hidden="true" />;
+}
+
 function getServiceLabel(item: AdminDoc) {
-  const raw = String(item.service || item.selectedServiceTitle || "").toLowerCase();
+  const raw = String(item.service || item.selectedServiceTitle || item.packageType || "").toLowerCase();
   if (raw.includes("laundry")) return "Laundry Rescue";
   if (raw.includes("errand")) return "Errand Helper";
   if (raw.includes("helper")) return "Helper Block";
@@ -132,7 +205,7 @@ function getServiceLabel(item: AdminDoc) {
 }
 
 function getSuggestedPresetId(item: AdminDoc) {
-  const raw = String(item.service || item.selectedServiceTitle || "").toLowerCase();
+  const raw = String(item.service || item.selectedServiceTitle || item.packageType || "").toLowerCase();
   if (raw.includes("laundry")) return "laundry-deposit-standard";
   if (raw.includes("errand")) return "errand-helper-standard";
   if (raw.includes("helper")) return "helper-block-standard";
@@ -140,8 +213,15 @@ function getSuggestedPresetId(item: AdminDoc) {
   return "parent-reset-standard";
 }
 
-function createLineFromPreset(presetId: string): FamilyLineItem {
-  const preset = PACKAGE_PRESETS.find((item) => item.id === presetId) || PACKAGE_PRESETS[0];
+function getDefaultPaymentPlan(item: AdminDoc) {
+  const raw = String(item.service || item.selectedServiceTitle || item.packageType || "").toLowerCase();
+  if (raw.includes("laundry")) return "Laundry Rescue deposit";
+  if (raw.includes("errand")) return "One-time errand helper";
+  return "One-time family service";
+}
+
+function createLineFromPreset(presetId: string, overrides: Partial<FamilyLineItem> = {}): FamilyLineItem {
+  const preset = FAMILY_PRESETS.find((item) => item.id === presetId) || FAMILY_PRESETS[0];
   return {
     id: makeId(),
     preset: preset.id,
@@ -152,6 +232,66 @@ function createLineFromPreset(presetId: string): FamilyLineItem {
     rate: preset.rate,
     amount: preset.amount,
     note: "",
+    ...overrides,
+  };
+}
+
+function createDefaultLinesFromRequest(item: AdminDoc): FamilyLineItem[] {
+  const lines: FamilyLineItem[] = [createLineFromPreset(getSuggestedPresetId(item))];
+  const service = String(item.service || item.selectedServiceTitle || item.packageType || "").toLowerCase();
+
+  if (service.includes("laundry")) {
+    const detergent = String(item.detergent || "").toLowerCase();
+    const dryer = String(item.dryPreference || "").toLowerCase();
+    const addOns = Array.isArray(item.laundryAddOns) ? item.laundryAddOns.map((value: unknown) => String(value)) : [];
+    if (detergent.includes("baby") || detergent.includes("sensitive") || detergent.includes("fragrance-free")) {
+      lines.push(createLineFromPreset("detergent-addon", { note: getString(item.detergent) }));
+    }
+    if (dryer.includes("low heat")) {
+      lines.push(createLineFromPreset("low-heat-addon", { note: getString(item.dryPreference) }));
+    }
+    if (addOns.some((value) => value.toLowerCase().includes("hang dry"))) {
+      lines.push(createLineFromPreset("hang-dry-addon", { note: "Customer selected hang-dry handling. Admin can adjust after review." }));
+    }
+    if (addOns.some((value) => value.toLowerCase().includes("rush"))) {
+      lines.push(createLineFromPreset("rush-return-addon", { note: "Rush return only when approved and available. Admin can adjust the amount." }));
+    }
+    if (addOns.some((value) => value.toLowerCase().includes("bulky"))) {
+      lines.push(createLineFromPreset("custom-approved-line", {
+        label: "Bulky laundry item review",
+        description: "Bulky items are reviewed and quoted separately before any additional charge.",
+        amount: "0",
+        rate: "0",
+        note: "Customer selected bulky items quoted separately.",
+      }));
+    }
+  }
+
+  if (service.includes("errand")) {
+    const distance = String(item.errandDistance || "").toLowerCase();
+    const stops = getString(item.errandStops);
+    if (distance.includes("more than 15")) {
+      lines.push(createLineFromPreset("errand-extra-mileage", { amount: "0", quantity: "0", note: "Customer selected more than 15 miles — quote before checkout." }));
+    }
+    if (stops.toLowerCase().includes("multiple")) {
+      lines.push(createLineFromPreset("errand-extra-stop", { amount: "0", quantity: "0", note: "Review the stop count before charging extra stops." }));
+    }
+  }
+
+  return lines;
+}
+
+function lineFromSaved(line: any): FamilyLineItem {
+  return {
+    id: getString(line.id) || makeId(),
+    preset: getString(line.preset) || "custom-approved-line",
+    label: getString(line.label) || "Custom approved line item",
+    description: getString(line.description),
+    quantity: getString(line.quantity) || "1",
+    unit: getString(line.unit) || "flat",
+    rate: getString(line.rate) || "0",
+    amount: getString(line.amount) || "0",
+    note: getString(line.note),
   };
 }
 
@@ -161,9 +301,15 @@ function calculateLineAmount(line: FamilyLineItem) {
   return Math.max(0, cleanNumber(line.quantity) * cleanNumber(line.rate));
 }
 
+function formatRate(rate: string) {
+  const value = cleanNumber(rate);
+  return Number.isFinite(value) ? `$${value.toFixed(value < 10 ? 2 : 0)}` : rate;
+}
+
 function formatQuantity(line: FamilyLineItem) {
-  if (line.unit === "flat") return "Flat amount";
-  return `${cleanNumber(line.quantity) || 0} ${line.unit}${cleanNumber(line.quantity) === 1 ? "" : "s"} × $${cleanNumber(line.rate).toFixed(2)}`;
+  if (line.unit === "flat") return "Flat approved amount";
+  const qty = cleanNumber(line.quantity);
+  return `${qty || 0} ${line.unit}${qty === 1 ? "" : "s"} × ${formatRate(line.rate)}`;
 }
 
 function buildCustomerBreakdownText({
@@ -211,10 +357,14 @@ function buildCustomerBreakdownText({
     laterAmount > 0 ? `Possible later/add-on amount: ${formatMoney(laterAmount)}` : "Possible later/add-on amount: None listed right now",
     customerNote ? `\nCustomer note: ${customerNote}` : "",
     "",
-    "Final timing, access, and service notes are confirmed by NestHelper before the visit. Any added work, route changes, laundry final balance, or extra time is reviewed before a separate payment link is sent.",
+    "This breakdown explains the amount being requested and keeps a record for NestHelper and the customer. Final timing, access, and service notes are confirmed before the visit. Added work, route changes, laundry final balance, or extra time may require a separate approved payment.",
   ]
     .filter((part) => part !== "")
     .join("\n");
+}
+
+function safeHtml(value: string) {
+  return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
 }
 
 export default function FamilyPaymentBreakdownBuilder({
@@ -226,31 +376,21 @@ export default function FamilyPaymentBreakdownBuilder({
 }: FamilyBreakdownBuilderProps) {
   const serviceLabel = getServiceLabel(item);
   const saved = (item.familyPaymentBreakdown || {}) as Record<string, any>;
+  const [open, setOpen] = useState(false);
+  const [dirty, setDirty] = useState(false);
   const [quoteTitle, setQuoteTitle] = useState(getString(saved.quoteTitle) || `${serviceLabel} payment breakdown`);
-  const [paymentPlan, setPaymentPlan] = useState(getString(saved.paymentPlan) || "One-time family service");
+  const [paymentPlan, setPaymentPlan] = useState(getString(saved.paymentPlan) || getDefaultPaymentPlan(item));
   const [selectedPreset, setSelectedPreset] = useState(getSuggestedPresetId(item));
   const [lineItems, setLineItems] = useState<FamilyLineItem[]>(
-    Array.isArray(saved.lineItems) && saved.lineItems.length
-      ? saved.lineItems.map((line: any) => ({
-          id: getString(line.id) || makeId(),
-          preset: getString(line.preset) || "custom-approved-line",
-          label: getString(line.label) || "Custom approved line item",
-          description: getString(line.description),
-          quantity: getString(line.quantity) || "1",
-          unit: getString(line.unit) || "flat",
-          rate: getString(line.rate) || "0",
-          amount: getString(line.amount) || "0",
-          note: getString(line.note),
-        }))
-      : [createLineFromPreset(getSuggestedPresetId(item))]
+    Array.isArray(saved.lineItems) && saved.lineItems.length ? saved.lineItems.map(lineFromSaved) : createDefaultLinesFromRequest(item)
   );
   const [discountCredit, setDiscountCredit] = useState(getString(saved.discountCredit) || "0");
   const [laterAmount, setLaterAmount] = useState(getString(saved.laterAmount) || "0");
   const [customerNote, setCustomerNote] = useState(
     getString(saved.customerNote) ||
       (String(item.service || "").includes("laundry")
-        ? "Laundry deposit/minimum is credited toward the final balance. A final balance link may be sent after dry weight, add-ons, bulky items, or approved changes are reviewed."
-        : "Any added time, errands, mileage, or scope changes are reviewed before a separate payment link is sent.")
+        ? "Laundry deposit/minimum is credited toward the final balance. A final balance invoice or payment link may be sent after dry weight, add-ons, bulky items, or approved changes are reviewed."
+        : "Any added time, errands, mileage, or scope changes are reviewed before a separate invoice or payment link is sent.")
   );
   const [internalNotes, setInternalNotes] = useState(getString(saved.internalNotes));
   const [refundStatus, setRefundStatus] = useState(getString(item.familyRefundTracking?.refundStatus) || "No refund due");
@@ -263,27 +403,19 @@ export default function FamilyPaymentBreakdownBuilder({
 
   useEffect(() => {
     const nextSaved = (item.familyPaymentBreakdown || {}) as Record<string, any>;
-    setQuoteTitle(getString(nextSaved.quoteTitle) || `${getServiceLabel(item)} payment breakdown`);
-    setPaymentPlan(getString(nextSaved.paymentPlan) || "One-time family service");
+    const nextServiceLabel = getServiceLabel(item);
+    setQuoteTitle(getString(nextSaved.quoteTitle) || `${nextServiceLabel} payment breakdown`);
+    setPaymentPlan(getString(nextSaved.paymentPlan) || getDefaultPaymentPlan(item));
     setSelectedPreset(getSuggestedPresetId(item));
-    setLineItems(
-      Array.isArray(nextSaved.lineItems) && nextSaved.lineItems.length
-        ? nextSaved.lineItems.map((line: any) => ({
-            id: getString(line.id) || makeId(),
-            preset: getString(line.preset) || "custom-approved-line",
-            label: getString(line.label) || "Custom approved line item",
-            description: getString(line.description),
-            quantity: getString(line.quantity) || "1",
-            unit: getString(line.unit) || "flat",
-            rate: getString(line.rate) || "0",
-            amount: getString(line.amount) || "0",
-            note: getString(line.note),
-          }))
-        : [createLineFromPreset(getSuggestedPresetId(item))]
-    );
+    setLineItems(Array.isArray(nextSaved.lineItems) && nextSaved.lineItems.length ? nextSaved.lineItems.map(lineFromSaved) : createDefaultLinesFromRequest(item));
     setDiscountCredit(getString(nextSaved.discountCredit) || "0");
     setLaterAmount(getString(nextSaved.laterAmount) || "0");
-    setCustomerNote(getString(nextSaved.customerNote) || "Any added time, errands, mileage, or scope changes are reviewed before a separate payment link is sent.");
+    setCustomerNote(
+      getString(nextSaved.customerNote) ||
+        (String(item.service || "").includes("laundry")
+          ? "Laundry deposit/minimum is credited toward the final balance. A final balance invoice or payment link may be sent after dry weight, add-ons, bulky items, or approved changes are reviewed."
+          : "Any added time, errands, mileage, or scope changes are reviewed before a separate invoice or payment link is sent.")
+    );
     setInternalNotes(getString(nextSaved.internalNotes));
     setRefundStatus(getString(item.familyRefundTracking?.refundStatus) || "No refund due");
     setRefundAmount(getString(item.familyRefundTracking?.refundAmount) || "0");
@@ -291,9 +423,10 @@ export default function FamilyPaymentBreakdownBuilder({
     setCustomerNotified(Boolean(item.familyRefundTracking?.customerNotified));
     setMessage("");
     setError("");
+    setDirty(false);
   }, [item.id]);
 
-  const subtotal = useMemo(() => lineItems.reduce((total, line) => total + calculateLineAmount(line), 0), [lineItems]);
+  const subtotal = useMemo(() => lineItems.reduce((sum, line) => sum + calculateLineAmount(line), 0), [lineItems]);
   const discount = Math.max(0, cleanNumber(discountCredit));
   const amountDueNow = Math.max(0, subtotal - discount);
   const possibleLaterAmount = Math.max(0, cleanNumber(laterAmount));
@@ -314,25 +447,49 @@ export default function FamilyPaymentBreakdownBuilder({
     [quoteTitle, serviceLabel, paymentPlan, lineItems, subtotal, discount, amountDueNow, possibleLaterAmount, customerNote, formatMoney]
   );
 
-  function addLineFromPreset() {
-    setLineItems((prev) => [...prev, createLineFromPreset(selectedPreset)]);
+  function markDirty() {
+    if (!dirty) setDirty(true);
   }
 
   function updateLine(id: string, updates: Partial<FamilyLineItem>) {
-    setLineItems((prev) => prev.map((line) => (line.id === id ? { ...line, ...updates } : line)));
+    markDirty();
+    setLineItems((prev) =>
+      prev.map((line) => {
+        if (line.id !== id) return line;
+        const next = { ...line, ...updates };
+        if (updates.quantity !== undefined || updates.rate !== undefined || updates.unit !== undefined) {
+          next.amount = next.unit === "flat" ? next.amount : String(calculateLineAmount(next));
+        }
+        return next;
+      })
+    );
+  }
+
+  function addLineFromPreset() {
+    markDirty();
+    setLineItems((prev) => [...prev, createLineFromPreset(selectedPreset)]);
+  }
+
+  function resetToCustomerSelections() {
+    if (!window.confirm("Replace current family payment lines with defaults from the customer request?")) return;
+    markDirty();
+    setLineItems(createDefaultLinesFromRequest(item));
+    setQuoteTitle(`${getServiceLabel(item)} payment breakdown`);
+    setPaymentPlan(getDefaultPaymentPlan(item));
   }
 
   function removeLine(id: string) {
-    setLineItems((prev) => (prev.length > 1 ? prev.filter((line) => line.id !== id) : prev));
+    markDirty();
+    setLineItems((prev) => prev.filter((line) => line.id !== id));
   }
 
   async function copyBreakdown() {
     await navigator.clipboard.writeText(customerBreakdownText);
-    setMessage("Family payment breakdown copied.");
+    setMessage("Family breakdown copied.");
   }
 
   function downloadBreakdown() {
-    const html = `<!doctype html><html><head><meta charset="utf-8"><title>${quoteTitle}</title><style>body{font-family:Arial,sans-serif;line-height:1.55;color:#233;padding:28px;max-width:760px;margin:0 auto;}h1{color:#075c58;}pre{white-space:pre-wrap;font-family:Arial,sans-serif;border:1px solid #eadfc8;background:#fbf6ea;border-radius:16px;padding:18px;}</style></head><body><h1>${quoteTitle}</h1><pre>${customerBreakdownText.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;")}</pre></body></html>`;
+    const html = `<!doctype html><html><head><meta charset="utf-8"><title>${safeHtml(quoteTitle)}</title><style>body{font-family:Arial,sans-serif;line-height:1.55;color:#233;padding:28px;}h1{color:#075c58;}pre{white-space:pre-wrap;font-family:Arial,sans-serif;border:1px solid #eadfc8;background:#fbf6ea;border-radius:16px;padding:18px;}</style></head><body><h1>${safeHtml(quoteTitle)}</h1><pre>${safeHtml(customerBreakdownText)}</pre></body></html>`;
     const blob = new Blob([html], { type: "text/html" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
@@ -345,22 +502,14 @@ export default function FamilyPaymentBreakdownBuilder({
   }
 
   function printBreakdown() {
-    const iframe = document.createElement("iframe");
-    iframe.style.position = "fixed";
-    iframe.style.right = "0";
-    iframe.style.bottom = "0";
-    iframe.style.width = "0";
-    iframe.style.height = "0";
-    iframe.style.border = "0";
-    document.body.appendChild(iframe);
-    const doc = iframe.contentWindow?.document;
-    if (!doc) return;
-    doc.open();
-    doc.write(`<!doctype html><html><head><meta charset="utf-8"><title>${quoteTitle}</title><style>body{font-family:Arial,sans-serif;line-height:1.55;color:#233;padding:28px;}h1{color:#075c58;}pre{white-space:pre-wrap;font-family:Arial,sans-serif;border:1px solid #eadfc8;background:#fbf6ea;border-radius:16px;padding:18px;}</style></head><body><h1>${quoteTitle}</h1><pre>${customerBreakdownText.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;")}</pre></body></html>`);
-    doc.close();
-    iframe.contentWindow?.focus();
-    iframe.contentWindow?.print();
-    window.setTimeout(() => iframe.remove(), 1000);
+    const printWindow = window.open("", "_blank", "width=900,height=700");
+    if (!printWindow) {
+      setError("Unable to open print preview. Use Download, then print the downloaded breakdown.");
+      return;
+    }
+    printWindow.document.open();
+    printWindow.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${safeHtml(quoteTitle)}</title><style>body{font-family:Arial,sans-serif;line-height:1.55;color:#233;padding:28px;}h1{color:#075c58;}pre{white-space:pre-wrap;font-family:Arial,sans-serif;border:1px solid #eadfc8;background:#fbf6ea;border-radius:16px;padding:18px;}</style></head><body><h1>${safeHtml(quoteTitle)}</h1><pre>${safeHtml(customerBreakdownText)}</pre><script>window.onload=function(){window.focus();window.print();};</script></body></html>`);
+    printWindow.document.close();
   }
 
   async function saveDraft() {
@@ -428,6 +577,7 @@ export default function FamilyPaymentBreakdownBuilder({
         },
       };
       onSaved(updates);
+      setDirty(false);
       setMessage("Family payment breakdown saved.");
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : "Unable to save family payment breakdown.");
@@ -436,182 +586,225 @@ export default function FamilyPaymentBreakdownBuilder({
     }
   }
 
+  function attemptClose() {
+    if (dirty && !window.confirm("You have unsaved family breakdown changes. Close without saving?")) return;
+    setOpen(false);
+  }
+
   return (
     <div className="mb-5 rounded-3xl border border-[#eadfc8] bg-[#fbf6ea] p-5 shadow-sm">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="max-w-3xl">
-          <p className="text-xs font-black uppercase tracking-[0.2em] text-[#b98a2f]">Family payment breakdown</p>
-          <h4 className="mt-1 text-xl font-black text-[#075c58]">Simple quote/payment builder for family requests</h4>
+          <p className="text-xs font-black uppercase tracking-[0.2em] text-[#b98a2f]">Family payment / invoice builder</p>
+          <h4 className="mt-1 text-xl font-black text-[#075c58]">Simple breakdown for family requests</h4>
           <p className="mt-2 text-sm leading-6 text-slate-700">
-            Use this when the customer needs a clear payment summary, a custom approved amount, recurring family help estimate, Laundry Rescue deposit/final-balance note, or refund/credit tracking. It is intentionally simpler than Commercial Reset.
+            Use this to explain the amount to the customer, create a saved record for NestHelper, customize package/add-on lines, and support checkout or Stripe invoice payments if questions come up later.
           </p>
         </div>
-        <div className="rounded-2xl bg-white px-4 py-3 text-sm font-black text-[#075c58] shadow-sm">
-          Amount due now: {formatMoney(amountDueNow)}
+        <div className="flex flex-col gap-2 sm:flex-row lg:flex-col">
+          <div className="rounded-2xl bg-white px-4 py-3 text-sm font-black text-[#075c58] shadow-sm">Amount due now: {formatMoney(amountDueNow)}</div>
+          <button type="button" onClick={() => setOpen(true)} className={getButtonClass("primary")}>Open family builder</button>
         </div>
-      </div>
-
-      <div className="mt-4 grid gap-3 md:grid-cols-2">
-        <label className="grid gap-2 text-sm font-bold text-slate-700">
-          Breakdown title
-          <input value={quoteTitle} onChange={(e) => setQuoteTitle(e.target.value)} className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]" />
-        </label>
-        <label className="grid gap-2 text-sm font-bold text-slate-700">
-          Payment type
-          <select value={paymentPlan} onChange={(e) => setPaymentPlan(e.target.value)} className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-bold text-[#075c58] outline-none focus:border-[#075c58]">
-            <option>One-time family service</option>
-            <option>Recurring weekly family service</option>
-            <option>Recurring every 2 weeks</option>
-            <option>Laundry Rescue deposit</option>
-            <option>Laundry final balance</option>
-            <option>Custom approved family payment</option>
-            <option>Refund / credit record</option>
-          </select>
-        </label>
-      </div>
-
-      <div className="mt-4 rounded-3xl border border-[#eadfc8] bg-white p-4">
-        <div className="flex flex-col gap-3 md:flex-row md:items-end">
-          <label className="grid flex-1 gap-2 text-sm font-bold text-slate-700">
-            Add line item
-            <select value={selectedPreset} onChange={(e) => setSelectedPreset(e.target.value)} className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-bold text-[#075c58] outline-none focus:border-[#075c58]">
-              {PACKAGE_PRESETS.map((preset) => <option key={preset.id} value={preset.id}>{preset.label}</option>)}
-            </select>
-          </label>
-          <button type="button" onClick={addLineFromPreset} className="min-h-11 rounded-2xl bg-[#075c58] px-5 py-3 text-sm font-black text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-[#064b48]">Add line</button>
-        </div>
-
-        <div className="mt-4 space-y-3">
-          {lineItems.map((line, index) => {
-            const amount = calculateLineAmount(line);
-            return (
-              <div key={line.id} className="rounded-3xl border border-[#eadfc8] bg-[#fbf6ea] p-4">
-                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                  <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Line {index + 1}</p>
-                  <div className="flex flex-wrap gap-2">
-                    <span className="rounded-full bg-white px-3 py-1 text-xs font-black text-[#075c58]">{formatMoney(amount)}</span>
-                    <button type="button" onClick={() => removeLine(line.id)} className="rounded-full border border-red-200 bg-white px-3 py-1 text-xs font-black text-red-700">Remove</button>
-                  </div>
-                </div>
-                <div className="mt-3 grid gap-3 lg:grid-cols-2">
-                  <label className="grid gap-2 text-sm font-bold text-slate-700">
-                    Customer-facing line title
-                    <input value={line.label} onChange={(e) => updateLine(line.id, { label: e.target.value })} className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]" />
-                  </label>
-                  <label className="grid gap-2 text-sm font-bold text-slate-700">
-                    Description
-                    <input value={line.description} onChange={(e) => updateLine(line.id, { description: e.target.value })} className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]" />
-                  </label>
-                </div>
-                <div className="mt-3 grid gap-3 md:grid-cols-4">
-                  <label className="grid gap-2 text-sm font-bold text-slate-700">
-                    Qty
-                    <input value={line.quantity} onChange={(e) => updateLine(line.id, { quantity: e.target.value })} inputMode="decimal" className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]" />
-                  </label>
-                  <label className="grid gap-2 text-sm font-bold text-slate-700">
-                    Unit
-                    <select value={line.unit} onChange={(e) => updateLine(line.id, { unit: e.target.value })} className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-bold text-[#075c58] outline-none focus:border-[#075c58]">
-                      <option>flat</option>
-                      <option>hour</option>
-                      <option>half-hour</option>
-                      <option>visit</option>
-                      <option>stop</option>
-                      <option>mile</option>
-                      <option>lb</option>
-                    </select>
-                  </label>
-                  <label className="grid gap-2 text-sm font-bold text-slate-700">
-                    Rate
-                    <input value={line.rate} onChange={(e) => updateLine(line.id, { rate: e.target.value })} inputMode="decimal" className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]" />
-                  </label>
-                  <label className="grid gap-2 text-sm font-bold text-slate-700">
-                    Flat amount
-                    <input value={line.amount} onChange={(e) => updateLine(line.id, { amount: e.target.value })} inputMode="decimal" disabled={line.unit !== "flat"} className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm outline-none disabled:bg-slate-100 disabled:text-slate-400 focus:border-[#075c58]" />
-                  </label>
-                </div>
-                <label className="mt-3 grid gap-2 text-sm font-bold text-slate-700">
-                  Optional line note
-                  <input value={line.note} onChange={(e) => updateLine(line.id, { note: e.target.value })} placeholder="Example: Customer approved by text; final timing still needs confirmation." className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]" />
-                </label>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      <div className="mt-4 grid gap-3 md:grid-cols-3">
-        <label className="grid gap-2 text-sm font-bold text-slate-700">
-          Discount / credit
-          <input value={discountCredit} onChange={(e) => setDiscountCredit(e.target.value)} inputMode="decimal" className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]" />
-        </label>
-        <label className="grid gap-2 text-sm font-bold text-slate-700">
-          Possible later/add-on amount
-          <input value={laterAmount} onChange={(e) => setLaterAmount(e.target.value)} inputMode="decimal" className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]" />
-        </label>
-        <div className="rounded-2xl border border-[#d8c18f] bg-white p-4 text-sm font-black text-[#075c58]">
-          <p>Subtotal: {formatMoney(subtotal)}</p>
-          <p>Due now: {formatMoney(amountDueNow)}</p>
-          {possibleLaterAmount > 0 && <p>Later/add-on: {formatMoney(possibleLaterAmount)}</p>}
-        </div>
-      </div>
-
-      <label className="mt-4 grid gap-2 text-sm font-bold text-slate-700">
-        Customer note
-        <textarea value={customerNote} onChange={(e) => setCustomerNote(e.target.value)} rows={3} className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]" />
-      </label>
-
-      <label className="mt-3 grid gap-2 text-sm font-bold text-slate-700">
-        Private admin notes
-        <textarea value={internalNotes} onChange={(e) => setInternalNotes(e.target.value)} rows={2} placeholder="Private notes. Not shown to customer." className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]" />
-      </label>
-
-      <div className="mt-4 rounded-3xl border border-red-100 bg-white p-4">
-        <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Refund / credit tracking</p>
-        <div className="mt-3 grid gap-3 md:grid-cols-2 lg:grid-cols-4">
-          <label className="grid gap-2 text-sm font-bold text-slate-700">
-            Refund status
-            <select value={refundStatus} onChange={(e) => setRefundStatus(e.target.value)} className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-bold text-[#075c58] outline-none focus:border-[#075c58]">
-              <option>No refund due</option>
-              <option>Full refund due</option>
-              <option>Partial refund due</option>
-              <option>Refund issued</option>
-              <option>Credit toward next visit</option>
-            </select>
-          </label>
-          <label className="grid gap-2 text-sm font-bold text-slate-700">
-            Refund / credit amount
-            <input value={refundAmount} onChange={(e) => setRefundAmount(e.target.value)} inputMode="decimal" className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]" />
-          </label>
-          <label className="grid gap-2 text-sm font-bold text-slate-700 lg:col-span-2">
-            Reason
-            <input value={refundReason} onChange={(e) => setRefundReason(e.target.value)} placeholder="Example: Customer overpaid final laundry balance." className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]" />
-          </label>
-        </div>
-        <label className="mt-3 flex items-center gap-3 rounded-2xl bg-[#fbf6ea] px-4 py-3 text-sm font-bold text-slate-700">
-          <input type="checkbox" checked={customerNotified} onChange={(e) => setCustomerNotified(e.target.checked)} className="h-5 w-5 rounded border-[#075c58] accent-[#075c58]" />
-          Customer has been notified about the refund/credit.
-        </label>
-      </div>
-
-      <div className="mt-4 rounded-3xl border border-[#eadfc8] bg-white p-4">
-        <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Customer-facing preview</p>
-        <pre className="mt-3 max-h-72 overflow-auto whitespace-pre-wrap rounded-2xl bg-[#fbf6ea] p-4 text-xs leading-5 text-slate-700">{customerBreakdownText}</pre>
-      </div>
-
-      <div className="mt-4 flex flex-wrap gap-3">
-        <button type="button" disabled={saving} onClick={saveDraft} className="min-h-11 rounded-2xl bg-[#075c58] px-5 py-3 text-sm font-black text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-[#064b48] disabled:opacity-55">
-          {saving ? "Saving..." : "Save family breakdown"}
-        </button>
-        <button type="button" onClick={copyBreakdown} className="min-h-11 rounded-2xl border-2 border-[#075c58] bg-white px-5 py-3 text-sm font-black text-[#075c58] transition hover:bg-[#f4ecdc]">Copy</button>
-        <button type="button" onClick={downloadBreakdown} className="min-h-11 rounded-2xl border border-[#d8c18f] bg-white px-5 py-3 text-sm font-black text-slate-700 transition hover:border-[#075c58] hover:text-[#075c58]">Download</button>
-        <button type="button" onClick={printBreakdown} className="min-h-11 rounded-2xl border border-[#d8c18f] bg-white px-5 py-3 text-sm font-black text-slate-700 transition hover:border-[#075c58] hover:text-[#075c58]">Print</button>
-        <button type="button" onClick={() => onApplyCheckout({ amount: amountDueNow, title: quoteTitle || `${serviceLabel} approved payment`, note: customerNote })} className="min-h-11 rounded-2xl bg-emerald-700 px-5 py-3 text-sm font-black text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-emerald-800">Use due now for custom checkout</button>
-        {possibleLaterAmount > 0 && (
-          <button type="button" onClick={() => onApplyAdditionalPayment({ amount: possibleLaterAmount, reason: "Additional approved family balance", note: customerNote })} className="min-h-11 rounded-2xl border-2 border-emerald-700 bg-white px-5 py-3 text-sm font-black text-emerald-700 transition hover:bg-emerald-50">Use later amount for additional link</button>
-        )}
       </div>
       {message && <p className="mt-3 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">{message}</p>}
       {error && <p className="mt-3 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{error}</p>}
+
+      {open && (
+        <div className="fixed inset-0 z-[70] overflow-y-auto bg-slate-950/70 p-3 sm:p-6" onClick={(e) => e.stopPropagation()}>
+          <div className="mx-auto max-w-6xl rounded-[2rem] bg-white shadow-2xl" role="dialog" aria-modal="true" aria-label="Family payment breakdown builder">
+            <div className="sticky top-0 z-10 rounded-t-[2rem] border-b border-[#eadfc8] bg-white/95 p-4 backdrop-blur sm:p-5">
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[0.2em] text-[#b98a2f]">Family Payment Breakdown Builder</p>
+                  <h3 className="mt-1 text-2xl font-black text-[#075c58]">{serviceLabel}</h3>
+                  <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-700">This is the family-side version of the Commercial builder. It defaults from the customer’s selected package and add-ons, but every line can be edited before saving, sending checkout, or creating a Stripe invoice.</p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <button type="button" onClick={saveDraft} disabled={saving} className={getButtonClass("primary")}>{saving ? <><BuilderSpinner /> Saving...</> : "Save draft"}</button>
+                  <button type="button" onClick={attemptClose} className={getButtonClass("quiet")}>Close</button>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid gap-5 p-4 sm:p-5 lg:grid-cols-[1.25fr_0.75fr]">
+              <div className="space-y-5">
+                <div className="rounded-3xl border border-[#eadfc8] bg-[#fbf6ea] p-4">
+                  <div className="grid gap-3 md:grid-cols-2">
+                    <label className="grid gap-2 text-sm font-bold text-slate-700">
+                      Breakdown title
+                      <input value={quoteTitle} onChange={(e) => { markDirty(); setQuoteTitle(e.target.value); }} className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]" />
+                    </label>
+                    <label className="grid gap-2 text-sm font-bold text-slate-700">
+                      Payment type
+                      <select value={paymentPlan} onChange={(e) => { markDirty(); setPaymentPlan(e.target.value); }} className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-bold text-[#075c58] outline-none focus:border-[#075c58]">
+                        <option>One-time family service</option>
+                        <option>Recurring weekly family service</option>
+                        <option>Recurring every 2 weeks</option>
+                        <option>Laundry Rescue deposit</option>
+                        <option>Laundry final balance</option>
+                        <option>Custom approved family payment</option>
+                        <option>Refund / credit record</option>
+                      </select>
+                    </label>
+                  </div>
+                </div>
+
+                <div className="rounded-3xl border border-[#eadfc8] bg-white p-4">
+                  <div className="flex flex-col gap-3 md:flex-row md:items-end">
+                    <label className="grid flex-1 gap-2 text-sm font-bold text-slate-700">
+                      Add line item
+                      <select value={selectedPreset} onChange={(e) => setSelectedPreset(e.target.value)} className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-bold text-[#075c58] outline-none focus:border-[#075c58]">
+                        {FAMILY_PRESETS.map((preset) => <option key={preset.id} value={preset.id}>{preset.label}</option>)}
+                      </select>
+                    </label>
+                    <button type="button" onClick={addLineFromPreset} className={getButtonClass("primary")}>Add line</button>
+                    <button type="button" onClick={resetToCustomerSelections} className={getButtonClass("quiet")}>Reset from request</button>
+                  </div>
+
+                  <div className="mt-4 space-y-3">
+                    {lineItems.map((line, index) => {
+                      const amount = calculateLineAmount(line);
+                      return (
+                        <div key={line.id} className="rounded-3xl border border-[#eadfc8] bg-[#fbf6ea] p-4">
+                          <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                            <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Line {index + 1}</p>
+                            <div className="flex flex-wrap gap-2">
+                              <span className="rounded-full bg-white px-3 py-1 text-xs font-black text-[#075c58]">{formatMoney(amount)}</span>
+                              <button type="button" onClick={() => removeLine(line.id)} className={getButtonClass("danger")}>Remove</button>
+                            </div>
+                          </div>
+                          <div className="mt-3 grid gap-3 lg:grid-cols-2">
+                            <label className="grid gap-2 text-sm font-bold text-slate-700">
+                              Customer-facing line title
+                              <input value={line.label} onChange={(e) => updateLine(line.id, { label: e.target.value })} className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]" />
+                            </label>
+                            <label className="grid gap-2 text-sm font-bold text-slate-700">
+                              Description
+                              <input value={line.description} onChange={(e) => updateLine(line.id, { description: e.target.value })} className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]" />
+                            </label>
+                          </div>
+                          <div className="mt-3 grid gap-3 md:grid-cols-4">
+                            <label className="grid gap-2 text-sm font-bold text-slate-700">
+                              Qty
+                              <input value={line.quantity} onChange={(e) => updateLine(line.id, { quantity: e.target.value })} inputMode="decimal" className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]" />
+                            </label>
+                            <label className="grid gap-2 text-sm font-bold text-slate-700">
+                              Unit
+                              <select value={line.unit} onChange={(e) => updateLine(line.id, { unit: e.target.value })} className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-bold text-[#075c58] outline-none focus:border-[#075c58]">
+                                <option>flat</option>
+                                <option>hour</option>
+                                <option>half-hour</option>
+                                <option>visit</option>
+                                <option>stop</option>
+                                <option>mile</option>
+                                <option>lb</option>
+                              </select>
+                            </label>
+                            <label className="grid gap-2 text-sm font-bold text-slate-700">
+                              Rate
+                              <input value={line.rate} onChange={(e) => updateLine(line.id, { rate: e.target.value })} inputMode="decimal" className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]" />
+                            </label>
+                            <label className="grid gap-2 text-sm font-bold text-slate-700">
+                              Flat amount
+                              <input value={line.amount} onChange={(e) => updateLine(line.id, { amount: e.target.value })} inputMode="decimal" disabled={line.unit !== "flat"} className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm outline-none disabled:bg-slate-100 disabled:text-slate-500 focus:border-[#075c58]" />
+                            </label>
+                          </div>
+                          <label className="mt-3 grid gap-2 text-sm font-bold text-slate-700">
+                            Optional line note
+                            <input value={line.note} onChange={(e) => updateLine(line.id, { note: e.target.value })} placeholder="Example: customer requested fragrance-free detergent, extra stop reviewed, final laundry balance may be separate" className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]" />
+                          </label>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="grid gap-3 md:grid-cols-2">
+                  <label className="grid gap-2 rounded-3xl border border-[#eadfc8] bg-white p-4 text-sm font-bold text-slate-700">
+                    Discount / credit
+                    <input value={discountCredit} onChange={(e) => { markDirty(); setDiscountCredit(e.target.value); }} inputMode="decimal" className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]" />
+                  </label>
+                  <label className="grid gap-2 rounded-3xl border border-[#eadfc8] bg-white p-4 text-sm font-bold text-slate-700">
+                    Possible later/add-on amount
+                    <input value={laterAmount} onChange={(e) => { markDirty(); setLaterAmount(e.target.value); }} inputMode="decimal" className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]" />
+                  </label>
+                </div>
+
+                <div className="rounded-3xl border border-[#eadfc8] bg-white p-4">
+                  <label className="grid gap-2 text-sm font-bold text-slate-700">
+                    Customer note
+                    <textarea value={customerNote} onChange={(e) => { markDirty(); setCustomerNote(e.target.value); }} rows={3} className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]" />
+                  </label>
+                  <label className="mt-3 grid gap-2 text-sm font-bold text-slate-700">
+                    Private admin notes
+                    <textarea value={internalNotes} onChange={(e) => { markDirty(); setInternalNotes(e.target.value); }} rows={3} placeholder="Private notes for NestHelper only." className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]" />
+                  </label>
+                </div>
+
+                <div className="rounded-3xl border border-red-100 bg-red-50/60 p-4">
+                  <p className="text-xs font-black uppercase tracking-[0.16em] text-red-700">Refund / credit tracking</p>
+                  <div className="mt-3 grid gap-3 md:grid-cols-2">
+                    <label className="grid gap-2 text-sm font-bold text-slate-700">
+                      Refund status
+                      <select value={refundStatus} onChange={(e) => { markDirty(); setRefundStatus(e.target.value); }} className="rounded-2xl border border-red-100 bg-white px-4 py-3 text-sm font-bold text-red-700 outline-none focus:border-red-400">
+                        <option>No refund due</option>
+                        <option>Refund review needed</option>
+                        <option>Partial refund issued</option>
+                        <option>Full refund issued</option>
+                        <option>Credit toward next visit</option>
+                      </select>
+                    </label>
+                    <label className="grid gap-2 text-sm font-bold text-slate-700">
+                      Refund / credit amount
+                      <input value={refundAmount} onChange={(e) => { markDirty(); setRefundAmount(e.target.value); }} inputMode="decimal" className="rounded-2xl border border-red-100 bg-white px-4 py-3 text-sm outline-none focus:border-red-400" />
+                    </label>
+                  </div>
+                  <label className="mt-3 grid gap-2 text-sm font-bold text-slate-700">
+                    Refund / credit reason
+                    <input value={refundReason} onChange={(e) => { markDirty(); setRefundReason(e.target.value); }} className="rounded-2xl border border-red-100 bg-white px-4 py-3 text-sm outline-none focus:border-red-400" />
+                  </label>
+                  <label className="mt-3 flex gap-3 rounded-2xl bg-white p-3 text-sm font-bold text-slate-700">
+                    <input type="checkbox" checked={customerNotified} onChange={(e) => { markDirty(); setCustomerNotified(e.target.checked); }} className="mt-1 h-4 w-4 accent-[#075c58]" />
+                    Customer notified about refund / credit
+                  </label>
+                </div>
+              </div>
+
+              <aside className="space-y-4">
+                <div className="rounded-3xl border border-[#075c58]/20 bg-[#075c58] p-5 text-white shadow-sm">
+                  <p className="text-xs font-black uppercase tracking-[0.18em] text-[#f1c96b]">Calculated total</p>
+                  <div className="mt-3 space-y-2 text-sm font-bold">
+                    <div className="flex justify-between gap-3"><span>Subtotal</span><span>{formatMoney(subtotal)}</span></div>
+                    <div className="flex justify-between gap-3"><span>Discount / credit</span><span>-{formatMoney(discount)}</span></div>
+                    <div className="border-t border-white/20 pt-3 text-lg flex justify-between gap-3"><span>Due now</span><span>{formatMoney(amountDueNow)}</span></div>
+                    <div className="flex justify-between gap-3 text-white/80"><span>Later/add-on</span><span>{formatMoney(possibleLaterAmount)}</span></div>
+                  </div>
+                </div>
+
+                <div className="rounded-3xl border border-[#eadfc8] bg-[#fbf6ea] p-4">
+                  <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Customer-facing breakdown</p>
+                  <pre className="mt-3 max-h-[480px] overflow-auto whitespace-pre-wrap rounded-2xl bg-white p-4 text-xs leading-5 text-slate-700">{customerBreakdownText}</pre>
+                  <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                    <button type="button" onClick={copyBreakdown} className={getButtonClass("secondary")}>Copy</button>
+                    <button type="button" onClick={downloadBreakdown} className={getButtonClass("quiet")}>Download</button>
+                    <button type="button" onClick={printBreakdown} className={getButtonClass("quiet")}>Print</button>
+                    <button type="button" onClick={() => onApplyCheckout({ amount: amountDueNow, title: quoteTitle, note: customerNote })} className={getButtonClass("primary")}>Fill checkout amount</button>
+                    <button type="button" onClick={() => onApplyAdditionalPayment({ amount: possibleLaterAmount, reason: "Family approved add-on / balance", note: customerNote })} className={getButtonClass("quiet")}>Fill add-on amount</button>
+                  </div>
+                </div>
+
+                <div className="rounded-3xl border border-[#eadfc8] bg-white p-4">
+                  <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Save before sending</p>
+                  <p className="mt-2 text-sm leading-6 text-slate-700">Save the draft before creating a family Stripe invoice or including the breakdown in a checkout email. The saved breakdown becomes the customer-facing record.</p>
+                  <button type="button" onClick={saveDraft} disabled={saving} className={`${getButtonClass("primary")} mt-3 w-full`}>{saving ? <><BuilderSpinner /> Saving...</> : "Save family breakdown"}</button>
+                  {message && <p className="mt-3 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">{message}</p>}
+                  {error && <p className="mt-3 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{error}</p>}
+                </div>
+              </aside>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
