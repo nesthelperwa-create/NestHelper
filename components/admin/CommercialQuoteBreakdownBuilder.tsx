@@ -12,6 +12,8 @@ export type QuoteLineItem = {
   unit: string;
   rate: string;
   minimum: string;
+  multiplier: string;
+  multiplierLabel: string;
   recurring: boolean;
   note: string;
 };
@@ -29,22 +31,26 @@ type QuoteBuilderProps = {
 const LINE_PRESETS: Record<string, Omit<QuoteLineItem, "id" | "note">> = {
   routineVisit: {
     preset: "routineVisit",
-    label: "Routine Commercial Reset visit",
-    description: "Routine business cleaning visit based on reviewed scope.",
-    quantity: "1",
-    unit: "visit",
-    rate: "175",
+    label: "Routine Commercial Reset — by sq ft",
+    description: "Routine business cleaning calculated from reviewed square footage and selected rate, with a minimum visit charge.",
+    quantity: "1000",
+    unit: "sq ft",
+    rate: "0.18",
     minimum: "175",
+    multiplier: "1",
+    multiplierLabel: "visit",
     recurring: false,
   },
   recurringMonthly: {
     preset: "recurringMonthly",
-    label: "Recurring Commercial Reset plan",
-    description: "Monthly recurring service plan based on approved frequency and scope.",
-    quantity: "1",
-    unit: "month",
-    rate: "499",
+    label: "Recurring Commercial Reset — monthly by sq ft",
+    description: "Monthly plan calculated from reviewed square footage, per-visit sq ft rate, and expected visits per month, with a monthly minimum.",
+    quantity: "1000",
+    unit: "sq ft",
+    rate: "0.18",
     minimum: "499",
+    multiplier: "4.33",
+    multiplierLabel: "visits/month",
     recurring: true,
   },
   laborHours: {
@@ -55,6 +61,8 @@ const LINE_PRESETS: Record<string, Omit<QuoteLineItem, "id" | "note">> = {
     unit: "hour",
     rate: "85",
     minimum: "75",
+    multiplier: "1",
+    multiplierLabel: "hour",
     recurring: false,
   },
   firstTimeReset: {
@@ -65,6 +73,8 @@ const LINE_PRESETS: Record<string, Omit<QuoteLineItem, "id" | "note">> = {
     unit: "sq ft",
     rate: "0.35",
     minimum: "249",
+    multiplier: "1",
+    multiplierLabel: "service",
     recurring: false,
   },
   carpetDeepCleaning: {
@@ -75,6 +85,8 @@ const LINE_PRESETS: Record<string, Omit<QuoteLineItem, "id" | "note">> = {
     unit: "carpet sq ft",
     rate: "0.50",
     minimum: "249",
+    multiplier: "1",
+    multiplierLabel: "service",
     recurring: false,
   },
   spotTreatment: {
@@ -85,6 +97,8 @@ const LINE_PRESETS: Record<string, Omit<QuoteLineItem, "id" | "note">> = {
     unit: "area",
     rate: "45",
     minimum: "25",
+    multiplier: "1",
+    multiplierLabel: "area",
     recurring: false,
   },
   floorScrub: {
@@ -95,6 +109,8 @@ const LINE_PRESETS: Record<string, Omit<QuoteLineItem, "id" | "note">> = {
     unit: "hard-floor sq ft",
     rate: "0.45",
     minimum: "0",
+    multiplier: "1",
+    multiplierLabel: "service",
     recurring: false,
   },
   buffShine: {
@@ -105,6 +121,8 @@ const LINE_PRESETS: Record<string, Omit<QuoteLineItem, "id" | "note">> = {
     unit: "hard-floor sq ft",
     rate: "0.70",
     minimum: "0",
+    multiplier: "1",
+    multiplierLabel: "service",
     recurring: false,
   },
   waxFinish: {
@@ -115,6 +133,8 @@ const LINE_PRESETS: Record<string, Omit<QuoteLineItem, "id" | "note">> = {
     unit: "hard-floor sq ft",
     rate: "1.00",
     minimum: "299",
+    multiplier: "1",
+    multiplierLabel: "service",
     recurring: false,
   },
   stripWax: {
@@ -125,6 +145,8 @@ const LINE_PRESETS: Record<string, Omit<QuoteLineItem, "id" | "note">> = {
     unit: "hard-floor sq ft",
     rate: "2.10",
     minimum: "499",
+    multiplier: "1",
+    multiplierLabel: "service",
     recurring: false,
   },
   turnover: {
@@ -135,6 +157,8 @@ const LINE_PRESETS: Record<string, Omit<QuoteLineItem, "id" | "note">> = {
     unit: "turnover",
     rate: "129",
     minimum: "129",
+    multiplier: "1",
+    multiplierLabel: "turnover",
     recurring: false,
   },
   linenRestock: {
@@ -145,6 +169,8 @@ const LINE_PRESETS: Record<string, Omit<QuoteLineItem, "id" | "note">> = {
     unit: "set",
     rate: "25",
     minimum: "0",
+    multiplier: "1",
+    multiplierLabel: "service",
     recurring: false,
   },
   customFlat: {
@@ -155,6 +181,8 @@ const LINE_PRESETS: Record<string, Omit<QuoteLineItem, "id" | "note">> = {
     unit: "flat",
     rate: "0",
     minimum: "0",
+    multiplier: "1",
+    multiplierLabel: "service",
     recurring: false,
   },
 };
@@ -176,9 +204,54 @@ const PRESET_ORDER = [
 ];
 
 const QUOTE_STATUSES = ["Quote drafted", "Quote sent", "Quote approved", "Initial paid", "Additional sent", "Additional paid", "Completed"];
-const QUOTE_TYPES = ["Flat visit quote", "Recurring monthly plan", "Reviewed price range", "Add-on quote", "Short-term rental turnover"];
+const QUOTE_TYPES = ["Sq-ft visit quote", "Sq-ft recurring monthly plan", "Flat visit quote", "Reviewed price range", "Add-on quote", "Short-term rental turnover"];
 const REFUND_STATUSES = ["No refund due", "Reviewing refund", "Partial refund due", "Full refund due", "Partial refund issued", "Full refund issued", "Credit offered"];
 const REFUND_REASONS = ["Service canceled", "Customer overpaid", "Add-on removed", "Partial service completed", "Service issue / make-it-right", "Duplicate payment", "Laundry or balance adjustment", "Other"];
+
+function getSubmittedSqFtValue(item: AdminDoc) {
+  const raw = String(item.squareFootage || item.squareFeet || item.sqFt || item.spaceSize || "");
+  if (!raw || raw.toLowerCase().includes("not sure")) return "1000";
+  const normalized = raw.replace(/,/g, "");
+  if (/under\s*750/i.test(normalized)) return "750";
+  const matches = normalized.match(/\d+(?:\.\d+)?/g);
+  if (!matches?.length) return "1000";
+  if (/over/i.test(normalized)) return matches[matches.length - 1];
+  return matches[matches.length - 1];
+}
+
+function getSuggestedRoutineRate(item: AdminDoc) {
+  const frequency = String(item.frequency || item.serviceFrequency || "").toLowerCase();
+  const condition = String(item.spaceCondition || item.condition || "").toLowerCase();
+  if (frequency.includes("five")) return "0.11";
+  if (frequency.includes("three")) return "0.13";
+  if (frequency.includes("twice") || frequency.includes("two")) return "0.15";
+  if (frequency.includes("weekly")) return "0.18";
+  if (frequency.includes("monthly") || frequency.includes("occasional")) return "0.22";
+  if (condition.includes("heavy")) return "0.45";
+  if (condition.includes("first-time") || condition.includes("catch-up")) return "0.35";
+  if (frequency.includes("one-time")) return "0.30";
+  return "0.18";
+}
+
+function getSuggestedMonthlyMultiplier(item: AdminDoc) {
+  const frequency = String(item.frequency || item.serviceFrequency || "").toLowerCase();
+  if (frequency.includes("five")) return "21.65";
+  if (frequency.includes("three")) return "13";
+  if (frequency.includes("twice") || frequency.includes("two")) return "8.66";
+  if (frequency.includes("weekly")) return "4.33";
+  if (frequency.includes("monthly") || frequency.includes("occasional")) return "1";
+  return "4.33";
+}
+
+function getInitialQuoteType(item: AdminDoc) {
+  const existing = safeString(item.commercialQuoteType) || safeString(item.commercialQuoteBreakdown?.quoteType);
+  if (existing) return existing;
+  const frequency = String(item.frequency || "").toLowerCase();
+  const businessType = String(item.businessType || "").toLowerCase();
+  if (businessType.includes("rental") || businessType.includes("turnover")) return "Short-term rental turnover";
+  if (frequency.includes("weekly") || frequency.includes("monthly") || frequency.includes("recurring") || frequency.includes("twice") || frequency.includes("three") || frequency.includes("five")) return "Sq-ft recurring monthly plan";
+  return "Sq-ft visit quote";
+}
 
 function makeId() {
   return `line-${Math.random().toString(36).slice(2, 9)}`;
@@ -193,16 +266,41 @@ function money(value: number) {
   return Number(Math.max(0, value).toFixed(2));
 }
 
-function makeLine(presetKey = "routineVisit"): QuoteLineItem {
+function makeLine(presetKey = "routineVisit", item?: AdminDoc): QuoteLineItem {
   const preset = LINE_PRESETS[presetKey] || LINE_PRESETS.routineVisit;
-  return { id: makeId(), ...preset, note: "" };
+  const line: QuoteLineItem = { id: makeId(), ...preset, note: "" };
+
+  if (presetKey === "routineVisit") {
+    line.quantity = item ? getSubmittedSqFtValue(item) : line.quantity;
+    line.rate = item ? getSuggestedRoutineRate(item) : line.rate;
+    line.minimum = "175";
+    line.multiplier = "1";
+    line.multiplierLabel = "visit";
+    line.note = item?.squareFootage ? "Prefilled from the request square-footage range. Edit the square footage/rate after review if needed." : "Enter reviewed square footage and rate.";
+  }
+
+  if (presetKey === "recurringMonthly") {
+    line.quantity = item ? getSubmittedSqFtValue(item) : line.quantity;
+    line.rate = item ? getSuggestedRoutineRate(item) : line.rate;
+    line.minimum = "499";
+    line.multiplier = item ? getSuggestedMonthlyMultiplier(item) : line.multiplier;
+    line.multiplierLabel = "visits/month";
+    line.note = item?.frequency ? `Monthly plan uses the requested frequency (${item.frequency}). Edit visits/month if the schedule changes.` : "Enter reviewed square footage, per-visit sq ft rate, and visits per month.";
+  }
+
+  if (presetKey === "firstTimeReset") {
+    line.quantity = item ? getSubmittedSqFtValue(item) : line.quantity;
+  }
+
+  return line;
 }
 
 function calculateLineAmount(line: QuoteLineItem) {
   const quantity = Math.max(0, toNumber(line.quantity));
   const rate = Math.max(0, toNumber(line.rate));
   const minimum = Math.max(0, toNumber(line.minimum));
-  const raw = line.unit === "flat" ? rate : quantity * rate;
+  const multiplier = Math.max(0, toNumber(line.multiplier || "1"));
+  const raw = line.unit === "flat" ? rate : quantity * rate * multiplier;
   return money(Math.max(raw, minimum));
 }
 
@@ -222,6 +320,8 @@ function getInitialLines(item: AdminDoc) {
       unit: safeString(line.unit) || "flat",
       rate: String(line.rate ?? line.amount ?? "0"),
       minimum: String(line.minimum ?? "0"),
+      multiplier: String(line.multiplier ?? "1"),
+      multiplierLabel: safeString(line.multiplierLabel) || "service",
       recurring: Boolean(line.recurring),
       note: safeString(line.note),
     }));
@@ -229,9 +329,9 @@ function getInitialLines(item: AdminDoc) {
 
   const frequency = String(item.frequency || "").toLowerCase();
   const businessType = String(item.businessType || "").toLowerCase();
-  if (businessType.includes("rental") || businessType.includes("turnover")) return [makeLine("turnover")];
-  if (frequency.includes("weekly") || frequency.includes("monthly") || frequency.includes("recurring") || frequency.includes("twice") || frequency.includes("three") || frequency.includes("five")) return [makeLine("recurringMonthly")];
-  return [makeLine("routineVisit")];
+  if (businessType.includes("rental") || businessType.includes("turnover")) return [makeLine("turnover", item)];
+  if (frequency.includes("weekly") || frequency.includes("monthly") || frequency.includes("recurring") || frequency.includes("twice") || frequency.includes("three") || frequency.includes("five")) return [makeLine("recurringMonthly", item)];
+  return [makeLine("routineVisit", item)];
 }
 
 function buildCustomerBreakdownText({
@@ -261,7 +361,9 @@ function buildCustomerBreakdownText({
 }) {
   const customerName = item.fullName || item.name || item.contactName || "Customer";
   const lines = lineItems.map((line) => {
-    const qty = line.unit === "flat" ? "" : `${line.quantity} ${line.unit} × ${line.rate}`;
+    const multiplier = Math.max(0, toNumber(line.multiplier || "1"));
+    const multiplierText = line.unit !== "flat" && multiplier !== 1 ? ` × ${line.multiplier} ${line.multiplierLabel || "multiplier"}` : "";
+    const qty = line.unit === "flat" ? "" : `${line.quantity} ${line.unit} × ${line.rate}${multiplierText}`;
     return `- ${line.label}${qty ? ` (${qty})` : ""}: ${new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(calculateLineAmount(line))}${line.note ? `\n  Note: ${line.note}` : ""}`;
   });
 
@@ -292,7 +394,7 @@ export default function CommercialQuoteBreakdownBuilder({ item, formatMoney, onS
   const [isOpen, setIsOpen] = useState(false);
   const [quoteTitle, setQuoteTitle] = useState("Commercial Reset quote");
   const [quoteStatus, setQuoteStatus] = useState("Quote drafted");
-  const [quoteType, setQuoteType] = useState("Flat visit quote");
+  const [quoteType, setQuoteType] = useState(() => getInitialQuoteType(item));
   const [validUntil, setValidUntil] = useState("");
   const [lineItems, setLineItems] = useState<QuoteLineItem[]>(() => getInitialLines(item));
   const [discountCredit, setDiscountCredit] = useState("0");
@@ -315,7 +417,7 @@ export default function CommercialQuoteBreakdownBuilder({ item, formatMoney, onS
     const refund = item.commercialRefundTracking || {};
     setQuoteTitle(safeString(breakdown.quoteTitle) || "Commercial Reset quote");
     setQuoteStatus(safeString(item.commercialQuoteStatus) || safeString(breakdown.quoteStatus) || "Quote drafted");
-    setQuoteType(safeString(item.commercialQuoteType) || safeString(breakdown.quoteType) || "Flat visit quote");
+    setQuoteType(getInitialQuoteType(item));
     setValidUntil(safeString(breakdown.validUntil));
     setLineItems(getInitialLines(item));
     setDiscountCredit(String(breakdown.discountCredit ?? "0"));
@@ -351,13 +453,13 @@ export default function CommercialQuoteBreakdownBuilder({ item, formatMoney, onS
   }
 
   function changePreset(id: string, presetKey: string) {
-    const preset = LINE_PRESETS[presetKey] || LINE_PRESETS.customFlat;
-    setLineItems((prev) => prev.map((line) => line.id === id ? { ...line, ...preset } : line));
+    const nextLine = makeLine(presetKey, item);
+    setLineItems((prev) => prev.map((line) => line.id === id ? { ...line, ...nextLine, id: line.id } : line));
     markDirty();
   }
 
   function addLine(preset = "customFlat") {
-    setLineItems((prev) => [...prev, makeLine(preset)]);
+    setLineItems((prev) => [...prev, makeLine(preset, item)]);
     markDirty();
   }
 
@@ -404,7 +506,7 @@ export default function CommercialQuoteBreakdownBuilder({ item, formatMoney, onS
   }
 
   function printBreakdown() {
-    const html = `<!doctype html><html><head><title>NestHelper Commercial Reset quote</title><style>body{font-family:Arial,sans-serif;color:#123;line-height:1.45;padding:32px}.card{max-width:760px;margin:auto;border:1px solid #ddd;border-radius:18px;padding:28px}h1{color:#075c58;margin:0 0 6px}.muted{color:#64748b}.row{display:flex;justify-content:space-between;border-bottom:1px solid #eee;padding:10px 0}.total{font-size:20px;font-weight:800;color:#075c58}.note{background:#fbf6ea;border-radius:14px;padding:14px;margin-top:16px;white-space:pre-wrap}</style></head><body><div class="card"><h1>NestHelper Commercial Reset quote</h1><p class="muted">${quoteTitle}</p>${lineItems.map((line) => `<div class="row"><div><strong>${line.label}</strong><br><span class="muted">${line.description || ""}${line.note ? `<br>${line.note}` : ""}</span></div><div>${formatMoney(calculateLineAmount(line))}</div></div>`).join("")}<div class="row"><strong>Subtotal</strong><strong>${formatMoney(subtotal)}</strong></div>${discount > 0 ? `<div class="row"><strong>Discount / credit</strong><strong>-${formatMoney(discount)}</strong></div>` : ""}<div class="row total"><span>Amount due now</span><span>${formatMoney(amountDueNow)}</span></div>${laterAmount > 0 ? `<div class="row"><strong>Possible later/add-on amount</strong><strong>${formatMoney(laterAmount)}</strong></div>` : ""}<div class="note">${customerNote.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</div><p class="muted">Sales tax, if applicable, is shown at checkout or invoice. Final service is based on approved scope and access.</p></div><script>window.print();</script></body></html>`;
+    const html = `<!doctype html><html><head><title>NestHelper Commercial Reset quote</title><style>body{font-family:Arial,sans-serif;color:#123;line-height:1.45;padding:32px}.card{max-width:760px;margin:auto;border:1px solid #ddd;border-radius:18px;padding:28px}h1{color:#075c58;margin:0 0 6px}.muted{color:#64748b}.row{display:flex;justify-content:space-between;border-bottom:1px solid #eee;padding:10px 0}.total{font-size:20px;font-weight:800;color:#075c58}.note{background:#fbf6ea;border-radius:14px;padding:14px;margin-top:16px;white-space:pre-wrap}</style></head><body><div class="card"><h1>NestHelper Commercial Reset quote</h1><p class="muted">${quoteTitle}</p>${lineItems.map((line) => `<div class="row"><div><strong>${line.label}</strong><br><span class="muted">${line.description || ""}${line.unit !== "flat" ? `<br>${line.quantity} ${line.unit} × ${line.rate}${toNumber(line.multiplier || "1") !== 1 ? ` × ${line.multiplier} ${line.multiplierLabel || "multiplier"}` : ""}` : ""}${line.note ? `<br>${line.note}` : ""}</span></div><div>${formatMoney(calculateLineAmount(line))}</div></div>`).join("")}<div class="row"><strong>Subtotal</strong><strong>${formatMoney(subtotal)}</strong></div>${discount > 0 ? `<div class="row"><strong>Discount / credit</strong><strong>-${formatMoney(discount)}</strong></div>` : ""}<div class="row total"><span>Amount due now</span><span>${formatMoney(amountDueNow)}</span></div>${laterAmount > 0 ? `<div class="row"><strong>Possible later/add-on amount</strong><strong>${formatMoney(laterAmount)}</strong></div>` : ""}<div class="note">${customerNote.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</div><p class="muted">Sales tax, if applicable, is shown at checkout or invoice. Final service is based on approved scope and access.</p></div><script>window.print();</script></body></html>`;
     const printWindow = window.open("", "_blank", "noopener,noreferrer");
     if (!printWindow) {
       setError("Pop-up blocked. Allow pop-ups to print the quote.");
@@ -490,7 +592,7 @@ export default function CommercialQuoteBreakdownBuilder({ item, formatMoney, onS
         <div>
           <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Professional quote builder</p>
           <h5 className="mt-1 text-base font-black text-[#075c58]">Build a customer-ready breakdown</h5>
-          <p className="mt-1 text-sm leading-6 text-slate-700">Use dropdown line items and built-in calculators for routine service, recurring plans, add-ons, credits, and refund notes.</p>
+          <p className="mt-1 text-sm leading-6 text-slate-700">Use sq-ft calculators for routine commercial service, plus dropdown line items for recurring plans, add-ons, credits, and refund notes.</p>
         </div>
         <button
           type="button"
@@ -539,13 +641,16 @@ export default function CommercialQuoteBreakdownBuilder({ item, formatMoney, onS
 
                 <div className="rounded-3xl border border-cyan-200 bg-white p-4">
                   <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-                    <div><p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Line items</p><h4 className="text-lg font-black text-[#075c58]">Dropdowns + built-in calculators</h4></div>
+                    <div><p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Line items</p><h4 className="text-lg font-black text-[#075c58]">Sq-ft calculators + dropdown line items</h4></div>
                     <div className="flex flex-wrap gap-2">
-                      <button type="button" onClick={() => addLine("routineVisit")} className="rounded-full border border-cyan-700 px-3 py-2 text-xs font-black text-cyan-800">+ Routine</button>
+                      <button type="button" onClick={() => addLine("routineVisit")} className="rounded-full border border-cyan-700 px-3 py-2 text-xs font-black text-cyan-800">+ Routine sq ft</button>
+                      <button type="button" onClick={() => addLine("recurringMonthly")} className="rounded-full border border-cyan-700 px-3 py-2 text-xs font-black text-cyan-800">+ Monthly plan</button>
                       <button type="button" onClick={() => addLine("carpetDeepCleaning")} className="rounded-full border border-cyan-700 px-3 py-2 text-xs font-black text-cyan-800">+ Carpet</button>
                       <button type="button" onClick={() => addLine("customFlat")} className="rounded-full bg-[#075c58] px-3 py-2 text-xs font-black text-white">+ Additional line</button>
                     </div>
                   </div>
+
+                  <p className="mt-3 rounded-2xl bg-[#fbf6ea] px-4 py-3 text-xs font-semibold leading-5 text-slate-700">Routine commercial lines are now sq-ft based by default. Use reviewed square footage × rate × visits/month when needed. The minimum field protects small jobs, and Custom approved line item is still available for true flat fees.</p>
 
                   <div className="mt-4 space-y-4">
                     {lineItems.map((line, index) => (
@@ -554,15 +659,17 @@ export default function CommercialQuoteBreakdownBuilder({ item, formatMoney, onS
                           <p className="text-sm font-black text-[#075c58]">Line {index + 1}: {line.label}</p>
                           <div className="text-right"><p className="text-xs font-black uppercase tracking-[0.14em] text-[#b98a2f]">Calculated amount</p><p className="text-lg font-black text-[#075c58]">{formatMoney(calculateLineAmount(line))}</p></div>
                         </div>
-                        <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                        <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
                           <label className="grid gap-2 text-xs font-black uppercase tracking-[0.14em] text-slate-500">Type<select value={line.preset} onChange={(e) => changePreset(line.id, e.target.value)} className="rounded-2xl border border-cyan-200 bg-white px-3 py-2 text-sm font-bold normal-case tracking-normal text-[#075c58] outline-none focus:border-[#075c58]">{PRESET_ORDER.map((key) => <option key={key} value={key}>{LINE_PRESETS[key].label}</option>)}</select></label>
-                          <label className="grid gap-2 text-xs font-black uppercase tracking-[0.14em] text-slate-500">Quantity / area<input value={line.quantity} onChange={(e) => updateLine(line.id, { quantity: e.target.value })} inputMode="decimal" className="rounded-2xl border border-cyan-200 bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal outline-none focus:border-[#075c58]" /></label>
+                          <label className="grid gap-2 text-xs font-black uppercase tracking-[0.14em] text-slate-500">Reviewed area / qty<input value={line.quantity} onChange={(e) => updateLine(line.id, { quantity: e.target.value })} inputMode="decimal" className="rounded-2xl border border-cyan-200 bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal outline-none focus:border-[#075c58]" /></label>
                           <label className="grid gap-2 text-xs font-black uppercase tracking-[0.14em] text-slate-500">Rate<input value={line.rate} onChange={(e) => updateLine(line.id, { rate: e.target.value })} inputMode="decimal" className="rounded-2xl border border-cyan-200 bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal outline-none focus:border-[#075c58]" /></label>
+                          <label className="grid gap-2 text-xs font-black uppercase tracking-[0.14em] text-slate-500">Visits / multiplier<input value={line.multiplier} onChange={(e) => updateLine(line.id, { multiplier: e.target.value })} inputMode="decimal" className="rounded-2xl border border-cyan-200 bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal outline-none focus:border-[#075c58]" /></label>
                           <label className="grid gap-2 text-xs font-black uppercase tracking-[0.14em] text-slate-500">Minimum<input value={line.minimum} onChange={(e) => updateLine(line.id, { minimum: e.target.value })} inputMode="decimal" className="rounded-2xl border border-cyan-200 bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal outline-none focus:border-[#075c58]" /></label>
                         </div>
-                        <div className="mt-3 grid gap-3 md:grid-cols-[1fr_1fr_auto]">
+                        <div className="mt-3 grid gap-3 md:grid-cols-[1fr_0.7fr_0.8fr_auto]">
                           <label className="grid gap-2 text-xs font-black uppercase tracking-[0.14em] text-slate-500">Customer label<input value={line.label} onChange={(e) => updateLine(line.id, { label: e.target.value })} className="rounded-2xl border border-cyan-200 bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal outline-none focus:border-[#075c58]" /></label>
                           <label className="grid gap-2 text-xs font-black uppercase tracking-[0.14em] text-slate-500">Unit<input value={line.unit} onChange={(e) => updateLine(line.id, { unit: e.target.value })} className="rounded-2xl border border-cyan-200 bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal outline-none focus:border-[#075c58]" /></label>
+                          <label className="grid gap-2 text-xs font-black uppercase tracking-[0.14em] text-slate-500">Multiplier label<input value={line.multiplierLabel} onChange={(e) => updateLine(line.id, { multiplierLabel: e.target.value })} className="rounded-2xl border border-cyan-200 bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal outline-none focus:border-[#075c58]" /></label>
                           <button type="button" onClick={() => removeLine(line.id)} className="self-end rounded-2xl border border-red-200 bg-white px-4 py-2 text-xs font-black text-red-700">Remove</button>
                         </div>
                         <label className="mt-3 grid gap-2 text-xs font-black uppercase tracking-[0.14em] text-slate-500">Line note<textarea value={line.note} onChange={(e) => updateLine(line.id, { note: e.target.value })} rows={2} placeholder="Example: Assumes floor area is cleared before service." className="rounded-2xl border border-cyan-200 bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal outline-none focus:border-[#075c58]" /></label>
@@ -604,7 +711,7 @@ export default function CommercialQuoteBreakdownBuilder({ item, formatMoney, onS
                     {laterAmount > 0 && <div className="flex justify-between gap-3"><span>Possible later/add-on</span><strong>{formatMoney(laterAmount)}</strong></div>}
                     <div className="flex justify-between gap-3"><span>Total tracked</span><strong>{formatMoney(totalQuoted)}</strong></div>
                   </div>
-                  <p className="mt-3 text-xs font-semibold leading-5 text-slate-600">Sales tax, if applicable, is still shown in Stripe checkout/invoice. The quote builder tracks service scope and customer-facing breakdown.</p>
+                  <p className="mt-3 text-xs font-semibold leading-5 text-slate-600">Sales tax, if applicable, is still shown in Stripe checkout/invoice. The quote builder tracks service scope, sq-ft math, and customer-facing breakdown.</p>
                   <div className="mt-4 grid gap-2">
                     <button type="button" onClick={() => onApplyFirstPayment?.(amountDueNow, quoteTitle, customerNote)} className="rounded-2xl bg-[#075c58] px-4 py-3 text-xs font-black text-white">Use amount due now for first payment</button>
                     <button type="button" onClick={() => onApplyAdditionalPayment?.(laterAmount, customerNote)} className="rounded-2xl border-2 border-[#075c58] bg-white px-4 py-3 text-xs font-black text-[#075c58]">Use later amount for add-on link</button>
