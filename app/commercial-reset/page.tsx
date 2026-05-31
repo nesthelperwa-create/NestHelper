@@ -180,13 +180,12 @@ export default function CommercialResetPage() {
 
           <div className="rounded-[2.25rem] border border-nest-gold/18 bg-white/86 p-6 shadow-soft sm:p-8">
             <p className="pill-label w-fit"><ClipboardCheck size={15} /> Helpful policy details</p>
-            <h3 className="mt-4 text-2xl font-black text-nest-teal sm:text-3xl">Scope, pricing, and add-on details in one place.</h3>
+            <h3 className="mt-4 text-2xl font-black text-nest-teal sm:text-3xl">Scope and boundary details in one place.</h3>
             <p className="mt-4 font-medium leading-7 text-nest-ink/70">
-              These links explain routine scope, separately quoted add-ons, turnover boundaries, and how pricing may change when the actual space or request is different from the quote.
+              These links explain the routine service scope, safety boundaries, turnover expectations, and when a request may need separate review before it can be confirmed.
             </p>
             <div className="mt-6 grid gap-3">
               <PolicyLink href="/policies/commercial-reset-policy" title="Commercial Reset Policy" />
-              <PolicyLink href="/policies/commercial-pricing-add-ons" title="Commercial Pricing & Add-ons" />
               <PolicyLink href="/policies/short-term-rental-turnover-policy" title="Short-Term Rental Turnover Policy" />
             </div>
           </div>
@@ -230,6 +229,9 @@ export default function CommercialResetPage() {
             <p className="mx-auto mt-4 max-w-4xl text-lg font-medium leading-8 text-nest-ink/72">
               Commercial pricing is not an open-ended hourly clock. NestHelper reviews the space, frequency, bathrooms, flooring, access, timing, current condition, product preferences, and optional photos, then sends a clear visit price or recurring plan before service is scheduled.
             </p>
+            <div className="mt-6 flex justify-center">
+              <PolicyLink href="/policies/commercial-pricing-add-ons" title="Commercial Pricing & Add-ons" />
+            </div>
           </div>
           <div className="grid gap-4 p-6 sm:p-8 lg:grid-cols-3 lg:p-10">
             <PricingCard title="Recurring commercial cleaning" price="From $149/visit" text="Quoted as a clear visit price or monthly plan. Small recurring accounts often start around $595/month depending on frequency, square footage, bathrooms, timing, and scope." />
