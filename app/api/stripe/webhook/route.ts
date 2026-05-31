@@ -6,7 +6,7 @@ import { getFirebaseAdminDb } from "@/lib/firebaseAdmin";
 import { services } from "@/lib/services";
 import { sendAdminEmail } from "@/lib/sendAdminEmail";
 import { sendPaymentReceivedEmail } from "@/lib/sendPaymentReceivedEmail";
-import { emailAliases } from "@/lib/emailRouting";
+import { emailAliases, getPrimaryAdminNotificationRecipients } from "@/lib/emailRouting";
 
 export const runtime = "nodejs";
 
@@ -73,6 +73,26 @@ function getAdminAlertFields(isLaundryDeposit: boolean, isLaundryFinalBalance: b
 
 function buildAddress(data: Record<string, unknown>) {
   return [getString(data.address), getString(data.city), getString(data.zip)].filter(Boolean).join(", ");
+}
+
+function getEmailResultError(result: unknown) {
+  if (!result || typeof result !== "object") return "";
+  const record = result as { skipped?: boolean; error?: unknown };
+
+  if (!record.error) return "";
+  if (record.error instanceof Error) return record.error.message;
+  if (typeof record.error === "object" && record.error && "message" in record.error) {
+    return String((record.error as { message?: unknown }).message || "Email provider returned an error.");
+  }
+  return String(record.error);
+}
+
+function assertEmailDelivered(result: unknown, skippedMessage: string, fallbackErrorMessage: string) {
+  const record = result && typeof result === "object" ? (result as { skipped?: boolean; error?: unknown }) : null;
+  if (record?.skipped) throw new Error(skippedMessage);
+
+  const providerError = getEmailResultError(result);
+  if (providerError) throw new Error(providerError || fallbackErrorMessage);
 }
 
 export async function POST(request: Request) {
@@ -164,7 +184,7 @@ export async function POST(request: Request) {
 
           if (email && !existingData.laundryFinalInvoiceConfirmationEmailSent) {
             try {
-              await sendPaymentReceivedEmail({
+              const result = await sendPaymentReceivedEmail({
                 to: email,
                 customerName,
                 requestId,
@@ -174,6 +194,11 @@ export async function POST(request: Request) {
                 paymentStatus,
                 replyToEmail: emailAliases.laundry,
               });
+              assertEmailDelivered(
+                result,
+                "Laundry final invoice confirmation email skipped because RESEND_API_KEY or the customer email is missing.",
+                "Laundry final invoice confirmation email failed."
+              );
               await requestRef.update({
                 laundryFinalInvoiceConfirmationEmailSent: true,
                 laundryFinalInvoiceConfirmationEmailSentAt: FieldValue.serverTimestamp(),
@@ -195,9 +220,9 @@ export async function POST(request: Request) {
                 title: "Laundry final invoice paid",
                 intro: "A customer paid a Laundry Rescue final balance invoice. The request is now marked fully paid in the admin dashboard.",
                 adminPath: "/admin/requests",
-                to: emailAliases.laundry,
+                to: getPrimaryAdminNotificationRecipients(),
                 routeLabel: "Laundry",
-                routedToText: emailAliases.laundry,
+                routedToText: getPrimaryAdminNotificationRecipients().join(", "),
                 rows: {
                   "Dashboard ID": requestId,
                   Service: serviceTitle,
@@ -210,10 +235,15 @@ export async function POST(request: Request) {
                   "Stripe invoice": invoice.id,
                 },
               });
+              assertEmailDelivered(
+                result,
+                "Laundry final invoice admin alert skipped because RESEND_API_KEY is missing.",
+                "Laundry final invoice admin alert failed."
+              );
               await requestRef.update({
                 laundryFinalInvoiceAdminPaymentEmailSent: true,
                 laundryFinalInvoiceAdminPaymentEmailSentAt: FieldValue.serverTimestamp(),
-                laundryFinalInvoiceAdminPaymentEmailError: result && "error" in result && result.error ? String(result.error) : "",
+                laundryFinalInvoiceAdminPaymentEmailError: "",
               });
             } catch (error) {
               console.error("Laundry final invoice admin alert failed", error);
@@ -246,7 +276,7 @@ export async function POST(request: Request) {
 
           if (email && !existingData.familyInvoicePaymentConfirmationEmailSent) {
             try {
-              await sendPaymentReceivedEmail({
+              const result = await sendPaymentReceivedEmail({
                 to: email,
                 customerName,
                 requestId,
@@ -257,6 +287,11 @@ export async function POST(request: Request) {
                 replyToEmail: serviceId === "laundry-rescue" ? emailAliases.laundry : emailAliases.billing,
                 servicePeriodLabel,
               });
+              assertEmailDelivered(
+                result,
+                "Family invoice confirmation email skipped because RESEND_API_KEY or the customer email is missing.",
+                "Family invoice confirmation email failed."
+              );
               await requestRef.update({
                 familyInvoicePaymentConfirmationEmailSent: true,
                 familyInvoicePaymentConfirmationEmailSentAt: FieldValue.serverTimestamp(),
@@ -273,15 +308,16 @@ export async function POST(request: Request) {
 
           if (!existingData.familyInvoiceAdminPaymentEmailSent) {
             try {
-              const routedPaymentInbox = serviceId === "laundry-rescue" ? emailAliases.laundry : emailAliases.billing;
+              const routedPaymentInbox = getPrimaryAdminNotificationRecipients();
+              const routeLabel = serviceId === "laundry-rescue" ? "Laundry" : "Billing";
               const result = await sendAdminEmail({
                 subject: `Stripe Invoice Paid: ${serviceTitle}`,
                 title: "Family invoice paid — ready to schedule",
                 intro: "A customer paid a NestHelper family-service Stripe invoice. The request is now marked Invoice Paid in the admin dashboard.",
                 adminPath: "/admin/requests",
                 to: routedPaymentInbox,
-                routeLabel: serviceId === "laundry-rescue" ? "Laundry" : "Billing",
-                routedToText: routedPaymentInbox,
+                routeLabel,
+                routedToText: routedPaymentInbox.join(", "),
                 rows: {
                   "Dashboard ID": requestId,
                   Service: serviceTitle,
@@ -293,10 +329,15 @@ export async function POST(request: Request) {
                   "Stripe invoice": invoice.id,
                 },
               });
+              assertEmailDelivered(
+                result,
+                "Family invoice admin alert skipped because RESEND_API_KEY is missing.",
+                "Family invoice admin alert failed."
+              );
               await requestRef.update({
                 familyInvoiceAdminPaymentEmailSent: true,
                 familyInvoiceAdminPaymentEmailSentAt: FieldValue.serverTimestamp(),
-                familyInvoiceAdminPaymentEmailError: result && "error" in result && result.error ? String(result.error) : "",
+                familyInvoiceAdminPaymentEmailError: "",
               });
             } catch (error) {
               console.error("Family invoice admin alert failed", error);
@@ -328,7 +369,7 @@ export async function POST(request: Request) {
 
           if (email && !existingData.commercialInvoicePaymentConfirmationEmailSent) {
             try {
-              await sendPaymentReceivedEmail({
+              const result = await sendPaymentReceivedEmail({
                 to: email,
                 customerName,
                 requestId,
@@ -339,6 +380,11 @@ export async function POST(request: Request) {
                 replyToEmail: emailAliases.commercial || emailAliases.billing,
                 servicePeriodLabel,
               });
+              assertEmailDelivered(
+                result,
+                "Commercial invoice confirmation email skipped because RESEND_API_KEY or the customer email is missing.",
+                "Commercial invoice confirmation email failed."
+              );
               await requestRef.update({
                 commercialInvoicePaymentConfirmationEmailSent: true,
                 commercialInvoicePaymentConfirmationEmailSentAt: FieldValue.serverTimestamp(),
@@ -355,7 +401,7 @@ export async function POST(request: Request) {
 
           if (!existingData.commercialInvoiceAdminPaymentEmailSent) {
             try {
-              const routedPaymentInbox = emailAliases.commercial || emailAliases.billing;
+              const routedPaymentInbox = getPrimaryAdminNotificationRecipients();
               const result = await sendAdminEmail({
                 subject: `Stripe Invoice Paid: ${serviceTitle}`,
                 title: "Commercial invoice paid — ready to schedule",
@@ -363,7 +409,7 @@ export async function POST(request: Request) {
                 adminPath: "/admin/requests",
                 to: routedPaymentInbox,
                 routeLabel: "Commercial",
-                routedToText: routedPaymentInbox,
+                routedToText: routedPaymentInbox.join(", "),
                 rows: {
                   "Dashboard ID": requestId,
                   Service: serviceTitle,
@@ -375,10 +421,15 @@ export async function POST(request: Request) {
                   "Stripe invoice": invoice.id,
                 },
               });
+              assertEmailDelivered(
+                result,
+                "Commercial invoice admin alert skipped because RESEND_API_KEY is missing.",
+                "Commercial invoice admin alert failed."
+              );
               await requestRef.update({
                 commercialInvoiceAdminPaymentEmailSent: true,
                 commercialInvoiceAdminPaymentEmailSentAt: FieldValue.serverTimestamp(),
-                commercialInvoiceAdminPaymentEmailError: result && "error" in result && result.error ? String(result.error) : "",
+                commercialInvoiceAdminPaymentEmailError: "",
               });
             } catch (error) {
               console.error("Commercial invoice admin alert failed", error);
@@ -510,7 +561,7 @@ export async function POST(request: Request) {
 
         if (email && !alreadySent) {
           try {
-            await sendPaymentReceivedEmail({
+            const result = await sendPaymentReceivedEmail({
               to: email,
               customerName,
               requestId,
@@ -521,6 +572,11 @@ export async function POST(request: Request) {
               replyToEmail: serviceId === "laundry-rescue" ? emailAliases.laundry : emailAliases.billing,
               servicePeriodLabel: checkoutServicePeriodLabel,
             });
+            assertEmailDelivered(
+              result,
+              "Payment confirmation email skipped because RESEND_API_KEY or the customer email is missing.",
+              "Payment confirmation email failed."
+            );
 
             await requestRef.update({
               [confirmationFlag]: true,
@@ -541,7 +597,7 @@ export async function POST(request: Request) {
 
         if (!adminAlreadySent) {
           try {
-            const routedPaymentInbox = serviceId === "laundry-rescue" ? emailAliases.laundry : emailAliases.billing;
+            const routedPaymentInbox = getPrimaryAdminNotificationRecipients();
             const routedPaymentLabel = serviceId === "laundry-rescue" ? "Laundry" : "Billing";
 
             const result = await sendAdminEmail({
@@ -551,7 +607,7 @@ export async function POST(request: Request) {
               adminPath: "/admin/requests",
               to: routedPaymentInbox,
               routeLabel: routedPaymentLabel,
-              routedToText: routedPaymentInbox,
+              routedToText: routedPaymentInbox.join(", "),
               rows: {
                 "Dashboard ID": requestId,
                 Customer: customerName,
@@ -576,9 +632,11 @@ export async function POST(request: Request) {
               },
             });
 
-            if ((result as { skipped?: boolean })?.skipped) {
-              throw new Error("Admin payment alert skipped because RESEND_API_KEY is missing.");
-            }
+            assertEmailDelivered(
+              result,
+              "Admin payment alert skipped because RESEND_API_KEY is missing.",
+              "Admin payment notification email failed."
+            );
 
             await requestRef.update({
               [adminAlert.sentFlag]: true,
