@@ -861,6 +861,39 @@ export default function AdminTable({
                       )}
                     </div>
                   </div>
+
+                  {(selected.carpetArea || selected.hardFloorArea || selected.spotTreatmentCount || selected.upholsteryScope || selected.glassScope) && (
+                    <div className="mt-4 rounded-3xl border border-cyan-200 bg-white p-4">
+                      <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Add-on estimate details</p>
+                      <div className="mt-3 grid gap-3 md:grid-cols-2">
+                        {selected.carpetArea && (
+                          <div className="rounded-2xl border border-cyan-100 bg-cyan-50/40 p-4 text-xs font-semibold leading-5 text-slate-600">
+                            <span className="font-black text-[#075c58]">Carpet:</span> {formatValue("carpetArea", selected.carpetArea)}{selected.carpetCondition ? ` · ${formatValue("carpetCondition", selected.carpetCondition)}` : ""}
+                          </div>
+                        )}
+                        {selected.spotTreatmentCount && (
+                          <div className="rounded-2xl border border-cyan-100 bg-cyan-50/40 p-4 text-xs font-semibold leading-5 text-slate-600">
+                            <span className="font-black text-[#075c58]">Spot treatment:</span> {formatValue("spotTreatmentCount", selected.spotTreatmentCount)}
+                          </div>
+                        )}
+                        {selected.hardFloorArea && (
+                          <div className="rounded-2xl border border-cyan-100 bg-cyan-50/40 p-4 text-xs font-semibold leading-5 text-slate-600">
+                            <span className="font-black text-[#075c58]">Hard floors:</span> {formatValue("hardFloorArea", selected.hardFloorArea)}{selected.hardFloorMaterial ? ` · ${formatValue("hardFloorMaterial", selected.hardFloorMaterial)}` : ""}{selected.hardFloorCondition ? ` · ${formatValue("hardFloorCondition", selected.hardFloorCondition)}` : ""}
+                          </div>
+                        )}
+                        {selected.upholsteryScope && (
+                          <div className="rounded-2xl border border-cyan-100 bg-cyan-50/40 p-4 text-xs font-semibold leading-5 text-slate-600">
+                            <span className="font-black text-[#075c58]">Upholstery:</span> {formatValue("upholsteryScope", selected.upholsteryScope)}
+                          </div>
+                        )}
+                        {selected.glassScope && (
+                          <div className="rounded-2xl border border-cyan-100 bg-cyan-50/40 p-4 text-xs font-semibold leading-5 text-slate-600">
+                            <span className="font-black text-[#075c58]">Interior glass:</span> {formatValue("glassScope", selected.glassScope)}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div className="mt-4 rounded-3xl border border-cyan-200 bg-white p-4">

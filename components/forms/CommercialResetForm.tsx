@@ -40,6 +40,14 @@ const defaultState = {
   spaceDetails: [] as string[],
   cleaningPriorities: [] as string[],
   addOnInterests: [] as string[],
+  carpetArea: "",
+  carpetCondition: "",
+  spotTreatmentCount: "",
+  hardFloorArea: "",
+  hardFloorMaterial: "",
+  hardFloorCondition: "",
+  upholsteryScope: "",
+  glassScope: "",
   specialNotes: "",
   photoNotes: "",
   consent: false,
@@ -81,6 +89,63 @@ const squareFootageOptions = [
   "2,500–4,000 sq ft",
   "4,000–6,000 sq ft",
   "Over 6,000 sq ft",
+  "Not sure yet",
+];
+
+const specialtyAreaOptions = [
+  "Under 250 sq ft",
+  "250–500 sq ft",
+  "500–1,000 sq ft",
+  "1,000–2,000 sq ft",
+  "2,000–4,000 sq ft",
+  "Over 4,000 sq ft",
+  "Not sure yet",
+];
+
+const carpetConditionOptions = [
+  "Light refresh",
+  "Normal traffic wear",
+  "Visible spots / stains",
+  "Heavy traffic or odor concerns",
+  "Not sure yet",
+];
+
+const spotTreatmentOptions = [
+  "1–2 spots / areas",
+  "3–5 spots / areas",
+  "6+ spots / areas",
+  "Not sure yet",
+];
+
+const hardFloorMaterialOptions = [
+  "VCT / commercial tile",
+  "LVP / vinyl plank",
+  "Ceramic / tile",
+  "Concrete",
+  "Rubber gym floor",
+  "Mixed / not sure",
+];
+
+const hardFloorConditionOptions = [
+  "Light refresh",
+  "Dull / worn finish",
+  "Heavy buildup",
+  "Unknown or needs walkthrough",
+];
+
+const upholsteryScopeOptions = [
+  "1–2 chairs or small items",
+  "3–6 seats / waiting room chairs",
+  "Small sofa or loveseat",
+  "Multiple pieces / needs review",
+  "Not sure yet",
+];
+
+const glassScopeOptions = [
+  "A few interior windows or mirrors",
+  "Reception/front glass area",
+  "Multiple rooms or glass walls",
+  "Large storefront or exterior glass — needs review",
   "Not sure yet",
 ];
 
@@ -131,6 +196,7 @@ const cleaningPriorityOptions = [
 
 const addOnOptions = [
   "Carpet extraction quote",
+  "Spot treatment quote",
   "Floor scrub quote",
   "Buff / shine quote",
   "Wax / finish quote",
@@ -262,6 +328,24 @@ function getSquareFootageRange(value: string): NumberRange | null {
   return null;
 }
 
+function getSpecialtyAreaRange(value: string): NumberRange | null {
+  if (value === "Under 250 sq ft") return { low: 125, high: 250 };
+  if (value === "250–500 sq ft") return { low: 250, high: 500 };
+  if (value === "500–1,000 sq ft") return { low: 500, high: 1000 };
+  if (value === "1,000–2,000 sq ft") return { low: 1000, high: 2000 };
+  if (value === "2,000–4,000 sq ft") return { low: 2000, high: 4000 };
+  if (value === "Over 4,000 sq ft") return { low: 4000, high: 6000 };
+  return null;
+}
+
+function hasAddOn(form: CommercialResetFormState, name: string) {
+  return form.addOnInterests.includes(name);
+}
+
+function addOnAreaNote(label: string) {
+  return `${label}: reviewed after add-on area/photos/details`;
+}
+
 function getVisitRateRange(frequency: string, condition: string): NumberRange | null {
   if (frequency === "Weekly service") return { low: 0.15, high: 0.22 };
   if (frequency === "Twice weekly service") return { low: 0.12, high: 0.18 };
@@ -356,20 +440,76 @@ function getRentalEstimate(form: CommercialResetFormState): PlanningEstimate | n
   };
 }
 
-function getAddOnEstimate(form: CommercialResetFormState, sqft: NumberRange | null): string | undefined {
-  if (!form.addOnInterests.length || form.addOnInterests.includes("No add-ons right now")) return undefined;
-  if (!sqft) return "Add-ons selected — reviewed after photos/details";
+function getAddOnEstimate(form: CommercialResetFormState): string | undefined {
+  const selected = form.addOnInterests.filter((item) => item !== "No add-ons right now");
+  if (!selected.length) return undefined;
 
-  const ranges = form.addOnInterests
-    .filter((item) => item !== "No add-ons right now")
-    .map((item) => {
-      if (item === "Carpet extraction quote") return `Carpet extraction: ${rangeText(withMinimum({ low: sqft.low * 0.40, high: sqft.high * 0.60 }, 249))}`;
-      if (item === "Floor scrub quote") return `Floor scrub: ${rangeText({ low: sqft.low * 0.35, high: sqft.high * 0.60 })}`;
-      if (item === "Buff / shine quote") return `Buff / shine: ${rangeText({ low: sqft.low * 0.50, high: sqft.high * 0.90 })}`;
-      if (item === "Wax / finish quote") return `Wax / finish: ${rangeText(withMinimum({ low: sqft.low * 0.75, high: sqft.high * 1.25 }, 299))}`;
-      if (item === "Strip & wax quote") return `Strip & wax: ${rangeText(withMinimum({ low: sqft.low * 1.75, high: sqft.high * 2.50 }, 499))}`;
-      return `${item.replace(" quote", "")}: reviewed after photos/details`;
-    });
+  const carpetArea = getSpecialtyAreaRange(form.carpetArea);
+  const hardFloorArea = getSpecialtyAreaRange(form.hardFloorArea);
+  const ranges = selected.map((item) => {
+    if (item === "Carpet extraction quote") {
+      if (!carpetArea) return addOnAreaNote("Carpet extraction");
+      const multiplier = form.carpetCondition === "Heavy traffic or odor concerns" ? { low: 0.50, high: 0.75 } : { low: 0.40, high: 0.60 };
+      return `Carpet extraction: ${rangeText(withMinimum({ low: carpetArea.low * multiplier.low, high: carpetArea.high * multiplier.high }, 249))}`;
+    }
+
+    if (item === "Spot treatment quote") {
+      const spotMap: Record<string, NumberRange> = {
+        "1–2 spots / areas": { low: 25, high: 125 },
+        "3–5 spots / areas": { low: 75, high: 275 },
+        "6+ spots / areas": { low: 150, high: 450 },
+      };
+      return form.spotTreatmentCount && spotMap[form.spotTreatmentCount]
+        ? `Spot treatment: ${rangeText(spotMap[form.spotTreatmentCount])}`
+        : addOnAreaNote("Spot treatment");
+    }
+
+    if (item === "Floor scrub quote") {
+      if (!hardFloorArea) return addOnAreaNote("Floor scrub");
+      return `Floor scrub: ${rangeText({ low: hardFloorArea.low * 0.35, high: hardFloorArea.high * 0.60 })}`;
+    }
+
+    if (item === "Buff / shine quote") {
+      if (!hardFloorArea) return addOnAreaNote("Buff / shine");
+      return `Buff / shine: ${rangeText({ low: hardFloorArea.low * 0.50, high: hardFloorArea.high * 0.90 })}`;
+    }
+
+    if (item === "Wax / finish quote") {
+      if (!hardFloorArea) return addOnAreaNote("Wax / finish");
+      const multiplier = form.hardFloorCondition === "Heavy buildup" ? { low: 0.90, high: 1.45 } : { low: 0.75, high: 1.25 };
+      return `Wax / finish: ${rangeText(withMinimum({ low: hardFloorArea.low * multiplier.low, high: hardFloorArea.high * multiplier.high }, 299))}`;
+    }
+
+    if (item === "Strip & wax quote") {
+      if (!hardFloorArea) return addOnAreaNote("Strip & wax");
+      const multiplier = form.hardFloorCondition === "Heavy buildup" ? { low: 2.00, high: 2.85 } : { low: 1.75, high: 2.50 };
+      return `Strip & wax: ${rangeText(withMinimum({ low: hardFloorArea.low * multiplier.low, high: hardFloorArea.high * multiplier.high }, 499))}`;
+    }
+
+    if (item === "Upholstery quote") {
+      const upholsteryMap: Record<string, NumberRange> = {
+        "1–2 chairs or small items": { low: 75, high: 175 },
+        "3–6 seats / waiting room chairs": { low: 150, high: 425 },
+        "Small sofa or loveseat": { low: 125, high: 325 },
+      };
+      return form.upholsteryScope && upholsteryMap[form.upholsteryScope]
+        ? `Upholstery: ${rangeText(upholsteryMap[form.upholsteryScope])}`
+        : addOnAreaNote("Upholstery");
+    }
+
+    if (item === "Interior glass quote") {
+      const glassMap: Record<string, NumberRange> = {
+        "A few interior windows or mirrors": { low: 35, high: 125 },
+        "Reception/front glass area": { low: 75, high: 225 },
+        "Multiple rooms or glass walls": { low: 150, high: 450 },
+      };
+      return form.glassScope && glassMap[form.glassScope]
+        ? `Interior glass: ${rangeText(glassMap[form.glassScope])}`
+        : addOnAreaNote("Interior glass");
+    }
+
+    return `${item.replace(" quote", "")}: reviewed after photos/details`;
+  });
 
   return ranges.join(" • ");
 }
@@ -401,7 +541,7 @@ function getCommercialPlanningEstimate(form: CommercialResetFormState): Planning
   const visitRange = withMinimum(adjusted, minimum);
   const visitsPerMonth = getVisitsPerMonth(form.frequency);
   const monthlyRange = visitsPerMonth ? withMinimum(multiplyRange(visitRange, visitsPerMonth), 499) : null;
-  const addOnRange = getAddOnEstimate(form, sqft);
+  const addOnRange = getAddOnEstimate(form);
 
   if (form.spaceCondition === "First-time / catch-up reset" || form.spaceCondition === "Heavy reset needed") {
     notes.push("A first-time or heavy reset may be quoted separately before moving into a recurring maintenance plan.");
@@ -473,6 +613,14 @@ function buildPayload(form: CommercialResetFormState) {
     spaceDetails: form.spaceDetails,
     cleaningPriorities: form.cleaningPriorities,
     addOnInterests: form.addOnInterests,
+    carpetArea: form.carpetArea,
+    carpetCondition: form.carpetCondition,
+    spotTreatmentCount: form.spotTreatmentCount,
+    hardFloorArea: form.hardFloorArea,
+    hardFloorMaterial: form.hardFloorMaterial,
+    hardFloorCondition: form.hardFloorCondition,
+    upholsteryScope: form.upholsteryScope,
+    glassScope: form.glassScope,
     specialNotes: form.specialNotes,
     photoNotes: form.photoNotes,
     quoteBasis: "NestHelper prepares a clear quoted visit price, recurring plan, or reviewed price range before service is scheduled.",
@@ -503,6 +651,12 @@ export function CommercialResetForm() {
   const isDaycareOrLearning = businessKind === "daycare";
   const spaceDetailOptions = useMemo(() => getSpaceDetailOptions(form.businessType), [form.businessType]);
   const planningEstimate = useMemo(() => getCommercialPlanningEstimate(form), [form]);
+  const needsCarpetDetails = hasAddOn(form, "Carpet extraction quote");
+  const needsSpotDetails = hasAddOn(form, "Spot treatment quote");
+  const needsHardFloorDetails = ["Floor scrub quote", "Buff / shine quote", "Wax / finish quote", "Strip & wax quote"].some((item) => hasAddOn(form, item));
+  const needsUpholsteryDetails = hasAddOn(form, "Upholstery quote");
+  const needsGlassDetails = hasAddOn(form, "Interior glass quote");
+  const hasSpecialtyAddOnDetails = needsCarpetDetails || needsSpotDetails || needsHardFloorDetails || needsUpholsteryDetails || needsGlassDetails;
 
   function update(name: keyof CommercialResetFormState, value: unknown) {
     setForm((prev) => ({ ...prev, [name]: value }) as CommercialResetFormState);
@@ -527,6 +681,32 @@ export function CommercialResetForm() {
   function toggleList(name: "flooringTypes" | "cleaningPriorities" | "spaceDetails" | "addOnInterests", item: string, checked: boolean) {
     setForm((prev) => {
       const current = prev[name];
+      if (name === "addOnInterests") {
+        if (item === "No add-ons right now" && checked) {
+          return {
+            ...prev,
+            addOnInterests: [item],
+            carpetArea: "",
+            carpetCondition: "",
+            spotTreatmentCount: "",
+            hardFloorArea: "",
+            hardFloorMaterial: "",
+            hardFloorCondition: "",
+            upholsteryScope: "",
+            glassScope: "",
+          };
+        }
+
+        const next = checked
+          ? [...current.filter((value) => value !== "No add-ons right now"), item]
+          : current.filter((value) => value !== item);
+
+        return {
+          ...prev,
+          addOnInterests: next,
+        };
+      }
+
       return {
         ...prev,
         [name]: checked ? [...current, item] : current.filter((value) => value !== item),
@@ -762,8 +942,105 @@ export function CommercialResetForm() {
             ))}
           </div>
         </div>
+
+        {hasSpecialtyAddOnDetails && (
+          <div className="grid gap-4 rounded-[1.65rem] border border-nest-gold/18 bg-white/75 p-4 shadow-sm sm:p-5">
+            <div>
+              <p className="text-sm font-black uppercase tracking-[0.16em] text-nest-gold">Add-on estimate details</p>
+              <p className="mt-2 text-sm font-semibold leading-6 text-nest-ink/68">
+                These only appear for selected add-ons so the estimate uses the right area or item count instead of assuming the entire space needs specialty work.
+              </p>
+            </div>
+
+            {needsCarpetDetails && (
+              <div className="grid gap-4 rounded-2xl border border-nest-teal/10 bg-nest-mint/18 p-4 sm:grid-cols-2">
+                <Field label="Approx. carpet area needing extraction">
+                  <select className="input" value={form.carpetArea} onChange={(e) => update("carpetArea", e.target.value)}>
+                    <option value="">Choose one</option>
+                    {specialtyAreaOptions.map((option) => <option key={option}>{option}</option>)}
+                  </select>
+                </Field>
+                <Field label="Carpet condition">
+                  <select className="input" value={form.carpetCondition} onChange={(e) => update("carpetCondition", e.target.value)}>
+                    <option value="">Choose one</option>
+                    {carpetConditionOptions.map((option) => <option key={option}>{option}</option>)}
+                  </select>
+                </Field>
+              </div>
+            )}
+
+            {needsSpotDetails && (
+              <div className="grid gap-4 rounded-2xl border border-nest-teal/10 bg-nest-mint/18 p-4 sm:grid-cols-2">
+                <Field label="Approx. number of spots / stain areas">
+                  <select className="input" value={form.spotTreatmentCount} onChange={(e) => update("spotTreatmentCount", e.target.value)}>
+                    <option value="">Choose one</option>
+                    {spotTreatmentOptions.map((option) => <option key={option}>{option}</option>)}
+                  </select>
+                </Field>
+                <div className="rounded-2xl border border-nest-gold/12 bg-white/80 p-4 text-sm font-semibold leading-6 text-nest-ink/68">
+                  Photos help confirm whether spot treatment is realistic or if a larger carpet extraction quote is needed.
+                </div>
+              </div>
+            )}
+
+            {needsHardFloorDetails && (
+              <div className="grid gap-4 rounded-2xl border border-nest-teal/10 bg-nest-mint/18 p-4 sm:grid-cols-2">
+                <Field label="Approx. hard-floor area needing specialty work">
+                  <select className="input" value={form.hardFloorArea} onChange={(e) => update("hardFloorArea", e.target.value)}>
+                    <option value="">Choose one</option>
+                    {specialtyAreaOptions.map((option) => <option key={option}>{option}</option>)}
+                  </select>
+                </Field>
+                <Field label="Hard-floor material">
+                  <select className="input" value={form.hardFloorMaterial} onChange={(e) => update("hardFloorMaterial", e.target.value)}>
+                    <option value="">Choose one</option>
+                    {hardFloorMaterialOptions.map((option) => <option key={option}>{option}</option>)}
+                  </select>
+                </Field>
+                <Field label="Hard-floor condition">
+                  <select className="input" value={form.hardFloorCondition} onChange={(e) => update("hardFloorCondition", e.target.value)}>
+                    <option value="">Choose one</option>
+                    {hardFloorConditionOptions.map((option) => <option key={option}>{option}</option>)}
+                  </select>
+                </Field>
+                <div className="rounded-2xl border border-nest-gold/12 bg-white/80 p-4 text-sm font-semibold leading-6 text-nest-ink/68">
+                  Floor scrub, buff, wax, and strip-and-wax pricing depends heavily on material, condition, buildup, access, and drying time.
+                </div>
+              </div>
+            )}
+
+            {needsUpholsteryDetails && (
+              <div className="grid gap-4 rounded-2xl border border-nest-teal/10 bg-nest-mint/18 p-4 sm:grid-cols-2">
+                <Field label="Upholstery scope">
+                  <select className="input" value={form.upholsteryScope} onChange={(e) => update("upholsteryScope", e.target.value)}>
+                    <option value="">Choose one</option>
+                    {upholsteryScopeOptions.map((option) => <option key={option}>{option}</option>)}
+                  </select>
+                </Field>
+                <div className="rounded-2xl border border-nest-gold/12 bg-white/80 p-4 text-sm font-semibold leading-6 text-nest-ink/68">
+                  Fabric type, stains, odor, and drying needs may require review before a final upholstery quote.
+                </div>
+              </div>
+            )}
+
+            {needsGlassDetails && (
+              <div className="grid gap-4 rounded-2xl border border-nest-teal/10 bg-nest-mint/18 p-4 sm:grid-cols-2">
+                <Field label="Interior glass / mirror scope">
+                  <select className="input" value={form.glassScope} onChange={(e) => update("glassScope", e.target.value)}>
+                    <option value="">Choose one</option>
+                    {glassScopeOptions.map((option) => <option key={option}>{option}</option>)}
+                  </select>
+                </Field>
+                <div className="rounded-2xl border border-nest-gold/12 bg-white/80 p-4 text-sm font-semibold leading-6 text-nest-ink/68">
+                  Standard interior glass is different from exterior storefront glass, ladder work, or high glass, which may need separate review.
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         <div className="rounded-2xl border border-nest-gold/15 bg-nest-mint/20 p-4 text-sm font-semibold leading-6 text-nest-ink/72">
-          Specialty add-ons such as carpet extraction, floor work, waxing, strip-and-wax, upholstery, or detailed glass work are reviewed before quoting and are not included by default.
+          Specialty add-ons are estimated separately from routine cleaning and are not included by default. If an area is unknown, NestHelper will review photos or request a walkthrough before quoting.
         </div>
       </Section>
 
@@ -774,7 +1051,7 @@ export function CommercialResetForm() {
           photos={form.photoUploads}
           onChange={(photos) => update("photoUploads", photos)}
           label="Upload walkthrough photos (optional)"
-          description="Add up to 4 optional photos of the space, flooring, restrooms, kitchen/break area, showers/changing areas, priority areas, access points, rental turnover condition, or anything that helps us quote accurately."
+          description="Add up to 4 optional photos of the space, flooring, carpet areas, hard-floor areas, restrooms, kitchen/break area, showers/changing areas, priority areas, access points, rental turnover condition, or anything that helps us quote accurately."
         />
         <Field label="Photo links or walkthrough notes (optional)"><textarea className="input min-h-24" placeholder="Paste a link to additional photos or describe anything a walkthrough should cover." value={form.photoNotes} onChange={(e) => update("photoNotes", e.target.value)} /></Field>
       </Section>
@@ -810,7 +1087,7 @@ function PlanningEstimateCard({ estimate }: { estimate: PlanningEstimate }) {
           <p className="pill-label w-fit"><Calculator size={15} /> Estimate Preview</p>
           <h3 className="mt-4 text-2xl font-black text-nest-teal">{estimate.title}</h3>
           <p className="mt-2 max-w-2xl text-sm font-medium leading-6 text-nest-ink/68">
-            This gives you a helpful budget range before you submit. NestHelper still reviews the request and sends the final quote before payment or scheduling.
+            This gives you a helpful budget range before you submit. Routine cleaning uses the main space details; specialty add-ons use the add-on area or item-count questions when provided.
           </p>
         </div>
         <div className="rounded-[1.4rem] border border-nest-gold/15 bg-white/85 p-4 text-left shadow-sm sm:min-w-64">
