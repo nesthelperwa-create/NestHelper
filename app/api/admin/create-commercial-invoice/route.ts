@@ -21,6 +21,15 @@ function getString(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
 }
 
+function formatServicePeriodLabel(start: unknown, end: unknown) {
+  const cleanStart = getString(start);
+  const cleanEnd = getString(end);
+  if (cleanStart && cleanEnd) return `${cleanStart} to ${cleanEnd}`;
+  if (cleanStart) return `Starts ${cleanStart}`;
+  if (cleanEnd) return `Through ${cleanEnd}`;
+  return "";
+}
+
 function cleanNumber(value: unknown) {
   const num = typeof value === "string" ? Number(value.replace(/[^0-9.-]/g, "")) : Number(value);
   return Number.isFinite(num) ? num : 0;
@@ -51,25 +60,13 @@ function formatRateForInvoice(rate: string, unit: string) {
   const normalizedUnit = unit.toLowerCase();
   const rateNumber = cleanNumber(rate);
   if (!Number.isFinite(rateNumber) || rateNumber <= 0) return rate;
-  if (
-    normalizedUnit.includes("sq ft") ||
-    normalizedUnit.includes("hour") ||
-    normalizedUnit.includes("area") ||
-    normalizedUnit.includes("turnover") ||
-    normalizedUnit.includes("set")
-  ) {
-    return `$${rateNumber.toLocaleString("en-US", {
-      minimumFractionDigits: rateNumber < 10 ? 2 : 0,
-      maximumFractionDigits: 2,
-    })}`;
+  if (normalizedUnit.includes("sq ft") || normalizedUnit.includes("hour") || normalizedUnit.includes("area") || normalizedUnit.includes("turnover") || normalizedUnit.includes("set")) {
+    return `$${rateNumber.toLocaleString("en-US", { minimumFractionDigits: rateNumber < 10 ? 2 : 0, maximumFractionDigits: 2 })}`;
   }
-  return `$${rateNumber.toLocaleString("en-US", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`;
+  return `$${rateNumber.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
-function buildLineDescription(line: Record<string, unknown>) {
+function buildLineDescription(line: Record<string, unknown>, servicePeriodLabel = "") {
   const label = getString(line.label) || "Commercial Reset line item";
   const description = getString(line.description);
   const note = getString(line.note);
@@ -83,27 +80,20 @@ function buildLineDescription(line: Record<string, unknown>) {
   const isFlat = !unit || unit === "flat";
   const math = isFlat
     ? "Flat approved amount"
-    : `Calculation: ${quantity || "0"} ${unit} × ${formatRateForInvoice(rate, unit)}${
-        multiplier && multiplier !== "1" ? ` × ${multiplier} ${multiplierLabel || "multiplier"}` : ""
-      }`;
-  const minimumText =
-    !isFlat && minimum && cleanNumber(minimum) > 0
-      ? `Minimum: $${cleanNumber(minimum).toLocaleString("en-US", { maximumFractionDigits: 2 })}`
-      : "";
+    : `Calculation: ${quantity || "0"} ${unit} × ${formatRateForInvoice(rate, unit)}${multiplier && multiplier !== "1" ? ` × ${multiplier} ${multiplierLabel || "multiplier"}` : ""}`;
+  const minimumText = !isFlat && minimum && cleanNumber(minimum) > 0 ? `Minimum: $${cleanNumber(minimum).toLocaleString("en-US", { maximumFractionDigits: 2 })}` : "";
 
   // Stripe invoice PDFs show the invoice item description, but they do not show metadata.
   // Keep the readable breakdown inside the description so customers see the details
   // on the hosted invoice page and downloaded invoice PDF.
   return [
     label,
+    servicePeriodLabel ? `Service period: ${servicePeriodLabel}` : "",
     description ? `Scope: ${description}` : "",
     math,
     minimumText,
     note ? `Note: ${note}` : "",
-  ]
-    .filter(Boolean)
-    .join("\n")
-    .slice(0, 900);
+  ].filter(Boolean).join("\n").slice(0, 900);
 }
 
 export async function POST(request: Request) {
@@ -116,10 +106,7 @@ export async function POST(request: Request) {
     if (!isAllowedAdminEmail(decoded.email)) return NextResponse.json({ ok: false }, { status: 403 });
 
     if (!stripe) {
-      return NextResponse.json(
-        { ok: false, error: "Stripe is not configured. Add STRIPE_SECRET_KEY in Vercel." },
-        { status: 500 }
-      );
+      return NextResponse.json({ ok: false, error: "Stripe is not configured. Add STRIPE_SECRET_KEY in Vercel." }, { status: 500 });
     }
 
     const body = (await request.json().catch(() => null)) as CreateCommercialInvoiceBody | null;
@@ -136,31 +123,21 @@ export async function POST(request: Request) {
 
     const data = requestSnap.data() || {};
     if (getString(data.service) !== "commercial-reset") {
-      return NextResponse.json(
-        { ok: false, error: "This invoice tool is only for Commercial Reset requests." },
-        { status: 400 }
-      );
+      return NextResponse.json({ ok: false, error: "This invoice tool is only for Commercial Reset requests." }, { status: 400 });
     }
 
     const email = getString(data.email);
     if (!email) return NextResponse.json({ ok: false, error: "Customer email is missing." }, { status: 400 });
 
     const breakdown = (data.commercialQuoteBreakdown || {}) as Record<string, unknown>;
-    const lineItems = Array.isArray(breakdown.lineItems) ? (breakdown.lineItems as Record<string, unknown>[]) : [];
+    const lineItems = Array.isArray(breakdown.lineItems) ? breakdown.lineItems as Record<string, unknown>[] : [];
     const amountDueNowCents = moneyToCents(breakdown.amountDueNow);
 
     if (!lineItems.length || amountDueNowCents <= 0) {
-      return NextResponse.json(
-        { ok: false, error: "Save a commercial quote breakdown with an amount due now before creating an invoice." },
-        { status: 400 }
-      );
+      return NextResponse.json({ ok: false, error: "Save a commercial quote breakdown with an amount due now before creating an invoice." }, { status: 400 });
     }
 
-    const customerName =
-      getString(data.fullName) ||
-      getString(data.contactName) ||
-      getString(data.businessName) ||
-      "NestHelper customer";
+    const customerName = getString(data.fullName) || getString(data.contactName) || getString(data.businessName) || "NestHelper customer";
     const address = getAddress(data);
     const customer = await stripe.customers.create({
       email,
@@ -178,13 +155,14 @@ export async function POST(request: Request) {
       automatic_tax: { enabled: enableAutomaticTax },
       auto_advance: false,
       description: getString(breakdown.quoteTitle) || "NestHelper Commercial Reset invoice",
-      footer:
-        getString(breakdown.customerNote) ||
-        "Final service is based on approved scope, access, condition, schedule, and reviewed add-ons.",
+      footer: getString(breakdown.customerNote) || "Final service is based on approved scope, access, condition, schedule, and reviewed add-ons.",
       metadata: {
         requestId,
         serviceId: "commercial-reset",
         paymentType: "commercial_invoice",
+        servicePeriodStart: getString(breakdown.servicePeriodStart),
+        servicePeriodEnd: getString(breakdown.servicePeriodEnd),
+        servicePeriodLabel,
         siteUrl,
       },
     });
@@ -199,7 +177,7 @@ export async function POST(request: Request) {
         invoice: invoice.id,
         currency: "usd",
         amount,
-        description: buildLineDescription(line),
+        description: buildLineDescription(line, servicePeriodLabel),
         metadata: {
           requestId,
           serviceId: "commercial-reset",
@@ -224,14 +202,7 @@ export async function POST(request: Request) {
     }
 
     if (attachedLineCount === 0) {
-      return NextResponse.json(
-        {
-          ok: false,
-          error:
-            "No billable invoice line items were attached. Save a quote breakdown with at least one positive line item before creating an invoice.",
-        },
-        { status: 400 }
-      );
+      return NextResponse.json({ ok: false, error: "No billable invoice line items were attached. Save a quote breakdown with at least one positive line item before creating an invoice." }, { status: 400 });
     }
 
     const finalized = await stripe.invoices.finalizeInvoice(invoice.id, { auto_advance: false });
@@ -245,30 +216,16 @@ export async function POST(request: Request) {
         commercialInvoiceUrl: hostedInvoiceUrl,
         commercialInvoicePdf: invoicePdf,
         commercialInvoiceAmountDue: finalized.amount_due ?? null,
-        commercialInvoiceEmailWarning:
-          "Stripe finalized this invoice at $0.00, so NestHelper did not email it. Review the saved quote line items and try again.",
+        commercialInvoiceEmailWarning: "Stripe finalized this invoice at $0.00, so NestHelper did not email it. Review the saved quote line items and try again.",
         commercialInvoiceCreatedAt: FieldValue.serverTimestamp(),
         updatedAt: FieldValue.serverTimestamp(),
         updatedBy: decoded.email || "admin",
       });
-      return NextResponse.json(
-        {
-          ok: false,
-          error:
-            "Stripe finalized the invoice at $0.00. The invoice link was not emailed. Reopen the quote builder, confirm the line items, save the quote, and create the invoice again.",
-        },
-        { status: 500 }
-      );
+      return NextResponse.json({ ok: false, error: "Stripe finalized the invoice at $0.00. The invoice link was not emailed. Reopen the quote builder, confirm the line items, save the quote, and create the invoice again." }, { status: 500 });
     }
 
     if (!hostedInvoiceUrl) {
-      return NextResponse.json(
-        {
-          ok: false,
-          error: "Stripe created the invoice, but no hosted invoice link was returned. Open the invoice in Stripe or try again.",
-        },
-        { status: 500 }
-      );
+      return NextResponse.json({ ok: false, error: "Stripe created the invoice, but no hosted invoice link was returned. Open the invoice in Stripe or try again." }, { status: 500 });
     }
 
     let emailSent = false;
@@ -276,7 +233,7 @@ export async function POST(request: Request) {
 
     if (shouldSendEmail) {
       try {
-        const result = (await sendCommercialInvoiceEmail({
+        const result = await sendCommercialInvoiceEmail({
           to: email,
           customerName,
           requestId,
@@ -287,11 +244,10 @@ export async function POST(request: Request) {
           dueDate: finalized.due_date,
           quoteTitle: getString(breakdown.quoteTitle) || "Commercial Reset quote breakdown",
           quoteBreakdownText: getString(breakdown.customerBreakdownText),
-        })) as any;
+        }) as any;
 
         if (result?.skipped) {
-          emailWarning =
-            "Invoice created, but the NestHelper email was skipped because email settings or the customer email are missing.";
+          emailWarning = "Invoice created, but the NestHelper email was skipped because email settings or the customer email are missing.";
         } else if (result?.error) {
           emailWarning = result.error?.message || "Invoice created, but the NestHelper email could not be sent.";
         } else {
@@ -313,6 +269,9 @@ export async function POST(request: Request) {
       commercialInvoiceUrl: hostedInvoiceUrl,
       commercialInvoicePdf: invoicePdf,
       commercialInvoiceAmountDue: finalized.amount_due ?? null,
+      commercialInvoiceServicePeriodStart: getString(breakdown.servicePeriodStart),
+      commercialInvoiceServicePeriodEnd: getString(breakdown.servicePeriodEnd),
+      commercialInvoiceServicePeriodLabel: servicePeriodLabel,
       commercialInvoiceCustomerId: customer.id,
       commercialInvoiceDeliveryMethod: shouldSendEmail ? "nesthelper_email" : "manual",
       commercialInvoiceEmailSent: emailSent,
@@ -339,9 +298,6 @@ export async function POST(request: Request) {
     });
   } catch (error: any) {
     console.error("Unable to create commercial invoice", error);
-    return NextResponse.json(
-      { ok: false, error: error?.message || "Unable to create commercial invoice." },
-      { status: 500 }
-    );
+    return NextResponse.json({ ok: false, error: error?.message || "Unable to create commercial invoice." }, { status: 500 });
   }
 }

@@ -375,6 +375,7 @@ function buildCustomerBreakdownText({
   additionalAmount,
   customerNote,
   validUntil,
+  servicePeriodLabel,
 }: {
   item: AdminDoc;
   quoteTitle: string;
@@ -387,6 +388,7 @@ function buildCustomerBreakdownText({
   additionalAmount: number;
   customerNote: string;
   validUntil: string;
+  servicePeriodLabel: string;
 }) {
   const customerName = item.fullName || item.name || item.contactName || "Customer";
   const lines = lineItems.map((line) => {
@@ -403,6 +405,7 @@ function buildCustomerBreakdownText({
     `Status: ${quoteStatus}`,
     `Pricing style: ${quoteType}`,
     validUntil ? `Valid through: ${validUntil}` : "",
+    servicePeriodLabel ? `Service period: ${servicePeriodLabel}` : "",
     "",
     "Line items:",
     ...lines,
@@ -425,6 +428,8 @@ export default function CommercialQuoteBreakdownBuilder({ item, formatMoney, onS
   const [quoteStatus, setQuoteStatus] = useState("Quote drafted");
   const [quoteType, setQuoteType] = useState(() => getInitialQuoteType(item));
   const [validUntil, setValidUntil] = useState("");
+  const [servicePeriodStart, setServicePeriodStart] = useState("");
+  const [servicePeriodEnd, setServicePeriodEnd] = useState("");
   const [lineItems, setLineItems] = useState<QuoteLineItem[]>(() => getInitialLines(item));
   const [discountCredit, setDiscountCredit] = useState("0");
   const [additionalAmount, setAdditionalAmount] = useState("0");
@@ -448,6 +453,8 @@ export default function CommercialQuoteBreakdownBuilder({ item, formatMoney, onS
     setQuoteStatus(safeString(item.commercialQuoteStatus) || safeString(breakdown.quoteStatus) || "Quote drafted");
     setQuoteType(getInitialQuoteType(item));
     setValidUntil(safeString(breakdown.validUntil));
+    setServicePeriodStart(safeString(breakdown.servicePeriodStart));
+    setServicePeriodEnd(safeString(breakdown.servicePeriodEnd));
     setLineItems(getInitialLines(item));
     setDiscountCredit(String(breakdown.discountCredit ?? "0"));
     setAdditionalAmount(String(item.commercialAdditionalAmount ?? breakdown.additionalAmount ?? "0"));
@@ -469,6 +476,7 @@ export default function CommercialQuoteBreakdownBuilder({ item, formatMoney, onS
   const amountDueNow = money(Math.max(0, subtotal - discount));
   const laterAmount = money(toNumber(additionalAmount));
   const totalQuoted = money(amountDueNow + laterAmount);
+  const servicePeriodLabel = useMemo(() => formatServicePeriodLabel(servicePeriodStart, servicePeriodEnd), [servicePeriodStart, servicePeriodEnd]);
 
   function markDirty() {
     setDirty(true);
@@ -514,7 +522,8 @@ export default function CommercialQuoteBreakdownBuilder({ item, formatMoney, onS
     additionalAmount: laterAmount,
     customerNote,
     validUntil,
-  }), [item, quoteTitle, quoteStatus, quoteType, lineItems, subtotal, discount, amountDueNow, laterAmount, customerNote, validUntil]);
+    servicePeriodLabel,
+  }), [item, quoteTitle, quoteStatus, quoteType, lineItems, subtotal, discount, amountDueNow, laterAmount, customerNote, validUntil, servicePeriodLabel]);
 
   async function copyBreakdown() {
     await navigator.clipboard.writeText(customerBreakdownText);
@@ -627,6 +636,9 @@ export default function CommercialQuoteBreakdownBuilder({ item, formatMoney, onS
         quoteStatus,
         quoteType,
         validUntil,
+        servicePeriodStart,
+        servicePeriodEnd,
+        servicePeriodLabel,
         lineItems: lineItems.map((line) => ({ ...line, amount: calculateLineAmount(line) })),
         subtotal,
         discountCredit: discount,
@@ -735,6 +747,8 @@ export default function CommercialQuoteBreakdownBuilder({ item, formatMoney, onS
                     <label className="grid gap-2 text-sm font-bold text-slate-700">Valid until / review date<input type="date" value={validUntil} onChange={(e) => { setValidUntil(e.target.value); markDirty(); }} className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 font-normal outline-none focus:border-[#075c58]" /></label>
                     <label className="grid gap-2 text-sm font-bold text-slate-700">Quote progress<select value={quoteStatus} onChange={(e) => { setQuoteStatus(e.target.value); markDirty(); }} className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 font-bold text-[#075c58] outline-none focus:border-[#075c58]">{QUOTE_STATUSES.map((status) => <option key={status}>{status}</option>)}</select></label>
                     <label className="grid gap-2 text-sm font-bold text-slate-700">Pricing style<select value={quoteType} onChange={(e) => { setQuoteType(e.target.value); markDirty(); }} className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 font-bold text-[#075c58] outline-none focus:border-[#075c58]">{QUOTE_TYPES.map((type) => <option key={type}>{type}</option>)}</select></label>
+                    <label className="grid gap-2 text-sm font-bold text-slate-700">Service period start <span className="text-xs font-semibold text-slate-500">Optional, use for recurring invoices</span><input type="date" value={servicePeriodStart} onChange={(e) => { setServicePeriodStart(e.target.value); markDirty(); }} className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 font-normal outline-none focus:border-[#075c58]" /></label>
+                    <label className="grid gap-2 text-sm font-bold text-slate-700">Service period end <span className="text-xs font-semibold text-slate-500">Shows on invoice/receipt emails</span><input type="date" value={servicePeriodEnd} onChange={(e) => { setServicePeriodEnd(e.target.value); markDirty(); }} className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 font-normal outline-none focus:border-[#075c58]" /></label>
                   </div>
                 </div>
 

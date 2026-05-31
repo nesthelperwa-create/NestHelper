@@ -10,6 +10,7 @@ type SendPaymentReceivedEmailInput = {
   currency?: string | null;
   paymentStatus?: string;
   replyToEmail?: string;
+  servicePeriodLabel?: string;
 };
 
 function escapeHtml(value: unknown) {
@@ -87,7 +88,7 @@ function getPaymentCopy(paymentStatus: string) {
   };
 }
 
-export async function sendPaymentReceivedEmail({ to, customerName, requestId, serviceTitle, amountTotal, currency, paymentStatus = "Paid", replyToEmail }: SendPaymentReceivedEmailInput) {
+export async function sendPaymentReceivedEmail({ to, customerName, requestId, serviceTitle, amountTotal, currency, paymentStatus = "Paid", replyToEmail, servicePeriodLabel }: SendPaymentReceivedEmailInput) {
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.NOTIFICATION_FROM_EMAIL || "NestHelper <onboarding@resend.dev>";
   const replyTo = replyToEmail || getPublicReplyEmail();
@@ -107,6 +108,7 @@ export async function sendPaymentReceivedEmail({ to, customerName, requestId, se
     ["Service", serviceTitle || "NestHelper service"],
     ["Payment status", paymentStatus],
     ["Amount paid", amountLabel],
+    ["Service period", servicePeriodLabel],
   ]
     .filter(([, value]) => String(value || "").trim().length > 0)
     .map(

@@ -23,6 +23,15 @@ function getString(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
 }
 
+function formatServicePeriodLabel(start: unknown, end: unknown) {
+  const cleanStart = getString(start);
+  const cleanEnd = getString(end);
+  if (cleanStart && cleanEnd) return `${cleanStart} to ${cleanEnd}`;
+  if (cleanStart) return `Starts ${cleanStart}`;
+  if (cleanEnd) return `Through ${cleanEnd}`;
+  return "";
+}
+
 function cleanNumber(value: unknown) {
   const num = typeof value === "string" ? Number(value.replace(/[^0-9.-]/g, "")) : Number(value);
   return Number.isFinite(num) ? num : 0;
@@ -63,7 +72,7 @@ function formatRateForInvoice(rate: string, unit: string) {
   })}`;
 }
 
-function buildLineDescription(line: Record<string, unknown>) {
+function buildLineDescription(line: Record<string, unknown>, servicePeriodLabel = "") {
   const label = getString(line.label) || "NestHelper family line item";
   const description = getString(line.description);
   const note = getString(line.note);
@@ -75,6 +84,7 @@ function buildLineDescription(line: Record<string, unknown>) {
 
   return [
     label,
+    servicePeriodLabel ? `Service period: ${servicePeriodLabel}` : "",
     description ? `Scope: ${description}` : "",
     math,
     note ? `Note: ${note}` : "",
@@ -126,6 +136,7 @@ export async function POST(request: Request) {
     const breakdown = (data.familyPaymentBreakdown || {}) as Record<string, unknown>;
     const lineItems = Array.isArray(breakdown.lineItems) ? (breakdown.lineItems as Record<string, unknown>[]) : [];
     const amountDueNowCents = moneyToCents(breakdown.amountDueNow);
+    const servicePeriodLabel = getString(breakdown.servicePeriodLabel) || formatServicePeriodLabel(breakdown.servicePeriodStart, breakdown.servicePeriodEnd);
 
     if (!lineItems.length || amountDueNowCents <= 0) {
       return NextResponse.json(
@@ -160,6 +171,9 @@ export async function POST(request: Request) {
         requestId,
         serviceId: getString(data.service) || "family-service",
         paymentType: "family_invoice",
+        servicePeriodStart: getString(breakdown.servicePeriodStart),
+        servicePeriodEnd: getString(breakdown.servicePeriodEnd),
+        servicePeriodLabel,
         siteUrl,
       },
     });
@@ -174,7 +188,7 @@ export async function POST(request: Request) {
         invoice: invoice.id,
         currency: "usd",
         amount,
-        description: buildLineDescription(line),
+        description: buildLineDescription(line, servicePeriodLabel),
         metadata: {
           requestId,
           serviceId: getString(data.service) || "family-service",
@@ -248,6 +262,7 @@ export async function POST(request: Request) {
           serviceTitle,
           quoteTitle: getString(breakdown.quoteTitle) || `${serviceTitle} payment breakdown`,
           quoteBreakdownText: getString(breakdown.customerBreakdownText),
+          servicePeriodLabel,
           replyToEmail: emailAliases.billing,
         })) as any;
 
@@ -274,6 +289,9 @@ export async function POST(request: Request) {
       familyInvoiceUrl: hostedInvoiceUrl,
       familyInvoicePdf: invoicePdf,
       familyInvoiceAmountDue: finalized.amount_due ?? null,
+      familyInvoiceServicePeriodStart: getString(breakdown.servicePeriodStart),
+      familyInvoiceServicePeriodEnd: getString(breakdown.servicePeriodEnd),
+      familyInvoiceServicePeriodLabel: servicePeriodLabel,
       familyInvoiceCustomerId: customer.id,
       familyInvoiceDeliveryMethod: shouldSendEmail ? "nesthelper_email" : "manual",
       familyInvoiceEmailSent: emailSent,
@@ -296,6 +314,7 @@ export async function POST(request: Request) {
       emailWarning,
       status: nextStatus,
       paymentStatus: nextStatus,
+      servicePeriodLabel,
       deliveryMethod: shouldSendEmail ? "nesthelper_email" : "manual",
     });
   } catch (error: any) {

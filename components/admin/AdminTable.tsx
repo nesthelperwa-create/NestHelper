@@ -426,6 +426,12 @@ export default function AdminTable({
   const [commercialInvoiceBusy, setCommercialInvoiceBusy] = useState(false);
   const [commercialInvoiceMessage, setCommercialInvoiceMessage] = useState("");
   const [commercialInvoiceError, setCommercialInvoiceError] = useState("");
+  const [commercialQuoteEmailBusy, setCommercialQuoteEmailBusy] = useState(false);
+  const [commercialQuoteEmailMessage, setCommercialQuoteEmailMessage] = useState("");
+  const [commercialQuoteEmailError, setCommercialQuoteEmailError] = useState("");
+  const [familyInvoiceBusy, setFamilyInvoiceBusy] = useState(false);
+  const [familyInvoiceMessage, setFamilyInvoiceMessage] = useState("");
+  const [familyInvoiceError, setFamilyInvoiceError] = useState("");
   const [statusValue, setStatusValue] = useState("New");
   const [statusNote, setStatusNote] = useState("");
   const [notifyCustomer, setNotifyCustomer] = useState(false);
@@ -471,6 +477,10 @@ export default function AdminTable({
     setCheckoutError("");
     setCommercialInvoiceMessage("");
     setCommercialInvoiceError("");
+    setCommercialQuoteEmailMessage("");
+    setCommercialQuoteEmailError("");
+    setFamilyInvoiceMessage("");
+    setFamilyInvoiceError("");
     setCustomInitialAmount(selected?.customInitialAmount ? String(selected.customInitialAmount) : "");
     setCustomInitialTitle(selected?.customInitialTitle ? String(selected.customInitialTitle) : "");
     setCustomInitialNote(selected?.customInitialNote ? String(selected.customInitialNote) : "");
@@ -625,12 +635,53 @@ export default function AdminTable({
     setAdditionalPaymentMessage("Additional payment checkout link copied.");
   }
 
+  async function emailCommercialQuoteOnly() {
+    if (!selected) return;
+    setCommercialQuoteEmailBusy(true);
+    setActiveAction("Emailing commercial quote for customer review...");
+    setCommercialQuoteEmailMessage("");
+    setCommercialQuoteEmailError("");
+
+    try {
+      const token = await firebaseAuth.currentUser?.getIdToken();
+      const res = await fetch("/api/admin/send-commercial-quote", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ requestId: selected.id }),
+      });
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok || !data.ok) throw new Error(data.error || "Unable to email commercial quote.");
+
+      setSelected((prev) => prev ? {
+        ...prev,
+        status: data.status || "Quote Sent",
+        commercialQuoteStatus: data.commercialQuoteStatus || "Quote sent",
+        commercialQuoteEmailSent: data.emailSent,
+        commercialQuoteEmailWarning: data.emailWarning,
+        commercialQuoteEmailSentAt: data.emailSent ? new Date().toISOString() : prev.commercialQuoteEmailSentAt,
+      } : prev);
+      setStatusValue(data.status || "Quote Sent");
+      setCommercialQuoteStatus(data.commercialQuoteStatus || "Quote sent");
+      setCommercialQuoteEmailMessage(data.emailWarning ? `Quote saved, but email warning: ${data.emailWarning}` : "Commercial quote emailed to the customer for review. No payment link was sent.");
+    } catch (error) {
+      setCommercialQuoteEmailError(error instanceof Error ? error.message : "Unable to email commercial quote.");
+    } finally {
+      setCommercialQuoteEmailBusy(false);
+      setActiveAction("");
+    }
+  }
+
   async function createCommercialInvoice(sendEmail: boolean) {
     if (!selected) return;
     setCommercialInvoiceBusy(true);
     setActiveAction(sendEmail ? "Creating invoice and sending NestHelper email..." : "Creating Stripe invoice...");
     setCommercialInvoiceMessage("");
     setCommercialInvoiceError("");
+    setCommercialQuoteEmailMessage("");
+    setCommercialQuoteEmailError("");
+    setFamilyInvoiceMessage("");
+    setFamilyInvoiceError("");
 
     try {
       const token = await firebaseAuth.currentUser?.getIdToken();
@@ -673,6 +724,55 @@ export default function AdminTable({
     }
   }
 
+  async function createFamilyInvoice(sendEmail: boolean) {
+    if (!selected) return;
+    setFamilyInvoiceBusy(true);
+    setActiveAction(sendEmail ? "Creating family invoice and sending NestHelper email..." : "Creating family Stripe invoice...");
+    setFamilyInvoiceMessage("");
+    setFamilyInvoiceError("");
+
+    try {
+      const token = await firebaseAuth.currentUser?.getIdToken();
+      const res = await fetch("/api/admin/create-family-invoice", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ requestId: selected.id, sendEmail }),
+      });
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok || !data.ok) throw new Error(data.error || "Unable to create family invoice.");
+
+      const nextInvoiceStatus = data.status || (sendEmail && data.emailSent ? "Invoice Link Sent" : "Invoice Created");
+      setSelected((prev) => prev ? {
+        ...prev,
+        status: nextInvoiceStatus,
+        paymentStatus: data.paymentStatus || nextInvoiceStatus,
+        familyInvoiceId: data.invoiceId,
+        familyInvoiceNumber: data.invoiceNumber,
+        familyInvoiceUrl: data.hostedInvoiceUrl,
+        familyInvoicePdf: data.invoicePdf,
+        familyInvoiceEmailSent: data.emailSent,
+        familyInvoiceEmailWarning: data.emailWarning,
+        familyInvoiceDeliveryMethod: data.deliveryMethod,
+        familyInvoiceServicePeriodLabel: data.servicePeriodLabel || prev.familyInvoiceServicePeriodLabel,
+        familyInvoiceSentAt: sendEmail && data.emailSent ? new Date().toISOString() : prev.familyInvoiceSentAt,
+      } : prev);
+      setStatusValue(nextInvoiceStatus);
+      if (sendEmail && data.emailSent) {
+        setFamilyInvoiceMessage("Family Stripe invoice created and sent to the customer by NestHelper email.");
+      } else if (sendEmail && data.emailWarning) {
+        setFamilyInvoiceMessage(`Family invoice created, but customer email was not sent. ${data.emailWarning} Open or copy the invoice link below.`);
+      } else {
+        setFamilyInvoiceMessage("Family Stripe invoice created. Open or copy the hosted invoice link below.");
+      }
+    } catch (error) {
+      setFamilyInvoiceError(error instanceof Error ? error.message : "Unable to create family invoice.");
+    } finally {
+      setFamilyInvoiceBusy(false);
+      setActiveAction("");
+    }
+  }
+
   async function createPaymentLink(sendEmail: boolean) {
     if (!selected) return;
     const useCustomInitial = checkoutMode === "custom";
@@ -682,6 +782,10 @@ export default function AdminTable({
     setCheckoutError("");
     setCommercialInvoiceMessage("");
     setCommercialInvoiceError("");
+    setCommercialQuoteEmailMessage("");
+    setCommercialQuoteEmailError("");
+    setFamilyInvoiceMessage("");
+    setFamilyInvoiceError("");
 
     try {
       const token = await firebaseAuth.currentUser?.getIdToken();
@@ -931,7 +1035,7 @@ export default function AdminTable({
   const hasSavedFamilyPaymentBreakdown = Boolean(selected?.familyPaymentBreakdown?.customerBreakdownText);
   const showCommercialQuotePanel = showPaymentActions && selectedIsCommercial;
   const showFamilyPaymentBreakdownPanel = showPaymentActions && !selectedIsCommercial;
-  const anyActionBusy = checkoutBusy || commercialInvoiceBusy || statusBusy || laundryFinalBusy || additionalPaymentBusy || commercialQuoteBusy;
+  const anyActionBusy = checkoutBusy || commercialInvoiceBusy || commercialQuoteEmailBusy || familyInvoiceBusy || statusBusy || laundryFinalBusy || additionalPaymentBusy || commercialQuoteBusy;
 
   return (
     <section className="space-y-5">
@@ -1013,8 +1117,8 @@ export default function AdminTable({
       <AdminActionFeedback
         busy={anyActionBusy}
         activeAction={activeAction}
-        messages={[statusMessage, checkoutMessage, commercialInvoiceMessage, laundryFinalMessage, additionalPaymentMessage, commercialQuoteMessage]}
-        errors={[statusError, checkoutError, commercialInvoiceError, laundryFinalError, additionalPaymentError, commercialQuoteError]}
+        messages={[statusMessage, checkoutMessage, commercialInvoiceMessage, commercialQuoteEmailMessage, familyInvoiceMessage, laundryFinalMessage, additionalPaymentMessage, commercialQuoteMessage]}
+        errors={[statusError, checkoutError, commercialInvoiceError, commercialQuoteEmailError, familyInvoiceError, laundryFinalError, additionalPaymentError, commercialQuoteError]}
       />
 
       <div className="overflow-hidden rounded-3xl border border-[#eadfc8] bg-white shadow-xl shadow-[#075c58]/5">
@@ -1093,8 +1197,8 @@ export default function AdminTable({
               <AdminActionFeedback
                 busy={anyActionBusy}
                 activeAction={activeAction}
-                messages={[statusMessage, checkoutMessage, commercialInvoiceMessage, laundryFinalMessage, additionalPaymentMessage, commercialQuoteMessage]}
-                errors={[statusError, checkoutError, commercialInvoiceError, laundryFinalError, additionalPaymentError, commercialQuoteError]}
+                messages={[statusMessage, checkoutMessage, commercialInvoiceMessage, commercialQuoteEmailMessage, familyInvoiceMessage, laundryFinalMessage, additionalPaymentMessage, commercialQuoteMessage]}
+                errors={[statusError, checkoutError, commercialInvoiceError, commercialQuoteEmailError, familyInvoiceError, laundryFinalError, additionalPaymentError, commercialQuoteError]}
               />
             </div>
 
@@ -1173,9 +1277,9 @@ export default function AdminTable({
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                   <div className="max-w-3xl">
                     <p className="text-xs font-black uppercase tracking-[0.2em] text-[#b98a2f]">Commercial quote workflow</p>
-                    <h4 className="mt-1 text-xl font-black text-[#075c58]">Review, quote, then email the breakdown with checkout</h4>
+                    <h4 className="mt-1 text-xl font-black text-[#075c58]">Review, quote, then invoice when approved</h4>
                     <p className="mt-2 text-sm leading-6 text-slate-700">
-                      This section is a guide for Commercial Reset only. Start by reviewing the space details, build and save the customer-ready breakdown, then use the green buttons to fill the Stripe payment sections below.
+                      This section is for Commercial Reset only. Review the request, build and save a customer-ready quote, email the quote by itself if the customer needs to approve first, then create the Stripe invoice once they are ready to pay.
                     </p>
                   </div>
                   <StatusBadge status={getCommercialQuoteStatus(selected)} />
@@ -1194,8 +1298,8 @@ export default function AdminTable({
                   </div>
                   <div className="rounded-2xl border border-cyan-200 bg-white p-4">
                     <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Step 3</p>
-                    <p className="mt-1 text-sm font-black text-[#075c58]">Send first payment</p>
-                    <p className="mt-1 text-xs leading-5 text-slate-600">Copy the amount into checkout below, then create and email the Stripe link.</p>
+                    <p className="mt-1 text-sm font-black text-[#075c58]">Email quote or invoice</p>
+                    <p className="mt-1 text-xs leading-5 text-slate-600">Send the quote only for approval, or create a Stripe invoice when the customer is ready to pay.</p>
                   </div>
                   <div className="rounded-2xl border border-cyan-200 bg-white p-4">
                     <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Optional</p>
@@ -1373,7 +1477,7 @@ export default function AdminTable({
                     />
                   </label>
 
-                  <div className="mt-4 grid gap-3 lg:grid-cols-3">
+                  <div className="mt-4 grid gap-3 lg:grid-cols-4">
                     <button
                       type="button"
                       disabled={commercialQuoteBusy}
@@ -1381,6 +1485,14 @@ export default function AdminTable({
                       className={getAdminActionClass("primary")}
                     >
                       {commercialQuoteBusy ? <><ActionSpinner /> Saving...</> : "1. Save quote details"}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={commercialQuoteEmailBusy || !hasSavedCommercialQuoteBreakdown}
+                      onClick={emailCommercialQuoteOnly}
+                      className={getAdminActionClass("success")}
+                    >
+                      {commercialQuoteEmailBusy ? <><ActionSpinner /> Emailing...</> : "Email quote only"}
                     </button>
                     <button
                       type="button"
@@ -1400,6 +1512,8 @@ export default function AdminTable({
 
                   {commercialQuoteMessage && <p className="mt-3 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">{commercialQuoteMessage}</p>}
                   {commercialQuoteError && <p className="mt-3 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{commercialQuoteError}</p>}
+                  {commercialQuoteEmailMessage && <p className="mt-3 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">{commercialQuoteEmailMessage}</p>}
+                  {commercialQuoteEmailError && <p className="mt-3 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{commercialQuoteEmailError}</p>}
                 </div>
               </div>
             )}
@@ -1570,6 +1684,46 @@ export default function AdminTable({
                         No saved quote breakdown is available yet. Save the Quote / Breakdown Builder draft first, then this checkbox will be available.
                       </p>
                     )}
+                  </div>
+                )}
+
+                {!selectedIsCommercial && (
+                  <div className="mt-4 rounded-3xl border border-cyan-200 bg-white p-4">
+                    <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                      <div className="max-w-2xl">
+                        <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Optional family invoice</p>
+                        <h5 className="mt-1 text-base font-black text-[#075c58]">Create a Stripe invoice from the saved family breakdown</h5>
+                        <p className="mt-1 text-sm leading-6 text-slate-700">
+                          Use this when you want a formal invoice/PDF instead of only a checkout receipt: Errand Helper, custom family quotes, recurring family help, Laundry Rescue balance, approved add-ons, or refund/credit documentation.
+                        </p>
+                      </div>
+                      <div className="flex flex-col gap-2 sm:flex-row lg:flex-col">
+                        <button type="button" disabled={familyInvoiceBusy || !hasSavedFamilyPaymentBreakdown} onClick={() => createFamilyInvoice(true)} className={getAdminActionClass("primary")}>
+                          {familyInvoiceBusy ? <><ActionSpinner /> Creating...</> : "Create + email family invoice"}
+                        </button>
+                        <button type="button" disabled={familyInvoiceBusy || !hasSavedFamilyPaymentBreakdown} onClick={() => createFamilyInvoice(false)} className={getAdminActionClass("secondary")}>
+                          Create family invoice only
+                        </button>
+                      </div>
+                    </div>
+                    {!hasSavedFamilyPaymentBreakdown && (
+                      <p className="mt-3 rounded-2xl bg-amber-50 px-4 py-3 text-xs font-bold leading-5 text-amber-800">Save the Family Payment Breakdown draft first. The invoice uses those saved line items, including the service period when entered.</p>
+                    )}
+                    {(selected.familyInvoiceUrl || selected.familyInvoicePdf) && (
+                      <div className="mt-4 rounded-2xl border border-cyan-100 bg-cyan-50/50 p-4">
+                        <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Current family invoice</p>
+                        {selected.familyInvoiceEmailWarning && <p className="mt-2 rounded-2xl bg-amber-50 px-3 py-2 text-xs font-bold text-amber-800">{selected.familyInvoiceEmailWarning}</p>}
+                        {selected.familyInvoiceServicePeriodLabel && <p className="mt-2 text-xs font-bold text-slate-600">Service period: {selected.familyInvoiceServicePeriodLabel}</p>}
+                        {selected.familyInvoiceUrl && <p className="mt-2 break-all text-sm text-[#075c58]">{selected.familyInvoiceUrl}</p>}
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {selected.familyInvoiceUrl && <a href={selected.familyInvoiceUrl} target="_blank" rel="noreferrer" className="rounded-full bg-[#075c58] px-4 py-2 text-xs font-black text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-[#064b48]">Open invoice</a>}
+                          {selected.familyInvoicePdf && <a href={selected.familyInvoicePdf} target="_blank" rel="noreferrer" className="rounded-full border border-[#075c58] bg-white px-4 py-2 text-xs font-black text-[#075c58] transition hover:bg-[#f4ecdc]">Open PDF</a>}
+                          {selected.familyInvoiceUrl && <button type="button" onClick={() => copyToClipboard(selected.familyInvoiceUrl || "")} className="rounded-full border border-[#075c58] bg-white px-4 py-2 text-xs font-black text-[#075c58] transition hover:bg-[#f4ecdc]">Copy invoice link</button>}
+                        </div>
+                      </div>
+                    )}
+                    {familyInvoiceMessage && <p className="mt-3 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">{familyInvoiceMessage}</p>}
+                    {familyInvoiceError && <p className="mt-3 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{familyInvoiceError}</p>}
                   </div>
                 )}
 

@@ -44,6 +44,15 @@ function formatMoney(value: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(Number.isFinite(value) ? value : 0);
 }
 
+function formatServicePeriodLabel(start: unknown, end: unknown) {
+  const cleanStart = getString(start);
+  const cleanEnd = getString(end);
+  if (cleanStart && cleanEnd) return `${cleanStart} to ${cleanEnd}`;
+  if (cleanStart) return `Starts ${cleanStart}`;
+  if (cleanEnd) return `Through ${cleanEnd}`;
+  return "";
+}
+
 function getServicePriceLabel(serviceId: string, mode: "standard" | "founding") {
   const service = services.find((item) => item.id === serviceId);
   if (!service) return "";
@@ -96,6 +105,9 @@ export async function POST(request: Request) {
     const savedCommercialBreakdownText = isCommercialReset ? getString(savedCommercialBreakdown.customerBreakdownText) : "";
     const savedFamilyBreakdown = (data.familyPaymentBreakdown || {}) as Record<string, unknown>;
     const savedFamilyBreakdownText = !isCommercialReset ? getString(savedFamilyBreakdown.customerBreakdownText) : "";
+    const servicePeriodLabel = isCommercialReset
+      ? getString(savedCommercialBreakdown.servicePeriodLabel) || formatServicePeriodLabel(savedCommercialBreakdown.servicePeriodStart, savedCommercialBreakdown.servicePeriodEnd)
+      : getString(savedFamilyBreakdown.servicePeriodLabel) || formatServicePeriodLabel(savedFamilyBreakdown.servicePeriodStart, savedFamilyBreakdown.servicePeriodEnd);
 
     if (!serviceId) {
       return NextResponse.json({ ok: false, error: "Missing service selection for this request." }, { status: 400 });
@@ -130,7 +142,7 @@ export async function POST(request: Request) {
               unit_amount: customAmountCents,
               product_data: {
                 name: customTitle,
-                description: customNote || `${serviceTitle} — ${formatMoney(customAmount)}`,
+                description: [customNote || `${serviceTitle} — ${formatMoney(customAmount)}`, servicePeriodLabel ? `Service period: ${servicePeriodLabel}` : ""].filter(Boolean).join("\n"),
               },
             },
             quantity: 1,
@@ -161,6 +173,9 @@ export async function POST(request: Request) {
         customInitialTitle: useCustomInitial ? customTitle : "",
         customInitialNote: useCustomInitial ? customNote : "",
         customInitialAmount: useCustomInitial ? String(Number(customAmount.toFixed(2))) : "",
+        servicePeriodLabel,
+        servicePeriodStart: isCommercialReset ? getString(savedCommercialBreakdown.servicePeriodStart) : getString(savedFamilyBreakdown.servicePeriodStart),
+        servicePeriodEnd: isCommercialReset ? getString(savedCommercialBreakdown.servicePeriodEnd) : getString(savedFamilyBreakdown.servicePeriodEnd),
         customerName: fullName,
         customerEmail: email,
         customerPhone: phone,
@@ -214,6 +229,9 @@ export async function POST(request: Request) {
       checkoutEmailError: emailError,
       checkoutIncludedQuoteBreakdown: Boolean(isCommercialReset && useCustomInitial && shouldIncludeQuoteBreakdown && savedCommercialBreakdownText),
       checkoutIncludedFamilyBreakdown: Boolean(!isCommercialReset && shouldIncludeFamilyBreakdown && savedFamilyBreakdownText),
+      checkoutServicePeriodLabel: servicePeriodLabel,
+      checkoutServicePeriodStart: isCommercialReset ? getString(savedCommercialBreakdown.servicePeriodStart) : getString(savedFamilyBreakdown.servicePeriodStart),
+      checkoutServicePeriodEnd: isCommercialReset ? getString(savedCommercialBreakdown.servicePeriodEnd) : getString(savedFamilyBreakdown.servicePeriodEnd),
       checkoutCreatedBy: decoded.email || "admin",
       updatedAt: FieldValue.serverTimestamp(),
       updatedBy: decoded.email || "admin",

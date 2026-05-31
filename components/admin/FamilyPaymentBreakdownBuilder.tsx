@@ -175,6 +175,15 @@ function getString(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
 }
 
+function formatServicePeriodLabel(start: string, end: string) {
+  const cleanStart = getString(start);
+  const cleanEnd = getString(end);
+  if (cleanStart && cleanEnd) return `${cleanStart} to ${cleanEnd}`;
+  if (cleanStart) return `Starts ${cleanStart}`;
+  if (cleanEnd) return `Through ${cleanEnd}`;
+  return "";
+}
+
 function makeId() {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 }
@@ -322,6 +331,7 @@ function buildCustomerBreakdownText({
   amountDueNow,
   laterAmount,
   customerNote,
+  servicePeriodLabel,
   formatMoney,
 }: {
   quoteTitle: string;
@@ -333,6 +343,7 @@ function buildCustomerBreakdownText({
   amountDueNow: number;
   laterAmount: number;
   customerNote: string;
+  servicePeriodLabel: string;
   formatMoney: (value: number) => string;
 }) {
   const lines = lineItems
@@ -348,6 +359,7 @@ function buildCustomerBreakdownText({
     quoteTitle || `${serviceLabel} payment breakdown`,
     `Service: ${serviceLabel}`,
     `Payment type: ${paymentPlan}`,
+    servicePeriodLabel ? `Service period: ${servicePeriodLabel}` : "",
     "",
     lines,
     "",
@@ -380,6 +392,8 @@ export default function FamilyPaymentBreakdownBuilder({
   const [dirty, setDirty] = useState(false);
   const [quoteTitle, setQuoteTitle] = useState(getString(saved.quoteTitle) || `${serviceLabel} payment breakdown`);
   const [paymentPlan, setPaymentPlan] = useState(getString(saved.paymentPlan) || getDefaultPaymentPlan(item));
+  const [servicePeriodStart, setServicePeriodStart] = useState(getString(saved.servicePeriodStart));
+  const [servicePeriodEnd, setServicePeriodEnd] = useState(getString(saved.servicePeriodEnd));
   const [selectedPreset, setSelectedPreset] = useState(getSuggestedPresetId(item));
   const [lineItems, setLineItems] = useState<FamilyLineItem[]>(
     Array.isArray(saved.lineItems) && saved.lineItems.length ? saved.lineItems.map(lineFromSaved) : createDefaultLinesFromRequest(item)
@@ -406,6 +420,8 @@ export default function FamilyPaymentBreakdownBuilder({
     const nextServiceLabel = getServiceLabel(item);
     setQuoteTitle(getString(nextSaved.quoteTitle) || `${nextServiceLabel} payment breakdown`);
     setPaymentPlan(getString(nextSaved.paymentPlan) || getDefaultPaymentPlan(item));
+    setServicePeriodStart(getString(nextSaved.servicePeriodStart));
+    setServicePeriodEnd(getString(nextSaved.servicePeriodEnd));
     setSelectedPreset(getSuggestedPresetId(item));
     setLineItems(Array.isArray(nextSaved.lineItems) && nextSaved.lineItems.length ? nextSaved.lineItems.map(lineFromSaved) : createDefaultLinesFromRequest(item));
     setDiscountCredit(getString(nextSaved.discountCredit) || "0");
@@ -430,6 +446,7 @@ export default function FamilyPaymentBreakdownBuilder({
   const discount = Math.max(0, cleanNumber(discountCredit));
   const amountDueNow = Math.max(0, subtotal - discount);
   const possibleLaterAmount = Math.max(0, cleanNumber(laterAmount));
+  const servicePeriodLabel = useMemo(() => formatServicePeriodLabel(servicePeriodStart, servicePeriodEnd), [servicePeriodStart, servicePeriodEnd]);
   const customerBreakdownText = useMemo(
     () =>
       buildCustomerBreakdownText({
@@ -442,9 +459,10 @@ export default function FamilyPaymentBreakdownBuilder({
         amountDueNow,
         laterAmount: possibleLaterAmount,
         customerNote,
+        servicePeriodLabel,
         formatMoney,
       }),
-    [quoteTitle, serviceLabel, paymentPlan, lineItems, subtotal, discount, amountDueNow, possibleLaterAmount, customerNote, formatMoney]
+    [quoteTitle, serviceLabel, paymentPlan, lineItems, subtotal, discount, amountDueNow, possibleLaterAmount, customerNote, servicePeriodLabel, formatMoney]
   );
 
   function markDirty() {
@@ -476,6 +494,8 @@ export default function FamilyPaymentBreakdownBuilder({
     setLineItems(createDefaultLinesFromRequest(item));
     setQuoteTitle(`${getServiceLabel(item)} payment breakdown`);
     setPaymentPlan(getDefaultPaymentPlan(item));
+    setServicePeriodStart("");
+    setServicePeriodEnd("");
   }
 
   function removeLine(id: string) {
@@ -529,10 +549,16 @@ export default function FamilyPaymentBreakdownBuilder({
           quoteTitle,
           customerNote,
           internalNotes,
+          servicePeriodStart,
+          servicePeriodEnd,
+          servicePeriodLabel,
           paymentBreakdown: {
             quoteTitle,
             serviceLabel,
             paymentPlan,
+            servicePeriodStart,
+            servicePeriodEnd,
+            servicePeriodLabel,
             lineItems,
             subtotal: Number(subtotal.toFixed(2)),
             discountCredit: Number(discount.toFixed(2)),
@@ -557,6 +583,9 @@ export default function FamilyPaymentBreakdownBuilder({
           quoteTitle,
           serviceLabel,
           paymentPlan,
+          servicePeriodStart,
+          servicePeriodEnd,
+          servicePeriodLabel,
           lineItems,
           subtotal: Number(subtotal.toFixed(2)),
           discountCredit: Number(discount.toFixed(2)),
@@ -645,6 +674,14 @@ export default function FamilyPaymentBreakdownBuilder({
                         <option>Custom approved family payment</option>
                         <option>Refund / credit record</option>
                       </select>
+                    </label>
+                    <label className="grid gap-2 text-sm font-bold text-slate-700">
+                      Service period start <span className="text-xs font-semibold text-slate-500">Optional, use for recurring</span>
+                      <input type="date" value={servicePeriodStart} onChange={(e) => { markDirty(); setServicePeriodStart(e.target.value); }} className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]" />
+                    </label>
+                    <label className="grid gap-2 text-sm font-bold text-slate-700">
+                      Service period end <span className="text-xs font-semibold text-slate-500">Shows on invoices/receipts</span>
+                      <input type="date" value={servicePeriodEnd} onChange={(e) => { markDirty(); setServicePeriodEnd(e.target.value); }} className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]" />
                     </label>
                   </div>
                 </div>

@@ -13,6 +13,7 @@ type CommercialInvoiceEmailInput = {
   quoteTitle?: string;
   quoteBreakdownText?: string;
   replyToEmail?: string;
+  servicePeriodLabel?: string;
 };
 
 function escapeHtml(value: unknown) {
@@ -56,6 +57,7 @@ export async function sendCommercialInvoiceEmail({
   quoteTitle,
   quoteBreakdownText,
   replyToEmail,
+  servicePeriodLabel,
 }: CommercialInvoiceEmailInput) {
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.NOTIFICATION_FROM_EMAIL || "NestHelper <onboarding@resend.dev>";
@@ -75,6 +77,7 @@ export async function sendCommercialInvoiceEmail({
     "Invoice number": invoiceNumber || "Shown on invoice",
     "Amount due": formatCents(amountDueCents),
     "Due date": formatDueDate(dueDate),
+    "Service period": servicePeriodLabel,
   });
   const breakdownHtml = cleanBreakdown
     ? `<div style="margin:0 0 22px 0;padding:16px 14px;border-radius:14px;background:#fbf6ea;border:1px solid #eadfc8;box-sizing:border-box;overflow-wrap:anywhere;word-break:break-word;">
@@ -117,7 +120,8 @@ export async function sendCommercialInvoiceEmail({
     </div>`;
 
   const breakdownTextBlock = cleanBreakdown ? `\n\n${quoteTitle || "Commercial Reset quote breakdown"}:\n${cleanBreakdown}` : "";
-  const text = `${greeting}\n\nYour NestHelper Commercial Reset invoice is ready for review and secure payment through Stripe. Please review the scope and amount before paying. Service is confirmed after payment and scheduling details are finalized by NestHelper.\n\nRequest ID: ${requestId}\nInvoice number: ${invoiceNumber || "Shown on invoice"}\nAmount due: ${formatCents(amountDueCents)}\nDue date: ${formatDueDate(dueDate)}${breakdownTextBlock}\n\nReview and pay invoice: ${invoiceUrl}${invoicePdf ? `\nInvoice PDF: ${invoicePdf}` : ""}\n\nQuestions or changes? Reply to this email or contact us at ${customerSupportEmail}.\n\nNestHelper: ${siteUrl}`;
+  const text = `${greeting}\n\nYour NestHelper Commercial Reset invoice is ready for review and secure payment through Stripe. Please review the scope and amount before paying. Service is confirmed after payment and scheduling details are finalized by NestHelper.\n\nRequest ID: ${requestId}\nInvoice number: ${invoiceNumber || "Shown on invoice"}\nAmount due: ${formatCents(amountDueCents)}\nDue date: ${formatDueDate(dueDate)}${servicePeriodLabel ? `
+Service period: ${servicePeriodLabel}` : ""}${breakdownTextBlock}\n\nReview and pay invoice: ${invoiceUrl}${invoicePdf ? `\nInvoice PDF: ${invoicePdf}` : ""}\n\nQuestions or changes? Reply to this email or contact us at ${customerSupportEmail}.\n\nNestHelper: ${siteUrl}`;
 
   const resend = new Resend(apiKey);
   return resend.emails.send({

@@ -114,15 +114,22 @@ export async function POST(request: Request) {
         const paymentType = getString(invoice.metadata?.paymentType);
         const serviceId = getString(invoice.metadata?.serviceId) || getString(existingData.service) || "commercial-reset";
         const isLaundryFinalInvoice = paymentType === "laundry_final_balance" || serviceId === "laundry-rescue";
+        const isFamilyInvoice = paymentType === "family_invoice";
+        const servicePeriodLabel =
+          getString(invoice.metadata?.servicePeriodLabel) ||
+          getString(existingData.familyInvoiceServicePeriodLabel) ||
+          getString(existingData.commercialInvoiceServicePeriodLabel) ||
+          getString(existingData.checkoutServicePeriodLabel);
+        const zeroDollarPrefix = isLaundryFinalInvoice ? "laundryFinalInvoice" : isFamilyInvoice ? "familyInvoice" : "commercialInvoice";
 
         // Stripe marks $0 finalized invoices as paid immediately. Ignore those so a draft/test
         // invoice mistake does not mark a real NestHelper request as paid or email the customer.
         if ((invoice.amount_paid ?? 0) <= 0) {
           await requestRef.update({
-            [isLaundryFinalInvoice ? "laundryFinalInvoiceZeroDollarPaidEventIgnored" : "commercialInvoiceZeroDollarPaidEventIgnored"]: true,
-            [isLaundryFinalInvoice ? "laundryFinalInvoiceZeroDollarPaidEventIgnoredAt" : "commercialInvoiceZeroDollarPaidEventIgnoredAt"]: FieldValue.serverTimestamp(),
-            [isLaundryFinalInvoice ? "laundryFinalInvoiceZeroDollarPaidEventInvoiceId" : "commercialInvoiceZeroDollarPaidEventInvoiceId"]: invoice.id,
-            [isLaundryFinalInvoice ? "laundryFinalInvoiceZeroDollarPaidEventAmountPaid" : "commercialInvoiceZeroDollarPaidEventAmountPaid"]: invoice.amount_paid ?? null,
+            [`${zeroDollarPrefix}ZeroDollarPaidEventIgnored`]: true,
+            [`${zeroDollarPrefix}ZeroDollarPaidEventIgnoredAt`]: FieldValue.serverTimestamp(),
+            [`${zeroDollarPrefix}ZeroDollarPaidEventInvoiceId`]: invoice.id,
+            [`${zeroDollarPrefix}ZeroDollarPaidEventAmountPaid`]: invoice.amount_paid ?? null,
             updatedAt: FieldValue.serverTimestamp(),
             updatedBy: "stripe-webhook",
           });
@@ -213,6 +220,89 @@ export async function POST(request: Request) {
               await requestRef.update({ laundryFinalInvoiceAdminPaymentEmailError: "Invoice was recorded, but the admin alert failed." });
             }
           }
+        } else if (isFamilyInvoice) {
+          const serviceTitle = getServiceTitle(existingData, "NestHelper family invoice");
+          const paymentStatus = "Invoice Paid";
+
+          await requestRef.update({
+            status: "Invoice Paid",
+            paymentStatus,
+            familyInvoiceStatus: paymentStatus,
+            familyInvoiceId: invoice.id,
+            familyInvoicePaidAt: FieldValue.serverTimestamp(),
+            familyInvoiceAmountPaid: invoice.amount_paid ?? null,
+            familyInvoiceAmountDue: invoice.amount_due ?? null,
+            familyInvoiceHostedUrl: invoice.hosted_invoice_url || existingData.familyInvoiceUrl || "",
+            familyInvoiceUrl: invoice.hosted_invoice_url || existingData.familyInvoiceUrl || "",
+            familyInvoicePdf: invoice.invoice_pdf || existingData.familyInvoicePdf || "",
+            familyInvoiceServicePeriodLabel: servicePeriodLabel,
+            stripeCustomerId: typeof invoice.customer === "string" ? invoice.customer : "",
+            updatedAt: FieldValue.serverTimestamp(),
+            updatedBy: "stripe-webhook",
+          });
+
+          const email = getString(existingData.email);
+          const customerName = getString(existingData.fullName) || getString(existingData.contactName);
+
+          if (email && !existingData.familyInvoicePaymentConfirmationEmailSent) {
+            try {
+              await sendPaymentReceivedEmail({
+                to: email,
+                customerName,
+                requestId,
+                serviceTitle,
+                amountTotal: invoice.amount_paid,
+                currency: invoice.currency,
+                paymentStatus,
+                replyToEmail: serviceId === "laundry-rescue" ? emailAliases.laundry : emailAliases.billing,
+                servicePeriodLabel,
+              });
+              await requestRef.update({
+                familyInvoicePaymentConfirmationEmailSent: true,
+                familyInvoicePaymentConfirmationEmailSentAt: FieldValue.serverTimestamp(),
+                familyInvoicePaymentConfirmationEmailError: "",
+              });
+            } catch (error) {
+              console.error("Family invoice paid confirmation email failed", error);
+              await requestRef.update({
+                familyInvoicePaymentConfirmationEmailSent: false,
+                familyInvoicePaymentConfirmationEmailError: "Payment was recorded, but the NestHelper payment confirmation email failed.",
+              });
+            }
+          }
+
+          if (!existingData.familyInvoiceAdminPaymentEmailSent) {
+            try {
+              const routedPaymentInbox = serviceId === "laundry-rescue" ? emailAliases.laundry : emailAliases.billing;
+              const result = await sendAdminEmail({
+                subject: `Stripe Invoice Paid: ${serviceTitle}`,
+                title: "Family invoice paid — ready to schedule",
+                intro: "A customer paid a NestHelper family-service Stripe invoice. The request is now marked Invoice Paid in the admin dashboard.",
+                adminPath: "/admin/requests",
+                to: routedPaymentInbox,
+                routeLabel: serviceId === "laundry-rescue" ? "Laundry" : "Billing",
+                routedToText: routedPaymentInbox,
+                rows: {
+                  "Dashboard ID": requestId,
+                  Service: serviceTitle,
+                  Customer: customerName,
+                  Email: email,
+                  "Amount paid": formatMoney(invoice.amount_paid, invoice.currency),
+                  "Service period": servicePeriodLabel,
+                  Address: buildAddress(existingData),
+                  "Stripe invoice": invoice.id,
+                },
+              });
+              await requestRef.update({
+                familyInvoiceAdminPaymentEmailSent: true,
+                familyInvoiceAdminPaymentEmailSentAt: FieldValue.serverTimestamp(),
+                familyInvoiceAdminPaymentEmailError: result && "error" in result && result.error ? String(result.error) : "",
+              });
+            } catch (error) {
+              console.error("Family invoice admin alert failed", error);
+              await requestRef.update({ familyInvoiceAdminPaymentEmailError: "Invoice was recorded, but the admin alert failed." });
+            }
+          }
         } else {
           const serviceTitle = getServiceTitle(existingData, "Commercial Reset invoice");
           const paymentStatus = "Invoice Paid";
@@ -227,6 +317,7 @@ export async function POST(request: Request) {
             commercialInvoiceAmountDue: invoice.amount_due ?? null,
             commercialInvoiceHostedUrl: invoice.hosted_invoice_url || existingData.commercialInvoiceUrl || "",
             commercialInvoicePdf: invoice.invoice_pdf || existingData.commercialInvoicePdf || "",
+            commercialInvoiceServicePeriodLabel: servicePeriodLabel,
             stripeCustomerId: typeof invoice.customer === "string" ? invoice.customer : "",
             updatedAt: FieldValue.serverTimestamp(),
             updatedBy: "stripe-webhook",
@@ -246,6 +337,7 @@ export async function POST(request: Request) {
                 currency: invoice.currency,
                 paymentStatus,
                 replyToEmail: emailAliases.commercial || emailAliases.billing,
+                servicePeriodLabel,
               });
               await requestRef.update({
                 commercialInvoicePaymentConfirmationEmailSent: true,
@@ -278,6 +370,7 @@ export async function POST(request: Request) {
                   Customer: customerName,
                   Email: email,
                   "Amount paid": formatMoney(invoice.amount_paid, invoice.currency),
+                  "Service period": servicePeriodLabel,
                   Address: buildAddress(existingData),
                   "Stripe invoice": invoice.id,
                 },
@@ -310,6 +403,7 @@ export async function POST(request: Request) {
         const isAdditionalPayment = paymentType === "additional_payment";
         const isLaundryFinalBalance = paymentType === "laundry_final_balance";
         const isCustomInitialPayment = getString(session.metadata?.customInitialPayment) === "true";
+        const checkoutServicePeriodLabel = getString(session.metadata?.servicePeriodLabel) || getString(existingData.checkoutServicePeriodLabel) || getString(existingData.familyInvoiceServicePeriodLabel) || getString(existingData.commercialInvoiceServicePeriodLabel);
         const isLaundryDeposit = serviceId === "laundry-rescue" && !isLaundryFinalBalance && !isAdditionalPayment;
         const status = isAdditionalPayment ? "Additional Paid" : isLaundryFinalBalance ? "Fully Paid" : isLaundryDeposit ? "Deposit Paid" : "Paid";
         const paymentStatus = isAdditionalPayment ? "Additional Paid" : isLaundryFinalBalance ? "Final Balance Paid" : isLaundryDeposit ? "Deposit Paid" : "Paid";
@@ -320,6 +414,7 @@ export async function POST(request: Request) {
           amountSubtotal: session.amount_subtotal ?? null,
           amountTotal: session.amount_total ?? null,
           currency: session.currency || "usd",
+          checkoutServicePeriodLabel,
           updatedAt: FieldValue.serverTimestamp(),
           updatedBy: "stripe-webhook",
         };
@@ -424,6 +519,7 @@ export async function POST(request: Request) {
               currency: session.currency,
               paymentStatus,
               replyToEmail: serviceId === "laundry-rescue" ? emailAliases.laundry : emailAliases.billing,
+              servicePeriodLabel: checkoutServicePeriodLabel,
             });
 
             await requestRef.update({
@@ -466,6 +562,7 @@ export async function POST(request: Request) {
                 "Payment status": paymentStatus,
                 "Additional reason": getString(session.metadata?.additionalReason),
                 "Additional note": getString(session.metadata?.additionalNote),
+                "Service period": checkoutServicePeriodLabel,
                 "Amount paid": formatMoney(session.amount_total, session.currency),
                 "Preferred date": getString(existingData.preferredDate),
                 "Preferred window": getString(existingData.preferredWindow),
