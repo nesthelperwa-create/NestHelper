@@ -625,7 +625,7 @@ export default function AdminTable({
   async function createCommercialInvoice(sendEmail: boolean) {
     if (!selected) return;
     setCommercialInvoiceBusy(true);
-    setActiveAction(sendEmail ? "Creating and emailing Stripe invoice..." : "Creating Stripe invoice...");
+    setActiveAction(sendEmail ? "Creating invoice and sending NestHelper email..." : "Creating Stripe invoice...");
     setCommercialInvoiceMessage("");
     setCommercialInvoiceError("");
 
@@ -640,17 +640,28 @@ export default function AdminTable({
 
       if (!res.ok || !data.ok) throw new Error(data.error || "Unable to create commercial invoice.");
 
+      const nextInvoiceStatus = data.status || (sendEmail && data.emailSent ? "Invoice Link Sent" : "Invoice Created");
       setSelected((prev) => prev ? {
         ...prev,
-        status: "Invoice Sent",
-        paymentStatus: "Invoice Sent",
+        status: nextInvoiceStatus,
+        paymentStatus: data.paymentStatus || nextInvoiceStatus,
         commercialInvoiceId: data.invoiceId,
+        commercialInvoiceNumber: data.invoiceNumber,
         commercialInvoiceUrl: data.hostedInvoiceUrl,
         commercialInvoicePdf: data.invoicePdf,
-        commercialInvoiceSentAt: sendEmail ? new Date().toISOString() : prev.commercialInvoiceSentAt,
+        commercialInvoiceEmailSent: data.emailSent,
+        commercialInvoiceEmailWarning: data.emailWarning,
+        commercialInvoiceDeliveryMethod: data.deliveryMethod,
+        commercialInvoiceSentAt: sendEmail && data.emailSent ? new Date().toISOString() : prev.commercialInvoiceSentAt,
       } : prev);
-      setStatusValue("Invoice Sent");
-      setCommercialInvoiceMessage(sendEmail ? "Stripe invoice created and emailed to the customer." : "Stripe invoice created. Open or copy the hosted invoice link below.");
+      setStatusValue(nextInvoiceStatus);
+      if (sendEmail && data.emailSent) {
+        setCommercialInvoiceMessage("Stripe invoice created and sent to the customer by NestHelper email.");
+      } else if (sendEmail && data.emailWarning) {
+        setCommercialInvoiceMessage(`Stripe invoice created, but customer email was not sent. ${data.emailWarning} Open or copy the invoice link below.`);
+      } else {
+        setCommercialInvoiceMessage("Stripe invoice created. Open or copy the hosted invoice link below.");
+      }
     } catch (error) {
       setCommercialInvoiceError(error instanceof Error ? error.message : "Unable to create commercial invoice.");
     } finally {
@@ -1419,12 +1430,12 @@ export default function AdminTable({
                         <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Recommended for commercial</p>
                         <h5 className="mt-1 text-base font-black text-[#075c58]">Create a Stripe invoice from the saved breakdown</h5>
                         <p className="mt-1 text-sm leading-6 text-slate-700">
-                          Best for commercial customers who expect an itemized invoice/PDF. Save the Quote / Breakdown Builder first, then create and send the invoice.
+                          Best for commercial customers who expect an itemized invoice/PDF. Save the Quote / Breakdown Builder first, then create the Stripe invoice. When emailing, NestHelper sends the hosted invoice link in a branded email.
                         </p>
                       </div>
                       <div className="flex flex-col gap-2 sm:flex-row lg:flex-col">
                         <button type="button" disabled={commercialInvoiceBusy || !hasSavedCommercialQuoteBreakdown} onClick={() => createCommercialInvoice(true)} className={getAdminActionClass("primary")}>
-                          {commercialInvoiceBusy ? <><ActionSpinner /> Creating...</> : "Create + email Stripe invoice"}
+                          {commercialInvoiceBusy ? <><ActionSpinner /> Creating...</> : "Create + email invoice link"}
                         </button>
                         <button type="button" disabled={commercialInvoiceBusy || !hasSavedCommercialQuoteBreakdown} onClick={() => createCommercialInvoice(false)} className={getAdminActionClass("secondary")}>
                           Create invoice only
@@ -1437,6 +1448,7 @@ export default function AdminTable({
                     {(selected.commercialInvoiceUrl || selected.commercialInvoicePdf) && (
                       <div className="mt-4 rounded-2xl border border-cyan-100 bg-cyan-50/50 p-4">
                         <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Current commercial invoice</p>
+                        {selected.commercialInvoiceEmailWarning && <p className="mt-2 rounded-2xl bg-amber-50 px-3 py-2 text-xs font-bold text-amber-800">{selected.commercialInvoiceEmailWarning}</p>}
                         {selected.commercialInvoiceUrl && <p className="mt-2 break-all text-sm text-[#075c58]">{selected.commercialInvoiceUrl}</p>}
                         <div className="mt-3 flex flex-wrap gap-2">
                           {selected.commercialInvoiceUrl && <a href={selected.commercialInvoiceUrl} target="_blank" rel="noreferrer" className="rounded-full bg-[#075c58] px-4 py-2 text-xs font-black text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-[#064b48]">Open invoice</a>}

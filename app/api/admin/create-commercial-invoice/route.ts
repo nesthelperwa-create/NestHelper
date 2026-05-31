@@ -5,6 +5,7 @@ import { getApps } from "firebase-admin/app";
 import Stripe from "stripe";
 import { isAllowedAdminEmail } from "@/lib/adminAuth";
 import { getFirebaseAdminDb } from "@/lib/firebaseAdmin";
+import { sendCommercialInvoiceEmail } from "@/lib/sendCommercialInvoiceEmail";
 
 export const runtime = "nodejs";
 
@@ -153,27 +154,78 @@ export async function POST(request: Request) {
     });
 
     const finalized = await stripe.invoices.finalizeInvoice(invoice.id);
-    const sentInvoice = shouldSendEmail ? await stripe.invoices.sendInvoice(finalized.id) : finalized;
+    const hostedInvoiceUrl = finalized.hosted_invoice_url || "";
+    const invoicePdf = finalized.invoice_pdf || "";
 
-    const hostedInvoiceUrl = sentInvoice.hosted_invoice_url || finalized.hosted_invoice_url || "";
-    const invoicePdf = sentInvoice.invoice_pdf || finalized.invoice_pdf || "";
+    if (!hostedInvoiceUrl) {
+      return NextResponse.json({ ok: false, error: "Stripe created the invoice, but no hosted invoice link was returned. Open the invoice in Stripe or try again." }, { status: 500 });
+    }
+
+    let emailSent = false;
+    let emailWarning = "";
+
+    if (shouldSendEmail) {
+      try {
+        const result = await sendCommercialInvoiceEmail({
+          to: email,
+          customerName,
+          requestId,
+          invoiceUrl: hostedInvoiceUrl,
+          invoicePdf,
+          invoiceNumber: finalized.number,
+          amountDueCents: finalized.amount_due,
+          dueDate: finalized.due_date,
+          quoteTitle: getString(breakdown.quoteTitle) || "Commercial Reset quote breakdown",
+          quoteBreakdownText: getString(breakdown.customerBreakdownText),
+        }) as any;
+
+        if (result?.skipped) {
+          emailWarning = "Invoice created, but the NestHelper email was skipped because email settings or the customer email are missing.";
+        } else if (result?.error) {
+          emailWarning = result.error?.message || "Invoice created, but the NestHelper email could not be sent.";
+        } else {
+          emailSent = true;
+        }
+      } catch (emailError: any) {
+        console.error("Commercial invoice NestHelper email failed", emailError);
+        emailWarning = emailError?.message || "Invoice created, but the NestHelper email could not be sent.";
+      }
+    }
+
+    const nextStatus = shouldSendEmail && emailSent ? "Invoice Link Sent" : "Invoice Created";
 
     await requestRef.update({
-      status: shouldSendEmail ? "Invoice Sent" : "Invoice Created",
-      paymentStatus: shouldSendEmail ? "Invoice Sent" : "Invoice Created",
+      status: nextStatus,
+      paymentStatus: nextStatus,
       commercialInvoiceId: finalized.id,
+      commercialInvoiceNumber: finalized.number || "",
       commercialInvoiceUrl: hostedInvoiceUrl,
       commercialInvoicePdf: invoicePdf,
       commercialInvoiceAmountDue: finalized.amount_due ?? null,
       commercialInvoiceCustomerId: customer.id,
+      commercialInvoiceDeliveryMethod: shouldSendEmail ? "nesthelper_email" : "manual",
+      commercialInvoiceEmailSent: emailSent,
+      commercialInvoiceEmailWarning: emailWarning,
       commercialInvoiceCreatedAt: FieldValue.serverTimestamp(),
-      commercialInvoiceSentAt: shouldSendEmail ? FieldValue.serverTimestamp() : null,
+      commercialInvoiceSentAt: shouldSendEmail && emailSent ? FieldValue.serverTimestamp() : null,
       commercialInvoiceCreatedBy: decoded.email || "admin",
       updatedAt: FieldValue.serverTimestamp(),
       updatedBy: decoded.email || "admin",
     });
 
-    return NextResponse.json({ ok: true, invoiceId: finalized.id, customerId: customer.id, hostedInvoiceUrl, invoicePdf, emailSent: shouldSendEmail });
+    return NextResponse.json({
+      ok: true,
+      invoiceId: finalized.id,
+      invoiceNumber: finalized.number,
+      customerId: customer.id,
+      hostedInvoiceUrl,
+      invoicePdf,
+      emailSent,
+      emailWarning,
+      status: nextStatus,
+      paymentStatus: nextStatus,
+      deliveryMethod: shouldSendEmail ? "nesthelper_email" : "manual",
+    });
   } catch (error: any) {
     console.error("Unable to create commercial invoice", error);
     return NextResponse.json({ ok: false, error: error?.message || "Unable to create commercial invoice." }, { status: 500 });
