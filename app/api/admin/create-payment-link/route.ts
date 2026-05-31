@@ -140,8 +140,8 @@ export async function POST(request: Request) {
       allow_promotion_codes: !useCustomInitial,
       customer_email: email || undefined,
       client_reference_id: requestId,
-      success_url: `${siteUrl}/checkout?success=true&payment_type=${successPaymentType}&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${siteUrl}/checkout?cancelled=true&payment_type=${successPaymentType}&request_id=${requestId}`,
+      success_url: `${siteUrl}/checkout?success=true&payment_type=${successPaymentType}&service_id=${encodeURIComponent(serviceId)}&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${siteUrl}/checkout?cancelled=true&payment_type=${successPaymentType}&service_id=${encodeURIComponent(serviceId)}&request_id=${requestId}`,
       metadata: {
         requestId,
         serviceId,

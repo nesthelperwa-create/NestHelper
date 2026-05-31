@@ -30,8 +30,8 @@ export async function POST(req: Request) {
     phone_number_collection: { enabled: true },
     allow_promotion_codes: true,
     client_reference_id: requestId,
-    success_url: `${baseUrl}/checkout?success=true&payment_type=${successPaymentType}&session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${baseUrl}/checkout?cancelled=true&payment_type=${successPaymentType}`,
+    success_url: `${baseUrl}/checkout?success=true&payment_type=${successPaymentType}&service_id=${encodeURIComponent(serviceId)}&session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${baseUrl}/checkout?cancelled=true&payment_type=${successPaymentType}&service_id=${encodeURIComponent(serviceId)}`,
     metadata: { serviceId, requestId, paymentMode: mode }
   });
 
