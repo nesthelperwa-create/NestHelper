@@ -124,6 +124,47 @@ export default function CommercialResetPage() {
         ctaLabel="Request Commercial Reset"
       />
 
+
+      <section className="mx-auto max-w-7xl px-4 pb-6 sm:px-6 lg:px-8">
+        <div className="overflow-hidden rounded-[2.35rem] border border-nest-gold/18 bg-gradient-to-br from-white via-nest-cream to-nest-mint/25 p-5 shadow-soft sm:p-6 lg:p-7">
+          <div className="grid gap-5 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
+            <div>
+              <p className="pill-label w-fit"><MapPin size={15} /> Service area check</p>
+              <h2 className="mt-4 text-2xl font-black leading-tight text-nest-teal sm:text-3xl">
+                Now quoting select Pierce County, Eastside, and Northshore areas.
+              </h2>
+              <p className="mt-3 font-medium leading-7 text-nest-ink/70">
+                This service is not available everywhere yet. If your business is near these areas, submit a quote request and NestHelper will review the address, schedule, scope, and any local endorsement requirements before confirming service.
+              </p>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="rounded-[1.5rem] border border-nest-gold/14 bg-white/88 p-4 shadow-sm">
+                <h3 className="text-lg font-black text-nest-teal">Pierce County focus</h3>
+                <p className="mt-2 text-sm font-bold leading-6 text-nest-ink/68">
+                  Tacoma, Lakewood, Puyallup, University Place, Fife, Sumner, Bonney Lake, Gig Harbor, Spanaway, Parkland, Graham, Frederickson, South Hill, and nearby communities.
+                </p>
+              </div>
+              <div className="rounded-[1.5rem] border border-nest-gold/14 bg-white/88 p-4 shadow-sm">
+                <h3 className="text-lg font-black text-nest-teal">Eastside / Northshore</h3>
+                <p className="mt-2 text-sm font-bold leading-6 text-nest-ink/68">
+                  Woodinville, Bothell, Kenmore, Kirkland, Redmond, Bellevue, Duvall, Mill Creek, and nearby Eastside/Northshore areas.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-5 flex flex-col gap-3 border-t border-nest-gold/14 pt-5 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm font-black leading-6 text-nest-ink/68">
+              Not sure if your address fits? Request a quote and we will review it before payment or scheduling.
+            </p>
+            <Link href="#service-areas" className="focus-ring inline-flex items-center justify-center gap-2 rounded-full border border-nest-gold/20 bg-white px-5 py-3 text-sm font-black text-nest-teal shadow-sm transition hover:-translate-y-0.5 hover:shadow-soft">
+              View service area details <ArrowRight size={16} />
+            </Link>
+          </div>
+        </div>
+      </section>
+
       <section className="mx-auto max-w-7xl px-4 pb-6 sm:px-6 lg:px-8">
         <div className="grid gap-5 lg:grid-cols-[1.05fr_0.95fr] lg:items-stretch">
           <div className="relative overflow-hidden rounded-[2.5rem] border border-nest-gold/18 bg-white/88 p-6 shadow-soft backdrop-blur sm:p-8 lg:p-10">
@@ -250,9 +291,9 @@ export default function CommercialResetPage() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
+      <section id="service-areas" className="mx-auto max-w-7xl scroll-mt-28 px-4 py-14 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-4xl text-center">
-          <p className="pill-label mx-auto w-fit"><MapPin size={15} /> Service Areas</p>
+          <p className="pill-label mx-auto w-fit"><MapPin size={15} /> Detailed Service Areas</p>
           <h2 className="text-balance mt-4 text-3xl font-black leading-tight text-nest-teal sm:text-5xl">
             Now quoting select Pierce County, Eastside, and Northshore areas.
           </h2>
