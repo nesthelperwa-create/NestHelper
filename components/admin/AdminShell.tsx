@@ -19,18 +19,80 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   const pathname = usePathname();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [checkingAccess, setCheckingAccess] = useState(false);
+  const [accessDenied, setAccessDenied] = useState(false);
 
   useEffect(() => {
-    const unsub = onAuthStateChanged(firebaseAuth, (currentUser) => {
+    let active = true;
+
+    const unsub = onAuthStateChanged(firebaseAuth, async (currentUser) => {
+      if (!active) return;
       setUser(currentUser);
-      setLoading(false);
-      if (!currentUser) router.replace("/admin/login");
+      setAccessDenied(false);
+
+      if (!currentUser) {
+        setLoading(false);
+        router.replace("/admin/login");
+        return;
+      }
+
+      setCheckingAccess(true);
+      try {
+        const token = await currentUser.getIdToken();
+        const response = await fetch("/api/admin/me", {
+          headers: { Authorization: `Bearer ${token}` },
+          cache: "no-store",
+        });
+        const result = await response.json().catch(() => null);
+        if (!active) return;
+
+        if (!response.ok || !result?.authorized) {
+          setAccessDenied(true);
+        }
+      } catch (error) {
+        console.error("Unable to verify admin access", error);
+        if (active) setAccessDenied(true);
+      } finally {
+        if (active) {
+          setCheckingAccess(false);
+          setLoading(false);
+        }
+      }
     });
-    return () => unsub();
+
+    return () => {
+      active = false;
+      unsub();
+    };
   }, [router]);
 
-  if (loading) {
-    return <div className="min-h-screen bg-[#fbf6ea] p-8 text-[#075c58]">Loading NestHelper Admin...</div>;
+  if (loading || checkingAccess) {
+    return <div className="min-h-screen bg-[#fbf6ea] p-8 text-[#075c58]">Verifying NestHelper Admin access...</div>;
+  }
+
+  if (accessDenied) {
+    return (
+      <main className="min-h-screen bg-[#fbf6ea] px-4 py-10 text-slate-900">
+        <div className="mx-auto grid min-h-[70vh] max-w-xl place-items-center">
+          <div className="rounded-[2rem] border border-rose-200 bg-white p-8 text-center shadow-xl shadow-rose-900/5">
+            <p className="text-sm font-bold uppercase tracking-[0.25em] text-rose-600">Access denied</p>
+            <h1 className="mt-3 text-3xl font-bold text-[#075c58]">This admin account is not authorized.</h1>
+            <p className="mt-3 text-slate-600">
+              The admin dashboard is limited to emails listed in NestHelper&apos;s server-side ADMIN_EMAILS setting.
+            </p>
+            <button
+              onClick={async () => {
+                await signOut(firebaseAuth).catch(() => undefined);
+                router.replace("/admin/login");
+              }}
+              className="mt-6 rounded-full bg-[#075c58] px-5 py-3 text-sm font-bold text-white shadow-lg shadow-[#075c58]/20 transition hover:scale-[1.01]"
+            >
+              Sign out and return to admin login
+            </button>
+          </div>
+        </div>
+      </main>
+    );
   }
 
   if (!user) return null;
