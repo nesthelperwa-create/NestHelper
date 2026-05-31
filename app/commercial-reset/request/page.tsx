@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import { BedDouble, Building2, CalendarClock, ClipboardCheck, MapPin, SprayCan } from "lucide-react";
+import { Building2, CalendarClock, Camera, ClipboardCheck, MapPin } from "lucide-react";
 import { CommercialResetForm } from "@/components/forms/CommercialResetForm";
 import { PageHero } from "@/components/PageHero";
 
@@ -15,27 +15,26 @@ export default function CommercialResetRequestPage() {
     <>
       <PageHero
         eyebrow="Commercial Quote"
-        title="Tell us about the business space or rental turnover."
-        text="No payment is due when you submit. NestHelper reviews the address, space type, square footage range, restrooms, kitchens, showers, frequency, condition, turnover timing if applicable, access, photos, product preferences, and service fit before confirming availability or sending a quote/payment link."
+        title="Request a Commercial Reset quote."
+        text="Tell us the basics about the space, location, schedule, and any photos. No payment is due today — NestHelper reviews the request and sends a clear quote before checkout."
         cta={false}
       />
 
       <section className="mx-auto grid max-w-6xl gap-8 px-4 py-14 sm:px-6 lg:grid-cols-[0.82fr_1.18fr] lg:px-8">
         <aside className="self-start rounded-[2.5rem] border border-nest-gold/18 bg-white/90 p-6 shadow-soft backdrop-blur lg:sticky lg:top-28">
-          <p className="pill-label w-fit"><ClipboardCheck size={15} /> Guided Intake</p>
-          <h2 className="mt-4 text-3xl font-black text-nest-teal sm:text-4xl">Simple guided intake.</h2>
+          <p className="pill-label w-fit"><ClipboardCheck size={15} /> Quote request</p>
+          <h2 className="mt-4 text-3xl font-black text-nest-teal sm:text-4xl">A few details, then we review.</h2>
           <p className="mt-3 font-medium leading-7 text-nest-ink/70">
-            This page is only for Commercial Reset, including routine business cleaning and short-term rental turnovers. The form uses dropdowns, checkboxes, and optional photos to keep the request simple while still giving NestHelper enough detail to prepare a clear flat visit quote, recurring plan, or reviewed range before checkout.
+            Share the space, location, timing, and photos if available. NestHelper reviews the request first, then sends a quote or recurring plan before payment.
           </p>
           <div className="mt-6 grid gap-3">
-            <SidebarPoint icon={<Building2 />} text="Business, host, or property contact" />
-            <SidebarPoint icon={<MapPin />} text="Pierce County or Eastside/Northshore area review" />
-            <SidebarPoint icon={<SprayCan />} text="About the space, what needs attention, product preferences, and photos" />
-            <SidebarPoint icon={<BedDouble />} text="Optional turnover details for short-term rentals" />
-            <SidebarPoint icon={<CalendarClock />} text="Frequency and preferred service windows" />
+            <SidebarPoint icon={<Building2 />} text="Business or property contact" />
+            <SidebarPoint icon={<MapPin />} text="Service address and area check" />
+            <SidebarPoint icon={<Camera />} text="Space details and optional photos" />
+            <SidebarPoint icon={<CalendarClock />} text="Frequency and preferred timing" />
           </div>
           <p className="mt-5 rounded-2xl border border-nest-teal/15 bg-nest-mint/25 p-4 text-sm font-semibold leading-6 text-nest-ink/76">
-            NestHelper brings the supplies. Non-toxic, low-odor, or fragrance-free product preferences can be requested where appropriate for the surface and scope.
+            Product preferences can be requested when appropriate for the surface and scope.
           </p>
         </aside>
 
