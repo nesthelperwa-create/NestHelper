@@ -25,16 +25,46 @@ export const metadata: Metadata = {
 };
 
 const businessTypes = [
-  "Small offices",
-  "Studios and gyms",
-  "Churches and nonprofits",
-  "Salons and barbershops",
-  "Therapy or professional offices",
-  "Real estate and insurance offices",
-  "Daycare common areas",
-  "Schools and learning studios",
-  "Short-term rental turnovers",
-  "Local small businesses",
+  {
+    title: "Small offices",
+    text: "After-hours or recurring reset support for workstations, entry areas, restrooms, and breakrooms.",
+  },
+  {
+    title: "Studios and gyms",
+    text: "Member-facing spaces, lobby areas, restrooms, floors, and high-touch surfaces kept ready for the next class or client.",
+  },
+  {
+    title: "Churches and nonprofits",
+    text: "Flexible cleaning support for gathering areas, offices, restrooms, classrooms, and community rooms.",
+  },
+  {
+    title: "Salons and barbershops",
+    text: "Client-ready reset support for reception areas, stations, floors, mirrors, and restrooms.",
+  },
+  {
+    title: "Therapy or professional offices",
+    text: "Calm, clean waiting rooms, treatment rooms, offices, and restroom touchpoints for client-facing practices.",
+  },
+  {
+    title: "Real estate and insurance offices",
+    text: "Polished support for client entrances, conference rooms, desks, display areas, and staff common spaces.",
+  },
+  {
+    title: "Daycare common areas",
+    text: "Common-area cleaning requests can be reviewed without adding childcare, supervision, or regulated sanitation services.",
+  },
+  {
+    title: "Schools and learning studios",
+    text: "Classrooms, common areas, restrooms, and supply preferences are reviewed before a quote is confirmed.",
+  },
+  {
+    title: "Short-term rental turnovers",
+    text: "Between-stay reset cleaning, linen or towel changeover notes, restock checklist review, and optional photo notes.",
+  },
+  {
+    title: "Local small businesses",
+    text: "Custom routine cleaning for manageable spaces that need consistency without a large janitorial contract.",
+  },
 ];
 
 const routineCleaning = [
@@ -108,7 +138,7 @@ export default function CommercialResetPage() {
 
         <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {businessTypes.map((type) => (
-            <InfoCard key={type} icon={type.includes("rental") ? <Home size={20} /> : <Building2 size={20} />} title={type} text="Quote reviewed based on space, frequency, access, and cleaning scope." />
+            <InfoCard key={type.title} icon={type.title.includes("rental") ? <Home size={20} /> : <Building2 size={20} />} title={type.title} text={type.text} />
           ))}
         </div>
 

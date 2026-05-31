@@ -210,7 +210,7 @@ export const policies: Policy[] = [
     ]
   },
   {
-    slug: "commercial-pricing-addons",
+    slug: "commercial-pricing-add-ons",
     title: "Commercial Pricing & Add-On Policy",
     intro: "Commercial Reset pricing is quote-based so small businesses can compare clear planning ranges without worrying about an open-ended hourly clock.",
     sections: [
@@ -237,6 +237,37 @@ export const policies: Policy[] = [
       {
         heading: "Local endorsement review",
         body: "Commercial availability may depend on address, city limits, local licensing or endorsement requirements, schedule, insurance fit, and operational capacity. Some city-limit jobs may require a city endorsement before service begins."
+      }
+    ]
+  },
+  {
+    slug: "short-term-rental-turnover-policy",
+    title: "Short-Term Rental Turnover Policy",
+    intro: "Short-term rental turnover support is reviewed as a host-managed commercial cleaning request with clear boundaries before service is scheduled.",
+    sections: [
+      {
+        heading: "Host-managed service",
+        body: "Short-term rental turnover support is for hosts or property contacts who manage the guest relationship, booking platform, house rules, supplies, and property decisions. NestHelper may provide approved cleaning and reset support between stays, but does not act as the host, property manager, or guest support contact."
+      },
+      {
+        heading: "Turnover cleaning scope",
+        body: "Approved turnover work may include kitchen and bathroom reset cleaning, trash removal, surface wipe-downs, floor care within basic scope, bed or linen changeover when quoted, towel placement, restock checklist notes, and guest-ready details listed in the approved quote."
+      },
+      {
+        heading: "Timing and access",
+        body: "Hosts must provide accurate checkout/check-in windows, parking details, entry instructions, alarm or lockbox information, supply locations, laundry expectations, and any areas that should not be entered. Tight same-day windows are reviewed before acceptance and may affect pricing or availability."
+      },
+      {
+        heading: "Photos and documentation",
+        body: "Optional photos may be used for quoting, priority areas, before-service context, and after-service notes when included in the approved scope. Photo notes are not a substitute for property management, inspection services, damage claims handling, or guest dispute resolution."
+      },
+      {
+        heading: "Laundry, linens, and restocking",
+        body: "Linen handling, towel changeover, laundry transport, onsite laundry, supply restocking, and consumable inventory checks must be requested and quoted separately when needed. NestHelper is not responsible for missing host supplies that were not stocked, labeled, or disclosed before service."
+      },
+      {
+        heading: "Excluded rental work",
+        body: "Short-term rental turnover service does not include repairs, maintenance, pest treatment, biohazard cleanup, mold remediation, construction cleanup, guest messaging, refunds, platform communication, property management, emergency response, or work outside the approved cleaning scope unless separately reviewed and confirmed."
       }
     ]
   },
