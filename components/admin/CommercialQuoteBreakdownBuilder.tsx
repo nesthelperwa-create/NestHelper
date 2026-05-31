@@ -253,12 +253,14 @@ function getSuggestedRoutineRate(item: AdminDoc) {
 
 function getSuggestedMonthlyMultiplier(item: AdminDoc) {
   const frequency = String(item.frequency || item.serviceFrequency || "").toLowerCase();
-  if (frequency.includes("five")) return "21.65";
-  if (frequency.includes("three")) return "13";
-  if (frequency.includes("twice") || frequency.includes("two")) return "8.66";
-  if (frequency.includes("weekly")) return "4.33";
+  // Use simple billing visits/month by default so the admin quote is easy to explain.
+  // Admin can still enter 4.33, 8.66, etc. manually when they want exact average-month math.
+  if (frequency.includes("five")) return "20";
+  if (frequency.includes("three")) return "12";
+  if (frequency.includes("twice") || frequency.includes("two")) return "8";
+  if (frequency.includes("weekly")) return "4";
   if (frequency.includes("monthly") || frequency.includes("occasional")) return "1";
-  return "4.33";
+  return "4";
 }
 
 function getInitialQuoteType(item: AdminDoc) {
@@ -303,7 +305,7 @@ function makeLine(presetKey = "routineVisit", item?: AdminDoc): QuoteLineItem {
     line.minimum = "499";
     line.multiplier = item ? getSuggestedMonthlyMultiplier(item) : line.multiplier;
     line.multiplierLabel = "visits/month";
-    line.note = item?.frequency ? `Monthly plan uses the requested frequency (${item.frequency}). Edit visits/month if the schedule changes.` : "Enter reviewed square footage, per-visit sq ft rate, and visits per month.";
+    line.note = item?.frequency ? `Monthly plan uses the requested frequency (${item.frequency}) with rounded billing visits/month. Edit visits/month if the schedule changes or if you want exact average-month math.` : "Enter reviewed square footage, per-visit sq ft rate, and visits per month.";
   }
 
   if (presetKey === "firstTimeReset") {
@@ -709,7 +711,7 @@ export default function CommercialQuoteBreakdownBuilder({ item, formatMoney, onS
 
       {isOpen && (
         <div className="fixed inset-0 z-[70] overflow-y-auto bg-slate-950/70 p-3 sm:p-6" onClick={(e) => e.stopPropagation()}>
-          <div className="mx-auto max-w-6xl rounded-[2rem] bg-white shadow-2xl" role="dialog" aria-modal="true" aria-label="Commercial quote breakdown builder">
+          <div className="mx-auto max-w-7xl rounded-[2rem] bg-white shadow-2xl" role="dialog" aria-modal="true" aria-label="Commercial quote breakdown builder">
             <div className="sticky top-0 z-10 flex flex-col gap-3 border-b border-[#eadfc8] bg-white/95 p-5 backdrop-blur md:flex-row md:items-center md:justify-between">
               <div>
                 <p className="text-xs font-black uppercase tracking-[0.2em] text-[#b98a2f]">Commercial Reset quote builder</p>
@@ -725,7 +727,7 @@ export default function CommercialQuoteBreakdownBuilder({ item, formatMoney, onS
               </div>
             </div>
 
-            <div className="grid gap-5 p-5 lg:grid-cols-[1.4fr_0.8fr]">
+            <div className="grid gap-5 p-5 lg:grid-cols-[minmax(0,1.55fr)_minmax(320px,0.75fr)]">
               <div className="space-y-5">
                 <div className="rounded-3xl border border-[#eadfc8] bg-[#fbf6ea] p-4">
                   <div className="grid gap-3 md:grid-cols-2">
@@ -747,7 +749,7 @@ export default function CommercialQuoteBreakdownBuilder({ item, formatMoney, onS
                     </div>
                   </div>
 
-                  <p className="mt-3 rounded-2xl bg-[#fbf6ea] px-4 py-3 text-xs font-semibold leading-5 text-slate-700">Routine commercial lines are now sq-ft based by default. Use reviewed square footage × rate × visits/month when needed. The minimum field protects small jobs, and Custom approved line item is still available for true flat fees.</p>
+                  <p className="mt-3 rounded-2xl bg-[#fbf6ea] px-4 py-3 text-xs font-semibold leading-5 text-slate-700">Routine commercial lines are sq-ft based by default. Use reviewed square footage × per-visit rate × billing visits/month when needed. For twice weekly, the builder now starts at 8 visits/month for a simple customer quote; enter 8.66 manually only if you want exact average-month math.</p>
 
                   <div className="mt-4 space-y-4">
                     {lineItems.map((line, index) => (
@@ -756,17 +758,17 @@ export default function CommercialQuoteBreakdownBuilder({ item, formatMoney, onS
                           <p className="text-sm font-black text-[#075c58]">Line {index + 1}: {line.label}</p>
                           <div className="text-right"><p className="text-xs font-black uppercase tracking-[0.14em] text-[#b98a2f]">Calculated amount</p><p className="text-lg font-black text-[#075c58]">{formatMoney(calculateLineAmount(line))}</p></div>
                         </div>
-                        <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
-                          <label className="grid gap-2 text-xs font-black uppercase tracking-[0.14em] text-slate-500">Type<select value={line.preset} onChange={(e) => changePreset(line.id, e.target.value)} className="rounded-2xl border border-cyan-200 bg-white px-3 py-2 text-sm font-bold normal-case tracking-normal text-[#075c58] outline-none focus:border-[#075c58]">{PRESET_ORDER.map((key) => <option key={key} value={key}>{LINE_PRESETS[key].label}</option>)}</select></label>
-                          <label className="grid gap-2 text-xs font-black uppercase tracking-[0.14em] text-slate-500">Reviewed area / qty<input value={line.quantity} onChange={(e) => updateLine(line.id, { quantity: e.target.value })} inputMode="decimal" className="rounded-2xl border border-cyan-200 bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal outline-none focus:border-[#075c58]" /></label>
-                          <label className="grid gap-2 text-xs font-black uppercase tracking-[0.14em] text-slate-500">Rate<input value={line.rate} onChange={(e) => updateLine(line.id, { rate: e.target.value })} inputMode="decimal" className="rounded-2xl border border-cyan-200 bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal outline-none focus:border-[#075c58]" /></label>
-                          <label className="grid gap-2 text-xs font-black uppercase tracking-[0.14em] text-slate-500">Visits / multiplier<input value={line.multiplier} onChange={(e) => updateLine(line.id, { multiplier: e.target.value })} inputMode="decimal" className="rounded-2xl border border-cyan-200 bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal outline-none focus:border-[#075c58]" /></label>
-                          <label className="grid gap-2 text-xs font-black uppercase tracking-[0.14em] text-slate-500">Minimum<input value={line.minimum} onChange={(e) => updateLine(line.id, { minimum: e.target.value })} inputMode="decimal" className="rounded-2xl border border-cyan-200 bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal outline-none focus:border-[#075c58]" /></label>
+                        <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                          <label className="grid min-w-0 gap-2 text-[11px] font-black uppercase tracking-[0.08em] text-slate-500">Line type<select value={line.preset} onChange={(e) => changePreset(line.id, e.target.value)} className="w-full min-w-0 rounded-2xl border border-cyan-200 bg-white px-3 py-2 text-sm font-bold normal-case tracking-normal text-[#075c58] outline-none focus:border-[#075c58]">{PRESET_ORDER.map((key) => <option key={key} value={key}>{LINE_PRESETS[key].label}</option>)}</select></label>
+                          <label className="grid min-w-0 gap-2 text-[11px] font-black uppercase tracking-[0.08em] text-slate-500">Area / qty<input value={line.quantity} onChange={(e) => updateLine(line.id, { quantity: e.target.value })} inputMode="decimal" className="w-full min-w-0 rounded-2xl border border-cyan-200 bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal outline-none focus:border-[#075c58]" /></label>
+                          <label className="grid min-w-0 gap-2 text-[11px] font-black uppercase tracking-[0.08em] text-slate-500">Rate<input value={line.rate} onChange={(e) => updateLine(line.id, { rate: e.target.value })} inputMode="decimal" className="w-full min-w-0 rounded-2xl border border-cyan-200 bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal outline-none focus:border-[#075c58]" /></label>
+                          <label className="grid min-w-0 gap-2 text-[11px] font-black uppercase tracking-[0.08em] text-slate-500">Visits / multiplier<input value={line.multiplier} onChange={(e) => updateLine(line.id, { multiplier: e.target.value })} inputMode="decimal" className="w-full min-w-0 rounded-2xl border border-cyan-200 bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal outline-none focus:border-[#075c58]" /></label>
+                          <label className="grid min-w-0 gap-2 text-[11px] font-black uppercase tracking-[0.08em] text-slate-500">Minimum<input value={line.minimum} onChange={(e) => updateLine(line.id, { minimum: e.target.value })} inputMode="decimal" className="w-full min-w-0 rounded-2xl border border-cyan-200 bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal outline-none focus:border-[#075c58]" /></label>
                         </div>
-                        <div className="mt-3 grid gap-3 md:grid-cols-[1fr_0.7fr_0.8fr_auto]">
-                          <label className="grid gap-2 text-xs font-black uppercase tracking-[0.14em] text-slate-500">Customer label<input value={line.label} onChange={(e) => updateLine(line.id, { label: e.target.value })} className="rounded-2xl border border-cyan-200 bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal outline-none focus:border-[#075c58]" /></label>
-                          <label className="grid gap-2 text-xs font-black uppercase tracking-[0.14em] text-slate-500">Unit<input value={line.unit} onChange={(e) => updateLine(line.id, { unit: e.target.value })} className="rounded-2xl border border-cyan-200 bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal outline-none focus:border-[#075c58]" /></label>
-                          <label className="grid gap-2 text-xs font-black uppercase tracking-[0.14em] text-slate-500">Multiplier label<input value={line.multiplierLabel} onChange={(e) => updateLine(line.id, { multiplierLabel: e.target.value })} className="rounded-2xl border border-cyan-200 bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal outline-none focus:border-[#075c58]" /></label>
+                        <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.75fr)_minmax(0,0.9fr)_auto]">
+                          <label className="grid min-w-0 gap-2 text-[11px] font-black uppercase tracking-[0.08em] text-slate-500">Customer label<input value={line.label} onChange={(e) => updateLine(line.id, { label: e.target.value })} className="w-full min-w-0 rounded-2xl border border-cyan-200 bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal outline-none focus:border-[#075c58]" /></label>
+                          <label className="grid min-w-0 gap-2 text-[11px] font-black uppercase tracking-[0.08em] text-slate-500">Unit<input value={line.unit} onChange={(e) => updateLine(line.id, { unit: e.target.value })} className="w-full min-w-0 rounded-2xl border border-cyan-200 bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal outline-none focus:border-[#075c58]" /></label>
+                          <label className="grid min-w-0 gap-2 text-[11px] font-black uppercase tracking-[0.08em] text-slate-500">Multiplier label<input value={line.multiplierLabel} onChange={(e) => updateLine(line.id, { multiplierLabel: e.target.value })} className="w-full min-w-0 rounded-2xl border border-cyan-200 bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal outline-none focus:border-[#075c58]" /></label>
                           <button type="button" onClick={() => removeLine(line.id)} className={`${getBuilderButtonClass("danger")} self-end`}>Remove</button>
                         </div>
                         <label className="mt-3 grid gap-2 text-xs font-black uppercase tracking-[0.14em] text-slate-500">Line note<textarea value={line.note} onChange={(e) => updateLine(line.id, { note: e.target.value })} rows={2} placeholder="Example: Assumes floor area is cleared before service." className="rounded-2xl border border-cyan-200 bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal outline-none focus:border-[#075c58]" /></label>

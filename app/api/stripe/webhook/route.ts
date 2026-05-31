@@ -111,6 +111,21 @@ export async function POST(request: Request) {
         const requestRef = db.collection("serviceRequests").doc(requestId);
         const requestSnap = await requestRef.get();
         const existingData = requestSnap.exists ? requestSnap.data() || {} : {};
+
+        // Stripe marks $0 finalized invoices as paid immediately. Ignore those so a draft/test
+        // invoice mistake does not mark a real NestHelper request as paid or email the customer.
+        if ((invoice.amount_paid ?? 0) <= 0) {
+          await requestRef.update({
+            commercialInvoiceZeroDollarPaidEventIgnored: true,
+            commercialInvoiceZeroDollarPaidEventIgnoredAt: FieldValue.serverTimestamp(),
+            commercialInvoiceZeroDollarPaidEventInvoiceId: invoice.id,
+            commercialInvoiceZeroDollarPaidEventAmountPaid: invoice.amount_paid ?? null,
+            updatedAt: FieldValue.serverTimestamp(),
+            updatedBy: "stripe-webhook",
+          });
+          return NextResponse.json({ received: true, ignored: "zero-dollar-invoice-paid" });
+        }
+
         const serviceId = getString(invoice.metadata?.serviceId) || getString(existingData.service) || "commercial-reset";
         const serviceTitle = getServiceTitle(existingData, "Commercial Reset invoice");
         const paymentStatus = "Invoice Paid";

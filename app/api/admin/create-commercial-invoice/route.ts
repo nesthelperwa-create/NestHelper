@@ -109,40 +109,13 @@ export async function POST(request: Request) {
       metadata: { requestId, serviceId: "commercial-reset" },
     });
 
-    for (const line of lineItems) {
-      const amount = moneyToCents(line.amount);
-      if (amount <= 0) continue;
-      await stripe.invoiceItems.create({
-        customer: customer.id,
-        currency: "usd",
-        amount,
-        description: getString(line.label) || "Commercial Reset line item",
-        metadata: {
-          requestId,
-          serviceId: "commercial-reset",
-          preset: getString(line.preset),
-          lineDescription: buildLineDescription(line),
-        },
-      });
-    }
-
-    const discountCredit = moneyToCents(breakdown.discountCredit);
-    if (discountCredit > 0) {
-      await stripe.invoiceItems.create({
-        customer: customer.id,
-        currency: "usd",
-        amount: -discountCredit,
-        description: "Discount / credit",
-        metadata: { requestId, serviceId: "commercial-reset" },
-      });
-    }
-
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
     const invoice = await stripe.invoices.create({
       customer: customer.id,
       collection_method: "send_invoice",
       days_until_due: 7,
       automatic_tax: { enabled: enableAutomaticTax },
+      auto_advance: false,
       description: getString(breakdown.quoteTitle) || "NestHelper Commercial Reset invoice",
       footer: getString(breakdown.customerNote) || "Final service is based on approved scope, access, condition, schedule, and reviewed add-ons.",
       metadata: {
@@ -153,9 +126,62 @@ export async function POST(request: Request) {
       },
     });
 
-    const finalized = await stripe.invoices.finalizeInvoice(invoice.id);
+    let attachedLineCount = 0;
+
+    for (const line of lineItems) {
+      const amount = moneyToCents(line.amount);
+      if (amount <= 0) continue;
+      await stripe.invoiceItems.create({
+        customer: customer.id,
+        invoice: invoice.id,
+        currency: "usd",
+        amount,
+        description: getString(line.label) || "Commercial Reset line item",
+        metadata: {
+          requestId,
+          serviceId: "commercial-reset",
+          preset: getString(line.preset),
+          lineDescription: buildLineDescription(line),
+        },
+      });
+      attachedLineCount += 1;
+    }
+
+    const discountCredit = moneyToCents(breakdown.discountCredit);
+    if (discountCredit > 0) {
+      await stripe.invoiceItems.create({
+        customer: customer.id,
+        invoice: invoice.id,
+        currency: "usd",
+        amount: -discountCredit,
+        description: "Discount / credit",
+        metadata: { requestId, serviceId: "commercial-reset" },
+      });
+      attachedLineCount += 1;
+    }
+
+    if (attachedLineCount === 0) {
+      return NextResponse.json({ ok: false, error: "No billable invoice line items were attached. Save a quote breakdown with at least one positive line item before creating an invoice." }, { status: 400 });
+    }
+
+    const finalized = await stripe.invoices.finalizeInvoice(invoice.id, { auto_advance: false });
     const hostedInvoiceUrl = finalized.hosted_invoice_url || "";
     const invoicePdf = finalized.invoice_pdf || "";
+
+    if ((finalized.amount_due ?? 0) <= 0) {
+      await requestRef.update({
+        commercialInvoiceId: finalized.id,
+        commercialInvoiceNumber: finalized.number || "",
+        commercialInvoiceUrl: hostedInvoiceUrl,
+        commercialInvoicePdf: invoicePdf,
+        commercialInvoiceAmountDue: finalized.amount_due ?? null,
+        commercialInvoiceEmailWarning: "Stripe finalized this invoice at $0.00, so NestHelper did not email it. Review the saved quote line items and try again.",
+        commercialInvoiceCreatedAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
+        updatedBy: decoded.email || "admin",
+      });
+      return NextResponse.json({ ok: false, error: "Stripe finalized the invoice at $0.00. The invoice link was not emailed. Reopen the quote builder, confirm the line items, save the quote, and create the invoice again." }, { status: 500 });
+    }
 
     if (!hostedInvoiceUrl) {
       return NextResponse.json({ ok: false, error: "Stripe created the invoice, but no hosted invoice link was returned. Open the invoice in Stripe or try again." }, { status: 500 });
