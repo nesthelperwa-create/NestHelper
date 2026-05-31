@@ -777,7 +777,7 @@ export default function AdminTable({
     if (!selected) return;
     const useCustomInitial = checkoutMode === "custom";
     setCheckoutBusy(true);
-    setActiveAction(sendEmail ? "Creating and emailing checkout link..." : "Creating checkout link only...");
+    setActiveAction(sendEmail ? "Creating and emailing quick checkout link..." : "Creating quick checkout link only...");
     setCheckoutMessage("");
     setCheckoutError("");
     setCommercialInvoiceMessage("");
@@ -807,7 +807,7 @@ export default function AdminTable({
       const data = await res.json().catch(() => ({}));
 
       if (!res.ok || !data.ok) {
-        throw new Error(data.error || "Unable to create checkout link.");
+        throw new Error(data.error || "Unable to create quick checkout link.");
       }
 
       setSelected((prev) => prev ? {
@@ -834,9 +834,9 @@ export default function AdminTable({
             ? " No saved family payment breakdown was found, so the email only includes the payment link and notes. Save the family breakdown first if you want it included."
             : " Family payment breakdown was not included because the checkbox was off."
         : "";
-      setCheckoutMessage(data.emailError || (data.emailSent ? `Checkout link created and emailed to the customer.${commercialBreakdownNotice}${familyBreakdownNotice}` : `Checkout link created. Copy it and send it manually.${commercialBreakdownNotice}${familyBreakdownNotice}`));
+      setCheckoutMessage(data.emailError || (data.emailSent ? `Quick checkout link created and emailed to the customer.${commercialBreakdownNotice}${familyBreakdownNotice}` : `Quick checkout link created. Copy it and send it manually.${commercialBreakdownNotice}${familyBreakdownNotice}`));
     } catch (error) {
-      setCheckoutError(error instanceof Error ? error.message : "Unable to create checkout link.");
+      setCheckoutError(error instanceof Error ? error.message : "Unable to create quick checkout link.");
     } finally {
       setCheckoutBusy(false);
       setActiveAction("");
@@ -1122,32 +1122,29 @@ export default function AdminTable({
       />
 
       <div className="overflow-hidden rounded-3xl border border-[#eadfc8] bg-white shadow-xl shadow-[#075c58]/5">
-        <div className="border-b border-[#eadfc8] bg-[#fbf6ea] px-4 py-3 text-xs font-bold text-slate-600 sm:hidden">
-          Swipe sideways to see all columns. The Actions column stays on the right.
-        </div>
         <div className="overflow-x-auto">
-          <table className="min-w-[1240px] divide-y divide-[#eadfc8] text-sm">
+          <table className="min-w-full divide-y divide-[#eadfc8] text-sm">
             <thead className="bg-[#f4ecdc] text-left text-xs uppercase tracking-wider text-[#075c58]">
               <tr>
-                <th className="min-w-[120px] px-4 py-4">Status</th>
+                <th className="px-4 py-4">Status</th>
                 {columns.map((col) => (
                   <th key={col.key} className="px-4 py-4">{col.label}</th>
                 ))}
                 <th className="px-4 py-4">Created</th>
-                <th className="sticky right-0 z-20 min-w-[190px] bg-[#f4ecdc] px-4 py-4 shadow-[-14px_0_24px_-24px_rgba(15,23,42,0.55)]">Actions</th>
+                <th className="px-4 py-4">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#f0e7d7]">
               {filtered.map((item) => (
                 <tr key={item.id} className={`transition-colors ${getServiceLook(item).row}`}>
-                  <td className="min-w-[120px] px-4 py-4"><StatusBadge status={item.status} /></td>
+                  <td className="px-4 py-4"><StatusBadge status={item.status} /></td>
                   {columns.map((col) => (
                     <td key={col.key} className="max-w-[220px] truncate px-4 py-4 text-slate-700">{renderAdminCell(col.key, item)}</td>
                   ))}
-                  <td className="min-w-[150px] px-4 py-4 text-slate-500">{formatDate(item.createdAt)}</td>
-                  <td className="sticky right-0 z-10 min-w-[190px] bg-inherit px-4 py-4 align-top shadow-[-14px_0_24px_-24px_rgba(15,23,42,0.45)]">
-                    <div className="flex min-w-[160px] flex-col items-stretch gap-2">
-                      <button onClick={() => setSelected(item)} className="w-full whitespace-nowrap rounded-full bg-[#075c58] px-4 py-2 text-xs font-black text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-[#064b48] focus:outline-none focus:ring-4 focus:ring-[#075c58]/20">Open details</button>
+                  <td className="px-4 py-4 text-slate-500">{formatDate(item.createdAt)}</td>
+                  <td className="px-4 py-4">
+                    <div className="flex flex-wrap gap-2">
+                      <button onClick={() => setSelected(item)} className="rounded-full bg-[#075c58] px-4 py-2 text-xs font-black text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-[#064b48] focus:outline-none focus:ring-4 focus:ring-[#075c58]/20">Open details</button>
                       <select
                         value={item.status || "New"}
                         onChange={async (e) => {
@@ -1167,8 +1164,8 @@ export default function AdminTable({
                             setActiveAction("");
                           }
                         }}
-                        className="w-full rounded-full border border-[#d8c18f] bg-white px-3 py-2 text-xs font-bold text-slate-700 shadow-sm outline-none transition hover:border-[#075c58] focus:border-[#075c58] focus:ring-4 focus:ring-[#075c58]/15"
-                        title="Quick internal status update. Open details to send a customer email."
+                        className="rounded-full border border-[#d8c18f] bg-white px-3 py-2 text-xs font-bold text-slate-700 shadow-sm outline-none transition hover:border-[#075c58] focus:border-[#075c58] focus:ring-4 focus:ring-[#075c58]/15"
+                        title="Quick internal status update. Open View to send a customer email."
                       >
                         {statuses.map((status) => <option key={status}>{status}</option>)}
                       </select>
@@ -1546,42 +1543,24 @@ export default function AdminTable({
 
             {showPaymentActions && (
               <div className="mb-5 rounded-3xl border border-[#d8c18f] bg-[#fbf6ea] p-5 shadow-sm">
-                <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                   <div className="max-w-2xl">
-                    <p className="text-xs font-black uppercase tracking-[0.2em] text-[#b98a2f]">{selectedIsCommercial ? "Step 3 — first payment" : "Approval + payment"}</p>
-                    <h4 className="mt-1 text-xl font-black text-[#075c58]">{selectedIsCommercial ? "Invoice or quick checkout" : "Create checkout after you approve the request"}</h4>
+                    <p className="text-xs font-black uppercase tracking-[0.2em] text-[#b98a2f]">{selectedIsCommercial ? "Step 3 — payment" : "Approval + payment"}</p>
+                    <h4 className="mt-1 text-xl font-black text-[#075c58]">Choose invoice or quick checkout</h4>
                     <p className="mt-2 text-sm leading-6 text-slate-700">
                       {selectedIsCommercial
-                        ? "For Commercial Reset, save the quote/breakdown first. For a more professional business record, send the Stripe invoice from the saved breakdown. Use the checkout link only for a quick deposit or simple first payment."
-                        : "This creates a Stripe Checkout Session tied to this request. Public checkout stays off; only admin can send payment after reviewing scope, service area, and availability."}
+                        ? "For Commercial Reset, the itemized Stripe invoice from the saved quote breakdown is usually the best option. Use quick checkout only for a simple deposit or first payment that does not need a formal invoice PDF."
+                        : "Use a Stripe invoice when you want the customer to receive an itemized invoice/PDF from the saved Family Payment Breakdown. Use quick checkout for a simple package payment or deposit."}
                     </p>
                     {selected.service === "laundry-rescue" && (
                       <p className="mt-2 rounded-2xl bg-white px-4 py-3 text-sm font-bold text-[#075c58]">
-                        Laundry Rescue first checkout is the deposit/minimum only. After dry weigh-in, use the final balance section below.
+                        Laundry Rescue quick checkout is for the deposit/minimum only. After dry weigh-in, use the final balance invoice section below.
                       </p>
                     )}
                   </div>
-                  {selectedIsCommercial ? (
-                    <div className="rounded-2xl border border-[#d8c18f] bg-white px-4 py-3 text-sm font-bold text-[#075c58] lg:min-w-80">
-                      Commercial can use an invoice or a custom checkout link. Invoice is best when you want an itemized business record.
-                    </div>
-                  ) : (
-                    <div className="grid min-w-72 gap-2">
-                      <label className="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Price mode</label>
-                      <select
-                        value={checkoutMode}
-                        onChange={(e) => setCheckoutMode(e.target.value as CheckoutMode)}
-                        className="rounded-2xl border border-[#d8c18f] bg-white px-4 py-3 text-sm font-bold text-[#075c58] outline-none focus:border-[#075c58]"
-                      >
-                        <option value="standard">Standard price</option>
-                        <option value="founding">Founding / beta price</option>
-                        <option value="custom">Custom initial amount</option>
-                      </select>
-                      <p className="rounded-2xl bg-amber-50 px-3 py-2 text-xs font-bold leading-5 text-amber-800">
-                        Price mode applies to quick checkout links only. Stripe invoices use the saved Family Payment Breakdown line items, so enter any beta, custom, discount, or credit amount in the builder before creating an invoice.
-                      </p>
-                    </div>
-                  )}
+                  <div className="rounded-2xl border border-[#d8c18f] bg-white px-4 py-3 text-sm font-bold text-[#075c58] lg:max-w-sm">
+                    Invoices use saved builder line items. Quick checkout uses the price mode/custom amount in the quick checkout box.
+                  </div>
                 </div>
 
                 {selectedIsCommercial && (
@@ -1610,6 +1589,7 @@ export default function AdminTable({
                       <div className="mt-4 rounded-2xl border border-cyan-100 bg-cyan-50/50 p-4">
                         <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Current commercial invoice</p>
                         {selected.commercialInvoiceEmailWarning && <p className="mt-2 rounded-2xl bg-amber-50 px-3 py-2 text-xs font-bold text-amber-800">{selected.commercialInvoiceEmailWarning}</p>}
+                        {selected.commercialInvoiceServicePeriodLabel && <p className="mt-2 text-xs font-bold text-slate-600">Service period: {selected.commercialInvoiceServicePeriodLabel}</p>}
                         {selected.commercialInvoiceUrl && <p className="mt-2 break-all text-sm text-[#075c58]">{selected.commercialInvoiceUrl}</p>}
                         <div className="mt-3 flex flex-wrap gap-2">
                           {selected.commercialInvoiceUrl && <a href={selected.commercialInvoiceUrl} target="_blank" rel="noreferrer" className="rounded-full bg-[#075c58] px-4 py-2 text-xs font-black text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-[#064b48]">Open invoice</a>}
@@ -1623,76 +1603,6 @@ export default function AdminTable({
                   </div>
                 )}
 
-                {isCustomCheckoutMode && (
-                  <div className="mt-4 rounded-3xl border border-[#eadfc8] bg-white p-4">
-                    <div>
-                      <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">{selectedIsCommercial ? "First payment link" : "Custom initial checkout"}</p>
-                      <h5 className="mt-1 text-base font-black text-[#075c58]">{selectedIsCommercial ? "Amount the customer pays before scheduling" : "Reviewed custom starting amount"}</h5>
-                      <p className="mt-1 text-sm leading-6 text-slate-700">
-                        {selectedIsCommercial
-                          ? "This should match the approved Commercial Reset quote amount. It is the amount collected before the first visit, first turnover, or first recurring plan begins."
-                          : "Use this when the first payment should not match the standard package price, such as a custom approved scope, special deposit, extra starting time, or service-area adjustment."}
-                      </p>
-                    </div>
-                    <div className="mt-4 grid gap-3 md:grid-cols-[0.7fr_1.3fr]">
-                      <label className="grid gap-2 text-sm font-bold text-slate-700">
-                        {selectedIsCommercial ? "Amount to collect now" : "Amount"}
-                        <input
-                          value={customInitialAmount}
-                          onChange={(e) => setCustomInitialAmount(e.target.value)}
-                          inputMode="decimal"
-                          placeholder="149"
-                          className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]"
-                        />
-                      </label>
-                      <label className="grid gap-2 text-sm font-bold text-slate-700">
-                        Checkout title
-                        <input
-                          value={customInitialTitle}
-                          onChange={(e) => setCustomInitialTitle(e.target.value)}
-                          placeholder={selected.service === "laundry-rescue" ? "Laundry Rescue custom deposit" : selected.service === "commercial-reset" ? "Commercial Reset approved quote" : "Custom Parent Reset checkout"}
-                          className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]"
-                        />
-                      </label>
-                    </div>
-                    <label className="mt-3 grid gap-2 text-sm font-bold text-slate-700">
-                      Optional customer note
-                      <textarea
-                        value={customInitialNote}
-                        onChange={(e) => setCustomInitialNote(e.target.value)}
-                        rows={3}
-                        placeholder={selectedIsCommercial ? "Example: Approved Commercial Reset quote. Add-ons or scope changes are reviewed before any additional charge." : "Example: Custom approved starting amount for 3.5 hours after request review. Any additional approved time or mileage would be billed separately."}
-                        className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
-                      />
-                    </label>
-                  </div>
-                )}
-
-                {selectedIsCommercial && isCustomCheckoutMode && (
-                  <div className="mt-4 rounded-3xl border border-[#d8c18f] bg-white p-4">
-                    <label className="flex gap-3 text-sm font-bold text-slate-700">
-                      <input
-                        type="checkbox"
-                        checked={includeCommercialQuoteBreakdown}
-                        onChange={(e) => setIncludeCommercialQuoteBreakdown(e.target.checked)}
-                        disabled={!hasSavedCommercialQuoteBreakdown}
-                        className="mt-1 h-4 w-4 rounded border-[#d8c18f] accent-[#075c58]"
-                      />
-                      <span>
-                        <span className="block text-[#075c58]">Include saved quote breakdown in the customer checkout email</span>
-                        <span className="mt-1 block text-xs font-semibold leading-5 text-slate-600">
-                          This only affects the quick checkout email. For a true itemized customer record, use the Stripe invoice option above instead.
-                        </span>
-                      </span>
-                    </label>
-                    {!hasSavedCommercialQuoteBreakdown && (
-                      <p className="mt-3 rounded-2xl bg-amber-50 px-4 py-3 text-xs font-bold leading-5 text-amber-800">
-                        No saved quote breakdown is available yet. Save the Quote / Breakdown Builder draft first, then this checkbox will be available.
-                      </p>
-                    )}
-                  </div>
-                )}
-
                 {!selectedIsCommercial && (
                   <div className="mt-4 rounded-3xl border border-cyan-200 bg-white p-4">
                     <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
@@ -1701,9 +1611,6 @@ export default function AdminTable({
                         <h5 className="mt-1 text-base font-black text-[#075c58]">Create a Stripe invoice from the saved family breakdown</h5>
                         <p className="mt-1 text-sm leading-6 text-slate-700">
                           Use this when you want a formal invoice/PDF instead of only a checkout receipt: Errand Helper, custom family quotes, recurring family help, Laundry Rescue balance, approved add-ons, or refund/credit documentation.
-                        </p>
-                        <p className="mt-2 rounded-2xl bg-amber-50 px-4 py-3 text-xs font-bold leading-5 text-amber-800">
-                          Invoices do not use the Standard / Founding / Beta price dropdown above. They use the saved Family Payment Breakdown. Open the builder, confirm the package/beta/custom line amounts, then save before creating an invoice.
                         </p>
                       </div>
                       <div className="flex flex-col gap-2 sm:flex-row lg:flex-col">
@@ -1736,65 +1643,173 @@ export default function AdminTable({
                   </div>
                 )}
 
-                {!selectedIsCommercial && (
-                  <div className="mt-4 rounded-3xl border border-[#d8c18f] bg-white p-4">
-                    <label className="flex gap-3 text-sm font-bold text-slate-700">
-                      <input
-                        type="checkbox"
-                        checked={includeFamilyPaymentBreakdown}
-                        onChange={(e) => setIncludeFamilyPaymentBreakdown(e.target.checked)}
-                        disabled={!hasSavedFamilyPaymentBreakdown}
-                        className="mt-1 h-4 w-4 rounded border-[#d8c18f] accent-[#075c58]"
-                      />
-                      <span>
-                        <span className="block text-[#075c58]">Include saved family payment breakdown in the customer checkout email</span>
-                        <span className="mt-1 block text-xs font-semibold leading-5 text-slate-600">
-                          Use this when you want the customer to see the package, custom amount, recurring plan, laundry note, discount, or credit details before paying. For invoices, the saved breakdown becomes the invoice line-item source.
-                        </span>
-                      </span>
-                    </label>
-                    {!hasSavedFamilyPaymentBreakdown && (
-                      <p className="mt-3 rounded-2xl bg-amber-50 px-4 py-3 text-xs font-bold leading-5 text-amber-800">
-                        No saved family payment breakdown is available yet. Save the Family Payment Breakdown draft first, then this checkbox will be available.
+                <div className="mt-4 rounded-3xl border border-[#d8c18f] bg-white p-4">
+                  <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                    <div className="max-w-2xl">
+                      <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Quick checkout</p>
+                      <h5 className="mt-1 text-base font-black text-[#075c58]">Create a non-invoice Stripe checkout link</h5>
+                      <p className="mt-1 text-sm leading-6 text-slate-700">
+                        Quick checkout is best for simple package payments, deposits, or small custom payments. It does not create the same itemized Stripe invoice/PDF as the invoice builder.
                       </p>
-                    )}
+                    </div>
+                    <div className="rounded-2xl bg-[#fbf6ea] px-4 py-3 text-xs font-bold leading-5 text-slate-700 lg:max-w-sm">
+                      {selectedIsCommercial
+                        ? "Commercial quick checkout uses the custom first-payment amount below. Use the invoice option for formal itemized records."
+                        : "Price mode applies only to these quick checkout buttons. Invoices use the saved Family Payment Breakdown instead."}
+                    </div>
                   </div>
-                )}
 
+                  {!selectedIsCommercial && (
+                    <div className="mt-4 grid gap-2 sm:max-w-sm">
+                      <label className="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Quick checkout price mode</label>
+                      <select
+                        value={checkoutMode}
+                        onChange={(e) => setCheckoutMode(e.target.value as CheckoutMode)}
+                        className="rounded-2xl border border-[#d8c18f] bg-white px-4 py-3 text-sm font-bold text-[#075c58] outline-none focus:border-[#075c58]"
+                      >
+                        <option value="standard">Standard price</option>
+                        <option value="founding">Founding / beta price</option>
+                        <option value="custom">Custom quick checkout amount</option>
+                      </select>
+                    </div>
+                  )}
 
-                <div className="mt-4 grid gap-3 md:grid-cols-2">
-                  <button
-                    type="button"
-                    disabled={checkoutBusy}
-                    onClick={() => createPaymentLink(true)}
-                    className={getAdminActionClass("primary")}
-                  >
-                    {checkoutBusy
-                      ? <><ActionSpinner /> Creating...</>
-                      : isCustomCheckoutMode
-                        ? selectedIsCommercial ? "Create + email first payment link" : "Create + email custom link"
+                  {selectedIsCommercial && (
+                    <input type="hidden" value={checkoutMode} readOnly aria-hidden="true" />
+                  )}
+
+                  {isCustomCheckoutMode && (
+                    <div className="mt-4 rounded-3xl border border-[#eadfc8] bg-[#fbf6ea] p-4">
+                      <div>
+                        <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">{selectedIsCommercial ? "Quick first-payment checkout" : "Custom quick checkout"}</p>
+                        <h5 className="mt-1 text-base font-black text-[#075c58]">{selectedIsCommercial ? "Amount the customer pays before scheduling" : "Reviewed custom starting amount"}</h5>
+                        <p className="mt-1 text-sm leading-6 text-slate-700">
+                          {selectedIsCommercial
+                            ? "Use this only when you want a simple checkout link instead of a formal invoice. It should match the approved first-payment amount."
+                            : "Use this when the first quick checkout should not match the standard package price, such as a custom approved scope, special deposit, extra starting time, or service-area adjustment."}
+                        </p>
+                      </div>
+                      <div className="mt-4 grid gap-3 md:grid-cols-[0.7fr_1.3fr]">
+                        <label className="grid gap-2 text-sm font-bold text-slate-700">
+                          {selectedIsCommercial ? "Amount to collect now" : "Amount"}
+                          <input
+                            value={customInitialAmount}
+                            onChange={(e) => setCustomInitialAmount(e.target.value)}
+                            inputMode="decimal"
+                            placeholder="149"
+                            className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]"
+                          />
+                        </label>
+                        <label className="grid gap-2 text-sm font-bold text-slate-700">
+                          Checkout title
+                          <input
+                            value={customInitialTitle}
+                            onChange={(e) => setCustomInitialTitle(e.target.value)}
+                            placeholder={selected.service === "laundry-rescue" ? "Laundry Rescue custom deposit" : selected.service === "commercial-reset" ? "Commercial Reset approved quote" : "Custom Parent Reset checkout"}
+                            className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]"
+                          />
+                        </label>
+                      </div>
+                      <label className="mt-3 grid gap-2 text-sm font-bold text-slate-700">
+                        Optional customer note
+                        <textarea
+                          value={customInitialNote}
+                          onChange={(e) => setCustomInitialNote(e.target.value)}
+                          rows={3}
+                          placeholder={selectedIsCommercial ? "Example: Approved Commercial Reset first payment. Add-ons or scope changes are reviewed before any additional charge." : "Example: Custom approved starting amount for 3.5 hours after request review. Any additional approved time or mileage would be billed separately."}
+                          className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
+                        />
+                      </label>
+                    </div>
+                  )}
+
+                  {selectedIsCommercial && isCustomCheckoutMode && (
+                    <div className="mt-4 rounded-3xl border border-[#d8c18f] bg-[#fbf6ea] p-4">
+                      <label className="flex gap-3 text-sm font-bold text-slate-700">
+                        <input
+                          type="checkbox"
+                          checked={includeCommercialQuoteBreakdown}
+                          onChange={(e) => setIncludeCommercialQuoteBreakdown(e.target.checked)}
+                          disabled={!hasSavedCommercialQuoteBreakdown}
+                          className="mt-1 h-4 w-4 rounded border-[#d8c18f] accent-[#075c58]"
+                        />
+                        <span>
+                          <span className="block text-[#075c58]">Include saved quote breakdown in the quick checkout email</span>
+                          <span className="mt-1 block text-xs font-semibold leading-5 text-slate-600">
+                            This only affects the quick checkout email. For a true itemized customer record, use the Stripe invoice option above instead.
+                          </span>
+                        </span>
+                      </label>
+                      {!hasSavedCommercialQuoteBreakdown && (
+                        <p className="mt-3 rounded-2xl bg-amber-50 px-4 py-3 text-xs font-bold leading-5 text-amber-800">
+                          No saved quote breakdown is available yet. Save the Quote / Breakdown Builder draft first, then this checkbox will be available.
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {!selectedIsCommercial && (
+                    <div className="mt-4 rounded-3xl border border-[#d8c18f] bg-[#fbf6ea] p-4">
+                      <label className="flex gap-3 text-sm font-bold text-slate-700">
+                        <input
+                          type="checkbox"
+                          checked={includeFamilyPaymentBreakdown}
+                          onChange={(e) => setIncludeFamilyPaymentBreakdown(e.target.checked)}
+                          disabled={!hasSavedFamilyPaymentBreakdown}
+                          className="mt-1 h-4 w-4 rounded border-[#d8c18f] accent-[#075c58]"
+                        />
+                        <span>
+                          <span className="block text-[#075c58]">Include saved family payment breakdown in the quick checkout email</span>
+                          <span className="mt-1 block text-xs font-semibold leading-5 text-slate-600">
+                            Use this when you want the customer to see the package, custom amount, recurring plan, laundry note, discount, or credit details before paying by quick checkout.
+                          </span>
+                        </span>
+                      </label>
+                      {!hasSavedFamilyPaymentBreakdown && (
+                        <p className="mt-3 rounded-2xl bg-amber-50 px-4 py-3 text-xs font-bold leading-5 text-amber-800">
+                          No saved family payment breakdown is available yet. Save the Family Payment Breakdown draft first, then this checkbox will be available.
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="mt-4 grid gap-3 md:grid-cols-2">
+                    <button
+                      type="button"
+                      disabled={checkoutBusy}
+                      onClick={() => createPaymentLink(true)}
+                      className={getAdminActionClass("primary")}
+                    >
+                      {checkoutBusy
+                        ? <><ActionSpinner /> Creating...</>
+                        : selectedIsCommercial
+                          ? "Create + email quick first-payment checkout link"
+                          : selected.service === "laundry-rescue"
+                            ? "Create + email quick deposit checkout link"
+                            : "Create + email quick checkout link"}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={checkoutBusy}
+                      onClick={() => createPaymentLink(false)}
+                      className={getAdminActionClass("secondary")}
+                    >
+                      {selectedIsCommercial
+                        ? "Create quick first-payment checkout link only"
                         : selected.service === "laundry-rescue"
-                          ? "Create + email deposit link"
-                          : "Create + email checkout link"}
-                  </button>
-                  <button
-                    type="button"
-                    disabled={checkoutBusy}
-                    onClick={() => createPaymentLink(false)}
-                    className={getAdminActionClass("secondary")}
-                  >
-                    {isCustomCheckoutMode ? selectedIsCommercial ? "Create first payment link only" : "Create custom link only" : selected.service === "laundry-rescue" ? "Create deposit link only" : "Create link only"}
-                  </button>
+                          ? "Create quick deposit checkout link only"
+                          : "Create quick checkout link only"}
+                    </button>
+                  </div>
                 </div>
-
 
                 {selected.checkoutUrl && (
                   <div className="mt-4 rounded-2xl border border-[#eadfc8] bg-white p-4">
-                    <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Current checkout link</p>
+                    <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Current quick checkout link</p>
                     <p className="mt-2 break-all text-sm text-[#075c58]">{selected.checkoutUrl}</p>
                     <div className="mt-3 flex flex-wrap gap-2">
-                      <a href={selected.checkoutUrl} target="_blank" rel="noreferrer" className="rounded-full bg-[#075c58] px-4 py-2 text-xs font-black text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-[#064b48]">Open Stripe checkout</a>
-                      <button type="button" onClick={() => copyToClipboard(selected.checkoutUrl || "")} className="rounded-full border border-[#075c58] bg-white px-4 py-2 text-xs font-black text-[#075c58] transition hover:bg-[#f4ecdc]">Copy link</button>
+                      <a href={selected.checkoutUrl} target="_blank" rel="noreferrer" className="rounded-full bg-[#075c58] px-4 py-2 text-xs font-black text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-[#064b48]">Open Stripe quick checkout</a>
+                      <button type="button" onClick={() => copyToClipboard(selected.checkoutUrl || "")} className="rounded-full border border-[#075c58] bg-white px-4 py-2 text-xs font-black text-[#075c58] transition hover:bg-[#f4ecdc]">Copy quick checkout link</button>
                     </div>
                   </div>
                 )}
