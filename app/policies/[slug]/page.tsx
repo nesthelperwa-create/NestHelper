@@ -36,7 +36,7 @@ export default async function PolicyDetailPage({ params }: PolicyPageProps) {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         {commercialReturnHref ? (
           <Link href={commercialReturnHref} className="focus-ring inline-flex items-center justify-center gap-2 rounded-full bg-nest-teal px-5 py-3 text-sm font-black text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-soft">
-            <ArrowLeft size={18} /> Back to Commercial Reset scope
+            <ArrowLeft size={18} /> Back to Commercial Reset details
           </Link>
         ) : null}
 
@@ -68,7 +68,7 @@ export default async function PolicyDetailPage({ params }: PolicyPageProps) {
         {commercialReturnHref ? (
           <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <Link href={commercialReturnHref} className="focus-ring inline-flex items-center justify-center gap-2 rounded-full bg-nest-teal px-5 py-3 text-sm font-black text-white transition hover:-translate-y-0.5 hover:shadow-soft">
-              <ArrowLeft size={18} /> Back to Commercial Reset scope
+              <ArrowLeft size={18} /> Back to Commercial Reset details
             </Link>
             <Link href="/policies" className="focus-ring inline-flex items-center justify-center gap-2 rounded-full border border-nest-gold/18 bg-white px-5 py-3 text-sm font-black text-nest-teal transition hover:-translate-y-0.5 hover:shadow-soft">
               View all policies

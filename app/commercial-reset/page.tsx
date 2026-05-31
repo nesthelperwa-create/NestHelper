@@ -70,23 +70,11 @@ const routineCleaning = [
   "Trash and recycling reset",
   "Restroom cleaning",
   "Breakroom and kitchenette reset",
-  "Common-area wipe-downs",
+  "Entry, lobby, and common-area wipe-downs",
   "Dusting and high-touch surfaces",
   "Vacuuming, sweeping, and mopping",
+  "Client-provided supply restock by checklist",
   "Low-odor / non-toxic product options by request",
-  "Guest-ready turnover resets when quoted",
-  "Linen, towel, and restock checklist review",
-];
-
-const specialtyAddOns = [
-  "Carpet extraction quoted separately",
-  "Spot treatment quoted separately",
-  "Floor scrub, buff, wax, or strip/wax by quote",
-  "Upholstery or specialty surfaces after review",
-  "First-time heavier reset quoted after walkthrough",
-  "Daycare requests are common-area focused unless reviewed",
-  "Short-term rental turnover add-ons can include linen/towel handling, restock checklist notes, limited photo notes, and guest-ready detail checks when approved",
-  "No guest messaging, property management, repairs, pest treatment, mold, biohazards, construction cleanup, or hazardous work",
 ];
 
 const commercialPriceRanges = [
@@ -208,57 +196,35 @@ export default function CommercialResetPage() {
       </section>
 
       <section id="commercial-scope" className="soft-section scroll-mt-28 px-4 py-14 sm:px-6 lg:px-8">
-        <div className="mx-auto grid max-w-7xl items-stretch gap-8 lg:grid-cols-[0.95fr_1.05fr]">
-          <div className="flex h-full flex-col rounded-[2.5rem] border border-nest-gold/18 bg-white/86 p-6 shadow-soft sm:p-8">
-            <p className="pill-label w-fit"><SprayCan size={15} /> Routine Scope</p>
-            <h2 className="mt-4 text-3xl font-black text-nest-teal sm:text-4xl">What Commercial Reset can include.</h2>
-            <p className="mt-4 font-medium leading-7 text-nest-ink/70">
-              Basic Commercial Reset is routine janitorial-style support. Specialty floor work and carpet work are not included by default and are quoted separately when available. Product preferences can be noted in the quote request.
-            </p>
-            <div className="mt-7 grid flex-1 auto-rows-fr gap-3 sm:grid-cols-2">
+        <div className="mx-auto max-w-7xl">
+          <div className="grid gap-8 lg:grid-cols-[0.92fr_1.08fr] lg:items-stretch">
+            <div className="flex h-full flex-col justify-between rounded-[2.5rem] border border-nest-gold/18 bg-white/88 p-6 shadow-soft sm:p-8 lg:p-10">
+              <div>
+                <p className="pill-label w-fit"><SprayCan size={15} /> Routine Scope</p>
+                <h2 className="mt-4 text-3xl font-black leading-tight text-nest-teal sm:text-5xl">
+                  What routine Commercial Reset can include.
+                </h2>
+                <p className="mt-5 text-base font-medium leading-7 text-nest-ink/72 sm:text-lg sm:leading-8">
+                  Basic Commercial Reset is routine janitorial-style support for manageable small business spaces. Specialty work, heavy first-time resets, floor care, carpet extraction, and short-term rental turnover details are reviewed in the pricing guidance below so the page stays clear and the quote stays honest.
+                </p>
+              </div>
+
+              <div className="mt-7 rounded-[1.75rem] border border-nest-gold/16 bg-nest-cream p-5">
+                <h3 className="text-lg font-black text-nest-teal">Simple scope first, add-ons second.</h3>
+                <p className="mt-2 text-sm font-bold leading-6 text-nest-ink/68">
+                  The request form and quote review help confirm square footage, bathrooms, access, supplies, timing, condition, photos, and any specialty add-ons before payment or scheduling.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid auto-rows-fr gap-3 sm:grid-cols-2">
               {routineCleaning.map((item) => <CheckTile key={item}>{item}</CheckTile>)}
-            </div>
-          </div>
-
-          <div className="flex h-full flex-col rounded-[2.5rem] border border-nest-gold/18 bg-white/86 p-6 shadow-soft sm:p-8">
-            <p className="pill-label w-fit"><DoorOpen size={15} /> Add-ons and Boundaries</p>
-            <h2 className="mt-4 text-3xl font-black text-nest-teal sm:text-4xl">Quoted separately when the job needs more.</h2>
-            <p className="mt-4 font-medium leading-7 text-nest-ink/70">
-              This keeps quotes honest and helps make sure the service scope, product preferences, safety boundaries, and specialty work are reviewed before anything is confirmed.
-            </p>
-            <div className="mt-7 grid flex-1 auto-rows-fr gap-3">
-              {specialtyAddOns.map((item) => <CheckTile key={item}>{item}</CheckTile>)}
-            </div>
-          </div>
-        </div>
-
-        <div className="mx-auto mt-8 grid max-w-7xl items-stretch gap-5 lg:grid-cols-[1fr_0.95fr]">
-          <div className="flex h-full flex-col rounded-[2.25rem] border border-nest-gold/18 bg-gradient-to-br from-white via-nest-cream to-nest-mint/25 p-6 shadow-soft sm:p-8">
-            <p className="pill-label w-fit"><Home size={15} /> Host-managed turnovers</p>
-            <h3 className="mt-4 text-2xl font-black text-nest-teal sm:text-3xl">Short-term rentals can be reviewed as a commercial add-on lane.</h3>
-            <p className="mt-4 font-medium leading-7 text-nest-ink/70">
-              Turnover requests fit best when the host already manages the guest relationship, house rules, supplies, and property decisions. NestHelper can review cleaning, linen or towel handling, restock checklist notes, and optional photo notes as part of the approved quote.
-            </p>
-            <p className="mt-4 rounded-2xl bg-white/72 p-4 text-sm font-bold leading-6 text-nest-ink/68">
-              Boundaries stay clear: no guest messaging, platform communication, repairs, pest treatment, biohazards, emergency response, or full property management unless separately reviewed and confirmed.
-            </p>
-          </div>
-
-          <div id="commercial-policy-details" className="flex h-full scroll-mt-28 flex-col rounded-[2.25rem] border border-nest-gold/18 bg-white/86 p-6 shadow-soft sm:p-8">
-            <p className="pill-label w-fit"><ClipboardCheck size={15} /> Scope details</p>
-            <h3 className="mt-4 text-2xl font-black text-nest-teal sm:text-3xl">Routine scope and special-case boundaries.</h3>
-            <p className="mt-4 font-medium leading-7 text-nest-ink/70">
-              These links explain what routine Commercial Reset can include, what stays outside the basic scope, and how host-managed turnovers are reviewed before scheduling.
-            </p>
-            <div className="mt-6 grid gap-3">
-              <ActionLink href="/policies/commercial-reset-policy" title="Commercial Reset Policy" />
-              <ActionLink href="/policies/short-term-rental-turnover-policy" title="Short-Term Rental Turnover Policy" />
             </div>
           </div>
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
+      <section id="commercial-quote-guidance" className="mx-auto max-w-7xl scroll-mt-28 px-4 py-14 sm:px-6 lg:px-8">
         <div className="overflow-hidden rounded-[2.75rem] border border-nest-gold/18 bg-white/90 shadow-soft">
           <div className="bg-gradient-to-br from-nest-cream via-white to-nest-mint/35 p-6 text-center sm:p-8 lg:p-10">
             <p className="pill-label mx-auto w-fit"><CheckCircle2 size={15} /> Quote Guidance</p>
@@ -284,9 +250,34 @@ export default function CommercialResetPage() {
             <div className="mt-7">
               <CommercialAddOnPricingSelector />
             </div>
-            <p className="mx-auto mt-6 max-w-4xl rounded-2xl bg-nest-cream p-4 text-center text-sm font-bold leading-6 text-nest-ink/68">
-              Basic Commercial Reset does not automatically include carpet shampooing, wax, strip-and-wax, repairs, mold, biohazards, construction cleanup, or hazardous work. Those are reviewed separately or declined when outside NestHelper’s scope.
-            </p>
+            <div id="commercial-policy-details" className="mt-7 scroll-mt-28 rounded-[2.25rem] border border-nest-gold/18 bg-white/90 p-5 shadow-sm sm:p-6">
+              <div className="grid gap-5 lg:grid-cols-[1fr_1fr_0.95fr] lg:items-stretch">
+                <div className="rounded-[1.75rem] bg-nest-cream p-5">
+                  <h4 className="text-lg font-black text-nest-teal">Basic reset boundaries</h4>
+                  <p className="mt-2 text-sm font-bold leading-6 text-nest-ink/68">
+                    Basic Commercial Reset does not automatically include carpet shampooing, waxing, strip-and-wax, repairs, mold, biohazards, construction cleanup, or hazardous work. Those are reviewed separately or declined when outside NestHelper’s scope.
+                  </p>
+                </div>
+
+                <div className="rounded-[1.75rem] bg-nest-mint/22 p-5">
+                  <h4 className="text-lg font-black text-nest-teal">Host-managed turnovers</h4>
+                  <p className="mt-2 text-sm font-bold leading-6 text-nest-ink/68">
+                    Short-term rental turnover requests fit best when the host already manages guest messaging, house rules, supplies, property decisions, and platform communication. Cleaning, linen/towel handling, restock checklist notes, and limited photo notes can be reviewed as add-ons.
+                  </p>
+                </div>
+
+                <div className="rounded-[1.75rem] border border-nest-gold/16 bg-white p-5">
+                  <h4 className="text-lg font-black text-nest-teal">Scope policies</h4>
+                  <p className="mt-2 text-sm font-bold leading-6 text-nest-ink/68">
+                    Read the details before requesting work that may need special review.
+                  </p>
+                  <div className="mt-4 grid gap-3">
+                    <ActionLink href="/policies/commercial-reset-policy" title="Commercial Reset Policy" />
+                    <ActionLink href="/policies/short-term-rental-turnover-policy" title="Short-Term Rental Turnover Policy" />
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
