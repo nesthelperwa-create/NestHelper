@@ -183,7 +183,7 @@ export async function POST(request: Request) {
             await requestRef.update({
               commercialInvoiceAdminPaymentEmailSent: true,
               commercialInvoiceAdminPaymentEmailSentAt: FieldValue.serverTimestamp(),
-              commercialInvoiceAdminPaymentEmailError: result?.error || "",
+              commercialInvoiceAdminPaymentEmailError: result && "error" in result && result.error ? String(result.error) : "",
             });
           } catch (error) {
             console.error("Commercial invoice admin alert failed", error);
