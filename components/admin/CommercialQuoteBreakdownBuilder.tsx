@@ -328,6 +328,15 @@ function safeString(value: unknown) {
   return typeof value === "string" ? value : "";
 }
 
+function formatServicePeriodLabel(start: unknown, end: unknown) {
+  const cleanStart = safeString(start);
+  const cleanEnd = safeString(end);
+  if (cleanStart && cleanEnd) return `${cleanStart} to ${cleanEnd}`;
+  if (cleanStart) return `Starts ${cleanStart}`;
+  if (cleanEnd) return `Through ${cleanEnd}`;
+  return "";
+}
+
 function escapeHtml(value: unknown) {
   return String(value ?? "")
     .replaceAll("&", "&amp;")
