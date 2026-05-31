@@ -24,6 +24,7 @@ type CreatePaymentLinkBody = {
   customTitle?: string;
   customNote?: string;
   includeQuoteBreakdown?: boolean;
+  includeFamilyBreakdown?: boolean;
 };
 
 function getString(value: unknown) {
@@ -72,6 +73,7 @@ export async function POST(request: Request) {
     const shouldSendEmail = body?.sendEmail !== false;
     const useCustomInitial = Boolean(body?.customInitial);
     const shouldIncludeQuoteBreakdown = body?.includeQuoteBreakdown !== false;
+    const shouldIncludeFamilyBreakdown = body?.includeFamilyBreakdown !== false;
 
     if (!requestId) {
       return NextResponse.json({ ok: false, error: "Missing request ID." }, { status: 400 });
@@ -92,6 +94,8 @@ export async function POST(request: Request) {
     const isCommercialReset = serviceId === "commercial-reset";
     const savedCommercialBreakdown = (data.commercialQuoteBreakdown || {}) as Record<string, unknown>;
     const savedCommercialBreakdownText = isCommercialReset ? getString(savedCommercialBreakdown.customerBreakdownText) : "";
+    const savedFamilyBreakdown = (data.familyPaymentBreakdown || {}) as Record<string, unknown>;
+    const savedFamilyBreakdownText = !isCommercialReset ? getString(savedFamilyBreakdown.customerBreakdownText) : "";
 
     if (!serviceId) {
       return NextResponse.json({ ok: false, error: "Missing service selection for this request." }, { status: 400 });
@@ -182,8 +186,12 @@ export async function POST(request: Request) {
           preferredWindow: getString(data.preferredWindow),
           city: getString(data.city),
           replyToEmail,
-          quoteBreakdownText: isCommercialReset && useCustomInitial && shouldIncludeQuoteBreakdown ? savedCommercialBreakdownText : "",
-          quoteBreakdownTitle: isCommercialReset ? "Commercial Reset quote breakdown" : undefined,
+          quoteBreakdownText: isCommercialReset && useCustomInitial && shouldIncludeQuoteBreakdown
+            ? savedCommercialBreakdownText
+            : !isCommercialReset && shouldIncludeFamilyBreakdown
+              ? savedFamilyBreakdownText
+              : "",
+          quoteBreakdownTitle: isCommercialReset ? "Commercial Reset quote breakdown" : savedFamilyBreakdownText ? "NestHelper payment breakdown" : undefined,
         });
         emailSent = true;
       } catch (error) {
@@ -205,6 +213,7 @@ export async function POST(request: Request) {
       checkoutEmailSent: emailSent,
       checkoutEmailError: emailError,
       checkoutIncludedQuoteBreakdown: Boolean(isCommercialReset && useCustomInitial && shouldIncludeQuoteBreakdown && savedCommercialBreakdownText),
+      checkoutIncludedFamilyBreakdown: Boolean(!isCommercialReset && shouldIncludeFamilyBreakdown && savedFamilyBreakdownText),
       checkoutCreatedBy: decoded.email || "admin",
       updatedAt: FieldValue.serverTimestamp(),
       updatedBy: decoded.email || "admin",
@@ -222,7 +231,16 @@ export async function POST(request: Request) {
 
     await requestRef.update(updatePayload);
 
-    return NextResponse.json({ ok: true, url: checkoutUrl, sessionId: session.id, emailSent, emailError, customInitial: useCustomInitial, includedQuoteBreakdown: Boolean(isCommercialReset && useCustomInitial && shouldIncludeQuoteBreakdown && savedCommercialBreakdownText) });
+    return NextResponse.json({
+      ok: true,
+      url: checkoutUrl,
+      sessionId: session.id,
+      emailSent,
+      emailError,
+      customInitial: useCustomInitial,
+      includedQuoteBreakdown: Boolean(isCommercialReset && useCustomInitial && shouldIncludeQuoteBreakdown && savedCommercialBreakdownText),
+      includedFamilyBreakdown: Boolean(!isCommercialReset && shouldIncludeFamilyBreakdown && savedFamilyBreakdownText),
+    });
   } catch (error) {
     console.error(error);
     return NextResponse.json({ ok: false, error: "Unable to create payment link." }, { status: 500 });

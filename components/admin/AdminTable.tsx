@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { firebaseAuth, firestoreDb } from "@/lib/firebaseClient";
 import StatusBadge from "./StatusBadge";
 import CommercialQuoteBreakdownBuilder from "./CommercialQuoteBreakdownBuilder";
+import FamilyPaymentBreakdownBuilder from "./FamilyPaymentBreakdownBuilder";
 
 type AdminDoc = { id: string; status?: string; createdAt?: unknown; checkoutUrl?: string; promoCode?: string; [key: string]: any };
 type CheckoutMode = "standard" | "founding" | "custom";
@@ -421,6 +422,7 @@ export default function AdminTable({
   const [checkoutMessage, setCheckoutMessage] = useState("");
   const [checkoutError, setCheckoutError] = useState("");
   const [includeCommercialQuoteBreakdown, setIncludeCommercialQuoteBreakdown] = useState(true);
+  const [includeFamilyPaymentBreakdown, setIncludeFamilyPaymentBreakdown] = useState(true);
   const [commercialInvoiceBusy, setCommercialInvoiceBusy] = useState(false);
   const [commercialInvoiceMessage, setCommercialInvoiceMessage] = useState("");
   const [commercialInvoiceError, setCommercialInvoiceError] = useState("");
@@ -473,6 +475,7 @@ export default function AdminTable({
     setCustomInitialTitle(selected?.customInitialTitle ? String(selected.customInitialTitle) : "");
     setCustomInitialNote(selected?.customInitialNote ? String(selected.customInitialNote) : "");
     setIncludeCommercialQuoteBreakdown(Boolean(selected?.commercialQuoteBreakdown?.customerBreakdownText));
+    setIncludeFamilyPaymentBreakdown(Boolean(selected?.familyPaymentBreakdown?.customerBreakdownText));
     setStatusValue(nextStatus);
     setStatusNote("");
     setNotifyCustomer(shouldNotifyByDefault(nextStatus));
@@ -694,6 +697,7 @@ export default function AdminTable({
           customTitle: useCustomInitial ? customInitialTitle : undefined,
           customNote: useCustomInitial ? customInitialNote : undefined,
           includeQuoteBreakdown: selected.service === "commercial-reset" && useCustomInitial ? includeCommercialQuoteBreakdown : undefined,
+          includeFamilyBreakdown: selected.service !== "commercial-reset" ? includeFamilyPaymentBreakdown : undefined,
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -709,6 +713,7 @@ export default function AdminTable({
         status: "Checkout Sent",
         paymentStatus: selected.service === "laundry-rescue" ? "Deposit Checkout Sent" : "Checkout Sent",
         checkoutIncludedQuoteBreakdown: data.includedQuoteBreakdown ?? prev.checkoutIncludedQuoteBreakdown,
+        checkoutIncludedFamilyBreakdown: data.includedFamilyBreakdown ?? prev.checkoutIncludedFamilyBreakdown,
       } : prev);
       setStatusValue("Checkout Sent");
       const commercialBreakdownNotice = selected.service === "commercial-reset" && useCustomInitial && sendEmail
@@ -718,7 +723,14 @@ export default function AdminTable({
             ? " No saved quote breakdown was found, so the email only includes the payment link and notes. Save the quote builder draft first if you want the breakdown included."
             : " Quote breakdown was not included because the checkbox was off."
         : "";
-      setCheckoutMessage(data.emailError || (data.emailSent ? `Checkout link created and emailed to the customer.${commercialBreakdownNotice}` : `Checkout link created. Copy it and send it manually.${commercialBreakdownNotice}`));
+      const familyBreakdownNotice = selected.service !== "commercial-reset" && sendEmail
+        ? data.includedFamilyBreakdown
+          ? " Saved family payment breakdown was included in the customer email."
+          : includeFamilyPaymentBreakdown
+            ? " No saved family payment breakdown was found, so the email only includes the payment link and notes. Save the family breakdown first if you want it included."
+            : " Family payment breakdown was not included because the checkbox was off."
+        : "";
+      setCheckoutMessage(data.emailError || (data.emailSent ? `Checkout link created and emailed to the customer.${commercialBreakdownNotice}${familyBreakdownNotice}` : `Checkout link created. Copy it and send it manually.${commercialBreakdownNotice}${familyBreakdownNotice}`));
     } catch (error) {
       setCheckoutError(error instanceof Error ? error.message : "Unable to create checkout link.");
     } finally {
@@ -912,7 +924,9 @@ export default function AdminTable({
   const selectedIsCommercial = isCommercialRequest(selected);
   const isCustomCheckoutMode = checkoutMode === "custom";
   const hasSavedCommercialQuoteBreakdown = Boolean(selected?.commercialQuoteBreakdown?.customerBreakdownText);
+  const hasSavedFamilyPaymentBreakdown = Boolean(selected?.familyPaymentBreakdown?.customerBreakdownText);
   const showCommercialQuotePanel = showPaymentActions && selectedIsCommercial;
+  const showFamilyPaymentBreakdownPanel = showPaymentActions && !selectedIsCommercial;
   const anyActionBusy = checkoutBusy || commercialInvoiceBusy || statusBusy || laundryFinalBusy || additionalPaymentBusy || commercialQuoteBusy;
 
   return (
@@ -1386,6 +1400,29 @@ export default function AdminTable({
               </div>
             )}
 
+            {showFamilyPaymentBreakdownPanel && (
+              <FamilyPaymentBreakdownBuilder
+                item={selected}
+                formatMoney={formatMoney}
+                onSaved={(updates) => {
+                  const savedBreakdown = updates.familyPaymentBreakdown as { customerBreakdownText?: string } | undefined;
+                  setSelected((prev) => (prev ? { ...prev, ...updates } : prev));
+                  if (savedBreakdown?.customerBreakdownText) setIncludeFamilyPaymentBreakdown(true);
+                }}
+                onApplyCheckout={({ amount, title, note }) => {
+                  setCheckoutMode("custom");
+                  setCustomInitialAmount(String(amount));
+                  setCustomInitialTitle(title);
+                  setCustomInitialNote(note);
+                }}
+                onApplyAdditionalPayment={({ amount, reason, note }) => {
+                  setAdditionalPaymentAmount(String(amount));
+                  setAdditionalPaymentReason(reason);
+                  setAdditionalPaymentNote(note);
+                }}
+              />
+            )}
+
             {showPaymentActions && (
               <div className="mb-5 rounded-3xl border border-[#d8c18f] bg-[#fbf6ea] p-5 shadow-sm">
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
@@ -1531,6 +1568,32 @@ export default function AdminTable({
                     )}
                   </div>
                 )}
+
+                {!selectedIsCommercial && (
+                  <div className="mt-4 rounded-3xl border border-[#d8c18f] bg-white p-4">
+                    <label className="flex gap-3 text-sm font-bold text-slate-700">
+                      <input
+                        type="checkbox"
+                        checked={includeFamilyPaymentBreakdown}
+                        onChange={(e) => setIncludeFamilyPaymentBreakdown(e.target.checked)}
+                        disabled={!hasSavedFamilyPaymentBreakdown}
+                        className="mt-1 h-4 w-4 rounded border-[#d8c18f] accent-[#075c58]"
+                      />
+                      <span>
+                        <span className="block text-[#075c58]">Include saved family payment breakdown in the customer checkout email</span>
+                        <span className="mt-1 block text-xs font-semibold leading-5 text-slate-600">
+                          Use this when you want the customer to see the package, custom amount, recurring plan, laundry note, discount, or credit details before paying.
+                        </span>
+                      </span>
+                    </label>
+                    {!hasSavedFamilyPaymentBreakdown && (
+                      <p className="mt-3 rounded-2xl bg-amber-50 px-4 py-3 text-xs font-bold leading-5 text-amber-800">
+                        No saved family payment breakdown is available yet. Save the Family Payment Breakdown draft first, then this checkbox will be available.
+                      </p>
+                    )}
+                  </div>
+                )}
+
 
                 <div className="mt-4 grid gap-3 md:grid-cols-2">
                   <button
