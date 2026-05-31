@@ -246,6 +246,7 @@ export function RequestForm() {
           <p className="mt-3 max-w-2xl leading-7 text-nest-ink/72">
             Choose a service, then answer only the questions that match that package. NestHelper reviews the request before checkout so families get the right scope, timing, helper, and price before anything is confirmed.
           </p>
+          <p className="mt-3 text-sm font-bold text-nest-ink/65"><span className="text-red-600">*</span> Required fields</p>
           <div className="mt-5 grid gap-3 sm:grid-cols-3">
             <Step icon={<ShieldCheck className="h-5 w-5" />} title="1. We review" text="Area, safety, pets, access, and scope." />
             <Step icon={<CreditCard className="h-5 w-5" />} title="2. You approve" text="We send a secure payment link." />
@@ -256,24 +257,24 @@ export function RequestForm() {
 
       <Section title="1. Contact information" description="We use this to confirm the request, send prep notes, and share the checkout link if approved.">
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Full name"><input className="input" required autoComplete="name" value={form.fullName} onChange={(e) => update("fullName", e.target.value)} /></Field>
-          <Field label="Phone"><input className="input" required autoComplete="tel" inputMode="tel" value={form.phone} onChange={(e) => update("phone", formatPhoneNumber(e.target.value))} /></Field>
-          <Field label="Email"><input type="email" className="input" required autoComplete="email" value={form.email} onChange={(e) => update("email", e.target.value)} /></Field>
+          <Field label="Full name" required><input className="input" required autoComplete="name" value={form.fullName} onChange={(e) => update("fullName", e.target.value)} /></Field>
+          <Field label="Phone" required><input className="input" required autoComplete="tel" inputMode="tel" value={form.phone} onChange={(e) => update("phone", formatPhoneNumber(e.target.value))} /></Field>
+          <Field label="Email" required><input type="email" className="input" required autoComplete="email" value={form.email} onChange={(e) => update("email", e.target.value)} /></Field>
           <Field label="Promo/referral code (optional)"><input className="input" placeholder="Optional code" value={form.promoCode} onChange={(e) => update("promoCode", e.target.value.toUpperCase())} /></Field>
         </div>
       </Section>
 
       <Section title="2. Service address" description="Parent Reset service is focused on Woodinville, Bothell, Kirkland, Redmond, and nearby Eastside/Northshore communities. Pierce County is currently listed for Commercial Reset only.">
-        <Field label="Street address"><input className="input" required autoComplete="street-address" value={form.address} onChange={(e) => update("address", e.target.value)} /></Field>
+        <Field label="Street address" required><input className="input" required autoComplete="street-address" value={form.address} onChange={(e) => update("address", e.target.value)} /></Field>
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="City"><input className="input" required autoComplete="address-level2" value={form.city} onChange={(e) => update("city", e.target.value)} /></Field>
-          <Field label="ZIP"><input className="input" required autoComplete="postal-code" inputMode="numeric" value={form.zip} onChange={(e) => update("zip", e.target.value)} /></Field>
+          <Field label="City" required><input className="input" required autoComplete="address-level2" value={form.city} onChange={(e) => update("city", e.target.value)} /></Field>
+          <Field label="ZIP" required><input className="input" required autoComplete="postal-code" inputMode="numeric" value={form.zip} onChange={(e) => update("zip", e.target.value)} /></Field>
         </div>
       </Section>
 
       <Section title="3. Service and timing" description="Choose the package first. The next section changes based on the package selected.">
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Service requested">
+          <Field label="Service requested" required>
             <select className="input" required value={form.service} onChange={(e) => handleServiceChange(e.target.value)}>
               <option value="">Choose a service</option>
               {services.map((service) => <option key={service.id} value={service.id}>{service.title}</option>)}
@@ -287,7 +288,7 @@ export function RequestForm() {
               <option>Recurring help — contact me to discuss</option>
             </select>
           </Field>
-          <Field label="Preferred date"><input type="date" className="input" required value={form.preferredDate} onChange={(e) => update("preferredDate", e.target.value)} /></Field>
+          <Field label="Preferred date" required><input type="date" className="input" required value={form.preferredDate} onChange={(e) => update("preferredDate", e.target.value)} /></Field>
           <Field label="Backup date (optional)"><input type="date" className="input" value={form.alternateDate} onChange={(e) => update("alternateDate", e.target.value)} /></Field>
         </div>
         <Field label="Preferred time window"><input className="input" placeholder="Example: Friday morning, Saturday after 1pm, weekdays after 4" value={form.preferredWindow} onChange={(e) => update("preferredWindow", e.target.value)} /></Field>
@@ -360,7 +361,7 @@ export function RequestForm() {
               ))}
             </div>
           </div>
-          <Field label="Anything else we should know?">
+          <Field label="Anything else we should know?" required>
             <textarea className="input min-h-28" required placeholder="Example: dishes are backed up, toys everywhere, laundry needs folding, pantry needs a reset, or I need help catching up before guests arrive." value={form.requestDetails} onChange={(e) => update("requestDetails", e.target.value)} />
           </Field>
         </Section>
@@ -393,11 +394,11 @@ export function RequestForm() {
               </select>
             </Field>
           </div>
-          <Field label="Errand stops or task list"><textarea className="input min-h-28" required placeholder="Example: Target return, grocery pickup at QFC, package drop-off." value={form.errandStops} onChange={(e) => update("errandStops", e.target.value)} /></Field>
-          <Field label="Starting area / stores / drop-off area"><input className="input" required placeholder="Example: Woodinville QFC to my home, or Bothell return drop-off" value={form.errandStartArea} onChange={(e) => update("errandStartArea", e.target.value)} /></Field>
+          <Field label="Errand stops or task list" required><textarea className="input min-h-28" required placeholder="Example: Target return, grocery pickup at QFC, package drop-off." value={form.errandStops} onChange={(e) => update("errandStops", e.target.value)} /></Field>
+          <Field label="Starting area / stores / drop-off area" required><input className="input" required placeholder="Example: Woodinville QFC to my home, or Bothell return drop-off" value={form.errandStartArea} onChange={(e) => update("errandStartArea", e.target.value)} /></Field>
           <label className="flex gap-3 rounded-2xl bg-white p-4 text-sm font-semibold text-nest-ink/82 shadow-sm">
             <input type="checkbox" required checked={form.errandMileageAck} onChange={(e) => update("errandMileageAck", e.target.checked)} className="mt-1 h-4 w-4" />
-            <span>I understand Errand Helper includes up to 2 hours and up to 15 driving miles. NestHelper will quote extra distance, complex stops, or special handling before checkout.</span>
+            <span><span className="text-red-600">*</span> I understand Errand Helper includes up to 2 hours and up to 15 driving miles. NestHelper will quote extra distance, complex stops, or special handling before checkout.</span>
           </label>
         </Section>
       )}
@@ -405,7 +406,7 @@ export function RequestForm() {
       {isLaundry && (
         <Section title="4. Laundry Rescue preferences" description="Laundry is billed by dry weight at pickup, then the final balance is sent after weigh-in.">
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Estimated laundry amount">
+            <Field label="Estimated laundry amount" required>
               <select className="input" required value={form.laundryBagEstimate} onChange={(e) => update("laundryBagEstimate", e.target.value)}>
                 <option>1–2 bags/hampers</option>
                 <option>3–4 bags/hampers</option>
@@ -414,7 +415,7 @@ export function RequestForm() {
                 <option>Not sure yet</option>
               </select>
             </Field>
-            <Field label="Pickup spot / access">
+            <Field label="Pickup spot / access" required>
               <select className="input" required value={form.laundryPickupSpot} onChange={(e) => update("laundryPickupSpot", e.target.value)}>
                 <option>Front porch / outside door</option>
                 <option>Garage</option>
@@ -515,7 +516,7 @@ export function RequestForm() {
         <h3 className="text-xl font-black text-nest-teal">Before you submit</h3>
         <label className="flex gap-3 rounded-2xl bg-white p-4 text-sm font-semibold text-nest-ink/82 shadow-sm">
           <input type="checkbox" required checked={form.consent} onChange={(e) => update("consent", e.target.checked)} className="mt-1 h-4 w-4" />
-          <span>I understand this is a request, not a confirmed booking. I agree to NestHelper’s Terms, Privacy Policy, Service Scope, Cancellation, Safety, Laundry, and Reset Promise policies.</span>
+          <span><span className="text-red-600">*</span> I understand this is a request, not a confirmed booking. I agree to NestHelper’s Terms, Privacy Policy, Service Scope, Cancellation, Safety, Laundry, and Reset Promise policies.</span>
         </label>
         <label className="flex gap-3 rounded-2xl bg-white p-4 text-sm font-semibold text-nest-ink/82 shadow-sm">
           <input type="checkbox" checked={form.textConsent} onChange={(e) => update("textConsent", e.target.checked)} className="mt-1 h-4 w-4" />
@@ -558,8 +559,16 @@ function Section({ title, description, children }: { title: string; description:
   );
 }
 
-function Field({ label, children }: { label: string; children: ReactNode }) {
-  return <label className="grid gap-2"><span className="label">{label}</span>{children}</label>;
+function Field({ label, children, required = false }: { label: string; children: ReactNode; required?: boolean }) {
+  return (
+    <label className="grid gap-2">
+      <span className="label">
+        {label}
+        {required && <span className="ml-1 text-base leading-none text-red-600" aria-label="required">*</span>}
+      </span>
+      {children}
+    </label>
+  );
 }
 
 function Step({ icon, title, text }: { icon: ReactNode; title: string; text: string }) {

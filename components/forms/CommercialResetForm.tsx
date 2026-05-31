@@ -195,8 +195,8 @@ const cleaningPriorityOptions = [
 ];
 
 const addOnOptions = [
-  "Carpet extraction quote",
-  "Spot treatment quote",
+  "Carpet deep cleaning quote",
+  "Spot/stain treatment quote",
   "Floor scrub quote",
   "Buff / shine quote",
   "Wax / finish quote",
@@ -447,21 +447,21 @@ function getAddOnEstimate(form: CommercialResetFormState): string | undefined {
   const carpetArea = getSpecialtyAreaRange(form.carpetArea);
   const hardFloorArea = getSpecialtyAreaRange(form.hardFloorArea);
   const ranges = selected.map((item) => {
-    if (item === "Carpet extraction quote") {
-      if (!carpetArea) return addOnAreaNote("Carpet extraction");
+    if (item === "Carpet deep cleaning quote") {
+      if (!carpetArea) return addOnAreaNote("Carpet deep cleaning");
       const multiplier = form.carpetCondition === "Heavy traffic or odor concerns" ? { low: 0.50, high: 0.75 } : { low: 0.40, high: 0.60 };
-      return `Carpet extraction: ${rangeText(withMinimum({ low: carpetArea.low * multiplier.low, high: carpetArea.high * multiplier.high }, 249))}`;
+      return `Carpet deep cleaning: ${rangeText(withMinimum({ low: carpetArea.low * multiplier.low, high: carpetArea.high * multiplier.high }, 249))}`;
     }
 
-    if (item === "Spot treatment quote") {
+    if (item === "Spot/stain treatment quote") {
       const spotMap: Record<string, NumberRange> = {
         "1–2 spots / areas": { low: 25, high: 125 },
         "3–5 spots / areas": { low: 75, high: 275 },
         "6+ spots / areas": { low: 150, high: 450 },
       };
       return form.spotTreatmentCount && spotMap[form.spotTreatmentCount]
-        ? `Spot treatment: ${rangeText(spotMap[form.spotTreatmentCount])}`
-        : addOnAreaNote("Spot treatment");
+        ? `Spot/stain treatment: ${rangeText(spotMap[form.spotTreatmentCount])}`
+        : addOnAreaNote("Spot/stain treatment");
     }
 
     if (item === "Floor scrub quote") {
@@ -521,8 +521,9 @@ function getCommercialPlanningEstimate(form: CommercialResetFormState): Planning
   const sqft = getSquareFootageRange(form.squareFootage);
   const rate = getVisitRateRange(form.frequency, form.spaceCondition);
   const notes = [
+    "Routine range above is for the main cleaning visit only. Selected specialty add-ons are shown separately below and are not included in the routine range unless NestHelper adds them to the final quote.",
     "Planning range only — not a final quote or payment request.",
-    "Final pricing may change after NestHelper reviews the address, photos, access, condition, supplies, schedule, and service fit.",
+    "Final pricing may change after NestHelper reviews the address, photos, access, condition, supplies, schedule, add-on details, and service fit.",
   ];
 
   if (!form.businessType || !form.squareFootage || !form.frequency || !sqft || !rate) {
@@ -651,8 +652,8 @@ export function CommercialResetForm() {
   const isDaycareOrLearning = businessKind === "daycare";
   const spaceDetailOptions = useMemo(() => getSpaceDetailOptions(form.businessType), [form.businessType]);
   const planningEstimate = useMemo(() => getCommercialPlanningEstimate(form), [form]);
-  const needsCarpetDetails = hasAddOn(form, "Carpet extraction quote");
-  const needsSpotDetails = hasAddOn(form, "Spot treatment quote");
+  const needsCarpetDetails = hasAddOn(form, "Carpet deep cleaning quote");
+  const needsSpotDetails = hasAddOn(form, "Spot/stain treatment quote");
   const needsHardFloorDetails = ["Floor scrub quote", "Buff / shine quote", "Wax / finish quote", "Strip & wax quote"].some((item) => hasAddOn(form, item));
   const needsUpholsteryDetails = hasAddOn(form, "Upholstery quote");
   const needsGlassDetails = hasAddOn(form, "Interior glass quote");
@@ -748,6 +749,7 @@ export function CommercialResetForm() {
           <p className="mt-3 max-w-2xl leading-7 text-nest-ink/72">
             This guided form stays quick, but asks the pricing details that matter: type of space, size range, restrooms, kitchens, showers, condition, frequency, and photos if helpful.
           </p>
+          <p className="mt-3 text-sm font-bold text-nest-ink/65"><span className="text-red-600">*</span> Required fields</p>
           <div className="mt-5 grid gap-3 sm:grid-cols-3">
             <Step icon={<ClipboardCheck className="h-5 w-5" />} title="1. Quick basics" text="Contact, address, business type, and service area." />
             <Step icon={<ShieldCheck className="h-5 w-5" />} title="2. Quote factors" text="Space size, layout, areas that need attention, condition, and frequency." />
@@ -758,17 +760,17 @@ export function CommercialResetForm() {
 
       <Section title="1. Business contact" description="Who should NestHelper contact about the quote, walkthrough, and service details?">
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Business / property name"><input className="input" required value={form.businessName} onChange={(e) => update("businessName", e.target.value)} /></Field>
-          <Field label="Contact name"><input className="input" required autoComplete="name" value={form.contactName} onChange={(e) => update("contactName", e.target.value)} /></Field>
+          <Field label="Business / property name" required><input className="input" required value={form.businessName} onChange={(e) => update("businessName", e.target.value)} /></Field>
+          <Field label="Contact name" required><input className="input" required autoComplete="name" value={form.contactName} onChange={(e) => update("contactName", e.target.value)} /></Field>
           <Field label="Role/title (optional)"><input className="input" placeholder="Owner, manager, host, office admin, etc." value={form.roleTitle} onChange={(e) => update("roleTitle", e.target.value)} /></Field>
-          <Field label="Business or property type">
+          <Field label="Business or property type" required>
             <select className="input" required value={form.businessType} onChange={(e) => updateBusinessType(e.target.value)}>
               <option value="">Choose one</option>
               {businessTypes.map((type) => <option key={type}>{type}</option>)}
             </select>
           </Field>
-          <Field label="Email"><input type="email" className="input" required autoComplete="email" value={form.email} onChange={(e) => update("email", e.target.value)} /></Field>
-          <Field label="Phone"><input className="input" required autoComplete="tel" inputMode="tel" value={form.phone} onChange={(e) => update("phone", formatPhoneNumber(e.target.value))} /></Field>
+          <Field label="Email" required><input type="email" className="input" required autoComplete="email" value={form.email} onChange={(e) => update("email", e.target.value)} /></Field>
+          <Field label="Phone" required><input className="input" required autoComplete="tel" inputMode="tel" value={form.phone} onChange={(e) => update("phone", formatPhoneNumber(e.target.value))} /></Field>
         </div>
       </Section>
 
@@ -782,51 +784,51 @@ export function CommercialResetForm() {
               <option>Nearby area — please review</option>
             </select>
           </Field>
-          <Field label="ZIP"><input className="input" required autoComplete="postal-code" inputMode="numeric" value={form.zip} onChange={(e) => update("zip", e.target.value)} /></Field>
+          <Field label="ZIP" required><input className="input" required autoComplete="postal-code" inputMode="numeric" value={form.zip} onChange={(e) => update("zip", e.target.value)} /></Field>
         </div>
-        <Field label="Street address"><input className="input" required autoComplete="street-address" value={form.address} onChange={(e) => update("address", e.target.value)} /></Field>
-        <Field label="City / community"><input className="input" required autoComplete="address-level2" value={form.city} onChange={(e) => update("city", e.target.value)} /></Field>
+        <Field label="Street address" required><input className="input" required autoComplete="street-address" value={form.address} onChange={(e) => update("address", e.target.value)} /></Field>
+        <Field label="City / community" required><input className="input" required autoComplete="address-level2" value={form.city} onChange={(e) => update("city", e.target.value)} /></Field>
       </Section>
 
       <Section title="3. About the Space" description="These quick ranges help NestHelper understand the size, layout, condition, and schedule before preparing a flat visit quote, recurring plan, or reviewed range.">
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Approx. square footage">
+          <Field label="Approx. square footage" required>
             <select className="input" required value={form.squareFootage} onChange={(e) => update("squareFootage", e.target.value)}>
               <option value="">Choose one</option>
               {squareFootageOptions.map((option) => <option key={option}>{option}</option>)}
             </select>
           </Field>
-          <Field label="Bathrooms / restrooms">
+          <Field label="Bathrooms / restrooms" required>
             <select className="input" required value={form.bathrooms} onChange={(e) => update("bathrooms", e.target.value)}>
               <option value="">Choose one</option>
               {bathroomOptions.map((option) => <option key={option}>{option}</option>)}
             </select>
           </Field>
-          <Field label="Kitchens / breakrooms">
+          <Field label="Kitchens / breakrooms" required>
             <select className="input" required value={form.kitchens} onChange={(e) => update("kitchens", e.target.value)}>
               <option value="">Choose one</option>
               {kitchenOptions.map((option) => <option key={option}>{option}</option>)}
             </select>
           </Field>
-          <Field label="Showers / changing areas">
+          <Field label="Showers / changing areas" required>
             <select className="input" required value={form.showers} onChange={(e) => update("showers", e.target.value)}>
               <option value="">Choose one</option>
               {showerOptions.map((option) => <option key={option}>{option}</option>)}
             </select>
           </Field>
-          <Field label="Current condition">
+          <Field label="Current condition" required>
             <select className="input" required value={form.spaceCondition} onChange={(e) => update("spaceCondition", e.target.value)}>
               <option value="">Choose one</option>
               {conditionOptions.map((option) => <option key={option}>{option}</option>)}
             </select>
           </Field>
-          <Field label="Traffic level">
+          <Field label="Traffic level" required>
             <select className="input" required value={form.trafficLevel} onChange={(e) => update("trafficLevel", e.target.value)}>
               <option value="">Choose one</option>
               {trafficOptions.map((option) => <option key={option}>{option}</option>)}
             </select>
           </Field>
-          <Field label="Cleaning frequency">
+          <Field label="Cleaning frequency" required>
             <select className="input" required value={form.frequency} onChange={(e) => update("frequency", e.target.value)}>
               <option value="">Choose one</option>
               {frequencies.map((frequency) => <option key={frequency}>{frequency}</option>)}
@@ -834,7 +836,7 @@ export function CommercialResetForm() {
           </Field>
           <Field label="Preferred start date"><input type="date" className="input" value={form.preferredDate} onChange={(e) => update("preferredDate", e.target.value)} /></Field>
         </div>
-        <Field label="Preferred days/times"><input className="input" required placeholder="Example: after 6pm weekdays, Saturday morning, before opening" value={form.preferredDaysTimes} onChange={(e) => update("preferredDaysTimes", e.target.value)} /></Field>
+        <Field label="Preferred days/times" required><input className="input" required placeholder="Example: after 6pm weekdays, Saturday morning, before opening" value={form.preferredDaysTimes} onChange={(e) => update("preferredDaysTimes", e.target.value)} /></Field>
         <div className="rounded-2xl border border-nest-teal/15 bg-nest-mint/25 p-4 text-sm font-semibold leading-6 text-nest-ink/76">
           These details are meant to make pricing feel fair and predictable. NestHelper will quote the visit, recurring plan, or add-on before anything is scheduled.
         </div>
@@ -954,14 +956,14 @@ export function CommercialResetForm() {
 
             {needsCarpetDetails && (
               <div className="grid gap-4 rounded-2xl border border-nest-teal/10 bg-nest-mint/18 p-4 sm:grid-cols-2">
-                <Field label="Approx. carpet area needing extraction">
-                  <select className="input" value={form.carpetArea} onChange={(e) => update("carpetArea", e.target.value)}>
+                <Field label="Approx. carpet area needing deep cleaning" required>
+                  <select className="input" required value={form.carpetArea} onChange={(e) => update("carpetArea", e.target.value)}>
                     <option value="">Choose one</option>
                     {specialtyAreaOptions.map((option) => <option key={option}>{option}</option>)}
                   </select>
                 </Field>
-                <Field label="Carpet condition">
-                  <select className="input" value={form.carpetCondition} onChange={(e) => update("carpetCondition", e.target.value)}>
+                <Field label="Carpet condition" required>
+                  <select className="input" required value={form.carpetCondition} onChange={(e) => update("carpetCondition", e.target.value)}>
                     <option value="">Choose one</option>
                     {carpetConditionOptions.map((option) => <option key={option}>{option}</option>)}
                   </select>
@@ -971,34 +973,34 @@ export function CommercialResetForm() {
 
             {needsSpotDetails && (
               <div className="grid gap-4 rounded-2xl border border-nest-teal/10 bg-nest-mint/18 p-4 sm:grid-cols-2">
-                <Field label="Approx. number of spots / stain areas">
-                  <select className="input" value={form.spotTreatmentCount} onChange={(e) => update("spotTreatmentCount", e.target.value)}>
+                <Field label="Approx. number of spots / stain areas" required>
+                  <select className="input" required value={form.spotTreatmentCount} onChange={(e) => update("spotTreatmentCount", e.target.value)}>
                     <option value="">Choose one</option>
                     {spotTreatmentOptions.map((option) => <option key={option}>{option}</option>)}
                   </select>
                 </Field>
                 <div className="rounded-2xl border border-nest-gold/12 bg-white/80 p-4 text-sm font-semibold leading-6 text-nest-ink/68">
-                  Photos help confirm whether spot treatment is realistic or if a larger carpet extraction quote is needed.
+                  Photos help confirm whether spot treatment is realistic or if a larger carpet deep cleaning quote is needed.
                 </div>
               </div>
             )}
 
             {needsHardFloorDetails && (
               <div className="grid gap-4 rounded-2xl border border-nest-teal/10 bg-nest-mint/18 p-4 sm:grid-cols-2">
-                <Field label="Approx. hard-floor area needing specialty work">
-                  <select className="input" value={form.hardFloorArea} onChange={(e) => update("hardFloorArea", e.target.value)}>
+                <Field label="Approx. hard-floor area needing specialty work" required>
+                  <select className="input" required value={form.hardFloorArea} onChange={(e) => update("hardFloorArea", e.target.value)}>
                     <option value="">Choose one</option>
                     {specialtyAreaOptions.map((option) => <option key={option}>{option}</option>)}
                   </select>
                 </Field>
-                <Field label="Hard-floor material">
-                  <select className="input" value={form.hardFloorMaterial} onChange={(e) => update("hardFloorMaterial", e.target.value)}>
+                <Field label="Hard-floor material" required>
+                  <select className="input" required value={form.hardFloorMaterial} onChange={(e) => update("hardFloorMaterial", e.target.value)}>
                     <option value="">Choose one</option>
                     {hardFloorMaterialOptions.map((option) => <option key={option}>{option}</option>)}
                   </select>
                 </Field>
-                <Field label="Hard-floor condition">
-                  <select className="input" value={form.hardFloorCondition} onChange={(e) => update("hardFloorCondition", e.target.value)}>
+                <Field label="Hard-floor condition" required>
+                  <select className="input" required value={form.hardFloorCondition} onChange={(e) => update("hardFloorCondition", e.target.value)}>
                     <option value="">Choose one</option>
                     {hardFloorConditionOptions.map((option) => <option key={option}>{option}</option>)}
                   </select>
@@ -1011,8 +1013,8 @@ export function CommercialResetForm() {
 
             {needsUpholsteryDetails && (
               <div className="grid gap-4 rounded-2xl border border-nest-teal/10 bg-nest-mint/18 p-4 sm:grid-cols-2">
-                <Field label="Upholstery scope">
-                  <select className="input" value={form.upholsteryScope} onChange={(e) => update("upholsteryScope", e.target.value)}>
+                <Field label="Upholstery scope" required>
+                  <select className="input" required value={form.upholsteryScope} onChange={(e) => update("upholsteryScope", e.target.value)}>
                     <option value="">Choose one</option>
                     {upholsteryScopeOptions.map((option) => <option key={option}>{option}</option>)}
                   </select>
@@ -1025,8 +1027,8 @@ export function CommercialResetForm() {
 
             {needsGlassDetails && (
               <div className="grid gap-4 rounded-2xl border border-nest-teal/10 bg-nest-mint/18 p-4 sm:grid-cols-2">
-                <Field label="Interior glass / mirror scope">
-                  <select className="input" value={form.glassScope} onChange={(e) => update("glassScope", e.target.value)}>
+                <Field label="Interior glass / mirror scope" required>
+                  <select className="input" required value={form.glassScope} onChange={(e) => update("glassScope", e.target.value)}>
                     <option value="">Choose one</option>
                     {glassScopeOptions.map((option) => <option key={option}>{option}</option>)}
                   </select>
@@ -1062,7 +1064,7 @@ export function CommercialResetForm() {
         <h3 className="text-xl font-black text-nest-teal">Before you submit</h3>
         <label className="flex gap-3 rounded-2xl bg-white p-4 text-sm font-semibold text-nest-ink/82 shadow-sm">
           <input type="checkbox" required checked={form.consent} onChange={(e) => update("consent", e.target.checked)} className="mt-1 h-4 w-4" />
-          <span>I understand this is a quote request, not a confirmed booking. Commercial Reset availability depends on address, scope, schedule, turnover timing if applicable, licensing/endorsement requirements, and service fit.</span>
+          <span><span className="text-red-600">*</span> I understand this is a quote request, not a confirmed booking. Commercial Reset availability depends on address, scope, schedule, turnover timing if applicable, licensing/endorsement requirements, and service fit.</span>
         </label>
         <label className="flex gap-3 rounded-2xl bg-white p-4 text-sm font-semibold text-nest-ink/82 shadow-sm">
           <input type="checkbox" checked={form.textConsent} onChange={(e) => update("textConsent", e.target.checked)} className="mt-1 h-4 w-4" />
@@ -1087,20 +1089,21 @@ function PlanningEstimateCard({ estimate }: { estimate: PlanningEstimate }) {
           <p className="pill-label w-fit"><Calculator size={15} /> Estimate Preview</p>
           <h3 className="mt-4 text-2xl font-black text-nest-teal">{estimate.title}</h3>
           <p className="mt-2 max-w-2xl text-sm font-medium leading-6 text-nest-ink/68">
-            This gives you a helpful budget range before you submit. Routine cleaning uses the main space details; specialty add-ons use the add-on area or item-count questions when provided.
+            The top range is the estimated routine cleaning visit based on the main space details. Any selected specialty add-ons are listed separately below and are not included in the top range unless NestHelper adds them to the final quote.
           </p>
         </div>
         <div className="rounded-[1.4rem] border border-nest-gold/15 bg-white/85 p-4 text-left shadow-sm sm:min-w-64">
-          <p className="text-xs font-black uppercase tracking-[0.16em] text-nest-gold">Planning range</p>
+          <p className="text-xs font-black uppercase tracking-[0.16em] text-nest-gold">Routine cleaning estimate</p>
           <p className="mt-2 text-2xl font-black text-nest-teal">{estimate.primaryRange}</p>
-          {estimate.monthlyRange && <p className="mt-1 text-sm font-black text-nest-ink/68">Approx. {estimate.monthlyRange}</p>}
+          {estimate.monthlyRange && <p className="mt-1 text-sm font-black text-nest-ink/68">Routine only: approx. {estimate.monthlyRange}</p>}
         </div>
       </div>
 
       {estimate.addOnRange && (
         <div className="mt-4 rounded-2xl border border-nest-gold/14 bg-white/80 p-4">
-          <p className="text-sm font-black text-nest-teal">Possible add-on planning</p>
+          <p className="text-sm font-black text-nest-teal">Selected add-ons — separate from the routine range above</p>
           <p className="mt-1 text-sm font-semibold leading-6 text-nest-ink/68">{estimate.addOnRange}</p>
+          <p className="mt-2 text-xs font-bold uppercase tracking-[0.12em] text-nest-gold">Add-ons may be one-time, recurring, or reviewed after photos/walkthrough depending on scope.</p>
         </div>
       )}
 
@@ -1142,8 +1145,16 @@ function Section({ title, description, children }: { title: string; description:
   );
 }
 
-function Field({ label, children }: { label: string; children: ReactNode }) {
-  return <label className="grid gap-2"><span className="label">{label}</span>{children}</label>;
+function Field({ label, children, required = false }: { label: string; children: ReactNode; required?: boolean }) {
+  return (
+    <label className="grid gap-2">
+      <span className="label">
+        {label}
+        {required && <span className="ml-1 text-base leading-none text-red-600" aria-label="required">*</span>}
+      </span>
+      {children}
+    </label>
+  );
 }
 
 function Step({ icon, title, text }: { icon: ReactNode; title: string; text: string }) {

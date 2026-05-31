@@ -5,8 +5,8 @@ import { CheckCircle2, Sparkles } from "lucide-react";
 
 const addOnOptions = [
   {
-    key: "carpet-extraction",
-    label: "Carpet extraction",
+    key: "carpet-deep-cleaning",
+    label: "Carpet deep cleaning",
     range: "$0.40–$0.60/sq ft",
     minimum: "Often $249 minimum",
     bestFor: "Carpeted offices, waiting rooms, studios, small business lobbies, and common areas that need a deeper refresh than vacuuming.",
@@ -21,11 +21,11 @@ const addOnOptions = [
     label: "Spot treatment",
     range: "$25–$75/area",
     minimum: "Quoted by area",
-    bestFor: "Small carpet, upholstery, or floor spots that need targeted attention instead of a full extraction or full floor-care visit.",
+    bestFor: "Small carpet, upholstery, or floor spots that need targeted attention instead of a full carpet deep cleaning or full floor-care visit.",
     notes: [
       "Best reviewed with photos so the quote is clear before scheduling.",
       "Some stains, odors, dye transfer, or set-in damage may improve but cannot be guaranteed to fully disappear.",
-      "Large or repeated spot areas may be quoted as carpet extraction or specialty cleaning instead.",
+      "Large or repeated spot areas may be quoted as carpet deep cleaning or specialty cleaning instead.",
     ],
   },
   {
@@ -105,7 +105,7 @@ const addOnOptions = [
 type AddOnKey = (typeof addOnOptions)[number]["key"];
 
 export function CommercialAddOnPricingSelector() {
-  const [selectedKey, setSelectedKey] = useState<AddOnKey>("carpet-extraction");
+  const [selectedKey, setSelectedKey] = useState<AddOnKey>("carpet-deep-cleaning");
   const selected = useMemo(() => addOnOptions.find((item) => item.key === selectedKey) ?? addOnOptions[0], [selectedKey]);
 
   return (
