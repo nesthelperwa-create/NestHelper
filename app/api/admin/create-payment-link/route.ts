@@ -23,6 +23,7 @@ type CreatePaymentLinkBody = {
   customAmount?: number | string;
   customTitle?: string;
   customNote?: string;
+  includeQuoteBreakdown?: boolean;
 };
 
 function getString(value: unknown) {
@@ -70,6 +71,7 @@ export async function POST(request: Request) {
     const mode = normalizeStripePriceMode(body?.mode);
     const shouldSendEmail = body?.sendEmail !== false;
     const useCustomInitial = Boolean(body?.customInitial);
+    const shouldIncludeQuoteBreakdown = body?.includeQuoteBreakdown !== false;
 
     if (!requestId) {
       return NextResponse.json({ ok: false, error: "Missing request ID." }, { status: 400 });
@@ -180,7 +182,7 @@ export async function POST(request: Request) {
           preferredWindow: getString(data.preferredWindow),
           city: getString(data.city),
           replyToEmail,
-          quoteBreakdownText: isCommercialReset && useCustomInitial ? savedCommercialBreakdownText : "",
+          quoteBreakdownText: isCommercialReset && useCustomInitial && shouldIncludeQuoteBreakdown ? savedCommercialBreakdownText : "",
           quoteBreakdownTitle: isCommercialReset ? "Commercial Reset quote breakdown" : undefined,
         });
         emailSent = true;
@@ -202,7 +204,7 @@ export async function POST(request: Request) {
       checkoutSentAt: emailSent ? FieldValue.serverTimestamp() : null,
       checkoutEmailSent: emailSent,
       checkoutEmailError: emailError,
-      checkoutIncludedQuoteBreakdown: Boolean(isCommercialReset && useCustomInitial && savedCommercialBreakdownText),
+      checkoutIncludedQuoteBreakdown: Boolean(isCommercialReset && useCustomInitial && shouldIncludeQuoteBreakdown && savedCommercialBreakdownText),
       checkoutCreatedBy: decoded.email || "admin",
       updatedAt: FieldValue.serverTimestamp(),
       updatedBy: decoded.email || "admin",
@@ -220,7 +222,7 @@ export async function POST(request: Request) {
 
     await requestRef.update(updatePayload);
 
-    return NextResponse.json({ ok: true, url: checkoutUrl, sessionId: session.id, emailSent, emailError, customInitial: useCustomInitial, includedQuoteBreakdown: Boolean(isCommercialReset && useCustomInitial && savedCommercialBreakdownText) });
+    return NextResponse.json({ ok: true, url: checkoutUrl, sessionId: session.id, emailSent, emailError, customInitial: useCustomInitial, includedQuoteBreakdown: Boolean(isCommercialReset && useCustomInitial && shouldIncludeQuoteBreakdown && savedCommercialBreakdownText) });
   } catch (error) {
     console.error(error);
     return NextResponse.json({ ok: false, error: "Unable to create payment link." }, { status: 500 });

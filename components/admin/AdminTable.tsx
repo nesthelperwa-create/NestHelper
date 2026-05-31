@@ -308,6 +308,7 @@ export default function AdminTable({
   const [checkoutBusy, setCheckoutBusy] = useState(false);
   const [checkoutMessage, setCheckoutMessage] = useState("");
   const [checkoutError, setCheckoutError] = useState("");
+  const [includeCommercialQuoteBreakdown, setIncludeCommercialQuoteBreakdown] = useState(true);
   const [statusValue, setStatusValue] = useState("New");
   const [statusNote, setStatusNote] = useState("");
   const [notifyCustomer, setNotifyCustomer] = useState(false);
@@ -353,6 +354,7 @@ export default function AdminTable({
     setCustomInitialAmount(selected?.customInitialAmount ? String(selected.customInitialAmount) : "");
     setCustomInitialTitle(selected?.customInitialTitle ? String(selected.customInitialTitle) : "");
     setCustomInitialNote(selected?.customInitialNote ? String(selected.customInitialNote) : "");
+    setIncludeCommercialQuoteBreakdown(Boolean(selected?.commercialQuoteBreakdown?.customerBreakdownText));
     setStatusValue(nextStatus);
     setStatusNote("");
     setNotifyCustomer(shouldNotifyByDefault(nextStatus));
@@ -468,6 +470,7 @@ export default function AdminTable({
           customAmount: useCustomInitial ? toNumber(customInitialAmount) : undefined,
           customTitle: useCustomInitial ? customInitialTitle : undefined,
           customNote: useCustomInitial ? customInitialNote : undefined,
+          includeQuoteBreakdown: selected.service === "commercial-reset" && useCustomInitial ? includeCommercialQuoteBreakdown : undefined,
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -485,10 +488,12 @@ export default function AdminTable({
         checkoutIncludedQuoteBreakdown: data.includedQuoteBreakdown ?? prev.checkoutIncludedQuoteBreakdown,
       } : prev);
       setStatusValue("Checkout Sent");
-      const commercialBreakdownNotice = selected.service === "commercial-reset" && useCustomInitial
+      const commercialBreakdownNotice = selected.service === "commercial-reset" && useCustomInitial && sendEmail
         ? data.includedQuoteBreakdown
           ? " Saved quote breakdown was included in the customer email."
-          : " No saved quote breakdown was found, so the email only includes the payment link and notes. Save the quote builder draft first if you want the breakdown included."
+          : includeCommercialQuoteBreakdown
+            ? " No saved quote breakdown was found, so the email only includes the payment link and notes. Save the quote builder draft first if you want the breakdown included."
+            : " Quote breakdown was not included because the checkbox was off."
         : "";
       setCheckoutMessage(data.emailError || (data.emailSent ? `Checkout link created and emailed to the customer.${commercialBreakdownNotice}` : `Checkout link created. Copy it and send it manually.${commercialBreakdownNotice}`));
     } catch (error) {
@@ -676,6 +681,7 @@ export default function AdminTable({
   const showLaundryFinalBalance = showPaymentActions && selected?.service === "laundry-rescue";
   const selectedIsCommercial = isCommercialRequest(selected);
   const isCustomCheckoutMode = checkoutMode === "custom";
+  const hasSavedCommercialQuoteBreakdown = Boolean(selected?.commercialQuoteBreakdown?.customerBreakdownText);
   const showCommercialQuotePanel = showPaymentActions && selectedIsCommercial;
 
   return (
@@ -931,6 +937,7 @@ export default function AdminTable({
                     item={selected}
                     formatMoney={formatMoney}
                     onSaved={(updates) => {
+                      const savedBreakdown = updates.commercialQuoteBreakdown as { customerBreakdownText?: string } | undefined;
                       setSelected((prev) => (prev ? { ...prev, ...updates } : prev));
                       if (updates.commercialInitialAmount !== undefined) setCommercialInitialAmount(String(updates.commercialInitialAmount));
                       if (updates.commercialAdditionalAmount !== undefined) setCommercialAdditionalAmount(String(updates.commercialAdditionalAmount));
@@ -938,6 +945,7 @@ export default function AdminTable({
                       if (updates.commercialQuoteType) setCommercialQuoteType(String(updates.commercialQuoteType));
                       if (updates.commercialCustomerQuoteNote) setCommercialCustomerQuoteNote(String(updates.commercialCustomerQuoteNote));
                       if (updates.commercialInternalQuoteNotes) setCommercialInternalQuoteNotes(String(updates.commercialInternalQuoteNotes));
+                      if (savedBreakdown?.customerBreakdownText) setIncludeCommercialQuoteBreakdown(true);
                       if (updates.status) setStatusValue(String(updates.status));
                     }}
                     onApplyFirstPayment={applyCommercialQuoteBuilderFirstPayment}
@@ -1133,6 +1141,31 @@ export default function AdminTable({
                         className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
                       />
                     </label>
+                  </div>
+                )}
+
+                {selectedIsCommercial && isCustomCheckoutMode && (
+                  <div className="mt-4 rounded-3xl border border-[#d8c18f] bg-white p-4">
+                    <label className="flex gap-3 text-sm font-bold text-slate-700">
+                      <input
+                        type="checkbox"
+                        checked={includeCommercialQuoteBreakdown}
+                        onChange={(e) => setIncludeCommercialQuoteBreakdown(e.target.checked)}
+                        disabled={!hasSavedCommercialQuoteBreakdown}
+                        className="mt-1 h-4 w-4 rounded border-[#d8c18f] accent-[#075c58]"
+                      />
+                      <span>
+                        <span className="block text-[#075c58]">Include saved quote breakdown in the customer checkout email</span>
+                        <span className="mt-1 block text-xs font-semibold leading-5 text-slate-600">
+                          This only affects the “Create + email first payment link” button. Stripe checkout still shows the payment amount; the NestHelper email will include the full saved breakdown when this is checked.
+                        </span>
+                      </span>
+                    </label>
+                    {!hasSavedCommercialQuoteBreakdown && (
+                      <p className="mt-3 rounded-2xl bg-amber-50 px-4 py-3 text-xs font-bold leading-5 text-amber-800">
+                        No saved quote breakdown is available yet. Save the Quote / Breakdown Builder draft first, then this checkbox will be available.
+                      </p>
+                    )}
                   </div>
                 )}
 
