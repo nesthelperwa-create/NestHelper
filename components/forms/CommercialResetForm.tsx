@@ -42,12 +42,16 @@ const defaultState = {
   addOnInterests: [] as string[],
   carpetArea: "",
   carpetCondition: "",
+  carpetAreaClearance: "",
   spotTreatmentCount: "",
   hardFloorArea: "",
   hardFloorMaterial: "",
   hardFloorCondition: "",
+  hardFloorAreaClearance: "",
   upholsteryScope: "",
+  upholsteryCondition: "",
   glassScope: "",
+  glassAccess: "",
   specialNotes: "",
   photoNotes: "",
   consent: false,
@@ -110,6 +114,14 @@ const carpetConditionOptions = [
   "Not sure yet",
 ];
 
+const areaClearanceOptions = [
+  "Mostly cleared before service",
+  "Light chairs/tables only",
+  "Some furniture or obstacles need review",
+  "Heavy furniture, equipment, or fragile items in the area",
+  "Not sure yet",
+];
+
 const spotTreatmentOptions = [
   "1–2 spots / areas",
   "3–5 spots / areas",
@@ -141,11 +153,27 @@ const upholsteryScopeOptions = [
   "Not sure yet",
 ];
 
+const upholsteryConditionOptions = [
+  "Light refresh",
+  "Visible spots / stains",
+  "Odor concerns",
+  "Fabric type or condition needs review",
+  "Not sure yet",
+];
+
 const glassScopeOptions = [
   "A few interior windows or mirrors",
   "Reception/front glass area",
   "Multiple rooms or glass walls",
   "Large storefront or exterior glass — needs review",
+  "Not sure yet",
+];
+
+const glassAccessOptions = [
+  "Reachable interior glass / mirrors only",
+  "Some high glass may need review",
+  "Storefront or exterior glass included",
+  "Ladder work may be needed",
   "Not sure yet",
 ];
 
@@ -346,6 +374,16 @@ function addOnAreaNote(label: string) {
   return `${label}: reviewed after add-on area/photos/details`;
 }
 
+function clearanceNeedsReview(value: string) {
+  return Boolean(value) && value !== "Mostly cleared before service";
+}
+
+function clearanceSuffix(value: string) {
+  if (!value || value === "Mostly cleared before service") return "";
+  if (value === "Light chairs/tables only") return " + possible light setup time";
+  return " + moving/setup reviewed separately";
+}
+
 function getVisitRateRange(frequency: string, condition: string): NumberRange | null {
   if (frequency === "Weekly service") return { low: 0.15, high: 0.22 };
   if (frequency === "Twice weekly service") return { low: 0.12, high: 0.18 };
@@ -450,7 +488,7 @@ function getAddOnEstimate(form: CommercialResetFormState): string | undefined {
     if (item === "Carpet deep cleaning quote") {
       if (!carpetArea) return addOnAreaNote("Carpet deep cleaning");
       const multiplier = form.carpetCondition === "Heavy traffic or odor concerns" ? { low: 0.50, high: 0.75 } : { low: 0.40, high: 0.60 };
-      return `Carpet deep cleaning: ${rangeText(withMinimum({ low: carpetArea.low * multiplier.low, high: carpetArea.high * multiplier.high }, 249))}`;
+      return `Carpet deep cleaning: ${rangeText(withMinimum({ low: carpetArea.low * multiplier.low, high: carpetArea.high * multiplier.high }, 249))}${clearanceSuffix(form.carpetAreaClearance)}`;
     }
 
     if (item === "Spot/stain treatment quote") {
@@ -466,24 +504,24 @@ function getAddOnEstimate(form: CommercialResetFormState): string | undefined {
 
     if (item === "Floor scrub quote") {
       if (!hardFloorArea) return addOnAreaNote("Floor scrub");
-      return `Floor scrub: ${rangeText({ low: hardFloorArea.low * 0.35, high: hardFloorArea.high * 0.60 })}`;
+      return `Floor scrub: ${rangeText({ low: hardFloorArea.low * 0.35, high: hardFloorArea.high * 0.60 })}${clearanceSuffix(form.hardFloorAreaClearance)}`;
     }
 
     if (item === "Buff / shine quote") {
       if (!hardFloorArea) return addOnAreaNote("Buff / shine");
-      return `Buff / shine: ${rangeText({ low: hardFloorArea.low * 0.50, high: hardFloorArea.high * 0.90 })}`;
+      return `Buff / shine: ${rangeText({ low: hardFloorArea.low * 0.50, high: hardFloorArea.high * 0.90 })}${clearanceSuffix(form.hardFloorAreaClearance)}`;
     }
 
     if (item === "Wax / finish quote") {
       if (!hardFloorArea) return addOnAreaNote("Wax / finish");
       const multiplier = form.hardFloorCondition === "Heavy buildup" ? { low: 0.90, high: 1.45 } : { low: 0.75, high: 1.25 };
-      return `Wax / finish: ${rangeText(withMinimum({ low: hardFloorArea.low * multiplier.low, high: hardFloorArea.high * multiplier.high }, 299))}`;
+      return `Wax / finish: ${rangeText(withMinimum({ low: hardFloorArea.low * multiplier.low, high: hardFloorArea.high * multiplier.high }, 299))}${clearanceSuffix(form.hardFloorAreaClearance)}`;
     }
 
     if (item === "Strip & wax quote") {
       if (!hardFloorArea) return addOnAreaNote("Strip & wax");
       const multiplier = form.hardFloorCondition === "Heavy buildup" ? { low: 2.00, high: 2.85 } : { low: 1.75, high: 2.50 };
-      return `Strip & wax: ${rangeText(withMinimum({ low: hardFloorArea.low * multiplier.low, high: hardFloorArea.high * multiplier.high }, 499))}`;
+      return `Strip & wax: ${rangeText(withMinimum({ low: hardFloorArea.low * multiplier.low, high: hardFloorArea.high * multiplier.high }, 499))}${clearanceSuffix(form.hardFloorAreaClearance)}`;
     }
 
     if (item === "Upholstery quote") {
@@ -492,8 +530,12 @@ function getAddOnEstimate(form: CommercialResetFormState): string | undefined {
         "3–6 seats / waiting room chairs": { low: 150, high: 425 },
         "Small sofa or loveseat": { low: 125, high: 325 },
       };
-      return form.upholsteryScope && upholsteryMap[form.upholsteryScope]
-        ? `Upholstery: ${rangeText(upholsteryMap[form.upholsteryScope])}`
+      const scopeRange = form.upholsteryScope ? upholsteryMap[form.upholsteryScope] : undefined;
+      const adjustedRange = scopeRange && (form.upholsteryCondition === "Visible spots / stains" || form.upholsteryCondition === "Odor concerns")
+        ? multiplyRange(scopeRange, 1.2)
+        : scopeRange;
+      return adjustedRange
+        ? `Upholstery: ${rangeText(adjustedRange)}`
         : addOnAreaNote("Upholstery");
     }
 
@@ -503,6 +545,9 @@ function getAddOnEstimate(form: CommercialResetFormState): string | undefined {
         "Reception/front glass area": { low: 75, high: 225 },
         "Multiple rooms or glass walls": { low: 150, high: 450 },
       };
+      if (form.glassAccess === "Storefront or exterior glass included" || form.glassAccess === "Ladder work may be needed") {
+        return "Glass cleaning: reviewed separately for exterior/high glass or ladder work";
+      }
       return form.glassScope && glassMap[form.glassScope]
         ? `Interior glass: ${rangeText(glassMap[form.glassScope])}`
         : addOnAreaNote("Interior glass");
@@ -512,6 +557,14 @@ function getAddOnEstimate(form: CommercialResetFormState): string | undefined {
   });
 
   return ranges.join(" • ");
+}
+
+function needsSelectedCarpetClearance(form: CommercialResetFormState) {
+  return hasAddOn(form, "Carpet deep cleaning quote") || hasAddOn(form, "Spot/stain treatment quote");
+}
+
+function needsSelectedHardFloorClearance(form: CommercialResetFormState) {
+  return ["Floor scrub quote", "Buff / shine quote", "Wax / finish quote", "Strip & wax quote"].some((item) => hasAddOn(form, item));
 }
 
 function getCommercialPlanningEstimate(form: CommercialResetFormState): PlanningEstimate {
@@ -543,6 +596,12 @@ function getCommercialPlanningEstimate(form: CommercialResetFormState): Planning
   const visitsPerMonth = getVisitsPerMonth(form.frequency);
   const monthlyRange = visitsPerMonth ? withMinimum(multiplyRange(visitRange, visitsPerMonth), 499) : null;
   const addOnRange = getAddOnEstimate(form);
+
+  if ((needsSelectedCarpetClearance(form) || needsSelectedHardFloorClearance(form)) && (clearanceNeedsReview(form.carpetAreaClearance) || clearanceNeedsReview(form.hardFloorAreaClearance))) {
+    notes.push("Specialty floor and carpet add-on ranges assume clear, safe access. Moving heavy furniture, equipment, fragile items, stocked shelves, desks, filing cabinets, appliances, or large obstacles is not included in standard add-on pricing and may require customer preparation or a separate labor quote.");
+  } else if (needsSelectedCarpetClearance(form) || needsSelectedHardFloorClearance(form)) {
+    notes.push("Specialty carpet and floor add-on ranges assume the work area is reasonably cleared before service.");
+  }
 
   if (form.spaceCondition === "First-time / catch-up reset" || form.spaceCondition === "Heavy reset needed") {
     notes.push("A first-time or heavy reset may be quoted separately before moving into a recurring maintenance plan.");
@@ -616,12 +675,16 @@ function buildPayload(form: CommercialResetFormState) {
     addOnInterests: form.addOnInterests,
     carpetArea: form.carpetArea,
     carpetCondition: form.carpetCondition,
+    carpetAreaClearance: form.carpetAreaClearance,
     spotTreatmentCount: form.spotTreatmentCount,
     hardFloorArea: form.hardFloorArea,
     hardFloorMaterial: form.hardFloorMaterial,
     hardFloorCondition: form.hardFloorCondition,
+    hardFloorAreaClearance: form.hardFloorAreaClearance,
     upholsteryScope: form.upholsteryScope,
+    upholsteryCondition: form.upholsteryCondition,
     glassScope: form.glassScope,
+    glassAccess: form.glassAccess,
     specialNotes: form.specialNotes,
     photoNotes: form.photoNotes,
     quoteBasis: "NestHelper prepares a clear quoted visit price, recurring plan, or reviewed price range before service is scheduled.",
@@ -689,12 +752,16 @@ export function CommercialResetForm() {
             addOnInterests: [item],
             carpetArea: "",
             carpetCondition: "",
+            carpetAreaClearance: "",
             spotTreatmentCount: "",
             hardFloorArea: "",
             hardFloorMaterial: "",
             hardFloorCondition: "",
+            hardFloorAreaClearance: "",
             upholsteryScope: "",
+            upholsteryCondition: "",
             glassScope: "",
+            glassAccess: "",
           };
         }
 
@@ -950,7 +1017,7 @@ export function CommercialResetForm() {
             <div>
               <p className="text-sm font-black uppercase tracking-[0.16em] text-nest-gold">Add-on estimate details</p>
               <p className="mt-2 text-sm font-semibold leading-6 text-nest-ink/68">
-                These only appear for selected add-ons so the estimate uses the right area or item count instead of assuming the entire space needs specialty work.
+                These only appear for selected add-ons so the estimate uses the right area, condition, item count, and access details instead of assuming the entire space needs specialty work.
               </p>
             </div>
 
@@ -968,6 +1035,15 @@ export function CommercialResetForm() {
                     {carpetConditionOptions.map((option) => <option key={option}>{option}</option>)}
                   </select>
                 </Field>
+                <Field label="Will the carpet area be cleared before service?" required>
+                  <select className="input" required value={form.carpetAreaClearance} onChange={(e) => update("carpetAreaClearance", e.target.value)}>
+                    <option value="">Choose one</option>
+                    {areaClearanceOptions.map((option) => <option key={option}>{option}</option>)}
+                  </select>
+                </Field>
+                <div className="rounded-2xl border border-nest-gold/12 bg-white/80 p-4 text-sm font-semibold leading-6 text-nest-ink/68">
+                  Carpet ranges assume clear, safe access. Heavy furniture, electronics, desks, filing cabinets, fragile items, or large obstacles may need to be moved by the customer or quoted separately.
+                </div>
               </div>
             )}
 
@@ -1005,8 +1081,14 @@ export function CommercialResetForm() {
                     {hardFloorConditionOptions.map((option) => <option key={option}>{option}</option>)}
                   </select>
                 </Field>
+                <Field label="Will the hard-floor area be cleared before service?" required>
+                  <select className="input" required value={form.hardFloorAreaClearance} onChange={(e) => update("hardFloorAreaClearance", e.target.value)}>
+                    <option value="">Choose one</option>
+                    {areaClearanceOptions.map((option) => <option key={option}>{option}</option>)}
+                  </select>
+                </Field>
                 <div className="rounded-2xl border border-nest-gold/12 bg-white/80 p-4 text-sm font-semibold leading-6 text-nest-ink/68">
-                  Floor scrub, buff, wax, and strip-and-wax pricing depends heavily on material, condition, buildup, access, and drying time.
+                  Floor scrub, buff, wax, and strip-and-wax pricing depends heavily on material, condition, buildup, clear access, drying time, and whether the floor must be fully cleared before work starts.
                 </div>
               </div>
             )}
@@ -1019,7 +1101,13 @@ export function CommercialResetForm() {
                     {upholsteryScopeOptions.map((option) => <option key={option}>{option}</option>)}
                   </select>
                 </Field>
-                <div className="rounded-2xl border border-nest-gold/12 bg-white/80 p-4 text-sm font-semibold leading-6 text-nest-ink/68">
+                <Field label="Upholstery condition" required>
+                  <select className="input" required value={form.upholsteryCondition} onChange={(e) => update("upholsteryCondition", e.target.value)}>
+                    <option value="">Choose one</option>
+                    {upholsteryConditionOptions.map((option) => <option key={option}>{option}</option>)}
+                  </select>
+                </Field>
+                <div className="rounded-2xl border border-nest-gold/12 bg-white/80 p-4 text-sm font-semibold leading-6 text-nest-ink/68 sm:col-span-2">
                   Fabric type, stains, odor, and drying needs may require review before a final upholstery quote.
                 </div>
               </div>
@@ -1027,14 +1115,20 @@ export function CommercialResetForm() {
 
             {needsGlassDetails && (
               <div className="grid gap-4 rounded-2xl border border-nest-teal/10 bg-nest-mint/18 p-4 sm:grid-cols-2">
+                <Field label="Glass access / height" required>
+                  <select className="input" required value={form.glassAccess} onChange={(e) => update("glassAccess", e.target.value)}>
+                    <option value="">Choose one</option>
+                    {glassAccessOptions.map((option) => <option key={option}>{option}</option>)}
+                  </select>
+                </Field>
                 <Field label="Interior glass / mirror scope" required>
                   <select className="input" required value={form.glassScope} onChange={(e) => update("glassScope", e.target.value)}>
                     <option value="">Choose one</option>
                     {glassScopeOptions.map((option) => <option key={option}>{option}</option>)}
                   </select>
                 </Field>
-                <div className="rounded-2xl border border-nest-gold/12 bg-white/80 p-4 text-sm font-semibold leading-6 text-nest-ink/68">
-                  Standard interior glass is different from exterior storefront glass, ladder work, or high glass, which may need separate review.
+                <div className="rounded-2xl border border-nest-gold/12 bg-white/80 p-4 text-sm font-semibold leading-6 text-nest-ink/68 sm:col-span-2">
+                  Standard interior glass is different from exterior storefront glass, ladder work, or high glass, which may need separate review or a partner quote.
                 </div>
               </div>
             )}
@@ -1042,7 +1136,7 @@ export function CommercialResetForm() {
         )}
 
         <div className="rounded-2xl border border-nest-gold/15 bg-nest-mint/20 p-4 text-sm font-semibold leading-6 text-nest-ink/72">
-          Specialty add-ons are estimated separately from routine cleaning and are not included by default. If an area is unknown, NestHelper will review photos or request a walkthrough before quoting.
+          Specialty add-ons are estimated separately from routine cleaning and are not included by default. Add-on ranges assume clear, safe access unless otherwise noted. Furniture moving, heavy equipment, fragile items, stocked shelves, desks, filing cabinets, appliances, exterior/high glass, or large obstacles may require customer preparation or a separate labor quote.
         </div>
       </Section>
 

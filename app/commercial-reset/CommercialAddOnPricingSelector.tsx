@@ -13,6 +13,7 @@ const addOnOptions = [
     notes: [
       "Quoted after reviewing square footage, stains, traffic level, drying time, access, and equipment needs.",
       "Spot treatment may be priced separately if there are concentrated stains or pet/odor concerns.",
+      "Rate ranges assume the carpet area is reasonably cleared. Heavy furniture, electronics, desks, filing cabinets, fragile items, or large obstacles may need customer preparation or a separate labor quote.",
       "Not included in basic routine Commercial Reset unless clearly added to the quote.",
     ],
   },
@@ -36,6 +37,7 @@ const addOnOptions = [
     bestFor: "Hard-surface business floors that need more than normal sweeping and mopping, especially in higher-traffic areas.",
     notes: [
       "Quoted based on flooring type, soil level, square footage, access, and whether equipment or partner support is needed.",
+      "Pricing assumes the work area is clear enough to safely use floor equipment. Moving heavy furniture or equipment is not included unless separately approved and quoted.",
       "This is separate from waxing or strip-and-wax work.",
       "Floor type matters, so customer photos are helpful before quoting.",
     ],
@@ -49,6 +51,7 @@ const addOnOptions = [
     notes: [
       "Not all floors are a fit for buffing, so surface type and condition must be reviewed first.",
       "May require after-hours access so floors have time to dry and the space can be used safely afterward.",
+      "The floor should be cleared before service unless light setup or moving time is specifically quoted.",
       "Wax or finish products are not included unless they are added to the quote.",
     ],
   },
@@ -61,6 +64,7 @@ const addOnOptions = [
     notes: [
       "Quoted after confirming floor type, current finish, prep needs, square footage, and timing.",
       "May require a separate walkthrough or photos before approval.",
+      "Standard pricing assumes the floor area is cleared. Heavy furniture, displays, desks, equipment, or fragile items must be moved by the customer or quoted separately.",
       "This is specialty work and may be scheduled separately from routine cleaning.",
     ],
   },
@@ -73,6 +77,7 @@ const addOnOptions = [
     notes: [
       "This is not part of basic Commercial Reset and may require partner support, special equipment, or a separate quote.",
       "Availability depends on floor type, condition, access, ventilation, drying time, and schedule.",
+      "The service area usually needs to be fully cleared before strip-and-wax work. Furniture moving is not included in the base range.",
       "NestHelper may decline this work if it is outside current staffing, equipment, insurance, or safety scope.",
     ],
   },
@@ -85,7 +90,7 @@ const addOnOptions = [
     notes: [
       "Quoted based on current condition, photos, bathrooms, floors, trash level, dust, product preferences, and time needed.",
       "Helps avoid underquoting the first visit and then keeping future recurring visits easier to maintain.",
-      "Does not include biohazards, mold, pest cleanup, construction cleanup, or hazardous work.",
+      "Does not include biohazards, mold, pest cleanup, construction cleanup, hazardous work, or heavy furniture/equipment moving unless separately reviewed.",
     ],
   },
   {
