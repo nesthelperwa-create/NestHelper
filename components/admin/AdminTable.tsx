@@ -834,7 +834,7 @@ export default function AdminTable({
                     </div>
                     <p className="rounded-full bg-cyan-50 px-3 py-1 text-xs font-black uppercase tracking-[0.14em] text-cyan-800">Commercial</p>
                   </div>
-                  <div className="mt-3 grid gap-3 md:grid-cols-3">
+                  <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
                     <div className="rounded-2xl border border-cyan-100 bg-cyan-50/40 p-4">
                       <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Space type</p>
                       <p className="mt-1 text-sm font-bold text-[#075c58]">{formatValue("businessType", selected.businessType)}</p>
@@ -849,6 +849,16 @@ export default function AdminTable({
                       <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Condition</p>
                       <p className="mt-1 text-sm font-bold text-[#075c58]">{formatValue("spaceCondition", selected.spaceCondition)}</p>
                       <p className="mt-1 text-xs font-semibold text-slate-600">Traffic: {formatValue("trafficLevel", selected.trafficLevel)}</p>
+                    </div>
+                    <div className="rounded-2xl border border-cyan-100 bg-cyan-50/40 p-4">
+                      <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Customer estimate</p>
+                      <p className="mt-1 text-sm font-bold text-[#075c58]">{formatValue("customerEstimatePrimaryRange", selected.customerEstimatePrimaryRange)}</p>
+                      <p className="mt-1 text-xs font-semibold text-slate-600">
+                        {selected.customerEstimateMonthlyRange ? `Monthly: ${formatValue("customerEstimateMonthlyRange", selected.customerEstimateMonthlyRange)}` : "Planning range shown on request form when enough details were entered."}
+                      </p>
+                      {selected.customerEstimateAddOnRange && (
+                        <p className="mt-1 text-xs font-semibold text-slate-600">Add-ons: {formatValue("customerEstimateAddOnRange", selected.customerEstimateAddOnRange)}</p>
+                      )}
                     </div>
                   </div>
                 </div>

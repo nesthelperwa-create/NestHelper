@@ -3,7 +3,7 @@
 import Link from "next/link";
 import type { FormEvent, ReactNode } from "react";
 import { useMemo, useState } from "react";
-import { ArrowRight, Building2, CheckCircle2, ClipboardCheck, CreditCard, ShieldCheck } from "lucide-react";
+import { ArrowRight, Building2, Calculator, CheckCircle2, ClipboardCheck, CreditCard, ShieldCheck } from "lucide-react";
 import { formatPhoneNumber } from "@/lib/formatPhoneNumber";
 import { PhotoUploadField, photoUploadSummary, type PhotoUpload } from "@/components/forms/PhotoUploadField";
 
@@ -213,7 +213,227 @@ function getSpaceDetailOptions(type: string) {
   return detailOptions[kind as keyof typeof detailOptions] || detailOptions.general;
 }
 
+type PlanningEstimate = {
+  ready: boolean;
+  title: string;
+  primaryRange: string;
+  monthlyRange?: string;
+  addOnRange?: string;
+  notes: string[];
+  adminSummary: string;
+};
+
+type NumberRange = { low: number; high: number };
+
+function dollars(value: number) {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  }).format(Math.round(value));
+}
+
+function rangeText(range: NumberRange, suffix = "") {
+  return `${dollars(range.low)}–${dollars(range.high)}${suffix}`;
+}
+
+function addRanges(...ranges: NumberRange[]) {
+  return ranges.reduce(
+    (total, range) => ({ low: total.low + range.low, high: total.high + range.high }),
+    { low: 0, high: 0 },
+  );
+}
+
+function multiplyRange(range: NumberRange, factor: number) {
+  return { low: range.low * factor, high: range.high * factor };
+}
+
+function withMinimum(range: NumberRange, minimum: number) {
+  return { low: Math.max(range.low, minimum), high: Math.max(range.high, minimum) };
+}
+
+function getSquareFootageRange(value: string): NumberRange | null {
+  if (value === "Under 750 sq ft") return { low: 500, high: 750 };
+  if (value === "750–1,500 sq ft") return { low: 750, high: 1500 };
+  if (value === "1,500–2,500 sq ft") return { low: 1500, high: 2500 };
+  if (value === "2,500–4,000 sq ft") return { low: 2500, high: 4000 };
+  if (value === "4,000–6,000 sq ft") return { low: 4000, high: 6000 };
+  if (value === "Over 6,000 sq ft") return { low: 6000, high: 8000 };
+  return null;
+}
+
+function getVisitRateRange(frequency: string, condition: string): NumberRange | null {
+  if (frequency === "Weekly service") return { low: 0.15, high: 0.22 };
+  if (frequency === "Twice weekly service") return { low: 0.12, high: 0.18 };
+  if (frequency === "Three times weekly service") return { low: 0.10, high: 0.16 };
+  if (frequency === "Five times weekly service") return { low: 0.08, high: 0.14 };
+  if (frequency === "Monthly / occasional support") return { low: 0.22, high: 0.34 };
+  if (frequency === "One-time commercial reset") {
+    if (condition === "Heavy reset needed") return { low: 0.35, high: 0.55 };
+    if (condition === "First-time / catch-up reset") return { low: 0.30, high: 0.45 };
+    return { low: 0.25, high: 0.35 };
+  }
+  return null;
+}
+
+function getVisitsPerMonth(frequency: string) {
+  if (frequency === "Weekly service") return 4;
+  if (frequency === "Twice weekly service") return 8;
+  if (frequency === "Three times weekly service") return 12;
+  if (frequency === "Five times weekly service") return 20;
+  return null;
+}
+
+function getLayoutAdjustment(form: CommercialResetFormState): NumberRange {
+  const bathroomMap: Record<string, NumberRange> = {
+    "0": { low: 0, high: 0 },
+    "1": { low: 0, high: 0 },
+    "2": { low: 20, high: 45 },
+    "3": { low: 40, high: 90 },
+    "4": { low: 60, high: 130 },
+    "5+": { low: 100, high: 220 },
+  };
+  const kitchenMap: Record<string, NumberRange> = {
+    "No kitchen/breakroom": { low: 0, high: 0 },
+    "1 kitchenette/breakroom": { low: 15, high: 45 },
+    "1 full kitchen": { low: 35, high: 85 },
+    "2+ kitchen/break areas": { low: 60, high: 140 },
+  };
+  const showerMap: Record<string, NumberRange> = {
+    "No showers/changing areas": { low: 0, high: 0 },
+    "1": { low: 25, high: 60 },
+    "2": { low: 50, high: 120 },
+    "3+": { low: 90, high: 220 },
+  };
+
+  return addRanges(
+    bathroomMap[form.bathrooms] || { low: 0, high: 0 },
+    kitchenMap[form.kitchens] || { low: 0, high: 0 },
+    showerMap[form.showers] || { low: 0, high: 0 },
+  );
+}
+
+function getConditionMultiplier(condition: string) {
+  if (condition === "Light reset needed") return 1.08;
+  if (condition === "First-time / catch-up reset") return 1.18;
+  if (condition === "Heavy reset needed") return 1.35;
+  return 1;
+}
+
+function getTrafficMultiplier(traffic: string) {
+  if (traffic === "High public/client traffic") return 1.12;
+  if (traffic === "Event or guest turnover traffic") return 1.15;
+  return 1;
+}
+
+function getRentalEstimate(form: CommercialResetFormState): PlanningEstimate | null {
+  if (getBusinessKind(form.businessType) !== "rental" && form.frequency !== "Short-term rental turnover / between-stay reset") return null;
+
+  const baseByBedrooms: Record<string, NumberRange> = {
+    "Studio": { low: 129, high: 179 },
+    "1 bedroom": { low: 139, high: 199 },
+    "2 bedrooms": { low: 169, high: 269 },
+    "3 bedrooms": { low: 229, high: 369 },
+    "4+ bedrooms": { low: 299, high: 549 },
+  };
+  const base = baseByBedrooms[form.rentalBedrooms] || { low: 129, high: 349 };
+  const linen = form.rentalLinenHandling.includes("needed") ? { low: 35, high: 125 } : { low: 0, high: 0 };
+  const restock = form.rentalRestockNeeds.trim() ? { low: 15, high: 65 } : { low: 0, high: 0 };
+  const photoNotes = form.spaceDetails.includes("Photo notes after reset") || form.rentalTurnoverNotes.toLowerCase().includes("photo") ? { low: 15, high: 45 } : { low: 0, high: 0 };
+  const total = addRanges(base, linen, restock, photoNotes);
+
+  const notes = [
+    "Planning range only — final turnover quote depends on access, condition, host checklist, timing between guests, linens/towels, restock expectations, and photos.",
+    "Guest messaging, platform communication, repairs, pest issues, biohazards, and property management are outside the standard turnover scope.",
+  ];
+
+  return {
+    ready: Boolean(form.businessType),
+    title: "Short-term rental turnover planning range",
+    primaryRange: rangeText(total, "/turnover"),
+    notes,
+    adminSummary: `Customer saw turnover planning range: ${rangeText(total, "/turnover")}.`,
+  };
+}
+
+function getAddOnEstimate(form: CommercialResetFormState, sqft: NumberRange | null): string | undefined {
+  if (!form.addOnInterests.length || form.addOnInterests.includes("No add-ons right now")) return undefined;
+  if (!sqft) return "Add-ons selected — reviewed after photos/details";
+
+  const ranges = form.addOnInterests
+    .filter((item) => item !== "No add-ons right now")
+    .map((item) => {
+      if (item === "Carpet extraction quote") return `Carpet extraction: ${rangeText(withMinimum({ low: sqft.low * 0.40, high: sqft.high * 0.60 }, 249))}`;
+      if (item === "Floor scrub quote") return `Floor scrub: ${rangeText({ low: sqft.low * 0.35, high: sqft.high * 0.60 })}`;
+      if (item === "Buff / shine quote") return `Buff / shine: ${rangeText({ low: sqft.low * 0.50, high: sqft.high * 0.90 })}`;
+      if (item === "Wax / finish quote") return `Wax / finish: ${rangeText(withMinimum({ low: sqft.low * 0.75, high: sqft.high * 1.25 }, 299))}`;
+      if (item === "Strip & wax quote") return `Strip & wax: ${rangeText(withMinimum({ low: sqft.low * 1.75, high: sqft.high * 2.50 }, 499))}`;
+      return `${item.replace(" quote", "")}: reviewed after photos/details`;
+    });
+
+  return ranges.join(" • ");
+}
+
+function getCommercialPlanningEstimate(form: CommercialResetFormState): PlanningEstimate {
+  const rentalEstimate = getRentalEstimate(form);
+  if (rentalEstimate && (form.frequency === "Short-term rental turnover / between-stay reset" || form.businessType.includes("rental"))) return rentalEstimate;
+
+  const sqft = getSquareFootageRange(form.squareFootage);
+  const rate = getVisitRateRange(form.frequency, form.spaceCondition);
+  const notes = [
+    "Planning range only — not a final quote or payment request.",
+    "Final pricing may change after NestHelper reviews the address, photos, access, condition, supplies, schedule, and service fit.",
+  ];
+
+  if (!form.businessType || !form.squareFootage || !form.frequency || !sqft || !rate) {
+    return {
+      ready: false,
+      title: "Estimated planning range",
+      primaryRange: "Enter space size and frequency to preview a range",
+      notes,
+      adminSummary: "Customer did not have enough details for an automatic planning range.",
+    };
+  }
+
+  const base = { low: sqft.low * rate.low, high: sqft.high * rate.high };
+  const adjusted = multiplyRange(addRanges(base, getLayoutAdjustment(form)), getConditionMultiplier(form.spaceCondition) * getTrafficMultiplier(form.trafficLevel));
+  const minimum = form.frequency === "One-time commercial reset" ? 249 : 175;
+  const visitRange = withMinimum(adjusted, minimum);
+  const visitsPerMonth = getVisitsPerMonth(form.frequency);
+  const monthlyRange = visitsPerMonth ? withMinimum(multiplyRange(visitRange, visitsPerMonth), 499) : null;
+  const addOnRange = getAddOnEstimate(form, sqft);
+
+  if (form.spaceCondition === "First-time / catch-up reset" || form.spaceCondition === "Heavy reset needed") {
+    notes.push("A first-time or heavy reset may be quoted separately before moving into a recurring maintenance plan.");
+  }
+
+  if (form.supplies !== "NestHelper brings standard supplies") {
+    notes.push("Product preferences are reviewed for surface fit, availability, and scope before the final quote is confirmed.");
+  }
+
+  const isPerVisitFrequency = form.frequency.includes("service") || form.frequency === "Monthly / occasional support";
+  const primaryRange = rangeText(visitRange, isPerVisitFrequency ? "/visit" : "");
+  const monthlyText = monthlyRange ? rangeText(monthlyRange, "/month") : undefined;
+  const estimateTitle = form.frequency === "Monthly / occasional support"
+    ? "Occasional support planning range"
+    : form.frequency.includes("service")
+      ? "Recurring service planning range"
+      : "One-time reset planning range";
+
+  return {
+    ready: true,
+    title: estimateTitle,
+    primaryRange,
+    monthlyRange: monthlyText,
+    addOnRange,
+    notes,
+    adminSummary: `Customer saw planning range: ${primaryRange}${monthlyText ? `; ${monthlyText}` : ""}${addOnRange ? `; Add-ons: ${addOnRange}` : ""}.`,
+  };
+}
+
 function buildPayload(form: CommercialResetFormState) {
+  const estimate = getCommercialPlanningEstimate(form);
+
   return {
     fullName: form.contactName,
     email: form.email,
@@ -256,6 +476,13 @@ function buildPayload(form: CommercialResetFormState) {
     specialNotes: form.specialNotes,
     photoNotes: form.photoNotes,
     quoteBasis: "NestHelper prepares a clear quoted visit price, recurring plan, or reviewed price range before service is scheduled.",
+    customerEstimateReady: estimate.ready,
+    customerEstimateTitle: estimate.title,
+    customerEstimatePrimaryRange: estimate.primaryRange,
+    customerEstimateMonthlyRange: estimate.monthlyRange || "",
+    customerEstimateAddOnRange: estimate.addOnRange || "",
+    customerEstimateNotes: estimate.notes,
+    customerEstimateAdminSummary: estimate.adminSummary,
     ...(form.photoUploads.length ? {
       photoUploadCount: form.photoUploads.length,
       photoUploadSummary: photoUploadSummary(form.photoUploads),
@@ -275,6 +502,7 @@ export function CommercialResetForm() {
   const isShortTermRental = businessKind === "rental";
   const isDaycareOrLearning = businessKind === "daycare";
   const spaceDetailOptions = useMemo(() => getSpaceDetailOptions(form.businessType), [form.businessType]);
+  const planningEstimate = useMemo(() => getCommercialPlanningEstimate(form), [form]);
 
   function update(name: keyof CommercialResetFormState, value: unknown) {
     setForm((prev) => ({ ...prev, [name]: value }) as CommercialResetFormState);
@@ -551,6 +779,8 @@ export function CommercialResetForm() {
         <Field label="Photo links or walkthrough notes (optional)"><textarea className="input min-h-24" placeholder="Paste a link to additional photos or describe anything a walkthrough should cover." value={form.photoNotes} onChange={(e) => update("photoNotes", e.target.value)} /></Field>
       </Section>
 
+      <PlanningEstimateCard estimate={planningEstimate} />
+
       <div className="grid gap-4 rounded-[1.75rem] border border-nest-teal/15 bg-nest-mint/20 p-5">
         <h3 className="text-xl font-black text-nest-teal">Before you submit</h3>
         <label className="flex gap-3 rounded-2xl bg-white p-4 text-sm font-semibold text-nest-ink/82 shadow-sm">
@@ -569,6 +799,43 @@ export function CommercialResetForm() {
       </button>
       {message && <p className={`rounded-2xl p-4 font-semibold ${status === "success" ? "bg-nest-mint/45 text-nest-teal" : "bg-red-50 text-red-700"}`}>{message}</p>}
     </form>
+  );
+}
+
+function PlanningEstimateCard({ estimate }: { estimate: PlanningEstimate }) {
+  return (
+    <div className={`overflow-hidden rounded-[1.9rem] border p-5 shadow-sm sm:p-6 ${estimate.ready ? "border-nest-gold/25 bg-gradient-to-br from-nest-cream via-white to-nest-mint/30" : "border-nest-teal/12 bg-white"}`}>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <p className="pill-label w-fit"><Calculator size={15} /> Estimate Preview</p>
+          <h3 className="mt-4 text-2xl font-black text-nest-teal">{estimate.title}</h3>
+          <p className="mt-2 max-w-2xl text-sm font-medium leading-6 text-nest-ink/68">
+            This gives you a helpful budget range before you submit. NestHelper still reviews the request and sends the final quote before payment or scheduling.
+          </p>
+        </div>
+        <div className="rounded-[1.4rem] border border-nest-gold/15 bg-white/85 p-4 text-left shadow-sm sm:min-w-64">
+          <p className="text-xs font-black uppercase tracking-[0.16em] text-nest-gold">Planning range</p>
+          <p className="mt-2 text-2xl font-black text-nest-teal">{estimate.primaryRange}</p>
+          {estimate.monthlyRange && <p className="mt-1 text-sm font-black text-nest-ink/68">Approx. {estimate.monthlyRange}</p>}
+        </div>
+      </div>
+
+      {estimate.addOnRange && (
+        <div className="mt-4 rounded-2xl border border-nest-gold/14 bg-white/80 p-4">
+          <p className="text-sm font-black text-nest-teal">Possible add-on planning</p>
+          <p className="mt-1 text-sm font-semibold leading-6 text-nest-ink/68">{estimate.addOnRange}</p>
+        </div>
+      )}
+
+      <div className="mt-4 grid gap-2">
+        {estimate.notes.map((note) => (
+          <div key={note} className="flex gap-2 rounded-2xl bg-white/72 p-3 text-sm font-semibold leading-6 text-nest-ink/70">
+            <CheckCircle2 size={17} className="mt-0.5 shrink-0 text-nest-teal" />
+            <span>{note}</span>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 
