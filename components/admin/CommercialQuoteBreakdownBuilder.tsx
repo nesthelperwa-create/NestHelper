@@ -28,6 +28,24 @@ type QuoteBuilderProps = {
   onApplyAdditionalPayment?: (amount: number, note: string) => void;
 };
 
+
+type BuilderButtonVariant = "primary" | "secondary" | "quiet" | "danger";
+
+function getBuilderButtonClass(variant: BuilderButtonVariant = "primary") {
+  const base = "inline-flex min-h-10 items-center justify-center gap-2 rounded-2xl px-4 py-2 text-xs font-black shadow-sm transition-all duration-150 focus:outline-none focus:ring-4 disabled:cursor-not-allowed disabled:opacity-55";
+  const variants: Record<BuilderButtonVariant, string> = {
+    primary: "bg-[#075c58] text-white hover:-translate-y-0.5 hover:bg-[#064b48] focus:ring-[#075c58]/25 active:translate-y-0 active:scale-[0.99]",
+    secondary: "border-2 border-[#075c58] bg-white text-[#075c58] hover:-translate-y-0.5 hover:bg-[#f4ecdc] focus:ring-[#075c58]/20 active:translate-y-0 active:scale-[0.99]",
+    quiet: "border border-[#d8c18f] bg-white text-slate-700 hover:-translate-y-0.5 hover:border-[#075c58] hover:text-[#075c58] focus:ring-[#075c58]/15 active:translate-y-0 active:scale-[0.99]",
+    danger: "border border-red-200 bg-white text-red-700 hover:-translate-y-0.5 hover:bg-red-50 focus:ring-red-700/15 active:translate-y-0 active:scale-[0.99]",
+  };
+  return `${base} ${variants[variant]}`;
+}
+
+function BuilderSpinner() {
+  return <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" aria-hidden="true" />;
+}
+
 const LINE_PRESETS: Record<string, Omit<QuoteLineItem, "id" | "note">> = {
   routineVisit: {
     preset: "routineVisit",
@@ -671,12 +689,12 @@ export default function CommercialQuoteBreakdownBuilder({ item, formatMoney, onS
         <div>
           <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Professional quote builder</p>
           <h5 className="mt-1 text-base font-black text-[#075c58]">Build a customer-ready breakdown</h5>
-          <p className="mt-1 text-sm leading-6 text-slate-700">Use sq-ft calculators for routine commercial service, plus dropdown line items for recurring plans, add-ons, credits, and refund notes. Save the breakdown first; when you create + email the first Commercial Reset payment link, the saved breakdown is included in the customer email.</p>
+          <p className="mt-1 text-sm leading-6 text-slate-700">Use sq-ft calculators for routine commercial service, plus dropdown line items for recurring plans, add-ons, credits, and refund notes. Save the breakdown first. Then choose whether to include it when you create + email the first Commercial Reset payment link.</p>
         </div>
         <button
           type="button"
           onClick={(e) => { e.stopPropagation(); setIsOpen(true); }}
-          className="rounded-2xl bg-[#075c58] px-5 py-3 text-sm font-black text-white shadow-lg shadow-[#075c58]/15 transition hover:-translate-y-0.5 hover:bg-[#064b48]"
+          className={`${getBuilderButtonClass("primary")} w-full sm:w-auto px-5 py-3 text-sm`}
         >
           Open quote / breakdown builder
         </button>
@@ -699,11 +717,11 @@ export default function CommercialQuoteBreakdownBuilder({ item, formatMoney, onS
                 <p className="mt-1 text-sm font-semibold text-slate-600">Clicking outside will not close this. Save draft before sending a payment link so the customer email includes the latest breakdown.</p>
               </div>
               <div className="flex flex-wrap gap-2">
-                <button type="button" onClick={copyBreakdown} className="rounded-full border border-[#075c58] px-4 py-2 text-xs font-black text-[#075c58]">Copy breakdown</button>
-                <button type="button" onClick={downloadBreakdown} className="rounded-full border border-[#075c58] px-4 py-2 text-xs font-black text-[#075c58]">Download quote</button>
-                <button type="button" onClick={printBreakdown} className="rounded-full border border-[#075c58] px-4 py-2 text-xs font-black text-[#075c58]">Print</button>
-                <button type="button" disabled={busy} onClick={saveBreakdown} className="rounded-full bg-[#075c58] px-4 py-2 text-xs font-black text-white disabled:opacity-60">{busy ? "Saving..." : "Save draft"}</button>
-                <button type="button" onClick={attemptClose} className="rounded-full bg-slate-900 px-4 py-2 text-xs font-black text-white">Close</button>
+                <button type="button" onClick={copyBreakdown} className={getBuilderButtonClass("secondary")}>Copy breakdown</button>
+                <button type="button" onClick={downloadBreakdown} className={getBuilderButtonClass("secondary")}>Download quote</button>
+                <button type="button" onClick={printBreakdown} className={getBuilderButtonClass("secondary")}>Print</button>
+                <button type="button" disabled={busy} onClick={saveBreakdown} className={getBuilderButtonClass("primary")}>{busy ? <><BuilderSpinner /> Saving...</> : "Save draft"}</button>
+                <button type="button" onClick={attemptClose} className={getBuilderButtonClass("quiet")}>Close</button>
               </div>
             </div>
 
@@ -722,10 +740,10 @@ export default function CommercialQuoteBreakdownBuilder({ item, formatMoney, onS
                   <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                     <div><p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Line items</p><h4 className="text-lg font-black text-[#075c58]">Sq-ft calculators + dropdown line items</h4></div>
                     <div className="flex flex-wrap gap-2">
-                      <button type="button" onClick={() => addLine("routineVisit")} className="rounded-full border border-cyan-700 px-3 py-2 text-xs font-black text-cyan-800">+ Routine sq ft</button>
-                      <button type="button" onClick={() => addLine("recurringMonthly")} className="rounded-full border border-cyan-700 px-3 py-2 text-xs font-black text-cyan-800">+ Monthly plan</button>
-                      <button type="button" onClick={() => addLine("carpetDeepCleaning")} className="rounded-full border border-cyan-700 px-3 py-2 text-xs font-black text-cyan-800">+ Carpet</button>
-                      <button type="button" onClick={() => addLine("customFlat")} className="rounded-full bg-[#075c58] px-3 py-2 text-xs font-black text-white">+ Additional line</button>
+                      <button type="button" onClick={() => addLine("routineVisit")} className={getBuilderButtonClass("quiet")}>+ Routine sq ft</button>
+                      <button type="button" onClick={() => addLine("recurringMonthly")} className={getBuilderButtonClass("quiet")}>+ Monthly plan</button>
+                      <button type="button" onClick={() => addLine("carpetDeepCleaning")} className={getBuilderButtonClass("quiet")}>+ Carpet</button>
+                      <button type="button" onClick={() => addLine("customFlat")} className={getBuilderButtonClass("primary")}>+ Additional line</button>
                     </div>
                   </div>
 
@@ -749,7 +767,7 @@ export default function CommercialQuoteBreakdownBuilder({ item, formatMoney, onS
                           <label className="grid gap-2 text-xs font-black uppercase tracking-[0.14em] text-slate-500">Customer label<input value={line.label} onChange={(e) => updateLine(line.id, { label: e.target.value })} className="rounded-2xl border border-cyan-200 bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal outline-none focus:border-[#075c58]" /></label>
                           <label className="grid gap-2 text-xs font-black uppercase tracking-[0.14em] text-slate-500">Unit<input value={line.unit} onChange={(e) => updateLine(line.id, { unit: e.target.value })} className="rounded-2xl border border-cyan-200 bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal outline-none focus:border-[#075c58]" /></label>
                           <label className="grid gap-2 text-xs font-black uppercase tracking-[0.14em] text-slate-500">Multiplier label<input value={line.multiplierLabel} onChange={(e) => updateLine(line.id, { multiplierLabel: e.target.value })} className="rounded-2xl border border-cyan-200 bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal outline-none focus:border-[#075c58]" /></label>
-                          <button type="button" onClick={() => removeLine(line.id)} className="self-end rounded-2xl border border-red-200 bg-white px-4 py-2 text-xs font-black text-red-700">Remove</button>
+                          <button type="button" onClick={() => removeLine(line.id)} className={`${getBuilderButtonClass("danger")} self-end`}>Remove</button>
                         </div>
                         <label className="mt-3 grid gap-2 text-xs font-black uppercase tracking-[0.14em] text-slate-500">Line note<textarea value={line.note} onChange={(e) => updateLine(line.id, { note: e.target.value })} rows={2} placeholder="Example: Assumes floor area is cleared before service." className="rounded-2xl border border-cyan-200 bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal outline-none focus:border-[#075c58]" /></label>
                       </div>
@@ -792,8 +810,8 @@ export default function CommercialQuoteBreakdownBuilder({ item, formatMoney, onS
                   </div>
                   <p className="mt-3 text-xs font-semibold leading-5 text-slate-600">Sales tax, if applicable, is still shown in Stripe checkout/invoice. The quote builder tracks service scope, sq-ft math, and customer-facing breakdown.</p>
                   <div className="mt-4 grid gap-2">
-                    <button type="button" onClick={() => onApplyFirstPayment?.(amountDueNow, quoteTitle, customerNote)} className="rounded-2xl bg-[#075c58] px-4 py-3 text-xs font-black text-white">Use amount due now for first payment</button>
-                    <button type="button" onClick={() => onApplyAdditionalPayment?.(laterAmount, customerNote)} className="rounded-2xl border-2 border-[#075c58] bg-white px-4 py-3 text-xs font-black text-[#075c58]">Use later amount for add-on link</button>
+                    <button type="button" onClick={() => onApplyFirstPayment?.(amountDueNow, quoteTitle, customerNote)} className={getBuilderButtonClass("primary")}>Use amount due now for first payment</button>
+                    <button type="button" onClick={() => onApplyAdditionalPayment?.(laterAmount, customerNote)} className={getBuilderButtonClass("secondary")}>Use later amount for add-on link</button>
                   </div>
                 </div>
 

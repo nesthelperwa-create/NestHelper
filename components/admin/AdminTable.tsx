@@ -182,6 +182,87 @@ function ServicePill({ item }: { item: AdminDoc }) {
   );
 }
 
+
+type AdminActionVariant = "primary" | "secondary" | "quiet" | "danger" | "success";
+
+function getAdminActionClass(variant: AdminActionVariant = "primary") {
+  const base = "inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl px-5 py-3 text-sm font-black shadow-sm transition-all duration-150 focus:outline-none focus:ring-4 disabled:cursor-not-allowed disabled:opacity-55";
+  const variants: Record<AdminActionVariant, string> = {
+    primary: "bg-[#075c58] text-white shadow-[#075c58]/15 hover:-translate-y-0.5 hover:bg-[#064b48] focus:ring-[#075c58]/25 active:translate-y-0 active:scale-[0.99]",
+    success: "bg-emerald-700 text-white shadow-emerald-900/15 hover:-translate-y-0.5 hover:bg-emerald-800 focus:ring-emerald-700/20 active:translate-y-0 active:scale-[0.99]",
+    secondary: "border-2 border-[#075c58] bg-white text-[#075c58] hover:-translate-y-0.5 hover:bg-[#f4ecdc] focus:ring-[#075c58]/20 active:translate-y-0 active:scale-[0.99]",
+    quiet: "border border-[#d8c18f] bg-white text-slate-700 hover:-translate-y-0.5 hover:border-[#075c58] hover:text-[#075c58] focus:ring-[#075c58]/15 active:translate-y-0 active:scale-[0.99]",
+    danger: "bg-red-700 text-white shadow-red-900/15 hover:-translate-y-0.5 hover:bg-red-800 focus:ring-red-700/20 active:translate-y-0 active:scale-[0.99]",
+  };
+  return `${base} ${variants[variant]}`;
+}
+
+function ActionSpinner() {
+  return <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" aria-hidden="true" />;
+}
+
+function AdminActionFeedback({ busy, activeAction, messages, errors }: { busy: boolean; activeAction: string; messages: string[]; errors: string[] }) {
+  const cleanMessages = messages.filter(Boolean);
+  const cleanErrors = errors.filter(Boolean);
+  if (!busy && !cleanMessages.length && !cleanErrors.length) return null;
+
+  return (
+    <div className="rounded-3xl border border-[#eadfc8] bg-[#fbf6ea] p-4 shadow-sm" role="status" aria-live="polite">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-xs font-black uppercase tracking-[0.18em] text-[#b98a2f]">Action feedback</p>
+          <p className="mt-1 text-sm font-bold text-slate-700">
+            {busy ? activeAction || "Working on the selected action..." : cleanErrors.length ? "Review the message below before continuing." : "Last action completed."}
+          </p>
+        </div>
+        {busy && <span className="inline-flex w-fit items-center gap-2 rounded-full bg-white px-3 py-1 text-xs font-black text-[#075c58] ring-1 ring-[#eadfc8]"><ActionSpinner /> Processing</span>}
+      </div>
+      {cleanMessages.map((message, index) => (
+        <p key={`message-${index}`} className="mt-2 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">{message}</p>
+      ))}
+      {cleanErrors.map((error, index) => (
+        <p key={`error-${index}`} className="mt-2 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{error}</p>
+      ))}
+    </div>
+  );
+}
+
+function AdminHelpCard() {
+  return (
+    <div className="rounded-3xl border border-[#eadfc8] bg-white p-4 shadow-sm">
+      <p className="text-xs font-black uppercase tracking-[0.18em] text-[#b98a2f]">Admin guide</p>
+      <div className="mt-3 grid gap-3 text-xs leading-5 text-slate-600 md:grid-cols-4">
+        <div className="rounded-2xl bg-[#f4ecdc] p-3"><span className="font-black text-[#075c58]">Green filled buttons</span> create, email, save, or update something.</div>
+        <div className="rounded-2xl bg-[#f4ecdc] p-3"><span className="font-black text-[#075c58]">Outlined buttons</span> open, copy, fill, or create without emailing.</div>
+        <div className="rounded-2xl bg-[#f4ecdc] p-3"><span className="font-black text-[#075c58]">Messages appear clearly</span> after a click so admins know if it worked.</div>
+        <div className="rounded-2xl bg-[#f4ecdc] p-3"><span className="font-black text-[#075c58]">Detail windows</span> only close with the Close button to prevent lost work.</div>
+      </div>
+    </div>
+  );
+}
+
+function AdminWorkflowGuide({ selectedIsCommercial, selectedService }: { selectedIsCommercial: boolean; selectedService?: string }) {
+  const laundry = selectedService === "laundry-rescue";
+  const steps = selectedIsCommercial
+    ? ["Review request", "Build quote", "Save breakdown", "Send first payment", "Track add-ons/refunds"]
+    : laundry
+      ? ["Review request", "Send deposit", "Dry weigh laundry", "Send final balance", "Track extras/refunds"]
+      : ["Review request", "Update status", "Send checkout", "Schedule visit", "Track extras/refunds"];
+  return (
+    <div className="rounded-3xl border border-[#eadfc8] bg-white p-4 shadow-sm">
+      <p className="text-xs font-black uppercase tracking-[0.18em] text-[#b98a2f]">Recommended flow</p>
+      <div className="mt-3 grid gap-2 sm:grid-cols-5">
+        {steps.map((step, index) => (
+          <div key={step} className="rounded-2xl bg-[#fbf6ea] p-3 text-xs font-bold leading-5 text-slate-700">
+            <span className="mb-2 inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#075c58] text-white">{index + 1}</span>
+            <span className="block">{step}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function isPhotoDataField(key: string) {
   const normalized = key.trim().toLowerCase().replaceAll("_", "").replaceAll("-", "");
   return ["photouploads", "uploadedphotos", "photodataurls", "imagedataurls"].includes(normalized);
@@ -338,6 +419,7 @@ export default function AdminTable({
   const [commercialQuoteBusy, setCommercialQuoteBusy] = useState(false);
   const [commercialQuoteMessage, setCommercialQuoteMessage] = useState("");
   const [commercialQuoteError, setCommercialQuoteError] = useState("");
+  const [activeAction, setActiveAction] = useState("");
 
   useEffect(() => {
     const q = query(collection(firestoreDb, collectionName), orderBy("createdAt", "desc"));
@@ -380,6 +462,7 @@ export default function AdminTable({
     setCommercialInternalQuoteNotes(selected?.commercialInternalQuoteNotes ? String(selected.commercialInternalQuoteNotes) : "");
     setCommercialQuoteMessage("");
     setCommercialQuoteError("");
+    setActiveAction("");
   }, [selected?.id]);
 
   const filtered = useMemo(() => {
@@ -412,6 +495,7 @@ export default function AdminTable({
   async function submitStatusUpdate() {
     if (!selected) return;
     setStatusBusy(true);
+    setActiveAction(`Updating status to ${statusValue}...`);
     setStatusMessage("");
     setStatusError("");
 
@@ -432,6 +516,7 @@ export default function AdminTable({
       setStatusError(error instanceof Error ? error.message : "Unable to update status.");
     } finally {
       setStatusBusy(false);
+      setActiveAction("");
     }
   }
 
@@ -454,6 +539,7 @@ export default function AdminTable({
     if (!selected) return;
     const useCustomInitial = checkoutMode === "custom";
     setCheckoutBusy(true);
+    setActiveAction(sendEmail ? "Creating and emailing checkout link..." : "Creating checkout link only...");
     setCheckoutMessage("");
     setCheckoutError("");
 
@@ -500,12 +586,14 @@ export default function AdminTable({
       setCheckoutError(error instanceof Error ? error.message : "Unable to create checkout link.");
     } finally {
       setCheckoutBusy(false);
+      setActiveAction("");
     }
   }
 
   async function createLaundryFinalBalance(sendEmail: boolean) {
     if (!selected) return;
     setLaundryFinalBusy(true);
+    setActiveAction(sendEmail ? "Creating and emailing laundry final balance link..." : "Creating laundry final balance link only...");
     setLaundryFinalMessage("");
     setLaundryFinalError("");
 
@@ -550,12 +638,14 @@ export default function AdminTable({
       setLaundryFinalError(error instanceof Error ? error.message : "Unable to create laundry final balance link.");
     } finally {
       setLaundryFinalBusy(false);
+      setActiveAction("");
     }
   }
 
   async function createAdditionalPayment(sendEmail: boolean) {
     if (!selected) return;
     setAdditionalPaymentBusy(true);
+    setActiveAction(sendEmail ? "Creating and emailing additional payment link..." : "Creating additional payment link only...");
     setAdditionalPaymentMessage("");
     setAdditionalPaymentError("");
 
@@ -595,12 +685,14 @@ export default function AdminTable({
       setAdditionalPaymentError(error instanceof Error ? error.message : "Unable to create additional payment link.");
     } finally {
       setAdditionalPaymentBusy(false);
+      setActiveAction("");
     }
   }
 
   async function saveCommercialQuote() {
     if (!selected) return;
     setCommercialQuoteBusy(true);
+    setActiveAction("Saving commercial quote details...");
     setCommercialQuoteMessage("");
     setCommercialQuoteError("");
 
@@ -641,6 +733,7 @@ export default function AdminTable({
       setCommercialQuoteError(error instanceof Error ? error.message : "Unable to save commercial quote details.");
     } finally {
       setCommercialQuoteBusy(false);
+      setActiveAction("");
     }
   }
 
@@ -683,6 +776,7 @@ export default function AdminTable({
   const isCustomCheckoutMode = checkoutMode === "custom";
   const hasSavedCommercialQuoteBreakdown = Boolean(selected?.commercialQuoteBreakdown?.customerBreakdownText);
   const showCommercialQuotePanel = showPaymentActions && selectedIsCommercial;
+  const anyActionBusy = checkoutBusy || statusBusy || laundryFinalBusy || additionalPaymentBusy || commercialQuoteBusy;
 
   return (
     <section className="space-y-5">
@@ -700,6 +794,14 @@ export default function AdminTable({
           className="w-full rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 shadow-sm outline-none focus:border-[#075c58] sm:max-w-sm"
         />
       </div>
+
+      {collectionName === "serviceRequests" && <AdminHelpCard />}
+      <AdminActionFeedback
+        busy={anyActionBusy}
+        activeAction={activeAction}
+        messages={[statusMessage, checkoutMessage, laundryFinalMessage, additionalPaymentMessage, commercialQuoteMessage]}
+        errors={[statusError, checkoutError, laundryFinalError, additionalPaymentError, commercialQuoteError]}
+      />
 
       <div className="overflow-hidden rounded-3xl border border-[#eadfc8] bg-white shadow-xl shadow-[#075c58]/5">
         <div className="overflow-x-auto">
@@ -724,11 +826,27 @@ export default function AdminTable({
                   <td className="px-4 py-4 text-slate-500">{formatDate(item.createdAt)}</td>
                   <td className="px-4 py-4">
                     <div className="flex flex-wrap gap-2">
-                      <button onClick={() => setSelected(item)} className="rounded-full bg-[#075c58] px-3 py-1.5 text-xs font-bold text-white">View</button>
+                      <button onClick={() => setSelected(item)} className="rounded-full bg-[#075c58] px-4 py-2 text-xs font-black text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-[#064b48] focus:outline-none focus:ring-4 focus:ring-[#075c58]/20">Open details</button>
                       <select
                         value={item.status || "New"}
-                        onChange={(e) => updateStatus(item, e.target.value).catch(console.error)}
-                        className="rounded-full border border-[#eadfc8] bg-white px-3 py-1.5 text-xs"
+                        onChange={async (e) => {
+                          const next = e.target.value;
+                          setStatusBusy(true);
+                          setActiveAction(`Updating ${getServiceLook(item).label} status to ${next}...`);
+                          setStatusMessage("");
+                          setStatusError("");
+                          try {
+                            await updateStatus(item, next);
+                            setItems((prev) => prev.map((existing) => existing.id === item.id ? { ...existing, status: next } : existing));
+                            setStatusMessage(`Status updated to ${next}.`);
+                          } catch (error) {
+                            setStatusError(error instanceof Error ? error.message : "Unable to update status.");
+                          } finally {
+                            setStatusBusy(false);
+                            setActiveAction("");
+                          }
+                        }}
+                        className="rounded-full border border-[#d8c18f] bg-white px-3 py-2 text-xs font-bold text-slate-700 shadow-sm outline-none transition hover:border-[#075c58] focus:border-[#075c58] focus:ring-4 focus:ring-[#075c58]/15"
                         title="Quick internal status update. Open View to send a customer email."
                       >
                         {statuses.map((status) => <option key={status}>{status}</option>)}
@@ -746,14 +864,24 @@ export default function AdminTable({
       </div>
 
       {selected && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4" onClick={() => setSelected(null)}>
-          <div className="max-h-[86vh] w-full max-w-4xl overflow-auto rounded-3xl bg-white p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-            <div className="mb-4 flex items-center justify-between gap-3">
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/50 p-2 sm:p-4">
+          <div className="max-h-[92vh] w-full max-w-6xl overflow-auto rounded-3xl bg-white p-4 shadow-2xl sm:p-6">
+            <div className="sticky top-0 z-20 -mx-4 -mt-4 mb-4 flex items-center justify-between gap-3 border-b border-[#eadfc8] bg-white/95 px-4 py-4 backdrop-blur sm:-mx-6 sm:-mt-6 sm:px-6">
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#b98a2f]">Admin details</p>
                 <h3 className="text-2xl font-bold text-[#075c58]">Submission Details</h3>
               </div>
-              <button onClick={() => setSelected(null)} className="rounded-full border px-4 py-2 text-sm font-bold">Close</button>
+              <button onClick={() => setSelected(null)} className={getAdminActionClass("quiet")}>Close details</button>
+            </div>
+
+            <div className="mb-5 space-y-4">
+              <AdminWorkflowGuide selectedIsCommercial={selectedIsCommercial} selectedService={selected.service} />
+              <AdminActionFeedback
+                busy={anyActionBusy}
+                activeAction={activeAction}
+                messages={[statusMessage, checkoutMessage, laundryFinalMessage, additionalPaymentMessage, commercialQuoteMessage]}
+                errors={[statusError, checkoutError, laundryFinalError, additionalPaymentError, commercialQuoteError]}
+              />
             </div>
 
             {showCustomerStatusActions && (
@@ -812,9 +940,9 @@ export default function AdminTable({
                     type="button"
                     disabled={statusBusy}
                     onClick={submitStatusUpdate}
-                    className="rounded-2xl bg-[#075c58] px-5 py-3 text-sm font-black text-white shadow-lg shadow-[#075c58]/15 transition hover:-translate-y-0.5 hover:bg-[#064b48] disabled:cursor-not-allowed disabled:opacity-60"
+                    className={getAdminActionClass("primary")}
                   >
-                    {statusBusy ? "Updating..." : notifyCustomer ? "Update status + notify customer" : "Update status only"}
+                    {statusBusy ? <><ActionSpinner /> Updating...</> : notifyCustomer ? "Update status + notify customer" : "Update status only"}
                   </button>
                   <p className="max-w-xl text-xs leading-5 text-slate-500">
                     Payment link emails and payment received emails are handled separately. This button is for manual updates like Declined, Scheduled, Canceled, or Needs Info.
@@ -833,7 +961,7 @@ export default function AdminTable({
                     <p className="text-xs font-black uppercase tracking-[0.2em] text-[#b98a2f]">Commercial quote workflow</p>
                     <h4 className="mt-1 text-xl font-black text-[#075c58]">Review, quote, then email the breakdown with checkout</h4>
                     <p className="mt-2 text-sm leading-6 text-slate-700">
-                      This section is a guide for Commercial Reset only. Start by reviewing the space details, enter the approved quote amount, save it, then use the green buttons to fill the Stripe payment sections below.
+                      This section is a guide for Commercial Reset only. Start by reviewing the space details, build and save the customer-ready breakdown, then use the green buttons to fill the Stripe payment sections below.
                     </p>
                   </div>
                   <StatusBadge status={getCommercialQuoteStatus(selected)} />
@@ -848,7 +976,7 @@ export default function AdminTable({
                   <div className="rounded-2xl border border-cyan-200 bg-white p-4">
                     <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Step 2</p>
                     <p className="mt-1 text-sm font-black text-[#075c58]">Prepare the quote</p>
-                    <p className="mt-1 text-xs leading-5 text-slate-600">Use a flat visit price, recurring plan, turnover price, or reviewed range.</p>
+                    <p className="mt-1 text-xs leading-5 text-slate-600">Use sq-ft pricing when possible, then add recurring, turnover, or reviewed add-on lines as needed.</p>
                   </div>
                   <div className="rounded-2xl border border-cyan-200 bg-white p-4">
                     <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Step 3</p>
@@ -1036,21 +1164,21 @@ export default function AdminTable({
                       type="button"
                       disabled={commercialQuoteBusy}
                       onClick={saveCommercialQuote}
-                      className="rounded-2xl bg-[#075c58] px-5 py-3 text-sm font-black text-white shadow-lg shadow-[#075c58]/15 transition hover:-translate-y-0.5 hover:bg-[#064b48] disabled:cursor-not-allowed disabled:opacity-60"
+                      className={getAdminActionClass("primary")}
                     >
-                      {commercialQuoteBusy ? "Saving..." : "1. Save quote details"}
+                      {commercialQuoteBusy ? <><ActionSpinner /> Saving...</> : "1. Save quote details"}
                     </button>
                     <button
                       type="button"
                       onClick={applyCommercialInitialToCheckout}
-                      className="rounded-2xl border-2 border-[#075c58] bg-white px-5 py-3 text-sm font-black text-[#075c58] transition hover:-translate-y-0.5 hover:bg-[#f4ecdc]"
+                      className={getAdminActionClass("secondary")}
                     >
                       2. Fill first payment link
                     </button>
                     <button
                       type="button"
                       onClick={applyCommercialAdditionalToPayment}
-                      className="rounded-2xl border-2 border-cyan-700 bg-white px-5 py-3 text-sm font-black text-cyan-800 transition hover:-translate-y-0.5 hover:bg-white/70"
+                      className={getAdminActionClass("quiet")}
                     >
                       Fill optional add-on link
                     </button>
@@ -1174,10 +1302,10 @@ export default function AdminTable({
                     type="button"
                     disabled={checkoutBusy}
                     onClick={() => createPaymentLink(true)}
-                    className="rounded-2xl bg-[#075c58] px-5 py-3 text-sm font-black text-white shadow-lg shadow-[#075c58]/15 transition hover:-translate-y-0.5 hover:bg-[#064b48] disabled:cursor-not-allowed disabled:opacity-60"
+                    className={getAdminActionClass("primary")}
                   >
                     {checkoutBusy
-                      ? "Creating..."
+                      ? <><ActionSpinner /> Creating...</>
                       : isCustomCheckoutMode
                         ? selectedIsCommercial ? "Create + email first payment link" : "Create + email custom link"
                         : selected.service === "laundry-rescue"
@@ -1188,7 +1316,7 @@ export default function AdminTable({
                     type="button"
                     disabled={checkoutBusy}
                     onClick={() => createPaymentLink(false)}
-                    className="rounded-2xl border-2 border-[#075c58] bg-white px-5 py-3 text-sm font-black text-[#075c58] transition hover:-translate-y-0.5 hover:bg-[#f4ecdc] disabled:cursor-not-allowed disabled:opacity-60"
+                    className={getAdminActionClass("secondary")}
                   >
                     {isCustomCheckoutMode ? selectedIsCommercial ? "Create first payment link only" : "Create custom link only" : selected.service === "laundry-rescue" ? "Create deposit link only" : "Create link only"}
                   </button>
@@ -1200,8 +1328,8 @@ export default function AdminTable({
                     <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Current checkout link</p>
                     <p className="mt-2 break-all text-sm text-[#075c58]">{selected.checkoutUrl}</p>
                     <div className="mt-3 flex flex-wrap gap-2">
-                      <a href={selected.checkoutUrl} target="_blank" rel="noreferrer" className="rounded-full bg-[#075c58] px-4 py-2 text-xs font-black text-white">Open Stripe checkout</a>
-                      <button type="button" onClick={() => copyToClipboard(selected.checkoutUrl || "")} className="rounded-full border border-[#075c58] px-4 py-2 text-xs font-black text-[#075c58]">Copy link</button>
+                      <a href={selected.checkoutUrl} target="_blank" rel="noreferrer" className="rounded-full bg-[#075c58] px-4 py-2 text-xs font-black text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-[#064b48]">Open Stripe checkout</a>
+                      <button type="button" onClick={() => copyToClipboard(selected.checkoutUrl || "")} className="rounded-full border border-[#075c58] bg-white px-4 py-2 text-xs font-black text-[#075c58] transition hover:bg-[#f4ecdc]">Copy link</button>
                     </div>
                   </div>
                 )}
@@ -1296,15 +1424,15 @@ export default function AdminTable({
                     type="button"
                     disabled={laundryFinalBusy}
                     onClick={() => createLaundryFinalBalance(true)}
-                    className="rounded-2xl bg-[#075c58] px-5 py-3 text-sm font-black text-white shadow-lg shadow-[#075c58]/15 transition hover:-translate-y-0.5 hover:bg-[#064b48] disabled:cursor-not-allowed disabled:opacity-60"
+                    className={getAdminActionClass("primary")}
                   >
-                    {laundryFinalBusy ? "Creating..." : "Create + email final balance link"}
+                    {laundryFinalBusy ? <><ActionSpinner /> Creating...</> : "Create + email final balance link"}
                   </button>
                   <button
                     type="button"
                     disabled={laundryFinalBusy}
                     onClick={() => createLaundryFinalBalance(false)}
-                    className="rounded-2xl border-2 border-[#075c58] bg-white px-5 py-3 text-sm font-black text-[#075c58] transition hover:-translate-y-0.5 hover:bg-[#f4ecdc] disabled:cursor-not-allowed disabled:opacity-60"
+                    className={getAdminActionClass("secondary")}
                   >
                     Create final balance link only
                   </button>
@@ -1315,8 +1443,8 @@ export default function AdminTable({
                     <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Current final balance checkout link</p>
                     <p className="mt-2 break-all text-sm text-[#075c58]">{selected.laundryFinalCheckoutUrl}</p>
                     <div className="mt-3 flex flex-wrap gap-2">
-                      <a href={selected.laundryFinalCheckoutUrl} target="_blank" rel="noreferrer" className="rounded-full bg-[#075c58] px-4 py-2 text-xs font-black text-white">Open final balance checkout</a>
-                      <button type="button" onClick={() => copyLaundryLink(selected.laundryFinalCheckoutUrl || "")} className="rounded-full border border-[#075c58] px-4 py-2 text-xs font-black text-[#075c58]">Copy link</button>
+                      <a href={selected.laundryFinalCheckoutUrl} target="_blank" rel="noreferrer" className="rounded-full bg-[#075c58] px-4 py-2 text-xs font-black text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-[#064b48]">Open final balance checkout</a>
+                      <button type="button" onClick={() => copyLaundryLink(selected.laundryFinalCheckoutUrl || "")} className="rounded-full border border-[#075c58] bg-white px-4 py-2 text-xs font-black text-[#075c58] transition hover:bg-[#f4ecdc]">Copy link</button>
                     </div>
                   </div>
                 )}
@@ -1395,15 +1523,15 @@ export default function AdminTable({
                     type="button"
                     disabled={additionalPaymentBusy}
                     onClick={() => createAdditionalPayment(true)}
-                    className="rounded-2xl bg-[#075c58] px-5 py-3 text-sm font-black text-white shadow-lg shadow-[#075c58]/15 transition hover:-translate-y-0.5 hover:bg-[#064b48] disabled:cursor-not-allowed disabled:opacity-60"
+                    className={getAdminActionClass("primary")}
                   >
-                    {additionalPaymentBusy ? "Creating..." : "Create + email additional payment link"}
+                    {additionalPaymentBusy ? <><ActionSpinner /> Creating...</> : "Create + email additional payment link"}
                   </button>
                   <button
                     type="button"
                     disabled={additionalPaymentBusy}
                     onClick={() => createAdditionalPayment(false)}
-                    className="rounded-2xl border-2 border-[#075c58] bg-white px-5 py-3 text-sm font-black text-[#075c58] transition hover:-translate-y-0.5 hover:bg-[#f4ecdc] disabled:cursor-not-allowed disabled:opacity-60"
+                    className={getAdminActionClass("secondary")}
                   >
                     Create additional link only
                   </button>
@@ -1414,8 +1542,8 @@ export default function AdminTable({
                     <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Current additional payment link</p>
                     <p className="mt-2 break-all text-sm text-[#075c58]">{selected.additionalPaymentCheckoutUrl}</p>
                     <div className="mt-3 flex flex-wrap gap-2">
-                      <a href={selected.additionalPaymentCheckoutUrl} target="_blank" rel="noreferrer" className="rounded-full bg-[#075c58] px-4 py-2 text-xs font-black text-white">Open additional checkout</a>
-                      <button type="button" onClick={() => copyAdditionalPaymentLink(selected.additionalPaymentCheckoutUrl || "")} className="rounded-full border border-[#075c58] px-4 py-2 text-xs font-black text-[#075c58]">Copy link</button>
+                      <a href={selected.additionalPaymentCheckoutUrl} target="_blank" rel="noreferrer" className="rounded-full bg-[#075c58] px-4 py-2 text-xs font-black text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-[#064b48]">Open additional checkout</a>
+                      <button type="button" onClick={() => copyAdditionalPaymentLink(selected.additionalPaymentCheckoutUrl || "")} className="rounded-full border border-[#075c58] bg-white px-4 py-2 text-xs font-black text-[#075c58] transition hover:bg-[#f4ecdc]">Copy link</button>
                     </div>
                   </div>
                 )}
