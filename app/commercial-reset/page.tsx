@@ -3,10 +3,8 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import {
   ArrowRight,
-  BedDouble,
   Building2,
   CalendarClock,
-  Camera,
   CheckCircle2,
   ClipboardCheck,
   DoorOpen,
@@ -59,7 +57,7 @@ const businessTypes = [
   },
   {
     title: "Short-term rental turnovers",
-    text: "Between-stay reset cleaning, linen or towel changeover notes, restock checklist review, and optional photo notes.",
+    text: "Host-managed turnover cleaning for manageable rentals when access, checklists, laundry or linen expectations, and guest timing are reviewed first.",
   },
   {
     title: "Local small businesses",
@@ -86,8 +84,8 @@ const specialtyAddOns = [
   "Upholstery or specialty surfaces after review",
   "First-time heavier reset quoted after walkthrough",
   "Daycare requests are common-area focused unless reviewed",
-  "Short-term rental work does not include guest messaging, repairs, pest treatment, biohazards, or property management unless separately reviewed",
-  "No mold, biohazard, construction cleanup, or hazardous work",
+  "Short-term rental turnover add-ons can include linen/towel handling, restock checklist notes, limited photo notes, and guest-ready detail checks when approved",
+  "No guest messaging, property management, repairs, pest treatment, mold, biohazards, construction cleanup, or hazardous work",
 ];
 
 export default function CommercialResetPage() {
@@ -141,22 +139,6 @@ export default function CommercialResetPage() {
             <InfoCard key={type.title} icon={type.title.includes("rental") ? <Home size={20} /> : <Building2 size={20} />} title={type.title} text={type.text} />
           ))}
         </div>
-
-        <div className="mt-10 overflow-hidden rounded-[2.5rem] border border-nest-gold/18 bg-gradient-to-br from-white via-nest-cream to-nest-mint/25 p-6 shadow-soft sm:p-8 lg:p-10">
-          <div className="mx-auto max-w-4xl text-center">
-            <p className="pill-label mx-auto w-fit"><BedDouble size={15} /> Short-Term Rental Turnovers</p>
-            <h2 className="text-balance mt-4 text-3xl font-black text-nest-teal sm:text-4xl">Guest-ready reset support for local hosts.</h2>
-            <p className="mx-auto mt-4 max-w-3xl font-medium leading-7 text-nest-ink/70">
-              For Airbnb-style or vacation rental spaces, NestHelper can review turnover cleaning requests as part of Commercial Reset. This can include reset cleaning between stays, linen/towel changeover, restock checklist notes, and optional photo notes after service when the scope is approved.
-            </p>
-          </div>
-          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <InfoCard icon={<BedDouble size={20} />} title="Between-stay reset" text="Kitchen, bath, floors, surfaces, trash, and guest-ready details based on the approved checklist." />
-            <InfoCard icon={<ClipboardCheck size={20} />} title="Host checklist" text="Add bed count, restock items, lockbox/access notes, parking, and must-check areas in the quote form." />
-            <InfoCard icon={<Camera size={20} />} title="Photo notes" text="Optional photos can help with quoting, walkthroughs, and documenting priority areas before service." />
-            <InfoCard icon={<ShieldCheck size={20} />} title="Clear boundaries" text="No repairs, guest communication, pest treatment, biohazards, or full property management unless separately reviewed." />
-          </div>
-        </div>
       </section>
 
       <section className="soft-section px-4 py-14 sm:px-6 lg:px-8">
@@ -180,6 +162,32 @@ export default function CommercialResetPage() {
             </p>
             <div className="mt-7 grid gap-3">
               {specialtyAddOns.map((item) => <CheckTile key={item}>{item}</CheckTile>)}
+            </div>
+          </div>
+        </div>
+
+        <div className="mx-auto mt-8 grid max-w-7xl gap-5 lg:grid-cols-[1fr_0.95fr]">
+          <div className="rounded-[2.25rem] border border-nest-gold/18 bg-gradient-to-br from-white via-nest-cream to-nest-mint/25 p-6 shadow-soft sm:p-8">
+            <p className="pill-label w-fit"><Home size={15} /> Host-managed turnovers</p>
+            <h3 className="mt-4 text-2xl font-black text-nest-teal sm:text-3xl">Short-term rentals can be reviewed as a commercial add-on lane.</h3>
+            <p className="mt-4 font-medium leading-7 text-nest-ink/70">
+              Turnover requests fit best when the host already manages the guest relationship, house rules, supplies, and property decisions. NestHelper can review cleaning, linen or towel handling, restock checklist notes, and optional photo notes as part of the approved quote.
+            </p>
+            <p className="mt-4 rounded-2xl bg-white/72 p-4 text-sm font-bold leading-6 text-nest-ink/68">
+              Boundaries stay clear: no guest messaging, platform communication, repairs, pest treatment, biohazards, emergency response, or full property management unless separately reviewed and confirmed.
+            </p>
+          </div>
+
+          <div className="rounded-[2.25rem] border border-nest-gold/18 bg-white/86 p-6 shadow-soft sm:p-8">
+            <p className="pill-label w-fit"><ClipboardCheck size={15} /> Helpful policy details</p>
+            <h3 className="mt-4 text-2xl font-black text-nest-teal sm:text-3xl">Scope, pricing, and add-on details in one place.</h3>
+            <p className="mt-4 font-medium leading-7 text-nest-ink/70">
+              These links explain routine scope, separately quoted add-ons, turnover boundaries, and how pricing may change when the actual space or request is different from the quote.
+            </p>
+            <div className="mt-6 grid gap-3">
+              <PolicyLink href="/policies/commercial-reset-policy" title="Commercial Reset Policy" />
+              <PolicyLink href="/policies/commercial-pricing-add-ons" title="Commercial Pricing & Add-ons" />
+              <PolicyLink href="/policies/short-term-rental-turnover-policy" title="Short-Term Rental Turnover Policy" />
             </div>
           </div>
         </div>
@@ -223,15 +231,10 @@ export default function CommercialResetPage() {
               Commercial pricing is not an open-ended hourly clock. NestHelper reviews the space, frequency, bathrooms, flooring, access, timing, current condition, product preferences, and optional photos, then sends a clear visit price or recurring plan before service is scheduled.
             </p>
           </div>
-          <div className="grid gap-4 p-6 pb-0 sm:p-8 sm:pb-0 lg:grid-cols-3 lg:p-10 lg:pb-0">
+          <div className="grid gap-4 p-6 sm:p-8 lg:grid-cols-3 lg:p-10">
             <PricingCard title="Recurring commercial cleaning" price="From $149/visit" text="Quoted as a clear visit price or monthly plan. Small recurring accounts often start around $595/month depending on frequency, square footage, bathrooms, timing, and scope." />
             <PricingCard title="One-time commercial reset" price="From $225" text="Best for first-time catch-up, move-in prep, office reset, or a deeper one-time clean before recurring service." />
-            <PricingCard title="Short-term rental turnover" price="From $129/turnover" text="Small studio/1-bed style turnovers may start here. Larger homes, laundry/linen handling, restock needs, tight windows, and photo reporting are quoted before scheduling." />
-          </div>
-          <div className="grid gap-3 p-6 sm:p-8 lg:grid-cols-3 lg:p-10">
-            <PolicyLink href="/policies/commercial-reset-policy" title="Commercial Reset Policy" />
-            <PolicyLink href="/policies/commercial-pricing-add-ons" title="Commercial Pricing & Add-ons" />
-            <PolicyLink href="/policies/short-term-rental-turnover-policy" title="Short-Term Rental Policy" />
+            <PricingCard title="Short-term rental turnover" price="From $129/turnover" text="Small studio/1-bed style turnovers may start here. Larger homes, laundry/linen handling, restock needs, limited time between check-out and check-in, and photo notes are quoted before scheduling." />
           </div>
         </div>
       </section>
