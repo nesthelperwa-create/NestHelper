@@ -88,6 +88,42 @@ const specialtyAddOns = [
   "No guest messaging, property management, repairs, pest treatment, mold, biohazards, construction cleanup, or hazardous work",
 ];
 
+const commercialPriceRanges = [
+  {
+    title: "Recurring commercial cleaning",
+    price: "From $149/visit",
+    text: "Quoted as a clear visit price or monthly plan. Small recurring accounts often start around $595/month depending on frequency, square footage, bathrooms, timing, and scope.",
+  },
+  {
+    title: "One-time commercial reset",
+    price: "From $225",
+    text: "Best for first-time catch-up, move-in prep, office reset, or a deeper one-time clean before recurring service.",
+  },
+  {
+    title: "Short-term rental turnover",
+    price: "From $129/turnover",
+    text: "Small studio/1-bed style turnovers may start here. Larger homes, laundry/linen handling, restock needs, limited time between check-out and check-in, and photo notes are quoted before scheduling.",
+  },
+];
+
+const addOnPriceRanges = [
+  {
+    title: "Carpet extraction",
+    price: "$0.40–$0.60/sq ft",
+    text: "Planning range when available, often with a $249 minimum. Spot treatment may be quoted separately by area.",
+  },
+  {
+    title: "Floor care",
+    price: "Quoted by surface",
+    text: "Scrub, buff, wax, and strip/wax are not part of basic service. Pricing depends on floor type, condition, square footage, and equipment needs.",
+  },
+  {
+    title: "Heavy first-time reset",
+    price: "$0.35–$0.55/sq ft",
+    text: "Useful when a space needs catch-up cleaning before moving into a recurring maintenance plan.",
+  },
+];
+
 export default function CommercialResetPage() {
   return (
     <>
@@ -185,8 +221,8 @@ export default function CommercialResetPage() {
               These links explain what routine Commercial Reset can include, what stays outside the basic scope, and how host-managed turnovers are reviewed before scheduling.
             </p>
             <div className="mt-6 grid gap-3">
-              <PolicyLink href="/policies/commercial-reset-policy" title="Commercial Reset Policy" />
-              <PolicyLink href="/policies/short-term-rental-turnover-policy" title="Short-Term Rental Turnover Policy" />
+              <ActionLink href="/policies/commercial-reset-policy" title="Commercial Reset Policy" />
+              <ActionLink href="/policies/short-term-rental-turnover-policy" title="Short-Term Rental Turnover Policy" />
             </div>
           </div>
         </div>
@@ -201,13 +237,31 @@ export default function CommercialResetPage() {
               Commercial pricing is not an open-ended hourly clock. NestHelper reviews the space, frequency, bathrooms, flooring, access, timing, current condition, product preferences, and optional photos, then sends a clear visit price or recurring plan before service is scheduled.
             </p>
             <div className="mt-6 flex justify-center">
-              <PolicyLink href="/policies/commercial-pricing-add-ons" title="Review Commercial Pricing & Add-ons" />
+              <ActionLink href="#commercial-pricing-add-ons" title="Commercial Pricing & Add-ons" />
             </div>
           </div>
-          <div className="grid gap-4 p-6 sm:p-8 lg:grid-cols-3 lg:p-10">
-            <PricingCard title="Recurring commercial cleaning" price="From $149/visit" text="Quoted as a clear visit price or monthly plan. Small recurring accounts often start around $595/month depending on frequency, square footage, bathrooms, timing, and scope." />
-            <PricingCard title="One-time commercial reset" price="From $225" text="Best for first-time catch-up, move-in prep, office reset, or a deeper one-time clean before recurring service." />
-            <PricingCard title="Short-term rental turnover" price="From $129/turnover" text="Small studio/1-bed style turnovers may start here. Larger homes, laundry/linen handling, restock needs, limited time between check-out and check-in, and photo notes are quoted before scheduling." />
+          <div id="commercial-pricing-add-ons" className="grid gap-4 p-6 sm:p-8 lg:grid-cols-3 lg:p-10">
+            {commercialPriceRanges.map((item) => (
+              <PricingCard key={item.title} title={item.title} price={item.price} text={item.text} />
+            ))}
+          </div>
+
+          <div className="border-t border-nest-gold/14 bg-white/78 p-6 sm:p-8 lg:p-10">
+            <div className="mx-auto max-w-4xl text-center">
+              <p className="pill-label mx-auto w-fit"><DoorOpen size={15} /> Add-on pricing guidance</p>
+              <h3 className="mt-4 text-2xl font-black text-nest-teal sm:text-3xl">Specialty work is priced separately so the quote stays clear.</h3>
+              <p className="mx-auto mt-4 max-w-3xl font-medium leading-7 text-nest-ink/70">
+                These are planning ranges, not guaranteed final prices. NestHelper confirms add-ons after reviewing the space, condition, photos, surface type, access, and timing.
+              </p>
+            </div>
+            <div className="mt-7 grid gap-4 lg:grid-cols-3">
+              {addOnPriceRanges.map((item) => (
+                <PricingCard key={item.title} title={item.title} price={item.price} text={item.text} />
+              ))}
+            </div>
+            <p className="mx-auto mt-6 max-w-4xl rounded-2xl bg-nest-cream p-4 text-center text-sm font-bold leading-6 text-nest-ink/68">
+              Basic Commercial Reset does not automatically include carpet shampooing, wax, strip-and-wax, repairs, mold, biohazards, construction cleanup, or hazardous work. Those are reviewed separately or declined when outside NestHelper’s scope.
+            </p>
           </div>
         </div>
       </section>
@@ -304,7 +358,7 @@ function AreaCard({ title, text }: { title: string; text: string }) {
 }
 
 
-function PolicyLink({ href, title }: { href: string; title: string }) {
+function ActionLink({ href, title }: { href: string; title: string }) {
   return (
     <Link href={href} className="group inline-flex items-center justify-between gap-3 rounded-2xl border border-nest-gold/14 bg-white px-5 py-4 text-sm font-black text-nest-teal shadow-sm transition hover:-translate-y-0.5 hover:border-nest-gold/30 hover:shadow-soft">
       {title}
