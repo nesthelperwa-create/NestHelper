@@ -32,7 +32,7 @@ export async function saveSubmission({ collection, payload, emailSubject, emailT
   const subjectPrefix = getSubmissionSubjectPrefix(collection, cleaned);
 
   try {
-    await sendAdminEmail({
+    const adminEmailResult = (await sendAdminEmail({
       subject: `${subjectPrefix} ${emailSubject}`,
       title: emailTitle,
       rows: {
@@ -48,24 +48,46 @@ export async function saveSubmission({ collection, payload, emailSubject, emailT
       to: routedAliasEmail,
       routeLabel,
       routedToText: routedAliasEmail,
+    })) as any;
+
+    await doc.update({
+      adminEmailStatus: adminEmailResult?.skipped ? "skipped" : adminEmailResult?.error ? "error" : "sent",
+      adminEmailError: adminEmailResult?.error?.message || "",
+      adminEmailUpdatedAt: FieldValue.serverTimestamp(),
     });
-  } catch (error) {
+  } catch (error: any) {
     // Form submissions should still succeed even if admin email notifications fail.
     // Check Vercel runtime logs to debug notification issues.
     console.error("Admin notification email failed", error);
+    await doc.update({
+      adminEmailStatus: "error",
+      adminEmailError: error?.message || "Admin notification email failed",
+      adminEmailUpdatedAt: FieldValue.serverTimestamp(),
+    });
   }
 
   try {
-    await sendCustomerConfirmationEmail({
+    const customerEmailResult = (await sendCustomerConfirmationEmail({
       collection,
       payload: cleaned,
       submissionId: doc.id,
       replyToEmail: customerReplyEmail,
+    })) as any;
+
+    await doc.update({
+      customerConfirmationStatus: customerEmailResult?.skipped ? "skipped" : customerEmailResult?.error ? "error" : "sent",
+      customerConfirmationError: customerEmailResult?.error?.message || "",
+      customerConfirmationUpdatedAt: FieldValue.serverTimestamp(),
     });
-  } catch (error) {
+  } catch (error: any) {
     // Form submissions should still succeed even if the customer confirmation email fails.
     // Check Vercel runtime logs to debug notification issues.
     console.error("Customer confirmation email failed", error);
+    await doc.update({
+      customerConfirmationStatus: "error",
+      customerConfirmationError: error?.message || "Customer confirmation email failed",
+      customerConfirmationUpdatedAt: FieldValue.serverTimestamp(),
+    });
   }
 
   return { id: doc.id };

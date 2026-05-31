@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
+import { preparePublicSubmission, publicFormErrorResponse } from "@/lib/publicFormSecurity";
 import { saveSubmission } from "@/lib/saveSubmission";
 
 export async function POST(request: Request) {
   try {
-    const payload = await request.json();
+    const payload = await preparePublicSubmission(request, "partnerApplications");
     const result = await saveSubmission({
       collection: "partnerApplications",
       payload,
@@ -13,7 +14,6 @@ export async function POST(request: Request) {
     });
     return NextResponse.json({ ok: true, ...result });
   } catch (error) {
-    console.error(error);
-    return NextResponse.json({ ok: false, error: "Unable to submit partner application." }, { status: 500 });
+    return publicFormErrorResponse(error, "Unable to submit partner application.");
   }
 }
