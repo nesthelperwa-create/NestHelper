@@ -109,16 +109,16 @@ export default function CommercialResetPage() {
                 Same NestHelper care, different service lane.
               </h2>
               <p className="mt-5 text-base font-medium leading-7 text-nest-ink/72 sm:text-lg sm:leading-8">
-                Commercial Reset keeps the family-focused homepage clean while giving small businesses and community spaces a professional place to ask for routine cleaning, first-time resets, recurring janitorial support, short-term rental turnover cleaning, and product preferences such as low-odor or non-toxic options when appropriate.
+                Commercial Reset keeps the family-focused Parent Reset homepage clean while giving small businesses and community spaces a focused place for routine cleaning, first-time resets, recurring janitorial support, and host-managed turnover requests.
               </p>
             </div>
           </div>
 
           <div className="grid gap-4">
-            <MiniProof icon={<ShieldCheck size={20} />} title="Insured local service" text="Commercial requests are reviewed for scope, schedule, address, and safety before any work is confirmed." />
-            <MiniProof icon={<ClipboardCheck size={20} />} title="Quote-first process" text="Pricing is customized around square footage, bathrooms, frequency, product preferences, access, and condition." />
-            <MiniProof icon={<CalendarClock size={20} />} title="Recurring or one-time" text="Request a one-time reset, weekly service, or more frequent routine cleaning depending on the space." />
-            <MiniProof icon={<SprayCan size={20} />} title="Product preferences" text="Non-toxic, low-odor, or fragrance-free options can be requested where appropriate for the surface and scope." />
+            <MiniProof icon={<ShieldCheck size={20} />} title="Insured local service" text="NestHelper operates as an insured local service, so commercial requests are handled through a professional review-and-quote process instead of casual one-off hiring." />
+            <MiniProof icon={<ClipboardCheck size={20} />} title="Reviewed before scheduling" text="Each request is checked for address, square footage, bathrooms, flooring, access, timing, supplies, and safety before a quote is confirmed." />
+            <MiniProof icon={<CalendarClock size={20} />} title="One-time or recurring plans" text="Choose a first-time reset, weekly routine cleaning, or a custom recurring schedule that fits the space and business hours." />
+            <MiniProof icon={<DoorOpen size={20} />} title="Clear scope and boundaries" text="Customers know what is included, what may cost extra, and what NestHelper cannot take on before service is scheduled." />
           </div>
         </div>
       </section>
@@ -179,15 +179,35 @@ export default function CommercialResetPage() {
           </div>
 
           <div className="rounded-[2.25rem] border border-nest-gold/18 bg-white/86 p-6 shadow-soft sm:p-8">
-            <p className="pill-label w-fit"><ClipboardCheck size={15} /> Helpful policy details</p>
-            <h3 className="mt-4 text-2xl font-black text-nest-teal sm:text-3xl">Scope and boundary details in one place.</h3>
+            <p className="pill-label w-fit"><ClipboardCheck size={15} /> Scope details</p>
+            <h3 className="mt-4 text-2xl font-black text-nest-teal sm:text-3xl">Routine scope and special-case boundaries.</h3>
             <p className="mt-4 font-medium leading-7 text-nest-ink/70">
-              These links explain the routine service scope, safety boundaries, turnover expectations, and when a request may need separate review before it can be confirmed.
+              These links explain what routine Commercial Reset can include, what stays outside the basic scope, and how host-managed turnovers are reviewed before scheduling.
             </p>
             <div className="mt-6 grid gap-3">
               <PolicyLink href="/policies/commercial-reset-policy" title="Commercial Reset Policy" />
               <PolicyLink href="/policies/short-term-rental-turnover-policy" title="Short-Term Rental Turnover Policy" />
             </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
+        <div className="overflow-hidden rounded-[2.75rem] border border-nest-gold/18 bg-white/90 shadow-soft">
+          <div className="bg-gradient-to-br from-nest-cream via-white to-nest-mint/35 p-6 text-center sm:p-8 lg:p-10">
+            <p className="pill-label mx-auto w-fit"><CheckCircle2 size={15} /> Quote Guidance</p>
+            <h2 className="text-balance mx-auto mt-4 max-w-4xl text-3xl font-black text-nest-teal sm:text-5xl">Pricing is quoted clearly before service is scheduled.</h2>
+            <p className="mx-auto mt-4 max-w-4xl text-lg font-medium leading-8 text-nest-ink/72">
+              Commercial pricing is not an open-ended hourly clock. NestHelper reviews the space, frequency, bathrooms, flooring, access, timing, current condition, product preferences, and optional photos, then sends a clear visit price or recurring plan before service is scheduled.
+            </p>
+            <div className="mt-6 flex justify-center">
+              <PolicyLink href="/policies/commercial-pricing-add-ons" title="Review Commercial Pricing & Add-ons" />
+            </div>
+          </div>
+          <div className="grid gap-4 p-6 sm:p-8 lg:grid-cols-3 lg:p-10">
+            <PricingCard title="Recurring commercial cleaning" price="From $149/visit" text="Quoted as a clear visit price or monthly plan. Small recurring accounts often start around $595/month depending on frequency, square footage, bathrooms, timing, and scope." />
+            <PricingCard title="One-time commercial reset" price="From $225" text="Best for first-time catch-up, move-in prep, office reset, or a deeper one-time clean before recurring service." />
+            <PricingCard title="Short-term rental turnover" price="From $129/turnover" text="Small studio/1-bed style turnovers may start here. Larger homes, laundry/linen handling, restock needs, limited time between check-out and check-in, and photo notes are quoted before scheduling." />
           </div>
         </div>
       </section>
@@ -217,26 +237,6 @@ export default function CommercialResetPage() {
             <p className="mt-3 font-medium leading-7 text-nest-ink/70">
               We include nearby unincorporated Pierce County communities as service areas because many local businesses are outside city limits. Availability still depends on the address, schedule, scope, and any required local endorsements.
             </p>
-          </div>
-        </div>
-      </section>
-
-      <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
-        <div className="overflow-hidden rounded-[2.75rem] border border-nest-gold/18 bg-white/90 shadow-soft">
-          <div className="bg-gradient-to-br from-nest-cream via-white to-nest-mint/35 p-6 text-center sm:p-8 lg:p-10">
-            <p className="pill-label mx-auto w-fit"><CheckCircle2 size={15} /> Quote Guidance</p>
-            <h2 className="text-balance mx-auto mt-4 max-w-4xl text-3xl font-black text-nest-teal sm:text-5xl">Pricing is quoted clearly before service is scheduled.</h2>
-            <p className="mx-auto mt-4 max-w-4xl text-lg font-medium leading-8 text-nest-ink/72">
-              Commercial pricing is not an open-ended hourly clock. NestHelper reviews the space, frequency, bathrooms, flooring, access, timing, current condition, product preferences, and optional photos, then sends a clear visit price or recurring plan before service is scheduled.
-            </p>
-            <div className="mt-6 flex justify-center">
-              <PolicyLink href="/policies/commercial-pricing-add-ons" title="Commercial Pricing & Add-ons" />
-            </div>
-          </div>
-          <div className="grid gap-4 p-6 sm:p-8 lg:grid-cols-3 lg:p-10">
-            <PricingCard title="Recurring commercial cleaning" price="From $149/visit" text="Quoted as a clear visit price or monthly plan. Small recurring accounts often start around $595/month depending on frequency, square footage, bathrooms, timing, and scope." />
-            <PricingCard title="One-time commercial reset" price="From $225" text="Best for first-time catch-up, move-in prep, office reset, or a deeper one-time clean before recurring service." />
-            <PricingCard title="Short-term rental turnover" price="From $129/turnover" text="Small studio/1-bed style turnovers may start here. Larger homes, laundry/linen handling, restock needs, limited time between check-out and check-in, and photo notes are quoted before scheduling." />
           </div>
         </div>
       </section>

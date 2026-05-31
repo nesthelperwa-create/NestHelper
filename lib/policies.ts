@@ -255,7 +255,7 @@ export const policies: Policy[] = [
       },
       {
         heading: "Timing and access",
-        body: "Hosts must provide accurate checkout/check-in windows, parking details, entry instructions, alarm or lockbox information, supply locations, laundry expectations, and any areas that should not be entered. Tight same-day windows are reviewed before acceptance and may affect pricing or availability."
+        body: "Hosts must provide accurate checkout/check-in windows, parking details, entry instructions, alarm or lockbox information, supply locations, laundry expectations, and any areas that should not be entered. Limited time between guest check-out and check-in is reviewed before acceptance and may affect pricing or availability."
       },
       {
         heading: "Photos and documentation",
