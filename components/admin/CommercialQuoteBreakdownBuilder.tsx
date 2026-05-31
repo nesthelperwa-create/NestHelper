@@ -689,7 +689,7 @@ export default function CommercialQuoteBreakdownBuilder({ item, formatMoney, onS
         <div>
           <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Professional quote builder</p>
           <h5 className="mt-1 text-base font-black text-[#075c58]">Build a customer-ready breakdown</h5>
-          <p className="mt-1 text-sm leading-6 text-slate-700">Use sq-ft calculators for routine commercial service, plus dropdown line items for recurring plans, add-ons, credits, and refund notes. Save the breakdown first. Then choose whether to include it when you create + email the first Commercial Reset payment link.</p>
+          <p className="mt-1 text-sm leading-6 text-slate-700">Use sq-ft calculators for routine commercial service, plus dropdown line items for recurring plans, add-ons, credits, and refund notes. Save the breakdown first. The admin can then create a Stripe invoice from it or use it with a quick checkout link when needed.</p>
         </div>
         <button
           type="button"
@@ -714,7 +714,7 @@ export default function CommercialQuoteBreakdownBuilder({ item, formatMoney, onS
               <div>
                 <p className="text-xs font-black uppercase tracking-[0.2em] text-[#b98a2f]">Commercial Reset quote builder</p>
                 <h3 className="text-2xl font-black text-[#075c58]">Professional breakdown</h3>
-                <p className="mt-1 text-sm font-semibold text-slate-600">Clicking outside will not close this. Save draft before sending a payment link so the customer email includes the latest breakdown.</p>
+                <p className="mt-1 text-sm font-semibold text-slate-600">Clicking outside will not close this. Save the draft before creating a Stripe invoice or sending any payment link so the customer gets the latest breakdown.</p>
               </div>
               <div className="flex flex-wrap gap-2">
                 <button type="button" onClick={copyBreakdown} className={getBuilderButtonClass("secondary")}>Copy breakdown</button>

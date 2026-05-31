@@ -28,9 +28,23 @@ const COMMERCIAL_QUOTE_TYPES = [
   "Short-term rental turnover",
 ];
 
+function getDateObject(value: unknown) {
+  if (!value) return null;
+  if (typeof value === "object" && value && "toDate" in value && typeof value.toDate === "function") {
+    const next = value.toDate();
+    return next instanceof Date && !Number.isNaN(next.getTime()) ? next : null;
+  }
+  if (typeof value === "string" || typeof value === "number") {
+    const next = new Date(value);
+    return Number.isNaN(next.getTime()) ? null : next;
+  }
+  return null;
+}
+
 function formatDate(value: unknown) {
+  const date = getDateObject(value);
+  if (date) return date.toLocaleString();
   if (!value) return "—";
-  if (typeof value === "object" && value && "toDate" in value && typeof value.toDate === "function") return value.toDate().toLocaleString();
   return String(value);
 }
 
@@ -348,15 +362,27 @@ function AdminPhotoUploads({ photos }: { photos: UploadedPhoto[] }) {
   );
 }
 
-function ServiceLegend() {
+function ServiceLegend({ activeServiceFilter, onToggleServiceFilter, counts }: { activeServiceFilter: string; onToggleServiceFilter: (key: string) => void; counts: Record<string, number> }) {
   return (
-    <div className="mt-3 flex flex-wrap gap-2">
-      {Object.entries(SERVICE_LOOKS).map(([key, look]) => (
-        <span key={key} className={`inline-flex min-w-[128px] items-center justify-center gap-2 rounded-full border px-3 py-1.5 text-[11px] font-black uppercase tracking-wide ${look.badge}`}>
-          <span className={`h-2 w-2 rounded-full ${look.dot}`} />
-          {look.label}
-        </span>
-      ))}
+    <div className="mt-3 flex flex-wrap gap-2" aria-label="Filter service requests by service type">
+      {Object.entries(SERVICE_LOOKS).map(([key, look]) => {
+        const active = activeServiceFilter === key;
+        const count = counts[key] || 0;
+        return (
+          <button
+            key={key}
+            type="button"
+            onClick={() => onToggleServiceFilter(key)}
+            aria-pressed={active}
+            className={`inline-flex min-h-10 min-w-[142px] items-center justify-center gap-2 rounded-full border px-3 py-2 text-[11px] font-black uppercase tracking-wide shadow-sm transition-all focus:outline-none focus:ring-4 focus:ring-[#075c58]/20 ${active ? "scale-[1.02] ring-2 ring-[#075c58]" : "hover:-translate-y-0.5"} ${look.badge}`}
+            title={active ? `Showing ${look.label}. Click again to clear.` : `Show only ${look.label}.`}
+          >
+            <span className={`h-2 w-2 rounded-full ${look.dot}`} />
+            <span>{look.label}</span>
+            <span className="rounded-full bg-white/20 px-2 py-0.5 text-[10px]">{count}</span>
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -382,6 +408,11 @@ export default function AdminTable({
   const [items, setItems] = useState<AdminDoc[]>([]);
   const [selected, setSelected] = useState<AdminDoc | null>(null);
   const [filter, setFilter] = useState("");
+  const [serviceFilter, setServiceFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [paymentFilter, setPaymentFilter] = useState("all");
+  const [dateFilter, setDateFilter] = useState("all");
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [checkoutMode, setCheckoutMode] = useState<CheckoutMode>("standard");
   const [customInitialAmount, setCustomInitialAmount] = useState("");
   const [customInitialTitle, setCustomInitialTitle] = useState("");
@@ -390,6 +421,9 @@ export default function AdminTable({
   const [checkoutMessage, setCheckoutMessage] = useState("");
   const [checkoutError, setCheckoutError] = useState("");
   const [includeCommercialQuoteBreakdown, setIncludeCommercialQuoteBreakdown] = useState(true);
+  const [commercialInvoiceBusy, setCommercialInvoiceBusy] = useState(false);
+  const [commercialInvoiceMessage, setCommercialInvoiceMessage] = useState("");
+  const [commercialInvoiceError, setCommercialInvoiceError] = useState("");
   const [statusValue, setStatusValue] = useState("New");
   const [statusNote, setStatusNote] = useState("");
   const [notifyCustomer, setNotifyCustomer] = useState(false);
@@ -433,6 +467,8 @@ export default function AdminTable({
     setCheckoutMode(nextMode);
     setCheckoutMessage("");
     setCheckoutError("");
+    setCommercialInvoiceMessage("");
+    setCommercialInvoiceError("");
     setCustomInitialAmount(selected?.customInitialAmount ? String(selected.customInitialAmount) : "");
     setCustomInitialTitle(selected?.customInitialTitle ? String(selected.customInitialTitle) : "");
     setCustomInitialNote(selected?.customInitialNote ? String(selected.customInitialNote) : "");
@@ -465,11 +501,62 @@ export default function AdminTable({
     setActiveAction("");
   }, [selected?.id]);
 
+  const serviceCounts = useMemo(() => {
+    return items.reduce<Record<string, number>>((acc, item) => {
+      const key = getServiceKey(item) || "unknown";
+      acc[key] = (acc[key] || 0) + 1;
+      return acc;
+    }, {});
+  }, [items]);
+
+  const availableStatuses = useMemo(() => {
+    const merged = new Set<string>([...statuses]);
+    items.forEach((item) => {
+      const status = String(item.status || "").trim();
+      if (status) merged.add(status);
+    });
+    return Array.from(merged).filter(Boolean).sort((a, b) => a.localeCompare(b));
+  }, [items, statuses]);
+
   const filtered = useMemo(() => {
     const term = filter.toLowerCase().trim();
-    if (!term) return items;
-    return items.filter((item) => JSON.stringify(item).toLowerCase().includes(term));
-  }, [items, filter]);
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const cutoff7 = now.getTime() - 7 * 24 * 60 * 60 * 1000;
+    const cutoff30 = now.getTime() - 30 * 24 * 60 * 60 * 1000;
+
+    return items.filter((item) => {
+      if (term && !JSON.stringify(item).toLowerCase().includes(term)) return false;
+      if (serviceFilter && getServiceKey(item) !== serviceFilter) return false;
+      if (statusFilter !== "all" && String(item.status || "") !== statusFilter) return false;
+
+      const paymentStatus = String(item.paymentStatus || item.laundryPaymentStatus || item.additionalPaymentStatus || "").toLowerCase();
+      if (paymentFilter === "paid" && !paymentStatus.includes("paid")) return false;
+      if (paymentFilter === "sent" && !(paymentStatus.includes("sent") || paymentStatus.includes("checkout") || paymentStatus.includes("invoice"))) return false;
+      if (paymentFilter === "unpaid" && (paymentStatus.includes("paid") || paymentStatus.includes("sent") || paymentStatus.includes("checkout") || paymentStatus.includes("invoice"))) return false;
+      if (paymentFilter === "refund" && !JSON.stringify(item).toLowerCase().includes("refund")) return false;
+
+      if (dateFilter !== "all") {
+        const created = getDateObject(item.createdAt)?.getTime();
+        if (!created) return false;
+        if (dateFilter === "today" && created < todayStart) return false;
+        if (dateFilter === "7d" && created < cutoff7) return false;
+        if (dateFilter === "30d" && created < cutoff30) return false;
+      }
+
+      return true;
+    });
+  }, [items, filter, serviceFilter, statusFilter, paymentFilter, dateFilter]);
+
+  const activeFilterCount = [filter.trim(), serviceFilter, statusFilter !== "all" ? statusFilter : "", paymentFilter !== "all" ? paymentFilter : "", dateFilter !== "all" ? dateFilter : ""].filter(Boolean).length;
+
+  function clearAllFilters() {
+    setFilter("");
+    setServiceFilter("");
+    setStatusFilter("all");
+    setPaymentFilter("all");
+    setDateFilter("all");
+  }
 
   const laundrySubtotal = Math.max(0, toNumber(laundryDryWeightLbs) * toNumber(laundryRatePerLb) + toNumber(laundryAddOnsAmount));
   const laundryBalanceDue = Math.max(0, laundrySubtotal - toNumber(laundryDepositCredit));
@@ -535,6 +622,43 @@ export default function AdminTable({
     setAdditionalPaymentMessage("Additional payment checkout link copied.");
   }
 
+  async function createCommercialInvoice(sendEmail: boolean) {
+    if (!selected) return;
+    setCommercialInvoiceBusy(true);
+    setActiveAction(sendEmail ? "Creating and emailing Stripe invoice..." : "Creating Stripe invoice...");
+    setCommercialInvoiceMessage("");
+    setCommercialInvoiceError("");
+
+    try {
+      const token = await firebaseAuth.currentUser?.getIdToken();
+      const res = await fetch("/api/admin/create-commercial-invoice", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ requestId: selected.id, sendEmail }),
+      });
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok || !data.ok) throw new Error(data.error || "Unable to create commercial invoice.");
+
+      setSelected((prev) => prev ? {
+        ...prev,
+        status: "Invoice Sent",
+        paymentStatus: "Invoice Sent",
+        commercialInvoiceId: data.invoiceId,
+        commercialInvoiceUrl: data.hostedInvoiceUrl,
+        commercialInvoicePdf: data.invoicePdf,
+        commercialInvoiceSentAt: sendEmail ? new Date().toISOString() : prev.commercialInvoiceSentAt,
+      } : prev);
+      setStatusValue("Invoice Sent");
+      setCommercialInvoiceMessage(sendEmail ? "Stripe invoice created and emailed to the customer." : "Stripe invoice created. Open or copy the hosted invoice link below.");
+    } catch (error) {
+      setCommercialInvoiceError(error instanceof Error ? error.message : "Unable to create commercial invoice.");
+    } finally {
+      setCommercialInvoiceBusy(false);
+      setActiveAction("");
+    }
+  }
+
   async function createPaymentLink(sendEmail: boolean) {
     if (!selected) return;
     const useCustomInitial = checkoutMode === "custom";
@@ -542,6 +666,8 @@ export default function AdminTable({
     setActiveAction(sendEmail ? "Creating and emailing checkout link..." : "Creating checkout link only...");
     setCheckoutMessage("");
     setCheckoutError("");
+    setCommercialInvoiceMessage("");
+    setCommercialInvoiceError("");
 
     try {
       const token = await firebaseAuth.currentUser?.getIdToken();
@@ -776,31 +902,90 @@ export default function AdminTable({
   const isCustomCheckoutMode = checkoutMode === "custom";
   const hasSavedCommercialQuoteBreakdown = Boolean(selected?.commercialQuoteBreakdown?.customerBreakdownText);
   const showCommercialQuotePanel = showPaymentActions && selectedIsCommercial;
-  const anyActionBusy = checkoutBusy || statusBusy || laundryFinalBusy || additionalPaymentBusy || commercialQuoteBusy;
+  const anyActionBusy = checkoutBusy || commercialInvoiceBusy || statusBusy || laundryFinalBusy || additionalPaymentBusy || commercialQuoteBusy;
 
   return (
     <section className="space-y-5">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <p className="text-sm font-bold uppercase tracking-[0.2em] text-[#b98a2f]">Admin</p>
-          <h2 className="text-3xl font-bold text-[#075c58]">{title}</h2>
-          <p className="mt-1 text-slate-600">{filtered.length} records</p>
-          {collectionName === "serviceRequests" && <ServiceLegend />}
+      <div className="rounded-3xl border border-[#eadfc8] bg-white p-4 shadow-sm sm:p-5">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p className="text-sm font-bold uppercase tracking-[0.2em] text-[#b98a2f]">Admin</p>
+            <h2 className="text-3xl font-bold text-[#075c58]">{title}</h2>
+            <p className="mt-1 text-slate-600">
+              Showing <span className="font-black text-[#075c58]">{filtered.length}</span> of <span className="font-black">{items.length}</span> records
+              {activeFilterCount > 0 ? ` · ${activeFilterCount} filter${activeFilterCount === 1 ? "" : "s"} on` : ""}
+            </p>
+          </div>
+          <div className="flex w-full flex-col gap-2 lg:max-w-xl">
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <input
+                value={filter}
+                onChange={(e) => setFilter(e.target.value)}
+                placeholder="Search name, phone, city, notes..."
+                className="min-h-12 w-full rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 shadow-sm outline-none focus:border-[#075c58] focus:ring-4 focus:ring-[#075c58]/15"
+              />
+              <button
+                type="button"
+                onClick={() => setFiltersOpen((prev) => !prev)}
+                className={getAdminActionClass(activeFilterCount ? "secondary" : "quiet")}
+              >
+                Filters{activeFilterCount ? ` (${activeFilterCount})` : ""}
+              </button>
+              {activeFilterCount > 0 && (
+                <button type="button" onClick={clearAllFilters} className={getAdminActionClass("quiet")}>Clear</button>
+              )}
+            </div>
+          </div>
         </div>
-        <input
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-          placeholder="Search name, phone, city, notes..."
-          className="w-full rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 shadow-sm outline-none focus:border-[#075c58] sm:max-w-sm"
-        />
+
+        {collectionName === "serviceRequests" && (
+          <div className="mt-4">
+            <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Quick service filter</p>
+            <ServiceLegend
+              activeServiceFilter={serviceFilter}
+              onToggleServiceFilter={(key) => setServiceFilter((prev) => prev === key ? "" : key)}
+              counts={serviceCounts}
+            />
+          </div>
+        )}
+
+        {filtersOpen && (
+          <div className="mt-4 grid gap-3 rounded-3xl border border-[#eadfc8] bg-[#fbf6ea] p-4 md:grid-cols-3">
+            <label className="grid gap-2 text-sm font-bold text-slate-700">
+              Status
+              <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="min-h-12 rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 font-bold text-[#075c58] outline-none focus:border-[#075c58]">
+                <option value="all">All statuses</option>
+                {availableStatuses.map((status) => <option key={status} value={status}>{status}</option>)}
+              </select>
+            </label>
+            <label className="grid gap-2 text-sm font-bold text-slate-700">
+              Payment
+              <select value={paymentFilter} onChange={(e) => setPaymentFilter(e.target.value)} className="min-h-12 rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 font-bold text-[#075c58] outline-none focus:border-[#075c58]">
+                <option value="all">All payment states</option>
+                <option value="unpaid">No payment sent/paid yet</option>
+                <option value="sent">Checkout or invoice sent</option>
+                <option value="paid">Paid</option>
+                <option value="refund">Refund / credit mentioned</option>
+              </select>
+            </label>
+            <label className="grid gap-2 text-sm font-bold text-slate-700">
+              Date created
+              <select value={dateFilter} onChange={(e) => setDateFilter(e.target.value)} className="min-h-12 rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 font-bold text-[#075c58] outline-none focus:border-[#075c58]">
+                <option value="all">Any time</option>
+                <option value="today">Today</option>
+                <option value="7d">Last 7 days</option>
+                <option value="30d">Last 30 days</option>
+              </select>
+            </label>
+          </div>
+        )}
       </div>
 
-      {collectionName === "serviceRequests" && <AdminHelpCard />}
       <AdminActionFeedback
         busy={anyActionBusy}
         activeAction={activeAction}
-        messages={[statusMessage, checkoutMessage, laundryFinalMessage, additionalPaymentMessage, commercialQuoteMessage]}
-        errors={[statusError, checkoutError, laundryFinalError, additionalPaymentError, commercialQuoteError]}
+        messages={[statusMessage, checkoutMessage, commercialInvoiceMessage, laundryFinalMessage, additionalPaymentMessage, commercialQuoteMessage]}
+        errors={[statusError, checkoutError, commercialInvoiceError, laundryFinalError, additionalPaymentError, commercialQuoteError]}
       />
 
       <div className="overflow-hidden rounded-3xl border border-[#eadfc8] bg-white shadow-xl shadow-[#075c58]/5">
@@ -856,7 +1041,7 @@ export default function AdminTable({
                 </tr>
               ))}
               {!filtered.length && (
-                <tr><td colSpan={columns.length + 3} className="px-4 py-12 text-center text-slate-500">No records yet.</td></tr>
+                <tr><td colSpan={columns.length + 3} className="px-4 py-12 text-center text-slate-500">No records match the current filters.</td></tr>
               )}
             </tbody>
           </table>
@@ -879,8 +1064,8 @@ export default function AdminTable({
               <AdminActionFeedback
                 busy={anyActionBusy}
                 activeAction={activeAction}
-                messages={[statusMessage, checkoutMessage, laundryFinalMessage, additionalPaymentMessage, commercialQuoteMessage]}
-                errors={[statusError, checkoutError, laundryFinalError, additionalPaymentError, commercialQuoteError]}
+                messages={[statusMessage, checkoutMessage, commercialInvoiceMessage, laundryFinalMessage, additionalPaymentMessage, commercialQuoteMessage]}
+                errors={[statusError, checkoutError, commercialInvoiceError, laundryFinalError, additionalPaymentError, commercialQuoteError]}
               />
             </div>
 
@@ -1195,10 +1380,10 @@ export default function AdminTable({
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                   <div className="max-w-2xl">
                     <p className="text-xs font-black uppercase tracking-[0.2em] text-[#b98a2f]">{selectedIsCommercial ? "Step 3 — first payment" : "Approval + payment"}</p>
-                    <h4 className="mt-1 text-xl font-black text-[#075c58]">{selectedIsCommercial ? "Create the first Commercial Reset payment link" : "Create checkout after you approve the request"}</h4>
+                    <h4 className="mt-1 text-xl font-black text-[#075c58]">{selectedIsCommercial ? "Invoice or quick checkout" : "Create checkout after you approve the request"}</h4>
                     <p className="mt-2 text-sm leading-6 text-slate-700">
                       {selectedIsCommercial
-                        ? "For Commercial Reset, save the quote/breakdown first, use the calculated amount here, then create and email the Stripe payment link. The saved breakdown is included in the customer email with the checkout link."
+                        ? "For Commercial Reset, save the quote/breakdown first. For a more professional business record, send the Stripe invoice from the saved breakdown. Use the checkout link only for a quick deposit or simple first payment."
                         : "This creates a Stripe Checkout Session tied to this request. Public checkout stays off; only admin can send payment after reviewing scope, service area, and availability."}
                     </p>
                     {selected.service === "laundry-rescue" && (
@@ -1209,7 +1394,7 @@ export default function AdminTable({
                   </div>
                   {selectedIsCommercial ? (
                     <div className="rounded-2xl border border-[#d8c18f] bg-white px-4 py-3 text-sm font-bold text-[#075c58] lg:min-w-80">
-                      Commercial uses a custom reviewed amount. Use the quote panel above to fill this section.
+                      Commercial can use an invoice or a custom checkout link. Invoice is best when you want an itemized business record.
                     </div>
                   ) : (
                     <div className="grid min-w-72 gap-2">
@@ -1226,6 +1411,44 @@ export default function AdminTable({
                     </div>
                   )}
                 </div>
+
+                {selectedIsCommercial && (
+                  <div className="mt-4 rounded-3xl border border-cyan-200 bg-white p-4">
+                    <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                      <div className="max-w-2xl">
+                        <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Recommended for commercial</p>
+                        <h5 className="mt-1 text-base font-black text-[#075c58]">Create a Stripe invoice from the saved breakdown</h5>
+                        <p className="mt-1 text-sm leading-6 text-slate-700">
+                          Best for commercial customers who expect an itemized invoice/PDF. Save the Quote / Breakdown Builder first, then create and send the invoice.
+                        </p>
+                      </div>
+                      <div className="flex flex-col gap-2 sm:flex-row lg:flex-col">
+                        <button type="button" disabled={commercialInvoiceBusy || !hasSavedCommercialQuoteBreakdown} onClick={() => createCommercialInvoice(true)} className={getAdminActionClass("primary")}>
+                          {commercialInvoiceBusy ? <><ActionSpinner /> Creating...</> : "Create + email Stripe invoice"}
+                        </button>
+                        <button type="button" disabled={commercialInvoiceBusy || !hasSavedCommercialQuoteBreakdown} onClick={() => createCommercialInvoice(false)} className={getAdminActionClass("secondary")}>
+                          Create invoice only
+                        </button>
+                      </div>
+                    </div>
+                    {!hasSavedCommercialQuoteBreakdown && (
+                      <p className="mt-3 rounded-2xl bg-amber-50 px-4 py-3 text-xs font-bold leading-5 text-amber-800">Save the Quote / Breakdown Builder draft first. The invoice uses those saved line items.</p>
+                    )}
+                    {(selected.commercialInvoiceUrl || selected.commercialInvoicePdf) && (
+                      <div className="mt-4 rounded-2xl border border-cyan-100 bg-cyan-50/50 p-4">
+                        <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Current commercial invoice</p>
+                        {selected.commercialInvoiceUrl && <p className="mt-2 break-all text-sm text-[#075c58]">{selected.commercialInvoiceUrl}</p>}
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {selected.commercialInvoiceUrl && <a href={selected.commercialInvoiceUrl} target="_blank" rel="noreferrer" className="rounded-full bg-[#075c58] px-4 py-2 text-xs font-black text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-[#064b48]">Open invoice</a>}
+                          {selected.commercialInvoicePdf && <a href={selected.commercialInvoicePdf} target="_blank" rel="noreferrer" className="rounded-full border border-[#075c58] bg-white px-4 py-2 text-xs font-black text-[#075c58] transition hover:bg-[#f4ecdc]">Open PDF</a>}
+                          {selected.commercialInvoiceUrl && <button type="button" onClick={() => copyToClipboard(selected.commercialInvoiceUrl || "")} className="rounded-full border border-[#075c58] bg-white px-4 py-2 text-xs font-black text-[#075c58] transition hover:bg-[#f4ecdc]">Copy invoice link</button>}
+                        </div>
+                      </div>
+                    )}
+                    {commercialInvoiceMessage && <p className="mt-3 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">{commercialInvoiceMessage}</p>}
+                    {commercialInvoiceError && <p className="mt-3 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{commercialInvoiceError}</p>}
+                  </div>
+                )}
 
                 {isCustomCheckoutMode && (
                   <div className="mt-4 rounded-3xl border border-[#eadfc8] bg-white p-4">
@@ -1285,7 +1508,7 @@ export default function AdminTable({
                       <span>
                         <span className="block text-[#075c58]">Include saved quote breakdown in the customer checkout email</span>
                         <span className="mt-1 block text-xs font-semibold leading-5 text-slate-600">
-                          This only affects the “Create + email first payment link” button. Stripe checkout still shows the payment amount; the NestHelper email will include the full saved breakdown when this is checked.
+                          This only affects the quick checkout email. For a true itemized customer record, use the Stripe invoice option above instead.
                         </span>
                       </span>
                     </label>

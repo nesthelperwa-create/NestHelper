@@ -102,6 +102,97 @@ export async function POST(request: Request) {
   }
 
   try {
+    if (event.type === "invoice.paid") {
+      const invoice = event.data.object as Stripe.Invoice;
+      const requestId = getString(invoice.metadata?.requestId);
+
+      if (requestId) {
+        const db = getFirebaseAdminDb();
+        const requestRef = db.collection("serviceRequests").doc(requestId);
+        const requestSnap = await requestRef.get();
+        const existingData = requestSnap.exists ? requestSnap.data() || {} : {};
+        const serviceId = getString(invoice.metadata?.serviceId) || getString(existingData.service) || "commercial-reset";
+        const serviceTitle = getServiceTitle(existingData, "Commercial Reset invoice");
+        const paymentStatus = "Invoice Paid";
+
+        await requestRef.update({
+          status: "Invoice Paid",
+          paymentStatus,
+          commercialInvoiceStatus: paymentStatus,
+          commercialInvoiceId: invoice.id,
+          commercialInvoicePaidAt: FieldValue.serverTimestamp(),
+          commercialInvoiceAmountPaid: invoice.amount_paid ?? null,
+          commercialInvoiceAmountDue: invoice.amount_due ?? null,
+          commercialInvoiceHostedUrl: invoice.hosted_invoice_url || existingData.commercialInvoiceUrl || "",
+          commercialInvoicePdf: invoice.invoice_pdf || existingData.commercialInvoicePdf || "",
+          stripeCustomerId: typeof invoice.customer === "string" ? invoice.customer : "",
+          updatedAt: FieldValue.serverTimestamp(),
+          updatedBy: "stripe-webhook",
+        });
+
+        const email = getString(existingData.email);
+        const customerName = getString(existingData.fullName) || getString(existingData.contactName);
+
+        if (email && !existingData.commercialInvoicePaymentConfirmationEmailSent) {
+          try {
+            await sendPaymentReceivedEmail({
+              to: email,
+              customerName,
+              requestId,
+              serviceTitle,
+              amountTotal: invoice.amount_paid,
+              currency: invoice.currency,
+              paymentStatus,
+              replyToEmail: emailAliases.commercial || emailAliases.billing,
+            });
+            await requestRef.update({
+              commercialInvoicePaymentConfirmationEmailSent: true,
+              commercialInvoicePaymentConfirmationEmailSentAt: FieldValue.serverTimestamp(),
+              commercialInvoicePaymentConfirmationEmailError: "",
+            });
+          } catch (error) {
+            console.error("Commercial invoice paid confirmation email failed", error);
+            await requestRef.update({
+              commercialInvoicePaymentConfirmationEmailSent: false,
+              commercialInvoicePaymentConfirmationEmailError: "Payment was recorded, but the NestHelper payment confirmation email failed.",
+            });
+          }
+        }
+
+        if (!existingData.commercialInvoiceAdminPaymentEmailSent) {
+          try {
+            const routedPaymentInbox = emailAliases.commercial || emailAliases.billing;
+            const result = await sendAdminEmail({
+              subject: `Stripe Invoice Paid: ${serviceTitle}`,
+              title: "Commercial invoice paid — ready to schedule",
+              intro: "A customer paid a Commercial Reset Stripe invoice. The request is now marked Invoice Paid in the admin dashboard.",
+              adminPath: "/admin/requests",
+              to: routedPaymentInbox,
+              routeLabel: "Commercial",
+              routedToText: routedPaymentInbox,
+              rows: {
+                "Dashboard ID": requestId,
+                Service: serviceTitle,
+                Customer: customerName,
+                Email: email,
+                "Amount paid": formatMoney(invoice.amount_paid, invoice.currency),
+                Address: buildAddress(existingData),
+                "Stripe invoice": invoice.id,
+              },
+            });
+            await requestRef.update({
+              commercialInvoiceAdminPaymentEmailSent: true,
+              commercialInvoiceAdminPaymentEmailSentAt: FieldValue.serverTimestamp(),
+              commercialInvoiceAdminPaymentEmailError: result?.error || "",
+            });
+          } catch (error) {
+            console.error("Commercial invoice admin alert failed", error);
+            await requestRef.update({ commercialInvoiceAdminPaymentEmailError: "Invoice was recorded, but the admin alert failed." });
+          }
+        }
+      }
+    }
+
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;
       const requestId = session.metadata?.requestId || session.client_reference_id || "";
