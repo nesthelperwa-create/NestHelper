@@ -144,6 +144,14 @@ a { text-underline-offset: 4px; }
   color: #005d56;
 }
 
+[data-field-invalid="true"] {
+  scroll-margin-top: 7rem;
+  outline: 3px solid rgba(220, 38, 38, 0.24);
+  outline-offset: 0.35rem;
+  border-radius: 1.25rem;
+  transition: outline-color 180ms ease;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;

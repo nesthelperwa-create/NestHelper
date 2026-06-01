@@ -5,6 +5,7 @@ import type { FormEvent, ReactNode } from "react";
 import { useMemo, useState } from "react";
 import { ArrowRight, Building2, Calculator, CheckCircle2, ClipboardCheck, CreditCard, ShieldCheck } from "lucide-react";
 import { formatPhoneNumber } from "@/lib/formatPhoneNumber";
+import { focusFirstInvalidField } from "@/lib/formInvalidFocus";
 import { PhotoUploadField, photoUploadSummary, type PhotoUpload } from "@/components/forms/PhotoUploadField";
 
 const defaultState = {
@@ -55,7 +56,6 @@ const defaultState = {
   specialNotes: "",
   photoNotes: "",
   consent: false,
-  textConsent: false,
   photoUploads: [] as PhotoUpload[],
 };
 
@@ -701,7 +701,6 @@ function buildPayload(form: CommercialResetFormState) {
       photoUploads: form.photoUploads,
     } : {}),
     consent: form.consent,
-    textConsent: form.textConsent,
     requestedAt: new Date().toISOString(),
   };
 }
@@ -807,7 +806,7 @@ export function CommercialResetForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} className="grid gap-6 overflow-hidden rounded-[2.5rem] border border-nest-gold/18 bg-white/90 p-4 shadow-soft backdrop-blur sm:p-6 lg:p-8">
+    <form onSubmit={onSubmit} onInvalidCapture={focusFirstInvalidField} className="grid gap-6 overflow-hidden rounded-[2.5rem] border border-nest-gold/18 bg-white/90 p-4 shadow-soft backdrop-blur sm:p-6 lg:p-8">
       <div className="relative overflow-hidden rounded-[1.9rem] bg-gradient-to-br from-nest-cream via-white to-nest-mint/35 p-5 shadow-sm sm:p-7">
         <div className="absolute -right-16 -top-20 h-48 w-48 rounded-full bg-nest-gold/15 blur-3xl" />
         <div className="relative">
@@ -1159,10 +1158,6 @@ export function CommercialResetForm() {
         <label className="flex gap-3 rounded-2xl bg-white p-4 text-sm font-semibold text-nest-ink/82 shadow-sm">
           <input type="checkbox" required checked={form.consent} onChange={(e) => update("consent", e.target.checked)} className="mt-1 h-4 w-4" />
           <span><span className="text-red-600">*</span> I understand this is a quote request, not a confirmed booking. Commercial Reset availability depends on address, scope, schedule, turnover timing if applicable, licensing/endorsement requirements, and service fit.</span>
-        </label>
-        <label className="flex gap-3 rounded-2xl bg-white p-4 text-sm font-semibold text-nest-ink/82 shadow-sm">
-          <input type="checkbox" checked={form.textConsent} onChange={(e) => update("textConsent", e.target.checked)} className="mt-1 h-4 w-4" />
-          <span>I agree NestHelper may text/email me about this quote request, walkthrough, scheduling, checkout, and service updates.</span>
         </label>
       </div>
 

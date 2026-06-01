@@ -5,6 +5,7 @@ import type { FormEvent, HTMLAttributes, ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { formatPhoneNumber } from "@/lib/formatPhoneNumber";
+import { focusFirstInvalidField } from "@/lib/formInvalidFocus";
 
 
 type Status = "idle" | "loading" | "success" | "error";
@@ -205,7 +206,7 @@ export function HelperApplicationForm() {
     catch(err){ console.error(err); setStatus("error"); setMessage("Something went wrong. Please try again."); }
   }
   return (
-    <form onSubmit={submit} className="grid gap-5 overflow-hidden rounded-[2.5rem] border border-nest-gold/18 bg-white/90 p-5 shadow-soft backdrop-blur sm:p-8">
+    <form onSubmit={submit} onInvalidCapture={focusFirstInvalidField} className="grid gap-5 overflow-hidden rounded-[2.5rem] border border-nest-gold/18 bg-white/90 p-5 shadow-soft backdrop-blur sm:p-8">
       <div className="rounded-[1.75rem] bg-gradient-to-br from-nest-cream via-white to-nest-mint/30 p-5">
         <p className="text-xs font-black uppercase tracking-[0.22em] text-nest-gold">Individual helper</p>
         <h2 className="mt-2 text-2xl font-black text-nest-teal">Part-Time Helper Application</h2>
@@ -253,7 +254,7 @@ export function PartnerApplicationForm() {
     catch(err){ console.error(err); setStatus("error"); setMessage("Something went wrong. Please try again."); }
   }
   return (
-    <form onSubmit={submit} className="grid gap-5 overflow-hidden rounded-[2.5rem] border border-nest-gold/18 bg-white/90 p-5 shadow-soft backdrop-blur sm:p-8">
+    <form onSubmit={submit} onInvalidCapture={focusFirstInvalidField} className="grid gap-5 overflow-hidden rounded-[2.5rem] border border-nest-gold/18 bg-white/90 p-5 shadow-soft backdrop-blur sm:p-8">
       <div className="rounded-[1.75rem] bg-gradient-to-br from-nest-cream via-white to-nest-mint/30 p-5">
         <p className="text-xs font-black uppercase tracking-[0.22em] text-nest-gold">Partner provider</p>
         <h2 className="mt-2 text-2xl font-black text-nest-teal">Independent Contractor / Partner Provider Application</h2>

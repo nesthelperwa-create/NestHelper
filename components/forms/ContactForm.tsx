@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { FormEvent, HTMLAttributes } from "react";
 import { ArrowRight, MessageCircle } from "lucide-react";
 import { formatPhoneNumber } from "@/lib/formatPhoneNumber";
+import { focusFirstInvalidField } from "@/lib/formInvalidFocus";
 
 type Status = "idle" | "loading" | "success" | "error";
 
@@ -60,7 +61,7 @@ export function ContactForm() {
   }
 
   return (
-    <form onSubmit={submit} className="overflow-hidden rounded-[2.5rem] border border-nest-gold/18 bg-white/90 shadow-soft backdrop-blur">
+    <form onSubmit={submit} onInvalidCapture={focusFirstInvalidField} className="overflow-hidden rounded-[2.5rem] border border-nest-gold/18 bg-white/90 shadow-soft backdrop-blur">
       <div className="bg-gradient-to-br from-nest-cream via-white to-nest-mint/30 p-6 sm:p-8">
         <div className="inline-flex rounded-2xl bg-white p-3 text-nest-teal shadow-sm">
           <MessageCircle />

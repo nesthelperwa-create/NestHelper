@@ -20,7 +20,6 @@ const commonAllowedFields = [
   "zip",
   "requestedAt",
   "consent",
-  "textConsent",
   "photoUploadCount",
   "photoUploadSummary",
   "photoUploads",

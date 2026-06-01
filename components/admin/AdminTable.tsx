@@ -1121,9 +1121,9 @@ export default function AdminTable({
         errors={[statusError, checkoutError, commercialInvoiceError, commercialQuoteEmailError, familyInvoiceError, laundryFinalError, additionalPaymentError, commercialQuoteError]}
       />
 
-      <div className="overflow-hidden rounded-3xl border border-[#eadfc8] bg-white shadow-xl shadow-[#075c58]/5">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-[#eadfc8] text-sm">
+      <div className="max-w-full overflow-hidden rounded-3xl border border-[#eadfc8] bg-white shadow-xl shadow-[#075c58]/5">
+        <div className="overflow-x-auto [scrollbar-gutter:stable]">
+          <table className="w-full min-w-[1180px] divide-y divide-[#eadfc8] text-sm">
             <thead className="bg-[#f4ecdc] text-left text-xs uppercase tracking-wider text-[#075c58]">
               <tr>
                 <th className="px-4 py-4">Status</th>
@@ -1131,7 +1131,7 @@ export default function AdminTable({
                   <th key={col.key} className="px-4 py-4">{col.label}</th>
                 ))}
                 <th className="px-4 py-4">Created</th>
-                <th className="px-4 py-4">Actions</th>
+                <th className="sticky right-0 z-20 min-w-[220px] bg-[#f4ecdc] px-4 py-4 shadow-[-10px_0_18px_rgba(0,0,0,0.04)]">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#f0e7d7]">
@@ -1142,9 +1142,9 @@ export default function AdminTable({
                     <td key={col.key} className="max-w-[220px] truncate px-4 py-4 text-slate-700">{renderAdminCell(col.key, item)}</td>
                   ))}
                   <td className="px-4 py-4 text-slate-500">{formatDate(item.createdAt)}</td>
-                  <td className="px-4 py-4">
-                    <div className="flex flex-wrap gap-2">
-                      <button onClick={() => setSelected(item)} className="rounded-full bg-[#075c58] px-4 py-2 text-xs font-black text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-[#064b48] focus:outline-none focus:ring-4 focus:ring-[#075c58]/20">Open details</button>
+                  <td className="sticky right-0 z-10 min-w-[220px] bg-white/95 px-3 py-4 align-top shadow-[-10px_0_18px_rgba(0,0,0,0.04)] backdrop-blur">
+                    <div className="grid min-w-[190px] gap-2">
+                      <button onClick={() => setSelected(item)} className="w-full whitespace-nowrap rounded-full bg-[#075c58] px-3 py-2 text-xs font-black text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-[#064b48] focus:outline-none focus:ring-4 focus:ring-[#075c58]/20">Open details</button>
                       <select
                         value={item.status || "New"}
                         onChange={async (e) => {
@@ -1164,7 +1164,7 @@ export default function AdminTable({
                             setActiveAction("");
                           }
                         }}
-                        className="rounded-full border border-[#d8c18f] bg-white px-3 py-2 text-xs font-bold text-slate-700 shadow-sm outline-none transition hover:border-[#075c58] focus:border-[#075c58] focus:ring-4 focus:ring-[#075c58]/15"
+                        className="w-full min-w-0 rounded-full border border-[#d8c18f] bg-white px-3 py-2 text-xs font-bold text-slate-700 shadow-sm outline-none transition hover:border-[#075c58] focus:border-[#075c58] focus:ring-4 focus:ring-[#075c58]/15"
                         title="Quick internal status update. Open View to send a customer email."
                       >
                         {statuses.map((status) => <option key={status}>{status}</option>)}

@@ -6,6 +6,7 @@ import { useMemo, useState } from "react";
 import { ArrowRight, CheckCircle2, Clock, CreditCard, MapPin, ShieldCheck } from "lucide-react";
 import { services, laundryAddOns } from "@/lib/services";
 import { formatPhoneNumber } from "@/lib/formatPhoneNumber";
+import { focusFirstInvalidField } from "@/lib/formInvalidFocus";
 import { PhotoUploadField, photoUploadSummary, type PhotoUpload } from "@/components/forms/PhotoUploadField";
 
 const defaultState = {
@@ -42,7 +43,6 @@ const defaultState = {
   laundryAddOns: [] as string[],
   reusableBagAck: false,
   consent: false,
-  textConsent: false,
   photoUploads: [] as PhotoUpload[],
 };
 
@@ -106,7 +106,6 @@ function cleanForSelectedService(form: RequestFormState) {
     selectedServiceTitle: services.find((service) => service.id === form.service)?.title || "",
     parkingAccess: form.parkingAccess,
     consent: form.consent,
-    textConsent: form.textConsent,
     ...(form.photoUploads.length ? {
       photoUploadCount: form.photoUploads.length,
       photoUploadSummary: photoUploadSummary(form.photoUploads),
@@ -237,7 +236,7 @@ export function RequestForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} className="grid gap-6 overflow-hidden rounded-[2.5rem] border border-nest-gold/18 bg-white/90 p-4 shadow-soft backdrop-blur sm:p-6 lg:p-8">
+    <form onSubmit={onSubmit} onInvalidCapture={focusFirstInvalidField} className="grid gap-6 overflow-hidden rounded-[2.5rem] border border-nest-gold/18 bg-white/90 p-4 shadow-soft backdrop-blur sm:p-6 lg:p-8">
       <div className="relative overflow-hidden rounded-[1.9rem] bg-gradient-to-br from-nest-cream via-white to-nest-mint/35 p-5 shadow-sm sm:p-7">
         <div className="absolute -right-16 -top-20 h-48 w-48 rounded-full bg-nest-gold/15 blur-3xl" />
         <div className="relative">
@@ -517,10 +516,6 @@ export function RequestForm() {
         <label className="flex gap-3 rounded-2xl bg-white p-4 text-sm font-semibold text-nest-ink/82 shadow-sm">
           <input type="checkbox" required checked={form.consent} onChange={(e) => update("consent", e.target.checked)} className="mt-1 h-4 w-4" />
           <span><span className="text-red-600">*</span> I understand this is a request, not a confirmed booking. I agree to NestHelper’s Terms, Privacy Policy, Service Scope, Cancellation, Safety, Laundry, and Reset Promise policies.</span>
-        </label>
-        <label className="flex gap-3 rounded-2xl bg-white p-4 text-sm font-semibold text-nest-ink/82 shadow-sm">
-          <input type="checkbox" checked={form.textConsent} onChange={(e) => update("textConsent", e.target.checked)} className="mt-1 h-4 w-4" />
-          <span>I agree NestHelper may text/email me about this request, checkout, prep notes, and service updates.</span>
         </label>
       </div>
 

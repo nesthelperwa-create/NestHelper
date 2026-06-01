@@ -100,7 +100,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   return (
     <div className="min-h-screen bg-[#fbf6ea] text-slate-900">
       <header className="sticky top-0 z-40 border-b border-[#eadfc8] bg-white/90 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-3 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-4">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.25em] text-[#b98a2f]">NestHelper LLC</p>
             <h1 className="text-2xl font-bold text-[#075c58]">Admin Dashboard</h1>
@@ -113,7 +113,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
             Sign out
           </button>
         </div>
-        <nav className="mx-auto flex max-w-7xl gap-2 overflow-x-auto px-4 pb-3">
+        <nav className="mx-auto flex w-full max-w-7xl gap-2 overflow-x-auto px-3 pb-3 sm:px-4">
           {links.map((link) => (
             <Link
               key={link.href}
@@ -127,7 +127,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
           ))}
         </nav>
       </header>
-      <main className="mx-auto max-w-7xl px-4 py-8">{children}</main>
+      <main className="mx-auto w-full max-w-7xl overflow-x-hidden px-3 py-6 sm:px-4 sm:py-8">{children}</main>
     </div>
   );
 }
