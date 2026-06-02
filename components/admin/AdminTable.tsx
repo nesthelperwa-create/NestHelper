@@ -86,9 +86,16 @@ function getLaundryDefaultDepositCredit(item: AdminDoc | null, mode: CheckoutMod
   if (!item || item.service !== "laundry-rescue") return 0;
   if (toNumber(item.laundryDepositCredit) > 0) return toNumber(item.laundryDepositCredit);
   if (toNumber(item.laundryDepositCreditCents) > 0) return centsToDollars(item.laundryDepositCreditCents);
+  // Credit only the pre-tax non-refundable deposit/minimum toward the final invoice.
+  // Tax is charged separately by Stripe on the deposit and then only on the final taxable balance.
+  if (toNumber(item.laundryDepositAmountSubtotal) > 0) return centsToDollars(item.laundryDepositAmountSubtotal);
+  if (toNumber(item.depositPaidAmountSubtotal) > 0) return centsToDollars(item.depositPaidAmountSubtotal);
+  if (toNumber(item.laundryDepositExpectedAmountCents) > 0) return centsToDollars(item.laundryDepositExpectedAmountCents);
   if (toNumber(item.laundryDepositAmountTotal) > 0) return centsToDollars(item.laundryDepositAmountTotal);
   if (toNumber(item.depositPaidAmountTotal) > 0) return centsToDollars(item.depositPaidAmountTotal);
-  if (toNumber(item.amountTotal) > 0 && ["Deposit Paid", "Paid"].includes(String(item.paymentStatus || item.status || ""))) return centsToDollars(item.amountTotal);
+  const paymentStatus = String(item.paymentStatus || item.laundryPaymentStatus || item.status || "");
+  if (toNumber(item.amountSubtotal) > 0 && ["Deposit Paid", "Deposit Paid - Final Pending", "Paid"].includes(paymentStatus)) return centsToDollars(item.amountSubtotal);
+  if (toNumber(item.amountTotal) > 0 && ["Deposit Paid", "Deposit Paid - Final Pending", "Paid"].includes(paymentStatus)) return centsToDollars(item.amountTotal);
   return mode === "founding" ? 49 : 59;
 }
 
@@ -814,12 +821,12 @@ export default function AdminTable({
         ...prev,
         checkoutUrl: data.url,
         checkoutSessionId: data.sessionId,
-        status: "Checkout Sent",
+        status: selected.service === "laundry-rescue" ? "Deposit Checkout Sent" : "Checkout Sent",
         paymentStatus: selected.service === "laundry-rescue" ? "Deposit Checkout Sent" : "Checkout Sent",
         checkoutIncludedQuoteBreakdown: data.includedQuoteBreakdown ?? prev.checkoutIncludedQuoteBreakdown,
         checkoutIncludedFamilyBreakdown: data.includedFamilyBreakdown ?? prev.checkoutIncludedFamilyBreakdown,
       } : prev);
-      setStatusValue("Checkout Sent");
+      setStatusValue(selected.service === "laundry-rescue" ? "Deposit Checkout Sent" : "Checkout Sent");
       const commercialBreakdownNotice = selected.service === "commercial-reset" && useCustomInitial && sendEmail
         ? data.includedQuoteBreakdown
           ? " Saved quote breakdown was included in the customer email."
@@ -834,7 +841,10 @@ export default function AdminTable({
             ? " No saved family payment breakdown was found, so the email only includes the payment link and notes. Save the family breakdown first if you want it included."
             : " Family payment breakdown was not included because the checkbox was off."
         : "";
-      setCheckoutMessage(data.emailError || (data.emailSent ? `Quick checkout link created and emailed to the customer.${commercialBreakdownNotice}${familyBreakdownNotice}` : `Quick checkout link created. Copy it and send it manually.${commercialBreakdownNotice}${familyBreakdownNotice}`));
+      const laundryDepositNotice = selected.service === "laundry-rescue"
+        ? " Stripe checkout will collect the non-refundable taxable deposit and ask the customer to choose auto-charge or invoice-before-delivery for the final laundry balance."
+        : "";
+      setCheckoutMessage(data.emailError || (data.emailSent ? `Quick checkout link created and emailed to the customer.${commercialBreakdownNotice}${familyBreakdownNotice}${laundryDepositNotice}` : `Quick checkout link created. Copy it and send it manually.${commercialBreakdownNotice}${familyBreakdownNotice}${laundryDepositNotice}`));
     } catch (error) {
       setCheckoutError(error instanceof Error ? error.message : "Unable to create quick checkout link.");
     } finally {
@@ -845,8 +855,9 @@ export default function AdminTable({
 
   async function createLaundryFinalBalance(sendEmail: boolean) {
     if (!selected) return;
+    const useAutoCharge = Boolean(selected.laundryAutoChargeAuthorized && selected.laundryFinalPaymentCollectionMethod === "auto_charge");
     setLaundryFinalBusy(true);
-    setActiveAction(sendEmail ? "Creating and emailing laundry final invoice..." : "Creating laundry final invoice only...");
+    setActiveAction(useAutoCharge ? "Creating itemized laundry invoice and auto-charging saved card..." : sendEmail ? "Creating and emailing laundry final invoice..." : "Creating laundry final invoice only...");
     setLaundryFinalMessage("");
     setLaundryFinalError("");
 
@@ -874,14 +885,17 @@ export default function AdminTable({
       setSelected((prev) => prev ? {
         ...prev,
         status: data.noBalanceDue ? "Fully Paid" : (data.status || "Final Invoice Sent"),
-        paymentStatus: data.noBalanceDue ? "Fully Paid" : (data.paymentStatus || "Final Invoice Sent"),
-        laundryPaymentStatus: data.noBalanceDue ? "Fully Paid" : (data.paymentStatus || "Final Invoice Sent"),
+        paymentStatus: data.noBalanceDue ? "Final Balance Paid" : (data.paymentStatus || "Final Invoice Sent"),
+        laundryPaymentStatus: data.noBalanceDue ? "Final Balance Paid" : (data.paymentStatus || "Final Invoice Sent"),
         laundryFinalInvoiceUrl: data.invoiceUrl || prev.laundryFinalInvoiceUrl,
         laundryFinalInvoicePdf: data.invoicePdf || prev.laundryFinalInvoicePdf,
         laundryFinalInvoiceId: data.invoiceId || prev.laundryFinalInvoiceId,
         laundryFinalInvoiceNumber: data.invoiceNumber || prev.laundryFinalInvoiceNumber,
         laundryFinalCheckoutUrl: data.url || data.invoiceUrl || prev.laundryFinalCheckoutUrl,
         laundryFinalCheckoutSessionId: data.sessionId || prev.laundryFinalCheckoutSessionId,
+        laundryFinalInvoiceStatus: data.autoChargeSucceeded ? "paid" : prev.laundryFinalInvoiceStatus,
+        laundryFinalInvoiceAmountDue: typeof data.balanceDue === "number" ? Math.round(data.balanceDue * 100) : prev.laundryFinalInvoiceAmountDue,
+        laundryFinalInvoiceAmountPaid: typeof data.amountPaid === "number" ? Math.round(data.amountPaid * 100) : prev.laundryFinalInvoiceAmountPaid,
         laundryDryWeightLbs: toNumber(laundryDryWeightLbs),
         laundryRatePerLb: toNumber(laundryRatePerLb),
         laundryAddOnsAmount: toNumber(laundryAddOnsAmount),
@@ -890,7 +904,17 @@ export default function AdminTable({
         laundryBalanceDue,
       } : prev);
       setStatusValue(data.noBalanceDue ? "Fully Paid" : (data.status || "Final Invoice Sent"));
-      setLaundryFinalMessage(data.emailError || data.message || (data.emailSent ? "Final balance invoice created and emailed to the customer." : "Final balance invoice created. Copy it and send it manually."));
+      setLaundryFinalMessage(
+        data.emailError ||
+        data.message ||
+        (data.autoChargeSucceeded
+          ? "Final balance invoice created and the saved payment method was charged. The request is now final-balance paid."
+          : data.autoCharge
+            ? "Final balance invoice was created and sent to Stripe for auto-charge. Check the invoice status before delivery."
+            : data.emailSent
+              ? "Final balance invoice created and emailed to the customer."
+              : "Final balance invoice created. Copy it and send it manually.")
+      );
     } catch (error) {
       setLaundryFinalError(error instanceof Error ? error.message : "Unable to create laundry final balance invoice.");
     } finally {
@@ -1028,6 +1052,24 @@ export default function AdminTable({
 
   const showPaymentActions = enablePaymentActions && collectionName === "serviceRequests" && selected;
   const showCustomerStatusActions = collectionName === "serviceRequests" && selected;
+  const selectedLaundryFinalPaymentStatus = String(selected?.laundryPaymentStatus || selected?.paymentStatus || selected?.status || "");
+  const laundryAutoChargeAuthorized = Boolean(
+    selected?.service === "laundry-rescue" &&
+    selected?.laundryAutoChargeAuthorized &&
+    selected?.laundryFinalPaymentCollectionMethod === "auto_charge"
+  );
+  const laundryAutoChargeReady = Boolean(
+    laundryAutoChargeAuthorized &&
+    (selected?.laundryAutoChargeReady || selected?.laundryAutoChargePaymentMethodId)
+  );
+  const laundryFinalAlreadyPaid = Boolean(
+    selected?.service === "laundry-rescue" &&
+    (
+      selectedLaundryFinalPaymentStatus.includes("Final Balance Paid") ||
+      selectedLaundryFinalPaymentStatus.includes("Fully Paid") ||
+      String(selected?.laundryFinalInvoiceStatus || "").toLowerCase() === "paid"
+    )
+  );
   const showLaundryFinalBalance = showPaymentActions && selected?.service === "laundry-rescue";
   const selectedIsCommercial = isCommercialRequest(selected);
   const isCustomCheckoutMode = checkoutMode === "custom";
@@ -1773,6 +1815,15 @@ export default function AdminTable({
                     </div>
                   )}
 
+                  {selected.service === "laundry-rescue" && (
+                    <div className="mt-4 rounded-3xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm leading-6 text-rose-900">
+                      <p className="font-black text-rose-950">Laundry deposit checkout note</p>
+                      <p className="mt-1 font-semibold">
+                        This creates the non-refundable, taxable deposit/minimum checkout. Stripe will ask the customer to choose either auto-charge for the final dry-weight balance or invoice-before-delivery. Deposit paid does not mean fully paid.
+                      </p>
+                    </div>
+                  )}
+
                   <div className="mt-4 grid gap-3 md:grid-cols-2">
                     <button
                       type="button"
@@ -1823,14 +1874,53 @@ export default function AdminTable({
               <div className="mb-5 rounded-3xl border border-[#d8c18f] bg-white p-5 shadow-sm">
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                   <div className="max-w-2xl">
-                    <p className="text-xs font-black uppercase tracking-[0.2em] text-[#b98a2f]">Laundry final balance</p>
-                    <h4 className="mt-1 text-xl font-black text-[#075c58]">Bill the remaining balance after dry weigh-in</h4>
+                    <p className="text-xs font-black uppercase tracking-[0.2em] text-[#b98a2f]">
+                      {laundryAutoChargeAuthorized ? "Laundry auto-charge final balance" : "Laundry final balance"}
+                    </p>
+                    <h4 className="mt-1 text-xl font-black text-[#075c58]">
+                      {laundryAutoChargeAuthorized ? "Create invoice + auto-charge saved card" : "Send final invoice before delivery"}
+                    </h4>
                     <p className="mt-2 text-sm leading-6 text-slate-700">
-                      Enter the dry weight, rate, add-ons, and deposit credit. NestHelper calculates the balance and creates a Stripe invoice with line-item details for the remaining amount only.
+                      {laundryAutoChargeAuthorized
+                        ? "The customer chose auto-charge during deposit checkout. Enter the dry weight, rate, add-ons, and deposit credit; NestHelper creates an itemized Stripe invoice and charges the saved payment method instead of showing a manual sender section."
+                        : "The customer chose invoice-before-delivery, or no auto-charge authorization is saved. Enter the dry weight, rate, add-ons, and deposit credit; NestHelper creates a Stripe invoice with line-item details for the remaining taxable balance only."}
                     </p>
                   </div>
                   <StatusBadge status={String(selected.laundryPaymentStatus || selected.paymentStatus || selected.status || "New")} />
                 </div>
+
+                <div className="mt-4 grid gap-3 md:grid-cols-2">
+                  <div className="rounded-2xl border border-[#eadfc8] bg-[#fbf6ea] p-4 text-sm leading-6 text-slate-700">
+                    <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Customer final-payment choice</p>
+                    <p className="mt-1 font-black text-[#075c58]">{selected.laundryFinalPaymentPreferenceLabel || "Not captured yet"}</p>
+                    <p className="mt-1 text-xs font-semibold text-slate-600">
+                      The deposit/minimum is non-refundable and taxable. The final invoice applies the pre-tax deposit as a credit so Stripe only taxes the remaining final balance.
+                    </p>
+                  </div>
+                  {laundryAutoChargeAuthorized ? (
+                    <div className={`rounded-2xl border p-4 text-sm leading-6 ${laundryAutoChargeReady ? "border-emerald-100 bg-emerald-50 text-emerald-900" : "border-amber-200 bg-amber-50 text-amber-900"}`}>
+                      <p className="text-xs font-black uppercase tracking-[0.16em]">Auto-charge status</p>
+                      <p className="mt-1 font-black">{laundryAutoChargeReady ? "Saved Stripe payment method ready" : "Auto-charge was selected, but the saved card is missing"}</p>
+                      <p className="mt-1 text-xs font-semibold">
+                        {laundryAutoChargeReady
+                          ? "The final action below will create the invoice and charge the saved card. Do not send a separate final invoice unless auto-charge fails."
+                          : selected.laundryAutoChargeError || "Use a manual invoice or have the customer re-authorize the laundry deposit checkout before auto-charging."}
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900">
+                      <p className="text-xs font-black uppercase tracking-[0.16em]">Hold until paid</p>
+                      <p className="mt-1 font-black">Send the final invoice before delivery</p>
+                      <p className="mt-1 text-xs font-semibold">Use the final invoice buttons below. Laundry should not be released until the invoice is fully paid.</p>
+                    </div>
+                  )}
+                </div>
+
+                {laundryFinalAlreadyPaid && (
+                  <p className="mt-4 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">
+                    This request already shows the final laundry balance as paid. Do not create another final invoice or auto-charge unless you intentionally need a correction.
+                  </p>
+                )}
 
                 <div className="mt-4 grid gap-3 md:grid-cols-4">
                   <label className="grid gap-2 text-sm font-bold text-slate-700">
@@ -1863,7 +1953,7 @@ export default function AdminTable({
                     />
                   </label>
                   <label className="grid gap-2 text-sm font-bold text-slate-700">
-                    Deposit credit
+                    Deposit credit before tax
                     <input
                       value={laundryDepositCredit}
                       onChange={(e) => setLaundryDepositCredit(e.target.value)}
@@ -1875,15 +1965,15 @@ export default function AdminTable({
 
                 <div className="mt-4 grid gap-3 rounded-2xl bg-[#fbf6ea] p-4 text-sm md:grid-cols-3">
                   <div>
-                    <p className="font-black uppercase tracking-[0.14em] text-[#b98a2f]">Laundry total</p>
+                    <p className="font-black uppercase tracking-[0.14em] text-[#b98a2f]">Laundry total before tax</p>
                     <p className="mt-1 text-xl font-black text-[#075c58]">{formatMoney(laundrySubtotal)}</p>
                   </div>
                   <div>
-                    <p className="font-black uppercase tracking-[0.14em] text-[#b98a2f]">Deposit credit</p>
+                    <p className="font-black uppercase tracking-[0.14em] text-[#b98a2f]">Deposit credit before tax</p>
                     <p className="mt-1 text-xl font-black text-[#075c58]">-{formatMoney(toNumber(laundryDepositCredit))}</p>
                   </div>
                   <div>
-                    <p className="font-black uppercase tracking-[0.14em] text-[#b98a2f]">Balance due</p>
+                    <p className="font-black uppercase tracking-[0.14em] text-[#b98a2f]">Final taxable balance</p>
                     <p className="mt-1 text-xl font-black text-[#075c58]">{formatMoney(laundryBalanceDue)}</p>
                   </div>
                 </div>
@@ -1893,34 +1983,50 @@ export default function AdminTable({
                   <textarea
                     value={laundryFinalNote}
                     onChange={(e) => setLaundryFinalNote(e.target.value)}
-                    placeholder="Example: 24 lbs dry weight, fragrance-free detergent, low heat dry. Deposit has already been credited."
+                    placeholder="Example: 24 lbs dry weight, fragrance-free detergent, low heat dry. Deposit has already been credited before tax."
                     rows={3}
                     className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
                   />
                 </label>
 
-                <div className="mt-4 grid gap-3 md:grid-cols-2">
-                  <button
-                    type="button"
-                    disabled={laundryFinalBusy}
-                    onClick={() => createLaundryFinalBalance(true)}
-                    className={getAdminActionClass("primary")}
-                  >
-                    {laundryFinalBusy ? <><ActionSpinner /> Creating...</> : "Create + email final invoice"}
-                  </button>
-                  <button
-                    type="button"
-                    disabled={laundryFinalBusy}
-                    onClick={() => createLaundryFinalBalance(false)}
-                    className={getAdminActionClass("secondary")}
-                  >
-                    Create final invoice only
-                  </button>
-                </div>
+                {laundryAutoChargeAuthorized ? (
+                  <div className="mt-4">
+                    <button
+                      type="button"
+                      disabled={laundryFinalBusy || laundryFinalAlreadyPaid || !laundryAutoChargeReady}
+                      onClick={() => createLaundryFinalBalance(false)}
+                      className={getAdminActionClass("primary")}
+                    >
+                      {laundryFinalBusy ? <><ActionSpinner /> Charging...</> : "Create invoice + auto-charge saved card"}
+                    </button>
+                    {!laundryAutoChargeReady && (
+                      <p className="mt-2 text-xs font-bold text-amber-800">Auto-charge is not ready, so the charge button is disabled to avoid a failed or duplicate billing attempt.</p>
+                    )}
+                  </div>
+                ) : (
+                  <div className="mt-4 grid gap-3 md:grid-cols-2">
+                    <button
+                      type="button"
+                      disabled={laundryFinalBusy || laundryFinalAlreadyPaid}
+                      onClick={() => createLaundryFinalBalance(true)}
+                      className={getAdminActionClass("primary")}
+                    >
+                      {laundryFinalBusy ? <><ActionSpinner /> Creating...</> : "Create + email final invoice"}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={laundryFinalBusy || laundryFinalAlreadyPaid}
+                      onClick={() => createLaundryFinalBalance(false)}
+                      className={getAdminActionClass("secondary")}
+                    >
+                      Create final invoice only
+                    </button>
+                  </div>
+                )}
 
                 {selected.laundryFinalCheckoutUrl && (
                   <div className="mt-4 rounded-2xl border border-[#eadfc8] bg-[#fbf6ea] p-4">
-                    <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Current final balance invoice link</p>
+                    <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Current final balance invoice / receipt link</p>
                     <p className="mt-2 break-all text-sm text-[#075c58]">{selected.laundryFinalCheckoutUrl}</p>
                     <div className="mt-3 flex flex-wrap gap-2">
                       <a href={selected.laundryFinalCheckoutUrl} target="_blank" rel="noreferrer" className="rounded-full bg-[#075c58] px-4 py-2 text-xs font-black text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-[#064b48]">Open final invoice</a>
@@ -1936,6 +2042,7 @@ export default function AdminTable({
                 {laundryFinalError && <p className="mt-3 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{laundryFinalError}</p>}
               </div>
             )}
+
 
             {showPaymentActions && (
               <div className="mb-5 rounded-3xl border border-[#d8c18f] bg-[#fbf6ea] p-5 shadow-sm">

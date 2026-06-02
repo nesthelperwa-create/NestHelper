@@ -63,32 +63,37 @@ For sandbox testing, `ENABLE_STRIPE_AUTOMATIC_TAX=false` lets checkout links wor
 
 ## Laundry Rescue deposit + final balance flow
 
-Laundry Rescue is now treated differently from flat-price services.
+Laundry Rescue is treated differently from flat-price services.
 
 1. Admin reviews the Laundry Rescue request.
-2. Admin sends the normal Stripe checkout link. For Laundry Rescue, this is the deposit/minimum only.
-3. When the deposit checkout succeeds, the webhook marks the request as `Deposit Paid` instead of fully `Paid`.
-4. After pickup, admin dry-weighs the laundry.
-5. In the admin request detail view, use the **Laundry final balance** section:
+2. Admin sends the normal quick checkout link. For Laundry Rescue, this is the non-refundable taxable deposit/minimum only.
+3. During deposit checkout, Stripe asks the customer to choose one final-balance option:
+   - Auto-charge my saved card after dry weight is confirmed
+   - Send me the final invoice link before delivery
+4. When the deposit checkout succeeds, the webhook marks the request as `Deposit Paid - Final Pending` instead of fully `Paid`.
+5. After pickup, admin dry-weighs the laundry.
+6. In the admin request detail view, use the **Laundry final balance** section:
    - Dry weight lbs
    - Rate per lb
    - Add-ons / bulky items
-   - Deposit credit
-6. NestHelper calculates:
+   - Deposit credit before tax
+7. NestHelper calculates:
 
 ```text
-Final laundry total = dry weight × rate per lb + add-ons
-Final balance due = final laundry total - deposit credit
+Final laundry subtotal before tax = dry weight × rate per lb + add-ons
+Final taxable balance = final laundry subtotal before tax - pre-tax deposit credit
 ```
 
-7. Admin sends the final balance Stripe checkout link.
-8. When final balance checkout succeeds, the webhook marks the request as `Fully Paid` and `Final Balance Paid`.
+8. NestHelper creates the final balance as a Stripe Invoice so the customer/admin can see the breakdown.
+9. If the customer chose auto-charge and Stripe saved the payment method, the dashboard shows only **Create invoice + auto-charge saved card**. The manual sender buttons are hidden to avoid double charging.
+10. If the customer chose invoice-before-delivery, admin sends the final Stripe invoice. Laundry is held until the final invoice is fully paid.
+11. When the final invoice is paid, the webhook marks the request as `Fully Paid` and `Final Balance Paid`.
 
 Use standard Laundry Rescue values unless you intentionally honor a beta/founding rate:
 
 ```text
 Standard rate: $2.99/lb
-Standard deposit/minimum credit: $59
+Standard deposit/minimum credit before tax: $59
 Founding/Beta rate: $2.49/lb
-Founding/Beta deposit/minimum credit: $49
+Founding/Beta deposit/minimum credit before tax: $49
 ```

@@ -101,14 +101,14 @@ export default function ServicesPage() {
             <p className="pill-label w-fit"><Scale size={15} /> Laundry Rescue</p>
             <h2 className="text-balance mt-4 text-3xl font-black text-nest-teal sm:text-4xl">Deposit first. Dry weigh-in after pickup. Final balance after we know the real amount.</h2>
             <p className="mt-4 max-w-4xl text-lg font-medium leading-8 text-nest-ink/72">
-              Laundry Rescue uses a minimum deposit first. At pickup, laundry is weighed dry using a portable scale. The final total is calculated from dry weight, add-ons, and any bulky quoted items, then the deposit is credited toward the final balance.
+              Laundry Rescue uses a non-refundable minimum deposit first. At pickup, laundry is weighed dry using a portable scale. The final total is calculated from dry weight, add-ons, and any bulky quoted items, then the pre-tax deposit is credited toward the final balance. During checkout, customers can choose auto-charge for the final balance or invoice-before-delivery.
             </p>
           </div>
 
           <div className="grid gap-5 p-7 sm:p-8 lg:grid-cols-3">
-            <LaundryStep icon={<CreditCard />} title="1. Deposit" text="$59 standard minimum/deposit secures the request after approval." />
+            <LaundryStep icon={<CreditCard />} title="1. Deposit" text="$59 standard non-refundable minimum/deposit secures the request after approval and is credited before tax toward the final total." />
             <LaundryStep icon={<Scale />} title="2. Dry weigh-in" text="Laundry is weighed dry at pickup so pricing is transparent." />
-            <LaundryStep icon={<ClipboardCheck />} title="3. Final balance" text="Any remaining balance is sent after weight and add-ons are confirmed." />
+            <LaundryStep icon={<ClipboardCheck />} title="3. Final balance" text="Any remaining balance is handled by the checkout option selected: auto-charge after review or invoice before delivery." />
           </div>
 
           <div className="border-t border-nest-gold/12 p-7 sm:p-8">

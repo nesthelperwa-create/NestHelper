@@ -35,16 +35,16 @@ function formatMoney(amountTotal?: number | null, currency?: string | null) {
 }
 
 function getPaymentCopy(paymentStatus: string) {
-  if (paymentStatus === "Deposit Paid") {
+  if (paymentStatus === "Deposit Paid" || paymentStatus === "Deposit Paid - Final Pending") {
     return {
       subject: "Laundry Rescue deposit received",
       eyebrow: "Deposit received",
       title: "Your Laundry Rescue deposit was received.",
-      intro: "Thank you — we received your Laundry Rescue deposit/minimum. This deposit is credited toward your final laundry total after dry weigh-in.",
+      intro: "Thank you — we received your non-refundable Laundry Rescue deposit/minimum. This deposit is credited toward your final laundry total after dry weigh-in.",
       nextSteps: [
         "NestHelper will confirm pickup/return details and any prep notes.",
         "Your laundry will be dry-weighed at pickup.",
-        "If the final total is higher than your deposit, we’ll send a final balance link after weigh-in.",
+        "If the final total is higher than your deposit, the final balance is handled based on the option selected during checkout: auto-charge the saved card or send an invoice link before delivery.",
       ],
     };
   }

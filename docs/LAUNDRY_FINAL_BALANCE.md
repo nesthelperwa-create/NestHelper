@@ -1,18 +1,27 @@
 # Laundry Rescue Final Balance
 
-Laundry Rescue now supports a two-step payment flow.
+Laundry Rescue uses a two-step payment flow: a non-refundable taxable deposit/minimum first, then an itemized final Stripe invoice after dry weigh-in.
 
 ## Step 1: Deposit / minimum
 
-The normal admin payment button sends the first Stripe checkout link.
+The normal admin quick checkout button sends the first Stripe Checkout link.
 
-For Laundry Rescue, that first payment should be treated as:
+For Laundry Rescue, that first checkout is only the deposit/minimum. It should be treated as:
 
 ```text
-Deposit Paid
+Deposit Checkout Sent → Deposit Paid - Final Pending
 ```
 
 not fully paid.
+
+The deposit checkout is tax-exclusive and uses Stripe automatic tax when `ENABLE_STRIPE_AUTOMATIC_TAX=true`. The deposit/minimum is non-refundable and is credited toward the final laundry total before tax.
+
+During Stripe checkout, the customer must choose one final-balance option:
+
+```text
+Auto-charge my saved card after dry weight is confirmed
+Send me the final invoice link before delivery
+```
 
 ## Step 2: Dry weigh-in and final balance
 
@@ -23,19 +32,38 @@ Use the **Laundry final balance** section to enter:
 - Dry weight lbs
 - Rate per lb
 - Add-ons / bulky items
-- Deposit credit
+- Deposit credit before tax
 - Optional note
 
 The site calculates:
 
 ```text
-Laundry subtotal = dry weight × rate per lb + add-ons
-Balance due = laundry subtotal - deposit credit
+Laundry subtotal before tax = dry weight × rate per lb + add-ons
+Final taxable balance = laundry subtotal before tax - pre-tax deposit credit
 ```
 
-If there is a balance due, the admin can create and email a Stripe checkout link for that remaining amount.
+The final balance is created as a Stripe Invoice with line-item details, not a plain Checkout link. The invoice uses positive taxable line items and an invoice discount/coupon for the non-refundable deposit credit, so Stripe taxes only the remaining final balance after the deposit credit.
 
-If the balance due is zero or negative, the request is marked `Fully Paid` without creating another checkout link.
+## Auto-charge customers
+
+If the customer selected auto-charge during the deposit checkout and Stripe saved a reusable payment method, the dashboard shows one action:
+
+```text
+Create invoice + auto-charge saved card
+```
+
+The manual final invoice sender buttons are hidden so the customer is not double charged.
+
+## Invoice-before-delivery customers
+
+If the customer selected invoice-before-delivery, the dashboard shows:
+
+```text
+Create + email final invoice
+Create final invoice only
+```
+
+Laundry should not be released until the final invoice is fully paid.
 
 ## Statuses
 
@@ -44,9 +72,13 @@ Recommended Laundry Rescue statuses:
 ```text
 New
 Approved
-Checkout Sent
-Deposit Paid
-Final Balance Sent
+Deposit Checkout Sent
+Deposit Paid - Final Pending
+Final Invoice Created
+Final Invoice Sent
+Final Auto-Charge Processing
+Final Auto-Charge Failed
+Final Balance Paid
 Fully Paid
 Scheduled
 Completed
@@ -54,4 +86,4 @@ Completed
 
 ## Important
 
-The final balance link uses Stripe dynamic `price_data`, so you do not need to create a separate Stripe product/price for every laundry order.
+Tax only shows when Stripe Tax is set up and `ENABLE_STRIPE_AUTOMATIC_TAX=true` in the deployed environment. For sandbox testing, it may be disabled until Stripe live/tax setup is complete.

@@ -75,6 +75,18 @@ function buildAddress(data: Record<string, unknown>) {
   return [getString(data.address), getString(data.city), getString(data.zip)].filter(Boolean).join(", ");
 }
 
+function getCheckoutCustomFieldValue(session: Stripe.Checkout.Session, key: string) {
+  const fields = Array.isArray(session.custom_fields) ? session.custom_fields : [];
+  const field = fields.find((item: any) => item.key === key) as any;
+  return getString(field?.dropdown?.value || field?.text?.value || field?.numeric?.value);
+}
+
+function getLaundryFinalPreferenceLabel(preference: string) {
+  if (preference === "auto_charge") return "Auto-charge saved card after dry weigh-in";
+  if (preference === "invoice_before_delivery") return "Send final invoice link before delivery";
+  return "Not selected";
+}
+
 function getEmailResultError(result: unknown) {
   if (!result || typeof result !== "object") return "";
   const record = result as { skipped?: boolean; error?: unknown };
@@ -456,8 +468,10 @@ export async function POST(request: Request) {
         const isCustomInitialPayment = getString(session.metadata?.customInitialPayment) === "true";
         const checkoutServicePeriodLabel = getString(session.metadata?.servicePeriodLabel) || getString(existingData.checkoutServicePeriodLabel) || getString(existingData.familyInvoiceServicePeriodLabel) || getString(existingData.commercialInvoiceServicePeriodLabel);
         const isLaundryDeposit = serviceId === "laundry-rescue" && !isLaundryFinalBalance && !isAdditionalPayment;
-        const status = isAdditionalPayment ? "Additional Paid" : isLaundryFinalBalance ? "Fully Paid" : isLaundryDeposit ? "Deposit Paid" : "Paid";
-        const paymentStatus = isAdditionalPayment ? "Additional Paid" : isLaundryFinalBalance ? "Final Balance Paid" : isLaundryDeposit ? "Deposit Paid" : "Paid";
+        const laundryFinalPreference = isLaundryDeposit ? getCheckoutCustomFieldValue(session, "laundry_final_payment_preference") || "invoice_before_delivery" : "";
+        const laundryAutoChargeAuthorized = laundryFinalPreference === "auto_charge";
+        const status = isAdditionalPayment ? "Additional Paid" : isLaundryFinalBalance ? "Fully Paid" : isLaundryDeposit ? "Deposit Paid - Final Pending" : "Paid";
+        const paymentStatus = isAdditionalPayment ? "Additional Paid" : isLaundryFinalBalance ? "Final Balance Paid" : isLaundryDeposit ? "Deposit Paid - Final Pending" : "Paid";
 
         const updatePayload: Record<string, unknown> = {
           status,
@@ -507,11 +521,54 @@ export async function POST(request: Request) {
         }
 
         if (isLaundryDeposit) {
-          updatePayload.laundryPaymentStatus = "Deposit Paid";
+          updatePayload.laundryPaymentStatus = "Deposit Paid - Final Pending";
+          updatePayload.laundryDepositStatus = "Deposit Paid";
           updatePayload.depositPaidAmountTotal = session.amount_total ?? null;
+          updatePayload.depositPaidAmountSubtotal = session.amount_subtotal ?? null;
           updatePayload.depositPaidAt = FieldValue.serverTimestamp();
           updatePayload.laundryDepositAmountTotal = session.amount_total ?? null;
+          updatePayload.laundryDepositAmountSubtotal = session.amount_subtotal ?? null;
+          updatePayload.laundryDepositTaxAmount = Math.max(0, (session.amount_total ?? 0) - (session.amount_subtotal ?? 0));
           updatePayload.laundryDepositPaidAt = FieldValue.serverTimestamp();
+          updatePayload.laundryDepositNonRefundable = true;
+          updatePayload.laundryFinalPaymentPreference = laundryFinalPreference;
+          updatePayload.laundryFinalPaymentPreferenceLabel = getLaundryFinalPreferenceLabel(laundryFinalPreference);
+          updatePayload.laundryAutoChargeAuthorized = laundryAutoChargeAuthorized;
+          updatePayload.laundryFinalPaymentCollectionMethod = laundryAutoChargeAuthorized ? "auto_charge" : "send_invoice";
+          updatePayload.laundryFinalPaymentPreferenceCapturedAt = FieldValue.serverTimestamp();
+          updatePayload.laundryDepositStripeCustomerId = typeof session.customer === "string" ? session.customer : "";
+        }
+
+        if (isLaundryDeposit && laundryAutoChargeAuthorized && typeof session.customer === "string" && typeof session.payment_intent === "string") {
+          try {
+            const paymentIntent = await stripe.paymentIntents.retrieve(session.payment_intent);
+            const paymentMethodId = typeof paymentIntent.payment_method === "string" ? paymentIntent.payment_method : "";
+
+            if (paymentMethodId) {
+              await stripe.customers.update(session.customer, {
+                invoice_settings: { default_payment_method: paymentMethodId },
+                metadata: {
+                  requestId,
+                  serviceId: "laundry-rescue",
+                  laundryAutoChargeAuthorized: "true",
+                  laundryFinalPaymentPreference: laundryFinalPreference,
+                },
+              });
+
+              updatePayload.laundryAutoChargeReady = true;
+              updatePayload.laundryAutoChargePaymentMethodSaved = true;
+              updatePayload.laundryAutoChargePaymentMethodId = paymentMethodId;
+            } else {
+              updatePayload.laundryAutoChargeReady = false;
+              updatePayload.laundryAutoChargePaymentMethodSaved = false;
+              updatePayload.laundryAutoChargeError = "Customer chose auto-charge, but Stripe did not return a reusable payment method.";
+            }
+          } catch (error) {
+            console.error("Unable to save laundry auto-charge payment method", error);
+            updatePayload.laundryAutoChargeReady = false;
+            updatePayload.laundryAutoChargePaymentMethodSaved = false;
+            updatePayload.laundryAutoChargeError = "Customer chose auto-charge, but NestHelper could not save the Stripe payment method for the final invoice.";
+          }
         }
 
         if (isLaundryFinalBalance) {
@@ -602,8 +659,10 @@ export async function POST(request: Request) {
 
             const result = await sendAdminEmail({
               subject: `Stripe Payment Received: ${serviceTitle}`,
-              title: "Payment received — ready to schedule",
-              intro: "A customer completed Stripe checkout. The request is now marked paid in the admin dashboard and is ready for scheduling follow-up.",
+              title: isLaundryDeposit ? "Laundry deposit paid — final balance still pending" : "Payment received — ready to schedule",
+              intro: isLaundryDeposit
+                ? "A customer paid the non-refundable Laundry Rescue deposit/minimum. The request is not fully paid yet; dry weight/add-ons still need a final balance before delivery."
+                : "A customer completed Stripe checkout. The request is now marked paid in the admin dashboard and is ready for scheduling follow-up.",
               adminPath: "/admin/requests",
               to: routedPaymentInbox,
               routeLabel: routedPaymentLabel,
@@ -616,6 +675,9 @@ export async function POST(request: Request) {
                 Service: serviceTitle,
                 "Payment type": adminAlert.paymentLabel,
                 "Payment status": paymentStatus,
+                "Laundry final preference": isLaundryDeposit ? getLaundryFinalPreferenceLabel(laundryFinalPreference) : "",
+                "Auto-charge saved": isLaundryDeposit ? (laundryAutoChargeAuthorized ? "Yes — hide manual final invoice sender unless auto-charge fails" : "No — send final invoice before delivery") : "",
+                "Tax collected": formatMoney(Math.max(0, (session.amount_total ?? 0) - (session.amount_subtotal ?? 0)), session.currency),
                 "Additional reason": getString(session.metadata?.additionalReason),
                 "Additional note": getString(session.metadata?.additionalNote),
                 "Service period": checkoutServicePeriodLabel,

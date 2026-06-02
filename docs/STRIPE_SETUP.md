@@ -13,10 +13,12 @@ NestHelper should stay request-first during beta:
 Laundry:
 
 1. Customer submits Laundry Rescue request.
-2. NestHelper approves pickup and sends a deposit link.
-3. Laundry is dry-weighed at pickup.
-4. Add-ons are confirmed.
-5. Final balance is sent by Stripe Invoice or another approved Stripe payment link.
+2. NestHelper approves pickup and sends a non-refundable taxable deposit link.
+3. Stripe checkout asks the customer to choose auto-charge for the final balance or invoice-before-delivery.
+4. Laundry is dry-weighed at pickup.
+5. Add-ons are confirmed.
+6. Final balance is created as a Stripe Invoice with line-item breakdown.
+7. If auto-charge was authorized and a saved payment method is available, the invoice is charged automatically. Otherwise, the final invoice is emailed before delivery and laundry is held until paid.
 
 ## What the code now supports
 
@@ -26,8 +28,9 @@ The site includes an admin-only payment flow:
 - The admin dashboard shows payment actions on `/admin/requests`.
 - Admin can choose Standard price or Founding/Beta price.
 - Admin can create and email the checkout link, or create the link only and copy it manually.
-- The request status changes to `Checkout Sent`.
+- The request status changes to `Checkout Sent`, or `Deposit Checkout Sent` for Laundry Rescue.
 - `/api/stripe/webhook` can mark the request `Paid` after successful checkout when the Stripe webhook is configured.
+- Laundry deposit checkout marks the request `Deposit Paid - Final Pending`, not fully paid.
 
 Public checkout remains disabled unless `ENABLE_PUBLIC_CHECKOUT=true`. Keep it disabled for the concierge beta.
 
@@ -47,7 +50,8 @@ Create standard and Founding Family/Beta prices for:
 - 3-Hour Family Reset
 - 4-Hour Helper Block
 - Errand Helper
-- Laundry Rescue Deposit
+
+Laundry Rescue deposit/minimum now uses dynamic Stripe `price_data` so it can stay tax-exclusive and support custom deposit amounts. You no longer need separate Laundry Rescue Deposit price IDs unless you want to keep them for your own Stripe reporting.
 
 Recommended env vars:
 
@@ -62,9 +66,8 @@ STRIPE_PRICE_HELPER_BLOCK_STANDARD=price_...
 STRIPE_PRICE_HELPER_BLOCK_FOUNDING=price_...
 STRIPE_PRICE_ERRAND_STANDARD=price_...
 STRIPE_PRICE_ERRAND_FOUNDING=price_...
-STRIPE_PRICE_LAUNDRY_DEPOSIT_STANDARD=price_...
-STRIPE_PRICE_LAUNDRY_DEPOSIT_FOUNDING=price_...
 ENABLE_PUBLIC_CHECKOUT=false
+ENABLE_STRIPE_AUTOMATIC_TAX=true
 ```
 
 ## Vercel env vars
@@ -85,10 +88,11 @@ Add a Stripe webhook endpoint:
 https://www.nesthelperwa.com/api/stripe/webhook
 ```
 
-Recommended event at launch:
+Recommended events at launch:
 
 ```text
 checkout.session.completed
+invoice.paid
 ```
 
 Copy the webhook signing secret from Stripe and save it in Vercel as:
@@ -107,7 +111,8 @@ Use `FOUNDINGFAMILY` or a similar code during beta. Because discounts differ by 
 
 - Do not turn on public checkout yet.
 - Do not send a payment link until you approve service area, scope, safety, pets/access, and availability.
-- For Laundry Rescue, the first checkout should usually be a deposit or minimum. Send the final balance later after dry weigh-in and add-ons.
+- For Laundry Rescue, the first checkout should be a non-refundable deposit/minimum. The final balance should be a Stripe Invoice after dry weigh-in and add-ons.
+- For live tax, complete Stripe Tax setup and set `ENABLE_STRIPE_AUTOMATIC_TAX=true`; otherwise tax will not be added in checkout/invoices.
 
 
 ## Sandbox tax note

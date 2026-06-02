@@ -75,14 +75,14 @@ const baseSuccessContent: Record<PaymentType, SuccessContent> = {
   laundry_deposit: {
     eyebrow: "Laundry deposit received",
     title: "Your Laundry Rescue deposit was successful.",
-    text: "Thanks — your Laundry Rescue deposit/minimum was received. We’ll confirm pickup details, dry-weigh laundry at pickup, and send a final balance link after weight, deposit credit, and add-ons are reviewed.",
+    text: "Thanks — your non-refundable Laundry Rescue deposit/minimum was received. We’ll confirm pickup details, dry-weigh laundry at pickup, and handle the final balance using the option you selected during checkout: auto-charge after review or invoice-before-delivery.",
     status: "Deposit paid ✓",
     steps: [
       "NestHelper confirms the pickup window, pickup spot, and laundry notes.",
       "Laundry is dry-weighed at pickup so the total can be calculated clearly.",
-      "A final balance invoice/payment link is sent after weight, deposit credit, and approved add-ons are confirmed.",
+      "If you selected auto-charge, NestHelper may charge the saved payment method after dry weight, deposit credit, tax, and approved add-ons are confirmed. If you selected invoice-before-delivery, a final invoice link is sent before delivery.",
     ],
-    note: "This is not always the final Laundry Rescue total. Dry weight, add-ons, bulky items, rush options, or extra work can change the final balance. If additional approved work is needed after the final balance, NestHelper may send a separate additional invoice/payment link.",
+    note: "This deposit is non-refundable and credited before tax toward the final Laundry Rescue total. Dry weight, add-ons, bulky items, rush options, or extra work can change the final balance. Laundry is not released until the final balance is fully paid.",
     closing: "You can close this tab. Watch for Laundry Rescue pickup details from NestHelper.",
   },
   laundry_final_balance: {

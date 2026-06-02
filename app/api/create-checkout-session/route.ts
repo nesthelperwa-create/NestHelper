@@ -16,8 +16,12 @@ export async function POST(req: Request) {
   const body = await req.json().catch(() => null) as { serviceId?: string; mode?: "standard" | "founding"; requestId?: string } | null;
   const serviceId = body?.serviceId;
   const mode = normalizeStripePriceMode(body?.mode);
+  if (!serviceId) return NextResponse.json({ error: "Missing service." }, { status: 400 });
+  if (serviceId === "laundry-rescue") {
+    return NextResponse.json({ error: "Laundry Rescue checkout must be sent from the admin dashboard so the deposit/final-balance choice and tax flow are captured correctly." }, { status: 403 });
+  }
   const priceId = getStripePriceId(serviceId, mode);
-  if (!serviceId || !priceId) return NextResponse.json({ error: "Missing service or Stripe price ID." }, { status: 400 });
+  if (!priceId) return NextResponse.json({ error: "Missing Stripe price ID." }, { status: 400 });
 
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
   const requestId = body?.requestId || "manual-approved-request";

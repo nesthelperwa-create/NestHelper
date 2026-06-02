@@ -62,19 +62,75 @@ function getAddress(data: Record<string, unknown>): Stripe.AddressParam | undefi
 function getDepositCreditFromRecord(data: Record<string, unknown>, providedDepositCredit: number) {
   if (providedDepositCredit > 0) return providedDepositCredit;
 
+  const subtotalCents = cleanNumber(data.laundryDepositAmountSubtotal) || cleanNumber(data.depositPaidAmountSubtotal);
+  if (subtotalCents > 0) return subtotalCents / 100;
+
   const candidateCents = [
     cleanNumber(data.laundryDepositCreditCents),
-    cleanNumber(data.laundryDepositAmountTotal),
-    cleanNumber(data.depositPaidAmountTotal),
+    cleanNumber(data.laundryDepositExpectedAmountCents),
   ].find((value) => value > 0);
 
   if (candidateCents) return candidateCents / 100;
 
-  const amountTotal = cleanNumber(data.amountTotal);
-  const paymentStatus = getString(data.paymentStatus || data.status);
-  if (amountTotal > 0 && ["Paid", "Deposit Paid"].includes(paymentStatus)) return amountTotal / 100;
+  const amountTotal = cleanNumber(data.amountSubtotal) || cleanNumber(data.amountTotal);
+  const paymentStatus = getString(data.paymentStatus || data.laundryPaymentStatus || data.status);
+  if (amountTotal > 0 && ["Paid", "Deposit Paid", "Deposit Paid - Final Pending"].includes(paymentStatus)) return amountTotal / 100;
 
   return getString(data.paymentMode) === "founding" ? 49 : 59;
+}
+
+function shouldAutoChargeFinalBalance(data: Record<string, unknown>) {
+  return Boolean(data.laundryAutoChargeAuthorized) && getString(data.laundryFinalPaymentCollectionMethod) === "auto_charge";
+}
+
+function getInvoiceTaxAmount(invoice: Stripe.Invoice) {
+  const totalTaxes = Array.isArray(invoice.total_taxes)
+    ? (invoice.total_taxes as Array<{ amount?: number | null }>).reduce((sum: number, item) => sum + cleanNumber(item.amount), 0)
+    : 0;
+  if (totalTaxes > 0) return totalTaxes;
+
+  const totalDiscounts = Array.isArray(invoice.total_discount_amounts)
+    ? (invoice.total_discount_amounts as Array<{ amount?: number | null }>).reduce((sum: number, item) => sum + cleanNumber(item.amount), 0)
+    : 0;
+  return Math.max(0, cleanNumber(invoice.total) - Math.max(0, cleanNumber(invoice.subtotal) - totalDiscounts));
+}
+
+async function getOrCreateStripeCustomer(data: Record<string, unknown>, requestId: string, fullName: string, email: string) {
+  if (!stripe) throw new Error("Stripe is not configured.");
+
+  const existingCustomerId = getString(data.laundryDepositStripeCustomerId) || getString(data.stripeCustomerId) || getString(data.laundryFinalInvoiceCustomerId);
+  const customerParams: Stripe.CustomerCreateParams = {
+    email,
+    name: fullName,
+    phone: getString(data.phone) || undefined,
+    address: getAddress(data),
+    metadata: { requestId, serviceId: "laundry-rescue" },
+  };
+
+  if (existingCustomerId) {
+    await stripe.customers.update(existingCustomerId, customerParams as Stripe.CustomerUpdateParams);
+    return existingCustomerId;
+  }
+
+  const customer = await stripe.customers.create(customerParams);
+  return customer.id;
+}
+
+async function createDepositCreditCoupon(requestId: string, depositCredit: number) {
+  if (!stripe) throw new Error("Stripe is not configured.");
+
+  const depositCreditCents = moneyToCents(depositCredit);
+  if (depositCreditCents <= 0) return "";
+
+  const coupon = await stripe.coupons.create({
+    amount_off: depositCreditCents,
+    currency: "usd",
+    duration: "once",
+    name: `Laundry deposit credit ${formatMoney(depositCredit)}`,
+    metadata: { requestId, serviceId: "laundry-rescue", creditType: "non_refundable_deposit_credit" },
+  });
+
+  return coupon.id;
 }
 
 export async function POST(request: Request) {
@@ -127,6 +183,8 @@ export async function POST(request: Request) {
     const laundrySubtotal = laundryBaseAmount + addOnsAmount;
     const balanceDue = Math.max(0, laundrySubtotal - depositCredit);
     const balanceDueCents = moneyToCents(balanceDue);
+    const autoCharge = shouldAutoChargeFinalBalance(data);
+    const savedPaymentMethodId = getString(data.laundryAutoChargePaymentMethodId);
 
     const updateBase = {
       laundryDryWeightLbs: Number(dryWeightLbs.toFixed(2)),
@@ -134,6 +192,7 @@ export async function POST(request: Request) {
       laundryBaseAmount: Number(laundryBaseAmount.toFixed(2)),
       laundryBaseAmountCents: moneyToCents(laundryBaseAmount),
       laundryAddOnsAmount: Number(addOnsAmount.toFixed(2)),
+      laundryAddOnsAmountCents: moneyToCents(addOnsAmount),
       laundryDepositCredit: Number(depositCredit.toFixed(2)),
       laundryDepositCreditCents: moneyToCents(depositCredit),
       laundrySubtotal: Number(laundrySubtotal.toFixed(2)),
@@ -141,6 +200,7 @@ export async function POST(request: Request) {
       laundryBalanceDue: Number(balanceDue.toFixed(2)),
       laundryBalanceDueCents: balanceDueCents,
       laundryFinalBalanceNote: finalBalanceNote,
+      laundryFinalBalanceTaxMode: "Stripe automatic tax on final amount after non-refundable deposit credit",
       updatedAt: FieldValue.serverTimestamp(),
       updatedBy: decoded.email || "admin",
     };
@@ -149,37 +209,57 @@ export async function POST(request: Request) {
       await requestRef.update({
         ...updateBase,
         status: "Fully Paid",
-        paymentStatus: "Fully Paid",
-        laundryPaymentStatus: "Fully Paid",
+        paymentStatus: "Final Balance Paid",
+        laundryPaymentStatus: "Final Balance Paid",
         laundryFinalBalanceCreatedAt: FieldValue.serverTimestamp(),
       });
 
-      return NextResponse.json({ ok: true, noBalanceDue: true, message: "No final balance is due. Request marked Fully Paid." });
+      return NextResponse.json({ ok: true, noBalanceDue: true, message: "No final balance is due. Request marked fully paid." });
     }
 
-    const customer = await stripe.customers.create({
-      email,
-      name: fullName,
-      phone: getString(data.phone) || undefined,
-      address: getAddress(data),
-      metadata: { requestId, serviceId: "laundry-rescue" },
-    });
+    if (autoCharge && !savedPaymentMethodId) {
+      await requestRef.update({
+        ...updateBase,
+        laundryAutoChargeReady: false,
+        laundryAutoChargeError: "Customer chose auto-charge, but no saved Stripe payment method is available. Send a final invoice instead or have the customer re-authorize payment.",
+      });
 
+      return NextResponse.json(
+        {
+          ok: false,
+          error: "Customer chose auto-charge, but no saved Stripe payment method is available. Send a final invoice instead or have the customer re-authorize payment.",
+        },
+        { status: 400 }
+      );
+    }
+
+    const customerId = await getOrCreateStripeCustomer(data, requestId, fullName, email);
+    const couponId = await createDepositCreditCoupon(requestId, depositCredit);
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+    const collectionMethod: "charge_automatically" | "send_invoice" = autoCharge ? "charge_automatically" : "send_invoice";
     const invoice = await stripe.invoices.create({
-      customer: customer.id,
-      collection_method: "send_invoice",
-      days_until_due: 7,
+      customer: customerId,
+      collection_method: collectionMethod,
+      ...(autoCharge ? { default_payment_method: savedPaymentMethodId } : { days_until_due: 7 }),
       automatic_tax: { enabled: enableAutomaticTax },
       auto_advance: false,
-      description: "Laundry Rescue final balance",
-      footer:
-        "This invoice reflects the final Laundry Rescue balance after dry weight, selected add-ons or bulky items, and the deposit/minimum credit already paid.",
+      description: autoCharge ? "Laundry Rescue final balance — auto-charge authorized" : "Laundry Rescue final balance",
+      footer: autoCharge
+        ? "This invoice reflects the final Laundry Rescue balance after dry weight, selected add-ons or bulky items, and the non-refundable deposit/minimum credit already paid. The customer authorized NestHelper to charge the saved payment method for this final balance."
+        : "This invoice reflects the final Laundry Rescue balance after dry weight, selected add-ons or bulky items, and the non-refundable deposit/minimum credit already paid. Laundry is held until the final balance is fully paid.",
+      discounts: couponId ? [{ coupon: couponId }] : undefined,
+      custom_fields: [
+        { name: "Dry weight", value: `${formatNumber(dryWeightLbs)} lb` },
+        { name: "Rate", value: `${formatMoney(ratePerLb)} / lb` },
+        { name: "Deposit credit", value: `-${formatMoney(depositCredit)}` },
+        { name: "Final collection", value: autoCharge ? "Auto-charge authorized" : "Invoice before delivery" },
+      ],
       metadata: {
         requestId,
         serviceId: "laundry-rescue",
         serviceTitle: "Laundry Rescue final balance",
         paymentType: "laundry_final_balance",
+        collectionMethod: autoCharge ? "auto_charge" : "send_invoice",
         dryWeightLbs: String(Number(dryWeightLbs.toFixed(2))),
         ratePerLb: String(Number(ratePerLb.toFixed(2))),
         addOnsAmount: String(Number(addOnsAmount.toFixed(2))),
@@ -190,24 +270,26 @@ export async function POST(request: Request) {
     });
 
     await stripe.invoiceItems.create({
-      customer: customer.id,
+      customer: customerId,
       invoice: invoice.id,
       currency: "usd",
       amount: moneyToCents(laundryBaseAmount),
+      tax_behavior: "exclusive",
       description: [
-        "Laundry Rescue wash, dry, and fold — dry weight",
+        "Laundry Rescue wash, dry, fold, and coordination — dry weight",
         `Calculation: ${formatNumber(dryWeightLbs)} lb × ${formatMoney(ratePerLb)} per lb`,
-        `Dry weight total: ${formatMoney(laundryBaseAmount)}`,
+        `Dry weight total before deposit credit: ${formatMoney(laundryBaseAmount)}`,
       ].join("\n"),
       metadata: { requestId, serviceId: "laundry-rescue", lineType: "dry_weight" },
     });
 
     if (addOnsAmount > 0) {
       await stripe.invoiceItems.create({
-        customer: customer.id,
+        customer: customerId,
         invoice: invoice.id,
         currency: "usd",
         amount: moneyToCents(addOnsAmount),
+        tax_behavior: "exclusive",
         description: [
           "Laundry add-ons / bulky items / approved extra work",
           "Includes approved items such as bulky pieces, rush changes, special handling, extra sorting, stain attention, or other reviewed laundry extras.",
@@ -216,20 +298,6 @@ export async function POST(request: Request) {
           .filter(Boolean)
           .join("\n"),
         metadata: { requestId, serviceId: "laundry-rescue", lineType: "add_ons" },
-      });
-    }
-
-    if (depositCredit > 0) {
-      await stripe.invoiceItems.create({
-        customer: customer.id,
-        invoice: invoice.id,
-        currency: "usd",
-        amount: -moneyToCents(depositCredit),
-        description: [
-          "Deposit/minimum credit already paid",
-          `Credit applied to this final balance: -${formatMoney(depositCredit)}`,
-        ].join("\n"),
-        metadata: { requestId, serviceId: "laundry-rescue", lineType: "deposit_credit" },
       });
     }
 
@@ -246,7 +314,7 @@ export async function POST(request: Request) {
         laundryFinalInvoicePdf: invoicePdf,
         laundryFinalInvoiceAmountDue: finalized.amount_due ?? null,
         laundryFinalInvoiceEmailWarning:
-          "Stripe finalized this laundry final balance invoice at $0.00, so NestHelper did not email it. Review the weight, add-ons, and deposit credit before trying again.",
+          "Stripe finalized this laundry final balance invoice at $0.00, so NestHelper did not email or auto-charge it. Review the weight, add-ons, and deposit credit before trying again.",
         laundryFinalBalanceCreatedAt: FieldValue.serverTimestamp(),
       });
 
@@ -254,23 +322,62 @@ export async function POST(request: Request) {
         {
           ok: false,
           error:
-            "Stripe finalized the laundry final balance invoice at $0.00. The invoice was not emailed. Review the dry weight, add-ons, and deposit credit and try again.",
+            "Stripe finalized the laundry final balance invoice at $0.00. The invoice was not emailed or auto-charged. Review the dry weight, add-ons, and deposit credit and try again.",
         },
         { status: 500 }
       );
     }
 
-    if (!hostedInvoiceUrl) {
+    if (!hostedInvoiceUrl && !autoCharge) {
       return NextResponse.json(
         { ok: false, error: "Stripe created the laundry final balance invoice, but no hosted invoice link was returned." },
         { status: 500 }
       );
     }
 
+    let paidInvoice: Stripe.Invoice | null = null;
+
+    if (autoCharge) {
+      try {
+        paidInvoice = await stripe.invoices.pay(finalized.id, { payment_method: savedPaymentMethodId });
+      } catch (error: any) {
+        console.error("Laundry final auto-charge failed", error);
+        await requestRef.update({
+          ...updateBase,
+          status: "Final Auto-Charge Failed",
+          paymentStatus: "Final Auto-Charge Failed",
+          laundryPaymentStatus: "Final Auto-Charge Failed",
+          laundryFinalInvoiceId: finalized.id,
+          laundryFinalInvoiceNumber: finalized.number || "",
+          laundryFinalInvoiceUrl: hostedInvoiceUrl,
+          laundryFinalInvoicePdf: invoicePdf,
+          laundryFinalInvoiceAmountDue: finalized.amount_due ?? null,
+          laundryFinalInvoiceCollectionMethod: "auto_charge",
+          laundryAutoChargeAttemptedAt: FieldValue.serverTimestamp(),
+          laundryAutoChargeError: error?.message || "Stripe could not auto-charge the saved payment method.",
+          laundryFinalBalanceCreatedAt: FieldValue.serverTimestamp(),
+          laundryFinalBalanceCreatedBy: decoded.email || "admin",
+          laundryFinalCheckoutUrl: hostedInvoiceUrl,
+          laundryFinalCheckoutSessionId: "",
+        });
+
+        return NextResponse.json(
+          {
+            ok: false,
+            error: error?.message || "Stripe could not auto-charge the saved payment method. Use the invoice link or have the customer update payment.",
+            invoiceId: finalized.id,
+            invoiceUrl: hostedInvoiceUrl,
+            invoicePdf,
+          },
+          { status: 500 }
+        );
+      }
+    }
+
     let emailSent = false;
     let emailError = "";
 
-    if (shouldSendEmail && email && hostedInvoiceUrl) {
+    if (!autoCharge && shouldSendEmail && email && hostedInvoiceUrl) {
       try {
         const result = (await sendLaundryFinalBalanceEmail({
           to: email,
@@ -303,42 +410,67 @@ export async function POST(request: Request) {
       }
     }
 
-    const nextStatus = shouldSendEmail && emailSent ? "Final Invoice Sent" : "Final Invoice Created";
+    const autoChargeSucceeded = Boolean(autoCharge && paidInvoice && (paidInvoice.amount_paid ?? 0) > 0 && paidInvoice.status === "paid");
+    const nextStatus = autoCharge
+      ? autoChargeSucceeded
+        ? "Fully Paid"
+        : "Final Auto-Charge Processing"
+      : shouldSendEmail && emailSent
+        ? "Final Invoice Sent"
+        : "Final Invoice Created";
+    const nextPaymentStatus = autoCharge
+      ? autoChargeSucceeded
+        ? "Final Balance Paid"
+        : "Final Auto-Charge Processing"
+      : nextStatus;
+    const responseInvoice = paidInvoice || finalized;
 
     await requestRef.update({
       ...updateBase,
       status: nextStatus,
-      paymentStatus: nextStatus,
-      laundryPaymentStatus: nextStatus,
-      laundryFinalInvoiceId: finalized.id,
-      laundryFinalInvoiceNumber: finalized.number || "",
-      laundryFinalInvoiceUrl: hostedInvoiceUrl,
-      laundryFinalInvoicePdf: invoicePdf,
-      laundryFinalInvoiceAmountDue: finalized.amount_due ?? null,
-      laundryFinalInvoiceCustomerId: customer.id,
-      laundryFinalInvoiceEmailSent: emailSent,
+      paymentStatus: nextPaymentStatus,
+      laundryPaymentStatus: nextPaymentStatus,
+      laundryFinalInvoiceStatus: responseInvoice.status || (autoChargeSucceeded ? "Paid" : "Open"),
+      laundryFinalInvoiceId: responseInvoice.id,
+      laundryFinalInvoiceNumber: responseInvoice.number || finalized.number || "",
+      laundryFinalInvoiceUrl: responseInvoice.hosted_invoice_url || hostedInvoiceUrl,
+      laundryFinalInvoicePdf: responseInvoice.invoice_pdf || invoicePdf,
+      laundryFinalInvoiceAmountDue: responseInvoice.amount_due ?? finalized.amount_due ?? null,
+      laundryFinalInvoiceAmountPaid: responseInvoice.amount_paid ?? null,
+      laundryFinalInvoiceSubtotal: responseInvoice.subtotal ?? null,
+      laundryFinalInvoiceTotal: responseInvoice.total ?? null,
+      laundryFinalInvoiceTaxAmount: getInvoiceTaxAmount(responseInvoice),
+      laundryFinalInvoiceCustomerId: customerId,
+      laundryFinalInvoiceCollectionMethod: autoCharge ? "auto_charge" : "send_invoice",
+      laundryFinalInvoiceEmailSent: !autoCharge && emailSent,
       laundryFinalInvoiceEmailError: emailError,
       laundryFinalInvoiceCreatedAt: FieldValue.serverTimestamp(),
-      laundryFinalInvoiceSentAt: shouldSendEmail && emailSent ? FieldValue.serverTimestamp() : null,
+      laundryFinalInvoiceSentAt: !autoCharge && shouldSendEmail && emailSent ? FieldValue.serverTimestamp() : null,
+      laundryAutoChargeAttemptedAt: autoCharge ? FieldValue.serverTimestamp() : null,
+      laundryAutoChargePaidAt: autoChargeSucceeded ? FieldValue.serverTimestamp() : null,
+      laundryAutoChargeError: "",
       laundryFinalBalanceCreatedAt: FieldValue.serverTimestamp(),
       laundryFinalBalanceCreatedBy: decoded.email || "admin",
       // Keep older dashboard fields populated so existing buttons and filters do not break.
-      laundryFinalCheckoutUrl: hostedInvoiceUrl,
+      laundryFinalCheckoutUrl: responseInvoice.hosted_invoice_url || hostedInvoiceUrl,
       laundryFinalCheckoutSessionId: "",
     });
 
     return NextResponse.json({
       ok: true,
-      invoiceId: finalized.id,
-      invoiceNumber: finalized.number,
-      invoiceUrl: hostedInvoiceUrl,
-      invoicePdf,
-      url: hostedInvoiceUrl,
+      invoiceId: responseInvoice.id,
+      invoiceNumber: responseInvoice.number || finalized.number,
+      invoiceUrl: responseInvoice.hosted_invoice_url || hostedInvoiceUrl,
+      invoicePdf: responseInvoice.invoice_pdf || invoicePdf,
+      url: responseInvoice.hosted_invoice_url || hostedInvoiceUrl,
       emailSent,
       emailError,
-      balanceDue: (finalized.amount_due ?? balanceDueCents) / 100,
+      autoCharge,
+      autoChargeSucceeded,
+      balanceDue: (responseInvoice.amount_due ?? finalized.amount_due ?? balanceDueCents) / 100,
+      amountPaid: (responseInvoice.amount_paid ?? 0) / 100,
       status: nextStatus,
-      paymentStatus: nextStatus,
+      paymentStatus: nextPaymentStatus,
     });
   } catch (error: any) {
     console.error(error);

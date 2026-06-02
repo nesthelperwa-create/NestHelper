@@ -27,6 +27,7 @@ type CreatePaymentLinkBody = {
   includeFamilyBreakdown?: boolean;
 };
 
+
 function getString(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
 }
@@ -42,6 +43,28 @@ function moneyToCents(value: number) {
 
 function formatMoney(value: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(Number.isFinite(value) ? value : 0);
+}
+
+function getLaundryDepositAmount(mode: "standard" | "founding", customAmount: number, useCustomInitial: boolean) {
+  if (useCustomInitial && customAmount > 0) return customAmount;
+  return mode === "founding" ? 49 : 59;
+}
+
+function buildLaundryFinalPaymentCustomFields(): Stripe.Checkout.SessionCreateParams.CustomField[] {
+  return [
+    {
+      key: "laundry_final_payment_preference",
+      label: { type: "custom", custom: "Final Laundry Rescue balance" },
+      type: "dropdown",
+      optional: false,
+      dropdown: {
+        options: [
+          { label: "Auto-charge my saved card after dry weight is confirmed", value: "auto_charge" },
+          { label: "Send me the final invoice link before delivery", value: "invoice_before_delivery" },
+        ],
+      },
+    },
+  ];
 }
 
 function formatServicePeriodLabel(start: unknown, end: unknown) {
@@ -117,13 +140,13 @@ export async function POST(request: Request) {
     const customAmountCents = moneyToCents(customAmount);
     const customTitle = getString(body?.customTitle) || getDefaultCustomTitle(serviceTitle, isLaundryRescue);
     const customNote = getString(body?.customNote);
-    const priceId = useCustomInitial ? "" : getStripePriceId(serviceId, mode);
+    const priceId = useCustomInitial || isLaundryRescue ? "" : getStripePriceId(serviceId, mode);
 
     if (useCustomInitial && customAmountCents <= 0) {
       return NextResponse.json({ ok: false, error: "Enter a custom initial amount greater than $0." }, { status: 400 });
     }
 
-    if (!useCustomInitial && !priceId) {
+    if (!isLaundryRescue && !useCustomInitial && !priceId) {
       return NextResponse.json(
         { ok: false, error: `Missing Stripe ${mode} price ID for this service. Check the service selection and Vercel Stripe price env vars.` },
         { status: 400 }
@@ -134,31 +157,51 @@ export async function POST(request: Request) {
     const fullName = getString(data.fullName);
     const phone = getString(data.phone);
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-    const lineItems = useCustomInitial
+    const laundryDepositAmount = getLaundryDepositAmount(mode, customAmount, useCustomInitial);
+    const laundryDepositAmountCents = moneyToCents(laundryDepositAmount);
+    const lineItems = isLaundryRescue
       ? [
           {
             price_data: {
               currency: "usd",
-              unit_amount: customAmountCents,
+              unit_amount: laundryDepositAmountCents,
+              tax_behavior: "exclusive" as const,
               product_data: {
-                name: customTitle,
-                description: [customNote || `${serviceTitle} — ${formatMoney(customAmount)}`, servicePeriodLabel ? `Service period: ${servicePeriodLabel}` : ""].filter(Boolean).join("\n"),
+                name: useCustomInitial ? customTitle : "Laundry Rescue non-refundable deposit / minimum",
+                description: [
+                  customNote || "Non-refundable Laundry Rescue deposit/minimum. This amount is credited toward the final laundry total after dry weight, add-ons, bulky items, or approved changes are reviewed.",
+                  "Final balance is handled after dry weigh-in. The customer chooses auto-charge or invoice-before-delivery during checkout.",
+                ].filter(Boolean).join("\n"),
               },
             },
             quantity: 1,
           },
         ]
-      : [{ price: priceId, quantity: 1 }];
+      : useCustomInitial
+        ? [
+            {
+              price_data: {
+                currency: "usd",
+                unit_amount: customAmountCents,
+                tax_behavior: "exclusive" as const,
+                product_data: {
+                  name: customTitle,
+                  description: [customNote || `${serviceTitle} — ${formatMoney(customAmount)}`, servicePeriodLabel ? `Service period: ${servicePeriodLabel}` : ""].filter(Boolean).join("\n"),
+                },
+              },
+              quantity: 1,
+            },
+          ]
+        : [{ price: priceId, quantity: 1 }];
 
     const successPaymentType = isLaundryRescue ? "laundry_deposit" : useCustomInitial ? "custom_initial" : "service_payment";
-
-    const session = await stripe.checkout.sessions.create({
+    const checkoutParams: Stripe.Checkout.SessionCreateParams = {
       mode: "payment",
       line_items: lineItems,
       automatic_tax: { enabled: enableAutomaticTax },
       billing_address_collection: "required",
       phone_number_collection: { enabled: true },
-      allow_promotion_codes: !useCustomInitial,
+      allow_promotion_codes: !useCustomInitial && !isLaundryRescue,
       customer_email: email || undefined,
       client_reference_id: requestId,
       success_url: `${siteUrl}/checkout?success=true&payment_type=${successPaymentType}&service_id=${encodeURIComponent(serviceId)}&session_id={CHECKOUT_SESSION_ID}`,
@@ -173,6 +216,9 @@ export async function POST(request: Request) {
         customInitialTitle: useCustomInitial ? customTitle : "",
         customInitialNote: useCustomInitial ? customNote : "",
         customInitialAmount: useCustomInitial ? String(Number(customAmount.toFixed(2))) : "",
+        laundryDepositNonRefundable: isLaundryRescue ? "true" : "",
+        laundryDepositAmount: isLaundryRescue ? String(Number(laundryDepositAmount.toFixed(2))) : "",
+        laundryFinalPaymentOptions: isLaundryRescue ? "auto_charge_or_invoice_before_delivery" : "",
         servicePeriodLabel,
         servicePeriodStart: isCommercialReset ? getString(savedCommercialBreakdown.servicePeriodStart) : getString(savedFamilyBreakdown.servicePeriodStart),
         servicePeriodEnd: isCommercialReset ? getString(savedCommercialBreakdown.servicePeriodEnd) : getString(savedFamilyBreakdown.servicePeriodEnd),
@@ -180,11 +226,29 @@ export async function POST(request: Request) {
         customerEmail: email,
         customerPhone: phone,
       },
-    });
+    };
+
+    if (isLaundryRescue) {
+      checkoutParams.customer_creation = "always";
+      checkoutParams.payment_intent_data = { setup_future_usage: "off_session" };
+      checkoutParams.custom_fields = buildLaundryFinalPaymentCustomFields();
+      checkoutParams.custom_text = {
+        submit: {
+          message:
+            "Laundry Rescue deposit/minimum is non-refundable and credited toward the final total. If you choose auto-charge, NestHelper may charge your saved payment method for the final balance after dry weight and add-ons are confirmed. If you choose invoice-before-delivery, laundry is held until the final invoice is fully paid.",
+        },
+      };
+    }
+
+    const session = await stripe.checkout.sessions.create(checkoutParams);
 
     const checkoutUrl = session.url || "";
     const replyToEmail = isLaundryRescue ? emailAliases.laundry : isCommercialReset ? emailAliases.commercial : emailAliases.billing;
-    const servicePrice = useCustomInitial ? `${formatMoney(customAmount)} custom initial checkout` : getServicePriceLabel(serviceId, mode);
+    const servicePrice = isLaundryRescue
+      ? `${formatMoney(laundryDepositAmount)} non-refundable deposit/minimum + tax, credited toward the final laundry total`
+      : useCustomInitial
+        ? `${formatMoney(customAmount)} custom initial checkout`
+        : getServicePriceLabel(serviceId, mode);
     let emailSent = false;
     let emailError = "";
 
@@ -201,12 +265,20 @@ export async function POST(request: Request) {
           preferredWindow: getString(data.preferredWindow),
           city: getString(data.city),
           replyToEmail,
-          quoteBreakdownText: isCommercialReset && useCustomInitial && shouldIncludeQuoteBreakdown
-            ? savedCommercialBreakdownText
-            : !isCommercialReset && shouldIncludeFamilyBreakdown
-              ? savedFamilyBreakdownText
-              : "",
-          quoteBreakdownTitle: isCommercialReset ? "Commercial Reset quote breakdown" : savedFamilyBreakdownText ? "NestHelper payment breakdown" : undefined,
+          quoteBreakdownText: isLaundryRescue
+            ? "This deposit/minimum is non-refundable and is credited toward the final Laundry Rescue total. During Stripe checkout, the customer chooses either auto-charge for the final balance after dry weigh-in or invoice-before-delivery. Laundry is not released until the final balance is fully paid."
+            : isCommercialReset && useCustomInitial && shouldIncludeQuoteBreakdown
+              ? savedCommercialBreakdownText
+              : !isCommercialReset && shouldIncludeFamilyBreakdown
+                ? savedFamilyBreakdownText
+                : "",
+          quoteBreakdownTitle: isLaundryRescue
+            ? "Laundry Rescue deposit and final-balance choice"
+            : isCommercialReset
+              ? "Commercial Reset quote breakdown"
+              : savedFamilyBreakdownText
+                ? "NestHelper payment breakdown"
+                : undefined,
         });
         emailSent = true;
       } catch (error) {
@@ -216,7 +288,7 @@ export async function POST(request: Request) {
     }
 
     const updatePayload: Record<string, unknown> = {
-      status: "Checkout Sent",
+      status: isLaundryRescue ? "Deposit Checkout Sent" : "Checkout Sent",
       paymentStatus: isLaundryRescue ? "Deposit Checkout Sent" : "Checkout Sent",
       laundryPaymentStatus: isLaundryRescue ? "Deposit Checkout Sent" : data.laundryPaymentStatus || null,
       paymentMode: useCustomInitial ? "custom" : mode,
@@ -229,6 +301,10 @@ export async function POST(request: Request) {
       checkoutEmailError: emailError,
       checkoutIncludedQuoteBreakdown: Boolean(isCommercialReset && useCustomInitial && shouldIncludeQuoteBreakdown && savedCommercialBreakdownText),
       checkoutIncludedFamilyBreakdown: Boolean(!isCommercialReset && shouldIncludeFamilyBreakdown && savedFamilyBreakdownText),
+      laundryDepositNonRefundable: isLaundryRescue ? true : data.laundryDepositNonRefundable || null,
+      laundryDepositExpectedAmount: isLaundryRescue ? Number(laundryDepositAmount.toFixed(2)) : data.laundryDepositExpectedAmount || null,
+      laundryDepositExpectedAmountCents: isLaundryRescue ? laundryDepositAmountCents : data.laundryDepositExpectedAmountCents || null,
+      laundryFinalPaymentPreferenceRequired: isLaundryRescue ? true : data.laundryFinalPaymentPreferenceRequired || null,
       checkoutServicePeriodLabel: servicePeriodLabel,
       checkoutServicePeriodStart: isCommercialReset ? getString(savedCommercialBreakdown.servicePeriodStart) : getString(savedFamilyBreakdown.servicePeriodStart),
       checkoutServicePeriodEnd: isCommercialReset ? getString(savedCommercialBreakdown.servicePeriodEnd) : getString(savedFamilyBreakdown.servicePeriodEnd),
