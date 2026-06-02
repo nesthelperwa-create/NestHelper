@@ -50,7 +50,15 @@ function getLaundryDepositAmount(mode: "standard" | "founding", customAmount: nu
   return mode === "founding" ? 49 : 59;
 }
 
-function buildLaundryFinalPaymentCustomFields(): Stripe.Checkout.SessionCreateParams.CustomField[] {
+type LaundryFinalPaymentCustomField = {
+  key: string;
+  label: { type: "custom"; custom: string };
+  type: "dropdown";
+  optional: boolean;
+  dropdown: { options: Array<{ label: string; value: string }> };
+};
+
+function buildLaundryFinalPaymentCustomFields(): LaundryFinalPaymentCustomField[] {
   return [
     {
       key: "laundry_final_payment_preference",
@@ -195,7 +203,7 @@ export async function POST(request: Request) {
         : [{ price: priceId, quantity: 1 }];
 
     const successPaymentType = isLaundryRescue ? "laundry_deposit" : useCustomInitial ? "custom_initial" : "service_payment";
-    const checkoutParams: Stripe.Checkout.SessionCreateParams = {
+    const checkoutParams: any = {
       mode: "payment",
       line_items: lineItems,
       automatic_tax: { enabled: enableAutomaticTax },
@@ -240,7 +248,7 @@ export async function POST(request: Request) {
       };
     }
 
-    const session = await stripe.checkout.sessions.create(checkoutParams);
+    const session = await stripe.checkout.sessions.create(checkoutParams as any);
 
     const checkoutUrl = session.url || "";
     const replyToEmail = isLaundryRescue ? emailAliases.laundry : isCommercialReset ? emailAliases.commercial : emailAliases.billing;
