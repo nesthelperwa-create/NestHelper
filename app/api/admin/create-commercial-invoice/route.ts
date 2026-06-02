@@ -19,6 +19,13 @@ type CreateCommercialInvoiceBody = {
   sendEmail?: boolean;
 };
 
+type AddressResult = {
+  address?: Stripe.AddressParam;
+  sourceText: string;
+  hasUsableLocation: boolean;
+  missingReason?: string;
+};
+
 function getString(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
 }
@@ -41,19 +48,132 @@ function moneyToCents(value: unknown) {
   return Math.round(Math.max(0, cleanNumber(value)) * 100);
 }
 
-function getAddress(data: Record<string, unknown>): Stripe.AddressParam | undefined {
-  const line1 = getString(data.serviceAddress) || getString(data.address) || getString(data.streetAddress);
-  const city = getString(data.city);
-  const state = getString(data.state) || "WA";
-  const postal_code = getString(data.zip) || getString(data.zipCode) || getString(data.postalCode);
+function pickFirstString(data: Record<string, unknown>, keys: string[]) {
+  for (const key of keys) {
+    const value = getString(data[key]);
+    if (value) return value;
+  }
+  return "";
+}
 
-  if (!line1 && !city && !postal_code) return undefined;
+function extractZipFromText(text: string) {
+  const match = text.match(/\b\d{5}(?:-\d{4})?\b/);
+  return match?.[0] || "";
+}
+
+function extractStateFromText(text: string) {
+  const upper = text.toUpperCase();
+  if (/\bWA\b/.test(upper) || upper.includes("WASHINGTON")) return "WA";
+  return "";
+}
+
+function getCommercialAddress(data: Record<string, unknown>): AddressResult {
+  const possibleAddressText = pickFirstString(data, [
+    "serviceAddress",
+    "cleaningAddress",
+    "commercialAddress",
+    "businessAddress",
+    "jobAddress",
+    "propertyAddress",
+    "address",
+    "streetAddress",
+    "location",
+    "serviceLocation",
+    "commercialServiceAddress",
+  ]);
+
+  const line1 =
+    pickFirstString(data, [
+      "serviceAddressLine1",
+      "cleaningAddressLine1",
+      "commercialAddressLine1",
+      "businessAddressLine1",
+      "jobAddressLine1",
+      "propertyAddressLine1",
+      "addressLine1",
+      "streetAddress",
+    ]) || possibleAddressText;
+
+  const city = pickFirstString(data, [
+    "serviceCity",
+    "cleaningCity",
+    "commercialCity",
+    "businessCity",
+    "jobCity",
+    "propertyCity",
+    "city",
+  ]);
+
+  const state =
+    pickFirstString(data, [
+      "serviceState",
+      "cleaningState",
+      "commercialState",
+      "businessState",
+      "jobState",
+      "propertyState",
+      "state",
+    ]) ||
+    extractStateFromText(possibleAddressText) ||
+    "WA";
+
+  const postal_code =
+    pickFirstString(data, [
+      "serviceZip",
+      "serviceZipCode",
+      "servicePostalCode",
+      "cleaningZip",
+      "cleaningZipCode",
+      "commercialZip",
+      "commercialZipCode",
+      "commercialPostalCode",
+      "businessZip",
+      "businessZipCode",
+      "jobZip",
+      "jobZipCode",
+      "propertyZip",
+      "propertyZipCode",
+      "zip",
+      "zipCode",
+      "postalCode",
+    ]) || extractZipFromText(possibleAddressText);
+
+  const sourceText = [line1, city, state, postal_code].filter(Boolean).join(", ");
+
+  if (!line1 && !city && !postal_code) {
+    return {
+      sourceText,
+      hasUsableLocation: false,
+      missingReason:
+        "The commercial request does not have a service address. Add the business/service address with city, state, and ZIP before creating a taxable commercial invoice.",
+    };
+  }
+
+  if (!postal_code) {
+    return {
+      address: {
+        line1: line1 || undefined,
+        city: city || undefined,
+        state: state || "WA",
+        country: "US",
+      },
+      sourceText,
+      hasUsableLocation: false,
+      missingReason:
+        "The commercial request is missing a ZIP code. Stripe Tax needs a customer/service ZIP code to calculate sales tax on taxable commercial lines.",
+    };
+  }
+
   return {
-    line1: line1 || undefined,
-    city: city || undefined,
-    state: state || undefined,
-    postal_code: postal_code || undefined,
-    country: "US",
+    address: {
+      line1: line1 || undefined,
+      city: city || undefined,
+      state: state || "WA",
+      postal_code,
+      country: "US",
+    },
+    sourceText,
+    hasUsableLocation: true,
   };
 }
 
@@ -148,7 +268,14 @@ function getCommercialLineTaxMode(line: Record<string, unknown>): "taxable" | "n
   if (["nontaxable", "non_taxable", "no_tax", "no tax", "false", "no"].includes(explicitTaxMode)) return "nontaxable";
   if (COMMERCIAL_TAXABLE_PRESETS.has(preset)) return "taxable";
   if (COMMERCIAL_NONTAXABLE_PRESETS.has(preset)) return "nontaxable";
-  if (/\b(carpet|deep clean|deep-clean|first[-\s]?time|floor scrub|buff|shine|wax|strip|turnover|linen|restock|specialty|specialized|non[-\s]?repetitive)\b/.test(searchable)) return "taxable";
+  if (
+    /\b(carpet|deep clean|deep-clean|first[-\s]?time|floor scrub|buff|shine|wax|strip|turnover|linen|restock|specialty|specialized|non[-\s]?repetitive)\b/.test(
+      searchable
+    )
+  ) {
+    return "taxable";
+  }
+
   return "nontaxable";
 }
 
@@ -163,9 +290,15 @@ function getCommercialTaxCounts(lineItems: Record<string, unknown>[]): { taxable
   );
 }
 
+function getAutomaticTaxStatus(invoice: Stripe.Invoice) {
+  const automaticTax = invoice.automatic_tax as Stripe.Invoice.AutomaticTax | null | undefined;
+  return automaticTax?.status || "";
+}
+
 export async function POST(request: Request) {
   try {
     getFirebaseAdminDb();
+
     const token = request.headers.get("authorization")?.replace("Bearer ", "");
     if (!token || !getApps().length) return NextResponse.json({ ok: false }, { status: 401 });
 
@@ -189,7 +322,9 @@ export async function POST(request: Request) {
     const requestRef = db.collection("serviceRequests").doc(requestId);
     const requestSnap = await requestRef.get();
 
-    if (!requestSnap.exists) return NextResponse.json({ ok: false, error: "Service request not found." }, { status: 404 });
+    if (!requestSnap.exists) {
+      return NextResponse.json({ ok: false, error: "Service request not found." }, { status: 404 });
+    }
 
     const data = requestSnap.data() || {};
     if (getString(data.service) !== "commercial-reset") {
@@ -207,10 +342,23 @@ export async function POST(request: Request) {
     const amountDueNowCents = moneyToCents(breakdown.amountDueNow);
     const commercialTaxCounts = getCommercialTaxCounts(lineItems);
     const hasTaxableCommercialLines = commercialTaxCounts.taxable > 0;
+    const commercialAddress = getCommercialAddress(data);
 
     if (!lineItems.length || amountDueNowCents <= 0) {
       return NextResponse.json(
         { ok: false, error: "Save a commercial quote breakdown with an amount due now before creating an invoice." },
+        { status: 400 }
+      );
+    }
+
+    if (hasTaxableCommercialLines && !commercialAddress.hasUsableLocation) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error:
+            commercialAddress.missingReason ||
+            "This quote has taxable commercial lines, but the request is missing a complete service address for Stripe Tax.",
+        },
         { status: 400 }
       );
     }
@@ -221,20 +369,27 @@ export async function POST(request: Request) {
       getString(data.businessName) ||
       "NestHelper customer";
 
-    const address = getAddress(data);
     const customer = await stripe.customers.create({
       email,
       name: customerName,
       phone: getString(data.phone) || undefined,
-      address,
-      metadata: { requestId, serviceId: "commercial-reset" },
+      address: commercialAddress.address,
+      shipping: commercialAddress.address
+        ? {
+            name: customerName,
+            phone: getString(data.phone) || undefined,
+            address: commercialAddress.address,
+          }
+        : undefined,
+      metadata: {
+        requestId,
+        serviceId: "commercial-reset",
+        serviceAddress: commercialAddress.sourceText,
+      },
     });
 
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-    const servicePeriodLabel = formatServicePeriodLabel(
-      breakdown.servicePeriodStart,
-      breakdown.servicePeriodEnd
-    );
+    const servicePeriodLabel = formatServicePeriodLabel(breakdown.servicePeriodStart, breakdown.servicePeriodEnd);
 
     const invoice = await stripe.invoices.create({
       customer: customer.id,
@@ -254,6 +409,7 @@ export async function POST(request: Request) {
         servicePeriodEnd: getString(breakdown.servicePeriodEnd),
         servicePeriodLabel,
         taxHandling: hasTaxableCommercialLines ? "mixed_or_taxable_commercial_lines" : "nontaxable_routine_janitorial",
+        serviceAddress: commercialAddress.sourceText,
         siteUrl,
       },
     });
@@ -264,20 +420,22 @@ export async function POST(request: Request) {
       const amount = moneyToCents(line.amount);
       if (amount <= 0) continue;
 
+      const taxMode = getCommercialLineTaxMode(line);
+
       await stripe.invoiceItems.create({
         customer: customer.id,
         invoice: invoice.id,
         currency: "usd",
         amount,
         tax_behavior: "exclusive",
-        tax_code: getCommercialLineTaxMode(line) === "taxable" ? commercialCleaningTaxCode : nontaxableProductTaxCode,
+        tax_code: taxMode === "taxable" ? commercialCleaningTaxCode : nontaxableProductTaxCode,
         description: buildLineDescription(line, servicePeriodLabel),
         metadata: {
           requestId,
           serviceId: "commercial-reset",
           preset: getString(line.preset),
           lineLabel: getString(line.label) || "Commercial Reset line item",
-          taxMode: getCommercialLineTaxMode(line),
+          taxMode,
         },
       });
 
@@ -292,7 +450,11 @@ export async function POST(request: Request) {
         currency: "usd",
         amount: -discountCredit,
         description: "Discount / credit\nApplied from the approved NestHelper Commercial Reset quote breakdown.",
-        metadata: { requestId, serviceId: "commercial-reset" },
+        metadata: {
+          requestId,
+          serviceId: "commercial-reset",
+          taxMode: "credit",
+        },
       });
 
       attachedLineCount += 1;
@@ -309,7 +471,32 @@ export async function POST(request: Request) {
       );
     }
 
-    const finalized = await stripe.invoices.finalizeInvoice(invoice.id, { auto_advance: false });
+    let finalized = await stripe.invoices.finalizeInvoice(invoice.id, { auto_advance: false });
+
+    const taxStatus = getAutomaticTaxStatus(finalized);
+    if (hasTaxableCommercialLines && enableAutomaticTax && taxStatus && taxStatus !== "complete") {
+      await requestRef.update({
+        commercialInvoiceId: finalized.id,
+        commercialInvoiceNumber: finalized.number || "",
+        commercialInvoiceTaxStatus: taxStatus,
+        commercialInvoiceTaxWarning: `Stripe automatic tax status: ${taxStatus}. Check the service address, Stripe Tax registration, and tax code settings.`,
+        commercialInvoiceCreatedAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
+        updatedBy: decoded.email || "admin",
+      });
+
+      return NextResponse.json(
+        {
+          ok: false,
+          error: `Stripe created the invoice, but automatic tax did not complete. Stripe tax status: ${taxStatus}. Check the commercial service address, ZIP code, live/test tax registration, and tax code settings before sending this invoice.`,
+          invoiceId: finalized.id,
+          invoiceNumber: finalized.number,
+          taxStatus,
+        },
+        { status: 500 }
+      );
+    }
+
     const hostedInvoiceUrl = finalized.hosted_invoice_url || "";
     const invoicePdf = finalized.invoice_pdf || "";
 
@@ -322,6 +509,7 @@ export async function POST(request: Request) {
         commercialInvoiceAmountDue: finalized.amount_due ?? null,
         commercialInvoiceEmailWarning:
           "Stripe finalized this invoice at $0.00, so NestHelper did not email it. Review the saved quote line items and try again.",
+        commercialInvoiceTaxStatus: taxStatus,
         commercialInvoiceCreatedAt: FieldValue.serverTimestamp(),
         updatedAt: FieldValue.serverTimestamp(),
         updatedBy: decoded.email || "admin",
@@ -341,7 +529,8 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           ok: false,
-          error: "Stripe created the invoice, but no hosted invoice link was returned. Open the invoice in Stripe or try again.",
+          error:
+            "Stripe created the invoice, but no hosted invoice link was returned. Open the invoice in Stripe or try again.",
         },
         { status: 500 }
       );
@@ -393,7 +582,11 @@ export async function POST(request: Request) {
       commercialInvoiceServicePeriodEnd: getString(breakdown.servicePeriodEnd),
       commercialInvoiceServicePeriodLabel: servicePeriodLabel,
       commercialInvoiceCustomerId: customer.id,
-      commercialInvoiceTaxHandling: hasTaxableCommercialLines ? "Stripe automatic tax for taxable Commercial Reset lines; nontaxable tax code for routine janitorial lines" : "No sales tax applied by NestHelper for routine/repetitive janitorial-style Commercial Reset lines",
+      commercialInvoiceTaxHandling: hasTaxableCommercialLines
+        ? "Stripe automatic tax for taxable Commercial Reset lines; nontaxable tax code for routine janitorial lines"
+        : "No sales tax applied by NestHelper for routine/repetitive janitorial-style Commercial Reset lines",
+      commercialInvoiceTaxStatus: taxStatus,
+      commercialInvoiceServiceAddress: commercialAddress.sourceText,
       commercialInvoiceTaxableLineCount: commercialTaxCounts.taxable,
       commercialInvoiceNontaxableLineCount: commercialTaxCounts.nontaxable,
       commercialInvoiceDeliveryMethod: shouldSendEmail ? "nesthelper_email" : "manual",
@@ -420,6 +613,8 @@ export async function POST(request: Request) {
       deliveryMethod: shouldSendEmail ? "nesthelper_email" : "manual",
       taxableLineCount: commercialTaxCounts.taxable,
       nontaxableLineCount: commercialTaxCounts.nontaxable,
+      taxStatus,
+      serviceAddress: commercialAddress.sourceText,
     });
   } catch (error: any) {
     console.error("Unable to create commercial invoice", error);
