@@ -16,8 +16,17 @@ const commonAllowedFields = [
   "email",
   "phone",
   "address",
+  "address2",
   "city",
+  "state",
   "zip",
+  "serviceAddress",
+  "serviceAddressLine1",
+  "serviceAddressLine2",
+  "serviceCity",
+  "serviceState",
+  "serviceZip",
+  "serviceAddressConfirmed",
   "requestedAt",
   "consent",
   "photoUploadCount",
@@ -202,6 +211,16 @@ function trimText(value: unknown, maxLength = 300) {
   return value.trim().slice(0, maxLength);
 }
 
+function looksLikeZip(value: unknown) {
+  const zip = trimText(value, 20);
+  return /^\d{5}(?:-\d{4})?$/.test(zip);
+}
+
+function looksLikeStreetAddress(value: unknown) {
+  const address = trimText(value, 300);
+  return /\d/.test(address) && /[a-zA-Z]/.test(address) && address.length >= 5;
+}
+
 function looksLikeEmail(value: unknown) {
   const email = trimText(value, 320).toLowerCase();
   return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
@@ -263,6 +282,12 @@ function validateRequired(collection: SubmissionCollection, payload: Record<stri
   const requireTrue = (field: string, label = field) => {
     if (payload[field] !== true) missing.push(label);
   };
+  const requireStreetAddress = () => {
+    if (!looksLikeStreetAddress(payload.address || payload.serviceAddressLine1)) missing.push("complete street address");
+  };
+  const requireZip = () => {
+    if (!looksLikeZip(payload.zip || payload.serviceZip)) missing.push("valid ZIP code");
+  };
 
   if (collection === "contactMessages") {
     requireText("name", "name");
@@ -293,6 +318,10 @@ function validateRequired(collection: SubmissionCollection, payload: Record<stri
     requireText("phone", "phone");
     requireText("service", "service");
     requireTrue("consent", "service acknowledgement");
+
+    requireStreetAddress();
+    requireZip();
+    requireTrue("serviceAddressConfirmed", "service address confirmation");
 
     if (trimText(payload.service) === "commercial-reset") {
       requireText("businessName", "business name");

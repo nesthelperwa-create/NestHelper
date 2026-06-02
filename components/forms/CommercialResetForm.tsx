@@ -15,8 +15,11 @@ const defaultState = {
   email: "",
   phone: "",
   address: "",
+  address2: "",
   city: "",
+  state: "WA",
   zip: "",
+  serviceAddressConfirmed: false,
   serviceRegion: "Not sure yet",
   businessType: "",
   squareFootage: "",
@@ -61,6 +64,31 @@ const defaultState = {
 
 type CommercialResetFormState = typeof defaultState;
 type Status = "idle" | "loading" | "success" | "error";
+
+function normalizeZipInput(value: string) {
+  return value.replace(/[^0-9-]/g, "").slice(0, 10);
+}
+
+function hasLikelyStreetAddress(address: string) {
+  return /\d/.test(address) && /[a-zA-Z]/.test(address) && address.trim().length >= 5;
+}
+
+function hasValidZip(zip: string) {
+  return /^\d{5}(?:-\d{4})?$/.test(zip.trim());
+}
+
+function buildServiceAddress(form: Pick<CommercialResetFormState, "address" | "address2" | "city" | "state" | "zip">) {
+  return [form.address, form.address2, form.city, form.state, form.zip].map((part) => part.trim()).filter(Boolean).join(", ");
+}
+
+function getAddressValidationMessage(form: Pick<CommercialResetFormState, "address" | "city" | "state" | "zip" | "serviceAddressConfirmed">) {
+  if (!hasLikelyStreetAddress(form.address)) return "Please enter the full cleaning street address, including a street number and street name.";
+  if (form.city.trim().length < 2) return "Please enter the cleaning city or community.";
+  if (form.state !== "WA") return "Commercial Reset currently accepts Washington service addresses only.";
+  if (!hasValidZip(form.zip)) return "Please enter a valid 5-digit ZIP code, or ZIP+4.";
+  if (!form.serviceAddressConfirmed) return "Please confirm the cleaning address is complete and correct.";
+  return "";
+}
 
 const businessTypes = [
   "Small office",
@@ -639,8 +667,17 @@ function buildPayload(form: CommercialResetFormState) {
     email: form.email,
     phone: form.phone,
     address: form.address,
+    address2: form.address2,
     city: form.city,
+    state: form.state,
     zip: form.zip,
+    serviceAddress: buildServiceAddress(form),
+    serviceAddressLine1: form.address,
+    serviceAddressLine2: form.address2,
+    serviceCity: form.city,
+    serviceState: form.state,
+    serviceZip: form.zip,
+    serviceAddressConfirmed: form.serviceAddressConfirmed,
     service: "commercial-reset",
     selectedServiceTitle: "Commercial Reset Quote",
     packageType: "Commercial Reset",
@@ -783,6 +820,13 @@ export function CommercialResetForm() {
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    const addressMessage = getAddressValidationMessage(form);
+    if (addressMessage) {
+      setStatus("error");
+      setMessage(addressMessage);
+      return;
+    }
+
     setStatus("loading");
     setMessage("");
 
@@ -850,10 +894,23 @@ export function CommercialResetForm() {
               <option>Nearby area — please review</option>
             </select>
           </Field>
-          <Field label="ZIP" required><input className="input" required autoComplete="postal-code" inputMode="numeric" value={form.zip} onChange={(e) => update("zip", e.target.value)} /></Field>
+          <Field label="ZIP" required><input className="input" required autoComplete="postal-code" inputMode="numeric" pattern="\d{5}(-\d{4})?" placeholder="98402" value={form.zip} onChange={(e) => update("zip", normalizeZipInput(e.target.value))} /></Field>
+          <Field label="Street address" required><input className="input" required autoComplete="address-line1" placeholder="123 Main St" value={form.address} onChange={(e) => update("address", e.target.value)} /></Field>
+          <Field label="Suite / unit (optional)"><input className="input" autoComplete="address-line2" placeholder="Suite, unit, floor, gate/access note, etc." value={form.address2} onChange={(e) => update("address2", e.target.value)} /></Field>
+          <Field label="City / community" required><input className="input" required autoComplete="address-level2" value={form.city} onChange={(e) => update("city", e.target.value)} /></Field>
+          <Field label="State" required>
+            <select className="input" required autoComplete="address-level1" value={form.state} onChange={(e) => update("state", e.target.value)}>
+              <option value="WA">Washington</option>
+            </select>
+          </Field>
         </div>
-        <Field label="Street address" required><input className="input" required autoComplete="street-address" value={form.address} onChange={(e) => update("address", e.target.value)} /></Field>
-        <Field label="City / community" required><input className="input" required autoComplete="address-level2" value={form.city} onChange={(e) => update("city", e.target.value)} /></Field>
+        <label className="flex items-start gap-3 rounded-2xl border border-nest-teal/15 bg-nest-mint/25 p-4 text-sm font-semibold leading-6 text-nest-ink/75">
+          <input type="checkbox" required className="mt-1 h-4 w-4 shrink-0 accent-nest-teal" checked={form.serviceAddressConfirmed} onChange={(e) => update("serviceAddressConfirmed", e.target.checked)} />
+          <span><span className="text-red-600">*</span> I confirm this is the correct cleaning/service address for NestHelper to review service area, access, and any required sales tax.</span>
+        </label>
+        <p className="rounded-2xl border border-nest-gold/15 bg-nest-cream/70 px-4 py-3 text-xs font-bold leading-5 text-nest-ink/65">
+          Please enter the full physical service address, including city and ZIP. If the address appears incomplete or outside our reviewed service area, NestHelper will follow up before sending a quote or payment link.
+        </p>
       </Section>
 
       <Section title="3. About the Space" description="These quick ranges help NestHelper understand the size, layout, condition, and schedule before preparing a flat visit quote, recurring plan, or reviewed range.">
