@@ -14,6 +14,7 @@ export const runtime = "nodejs";
 
 const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
 const enableAutomaticTax = process.env.ENABLE_STRIPE_AUTOMATIC_TAX === "true";
+const dynamicProductTaxCode = (process.env.STRIPE_PRODUCT_TAX_CODE || process.env.STRIPE_TAX_CODE || "").trim();
 
 type CreatePaymentLinkBody = {
   requestId?: string;
@@ -67,8 +68,8 @@ function buildLaundryFinalPaymentCustomFields(): LaundryFinalPaymentCustomField[
       optional: false,
       dropdown: {
         options: [
-          { label: "Auto-charge my saved card after dry weight is confirmed", value: "auto_charge" },
-          { label: "Send me the final invoice link before delivery", value: "invoice_before_delivery" },
+          { label: "Auto-charge saved card after weigh-in", value: "auto_charge" },
+          { label: "Email final invoice before delivery", value: "invoice_before_delivery" },
         ],
       },
     },
@@ -175,6 +176,7 @@ export async function POST(request: Request) {
               unit_amount: laundryDepositAmountCents,
               tax_behavior: "exclusive" as const,
               product_data: {
+                ...(dynamicProductTaxCode ? { tax_code: dynamicProductTaxCode } : {}),
                 name: useCustomInitial ? customTitle : "Laundry Rescue non-refundable deposit / minimum",
                 description: [
                   customNote || "Non-refundable Laundry Rescue deposit/minimum. This amount is credited toward the final laundry total after dry weight, add-ons, bulky items, or approved changes are reviewed.",
@@ -193,6 +195,7 @@ export async function POST(request: Request) {
                 unit_amount: customAmountCents,
                 tax_behavior: "exclusive" as const,
                 product_data: {
+                  ...(dynamicProductTaxCode ? { tax_code: dynamicProductTaxCode } : {}),
                   name: customTitle,
                   description: [customNote || `${serviceTitle} — ${formatMoney(customAmount)}`, servicePeriodLabel ? `Service period: ${servicePeriodLabel}` : ""].filter(Boolean).join("\n"),
                 },
@@ -238,6 +241,7 @@ export async function POST(request: Request) {
 
     if (isLaundryRescue) {
       checkoutParams.customer_creation = "always";
+      checkoutParams.payment_method_types = ["card"];
       checkoutParams.payment_intent_data = { setup_future_usage: "off_session" };
       checkoutParams.custom_fields = buildLaundryFinalPaymentCustomFields();
       checkoutParams.custom_text = {
@@ -344,7 +348,8 @@ export async function POST(request: Request) {
       includedFamilyBreakdown: Boolean(!isCommercialReset && shouldIncludeFamilyBreakdown && savedFamilyBreakdownText),
     });
   } catch (error) {
-    console.error(error);
-    return NextResponse.json({ ok: false, error: "Unable to create payment link." }, { status: 500 });
+    const message = error instanceof Error && error.message ? error.message : "Unable to create payment link.";
+    console.error("Create payment link failed", error);
+    return NextResponse.json({ ok: false, error: message }, { status: 500 });
   }
 }
