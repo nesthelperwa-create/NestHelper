@@ -24,6 +24,7 @@ const defaultState = {
   promoCode: "",
   homeType: "Single-family home",
   pets: "No pets",
+  petDetails: "",
   parkingAccess: "",
   supplyPreference: "NestHelper brings standard supplies",
   homePriorities: [] as string[],
@@ -59,6 +60,8 @@ const priorityOptions = [
   "I am not sure — help me prioritize",
 ];
 
+const WHOLE_HOME_OPTION = "Whole home — help me prioritize";
+
 const homeAreaOptions = [
   "Kitchen",
   "Living room",
@@ -67,7 +70,7 @@ const homeAreaOptions = [
   "Bathrooms",
   "Laundry area",
   "Entryway / mudroom",
-  "Whole-home reset",
+  WHOLE_HOME_OPTION,
 ];
 
 const laundryTypeOptions = [
@@ -86,6 +89,33 @@ function getServiceCategory(serviceId: string) {
   if (serviceId === "errand-helper") return "errand";
   if (serviceId) return "home";
   return "none";
+}
+
+function getHomeScopeWarning(serviceId: string, areas: string[]) {
+  const wholeHomeSelected = areas.includes(WHOLE_HOME_OPTION);
+  const individualAreaCount = areas.filter((area) => area !== WHOLE_HOME_OPTION).length;
+
+  if (serviceId === "parent-reset-2hr" && wholeHomeSelected) {
+    return "A 2-Hour Parent Reset is best for a few priority areas, not a full-home reset. If you choose whole home, we’ll focus on the highest-impact items first. A 3-Hour Family Reset or 4-Hour Helper Block may be a better fit for more rooms.";
+  }
+
+  if (serviceId === "parent-reset-2hr" && individualAreaCount > 3) {
+    return "You selected several areas for a 2-hour visit. We may not be able to complete every area in one visit, so please list your top priorities below.";
+  }
+
+  if (serviceId === "family-reset-3hr" && wholeHomeSelected) {
+    return "A 3-Hour Family Reset can cover more ground, but whole-home requests are still handled by priority. We’ll review your notes before confirming what can reasonably fit.";
+  }
+
+  if (serviceId === "family-reset-3hr" && individualAreaCount > 5) {
+    return "You selected a lot of areas for a 3-hour visit. We’ll review the scope and may recommend a 4-Hour Helper Block or follow-up visit if needed.";
+  }
+
+  if (serviceId === "helper-block-4hr" && wholeHomeSelected) {
+    return "A 4-Hour Helper Block gives more flexibility, but whole-home requests are still completed by priority and scope review, not guaranteed room-by-room completion.";
+  }
+
+  return "";
 }
 
 function cleanForSelectedService(form: RequestFormState) {
@@ -120,6 +150,7 @@ function cleanForSelectedService(form: RequestFormState) {
       packageType: "Home reset",
       homeType: form.homeType,
       pets: form.pets,
+      petDetails: form.petDetails,
       supplyPreference: form.supplyPreference,
       homePriorities: form.homePriorities,
       homeAreas: form.homeAreas,
@@ -169,6 +200,9 @@ export function RequestForm() {
   const isHomeReset = serviceCategory === "home";
   const isErrand = serviceCategory === "errand";
   const isLaundry = serviceCategory === "laundry";
+  const wholeHomeSelected = form.homeAreas.includes(WHOLE_HOME_OPTION);
+  const homeScopeWarning = isHomeReset ? getHomeScopeWarning(form.service, form.homeAreas) : "";
+  const petDetailsRequired = isHomeReset && form.pets !== "No pets";
 
   function update(name: keyof RequestFormState, value: unknown) {
     setForm((prev) => ({ ...prev, [name]: value }) as RequestFormState);
@@ -185,6 +219,7 @@ export function RequestForm() {
       roomsAreas: nextCategory === "home" ? prev.roomsAreas : "",
       homeType: nextCategory === "home" ? prev.homeType : defaultState.homeType,
       pets: nextCategory === "home" ? prev.pets : defaultState.pets,
+      petDetails: nextCategory === "home" ? prev.petDetails : "",
       supplyPreference: nextCategory === "home" ? prev.supplyPreference : defaultState.supplyPreference,
       errandType: nextCategory === "errand" ? prev.errandType : defaultState.errandType,
       errandDistance: nextCategory === "errand" ? prev.errandDistance : defaultState.errandDistance,
@@ -204,6 +239,22 @@ export function RequestForm() {
   function toggleList(name: "homePriorities" | "homeAreas" | "laundryTypes" | "laundryAddOns", item: string, checked: boolean) {
     setForm((prev) => {
       const current = prev[name];
+
+      if (name === "homeAreas") {
+        if (item === WHOLE_HOME_OPTION) {
+          return {
+            ...prev,
+            homeAreas: checked ? [WHOLE_HOME_OPTION] : [],
+          };
+        }
+
+        const withoutWholeHome = current.filter((value) => value !== WHOLE_HOME_OPTION);
+        return {
+          ...prev,
+          homeAreas: checked ? [...withoutWholeHome, item] : withoutWholeHome.filter((value) => value !== item),
+        };
+      }
+
       return {
         ...prev,
         [name]: checked ? [...current, item] : current.filter((value) => value !== item),
@@ -323,7 +374,7 @@ export function RequestForm() {
       )}
 
       {isHomeReset && (
-        <Section title="4. Home reset priorities" description="Quick checkboxes are enough. Use the notes box only for anything special or hard to explain.">
+        <Section title="4. Home reset focus" description="Choose what needs attention. We review your package, time block, notes, and photos before confirming what can reasonably fit.">
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Home type">
               <select className="input" value={form.homeType} onChange={(e) => update("homeType", e.target.value)}>
@@ -353,15 +404,34 @@ export function RequestForm() {
             </div>
           </div>
           <div>
-            <div className="label mb-3">Rooms or areas involved</div>
+            <div className="label mb-2">Where should we focus first?</div>
+            <p className="mb-3 text-sm leading-6 text-nest-ink/65">
+              Choose the areas you’d like help with. If you choose whole home, we’ll help prioritize instead of promising every room can be completed in one visit.
+            </p>
             <div className="grid gap-2 sm:grid-cols-2">
-              {homeAreaOptions.map((item) => (
-                <CheckOption key={item} checked={form.homeAreas.includes(item)} onChange={(checked) => toggleList("homeAreas", item, checked)}>{item}</CheckOption>
-              ))}
+              {homeAreaOptions.map((item) => {
+                const disabled = wholeHomeSelected && item !== WHOLE_HOME_OPTION;
+                return (
+                  <CheckOption
+                    key={item}
+                    checked={form.homeAreas.includes(item)}
+                    disabled={disabled}
+                    onChange={(checked) => toggleList("homeAreas", item, checked)}
+                  >
+                    {item}
+                  </CheckOption>
+                );
+              })}
             </div>
+            {wholeHomeSelected && (
+              <ScopeNotice>
+                Whole home requests are handled as a priority walkthrough. Tell us the top 2–3 things that would make the biggest difference, and we’ll review the right time block before checkout.
+              </ScopeNotice>
+            )}
+            {homeScopeWarning && <ScopeNotice tone="warning">{homeScopeWarning}</ScopeNotice>}
           </div>
-          <Field label="Anything else we should know?" required>
-            <textarea className="input min-h-28" required placeholder="Example: dishes are backed up, toys everywhere, laundry needs folding, pantry needs a reset, or I need help catching up before guests arrive." value={form.requestDetails} onChange={(e) => update("requestDetails", e.target.value)} />
+          <Field label={wholeHomeSelected ? "Top 2–3 must-do priorities for this visit" : "Top priorities for this visit"} required>
+            <textarea className="input min-h-28" required placeholder="Example: If time runs short, please handle kitchen counters, dishes, toy pickup in the living room, and the laundry pile first." value={form.requestDetails} onChange={(e) => update("requestDetails", e.target.value)} />
           </Field>
         </Section>
       )}
@@ -477,14 +547,26 @@ export function RequestForm() {
               <select className="input" value={form.pets} onChange={(e) => update("pets", e.target.value)}>
                 <option>No pets</option>
                 <option>Dog(s) — will be secured</option>
+                <option>Dog(s) — need to discuss</option>
                 <option>Cat(s)</option>
                 <option>Dog(s) and cat(s)</option>
                 <option>Other pets</option>
-                <option>I’ll explain below</option>
+                <option>I need to explain the pet/access situation</option>
               </select>
             </Field>
             <Field label="Parking/access notes"><input className="input" placeholder="Door code, parking, apartment info, stairs, elevator, gate, where to enter, etc." value={form.parkingAccess} onChange={(e) => update("parkingAccess", e.target.value)} /></Field>
           </div>
+          {petDetailsRequired && (
+            <Field label="Pet details" required>
+              <textarea
+                className="input min-h-24"
+                required
+                placeholder="Example: Two friendly dogs will be crated upstairs. Cat may hide. Please do not let pets outside."
+                value={form.petDetails}
+                onChange={(e) => update("petDetails", e.target.value)}
+              />
+            </Field>
+          )}
         </Section>
       )}
 
@@ -585,10 +667,22 @@ function MiniInfo({ icon, text }: { icon: ReactNode; text: string }) {
   );
 }
 
-function CheckOption({ checked, onChange, children }: { checked: boolean; onChange: (checked: boolean) => void; children: ReactNode }) {
+function ScopeNotice({ children, tone = "info" }: { children: ReactNode; tone?: "info" | "warning" }) {
+  const classes = tone === "warning"
+    ? "border-amber-300 bg-amber-50 text-amber-900"
+    : "border-nest-teal/20 bg-nest-mint/30 text-nest-teal";
+
   return (
-    <label className={`flex items-center gap-3 rounded-2xl border p-3 text-sm font-semibold transition ${checked ? "border-nest-gold/45 bg-nest-mint/35 text-nest-teal shadow-sm" : "border-nest-gold/10 bg-nest-cream text-nest-ink/78 hover:bg-nest-mint/25"}`}>
-      <input type="checkbox" className="h-4 w-4 accent-nest-teal" checked={checked} onChange={(e) => onChange(e.target.checked)} />
+    <div className={`mt-3 rounded-2xl border px-4 py-3 text-sm font-bold leading-6 ${classes}`}>
+      {children}
+    </div>
+  );
+}
+
+function CheckOption({ checked, onChange, children, disabled = false }: { checked: boolean; onChange: (checked: boolean) => void; children: ReactNode; disabled?: boolean }) {
+  return (
+    <label className={`flex items-center gap-3 rounded-2xl border p-3 text-sm font-semibold transition ${disabled ? "cursor-not-allowed opacity-45" : "cursor-pointer"} ${checked ? "border-nest-gold/45 bg-nest-mint/35 text-nest-teal shadow-sm" : "border-nest-gold/10 bg-nest-cream text-nest-ink/78 hover:bg-nest-mint/25"}`}>
+      <input type="checkbox" className="h-4 w-4 accent-nest-teal disabled:cursor-not-allowed" checked={checked} disabled={disabled} onChange={(e) => onChange(e.target.checked)} />
       <span>{children}</span>
     </label>
   );

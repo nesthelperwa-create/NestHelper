@@ -39,6 +39,7 @@ const serviceRequestAllowedFields = [
   "parkingAccess",
   "homeType",
   "pets",
+  "petDetails",
   "supplyPreference",
   "homePriorities",
   "homeAreas",
@@ -160,6 +161,7 @@ const maxSubmissionsByCollection: Record<SubmissionCollection, number> = {
 
 const textLimits: Record<string, number> = {
   requestDetails: 1800,
+  petDetails: 1200,
   specialNotes: 1800,
   rentalTurnoverNotes: 1200,
   accessInstructions: 1200,
