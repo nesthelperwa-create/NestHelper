@@ -101,7 +101,7 @@ const serviceExtras: Record<string, ServiceExtra> = {
 
 type CardOpenEvent = CustomEvent<{ id: string }>;
 
-export function ServiceCard({ service }: { service: Service }) {
+export function ServiceCard({ service, equalCollapsedHeight = false }: { service: Service; equalCollapsedHeight?: boolean }) {
   const [open, setOpen] = useState(false);
   const cardRef = useRef<HTMLElement | null>(null);
   const returnScrollYRef = useRef<number | null>(null);
@@ -111,6 +111,7 @@ export function ServiceCard({ service }: { service: Service }) {
   const detailsId = `service-details-${service.id}`;
   const featured = service.id === "family-reset-3hr";
   const isLaundry = service.id === "laundry-rescue";
+  const collapsedHeightClass = equalCollapsedHeight ? "h-[670px] sm:h-[650px]" : "min-h-[610px] md:h-[650px]";
 
   useEffect(() => {
     function handleOtherCard(event: Event) {
@@ -188,7 +189,7 @@ export function ServiceCard({ service }: { service: Service }) {
       ref={cardRef}
       onClick={handleCardClick}
       className={`group relative flex cursor-pointer flex-col overflow-hidden rounded-[2rem] border bg-white/95 shadow-sm backdrop-blur transition duration-300 hover:-translate-y-1 hover:shadow-lift ${
-        open ? `border-nest-gold/35 ring-4 ${theme.ring}` : "min-h-[610px] border-nest-gold/16 md:h-[650px]"
+        open ? `border-nest-gold/35 ring-4 ${theme.ring}` : `${collapsedHeightClass} border-nest-gold/16`
       }`}
     >
       {featured && (

@@ -473,7 +473,7 @@ export function RequestForm() {
       )}
 
       {isLaundry && (
-        <Section title="4. Laundry Rescue preferences" description="Laundry is billed by dry weight at pickup, then the final balance is sent after weigh-in.">
+        <Section title="4. Laundry Rescue preferences" description="Laundry is billed by dry weight at pickup. Your deposit is credited toward the final total, then the final balance is handled by your checkout choice: auto-charge after review or invoice before delivery.">
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Estimated laundry amount" required>
               <select className="input" required value={form.laundryBagEstimate} onChange={(e) => update("laundryBagEstimate", e.target.value)}>

@@ -34,7 +34,7 @@ export default function ServicesPage() {
         </div>
 
         <div className="grid items-start gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {services.map((service) => <ServiceCard key={service.id} service={service} />)}
+          {services.map((service) => <ServiceCard key={service.id} service={service} equalCollapsedHeight />)}
         </div>
 
         <div className="mt-10 rounded-[2.5rem] border border-nest-gold/18 bg-gradient-to-br from-white via-nest-cream to-nest-mint/30 p-7 shadow-soft sm:p-8">
@@ -82,17 +82,14 @@ export default function ServicesPage() {
         </div>
 
         <div className="mt-10 rounded-[2.5rem] border border-nest-gold/18 bg-gradient-to-br from-nest-mint/25 via-white to-nest-cream p-7 shadow-soft sm:p-8">
-          <div className="grid gap-5 lg:grid-cols-[0.25fr_1.75fr] lg:items-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-white text-nest-teal shadow-sm">
-              <SprayCan size={30} />
-            </div>
+          <div className="grid gap-6 lg:grid-cols-[0.7fr_1.3fr] lg:items-center">
             <div>
-              <p className="pill-label w-fit">Product preferences</p>
-              <h2 className="mt-3 text-3xl font-black text-nest-teal sm:text-4xl">Non-toxic, low-odor, and sensitive options can be requested.</h2>
-              <p className="mt-3 font-medium leading-7 text-nest-ink/70">
-                NestHelper brings the supplies. Tell us in the request if your family prefers non-toxic, low-odor, fragrance-free, or baby/sensitive products. We review the surface, task, supplies, and scope before confirming what fits the visit.
-              </p>
+              <p className="pill-label w-fit"><SprayCan size={15} /> Product preferences</p>
+              <h2 className="mt-4 text-3xl font-black text-nest-teal sm:text-4xl">Non-toxic, low-odor, and sensitive options can be requested.</h2>
             </div>
+            <p className="font-medium leading-7 text-nest-ink/70">
+              NestHelper brings the supplies. Tell us in the request if your family prefers non-toxic, low-odor, fragrance-free, or baby/sensitive products. We review the surface, task, supplies, and scope before confirming what fits the visit.
+            </p>
           </div>
         </div>
 

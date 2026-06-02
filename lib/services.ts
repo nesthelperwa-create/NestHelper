@@ -111,7 +111,7 @@ export const services: Service[] = [
       "$59 minimum + $2.99/lb",
       "Pickup and return delivery",
       "Baby/sensitive or fragrance-free detergent add-on",
-      "Final balance sent after weigh-in"
+      "Auto-charge or invoice after weigh-in"
     ],
     standardPrice: "$59 minimum + $2.99/lb",
     priceNote: "Minimum + per-pound pricing",
@@ -121,7 +121,7 @@ export const services: Service[] = [
     stripeStandardEnv: "STRIPE_PRICE_LAUNDRY_DEPOSIT_STANDARD",
     foundingPrice: "$49 minimum + $2.49/lb",
     stripeFoundingEnv: "STRIPE_PRICE_LAUNDRY_DEPOSIT_FOUNDING",
-    note: "Laundry is billed by dry weight. The deposit applies to the final total, and any remaining balance is sent after pickup weigh-in."
+    note: "Laundry is billed by dry weight. The non-refundable deposit is credited before tax toward the final total, and any remaining balance is handled by the checkout option selected: auto-charge after review or invoice before delivery."
   }
 ];
 
