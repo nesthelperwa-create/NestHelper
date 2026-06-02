@@ -118,7 +118,6 @@ function buildLineDescription(line: Record<string, unknown>, servicePeriodLabel 
     .slice(0, 900);
 }
 
-
 const COMMERCIAL_TAXABLE_PRESETS = new Set([
   "firstTimeReset",
   "carpetDeepCleaning",
@@ -137,7 +136,7 @@ const COMMERCIAL_NONTAXABLE_PRESETS = new Set([
   "laborHours",
 ]);
 
-function getCommercialLineTaxMode(line: Record<string, unknown>) {
+function getCommercialLineTaxMode(line: Record<string, unknown>): "taxable" | "nontaxable" {
   const preset = getString(line.preset);
   const explicitTaxMode = getString(line.taxMode || line.taxStatus || line.taxable).toLowerCase();
   const searchable = [line.label, line.description, line.note]
@@ -153,8 +152,8 @@ function getCommercialLineTaxMode(line: Record<string, unknown>) {
   return "nontaxable";
 }
 
-function getCommercialTaxCounts(lineItems: Record<string, unknown>[]) {
-  return lineItems.reduce(
+function getCommercialTaxCounts(lineItems: Record<string, unknown>[]): { taxable: number; nontaxable: number } {
+  return lineItems.reduce<{ taxable: number; nontaxable: number }>(
     (counts, line) => {
       if (getCommercialLineTaxMode(line) === "taxable") counts.taxable += 1;
       else counts.nontaxable += 1;
@@ -162,10 +161,6 @@ function getCommercialTaxCounts(lineItems: Record<string, unknown>[]) {
     },
     { taxable: 0, nontaxable: 0 }
   );
-}
-
-function commercialBreakdownHasTaxableLines(lineItems: Record<string, unknown>[]) {
-  return getCommercialTaxCounts(lineItems).taxable > 0;
 }
 
 export async function POST(request: Request) {
