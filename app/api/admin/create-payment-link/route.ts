@@ -14,6 +14,7 @@ export const runtime = "nodejs";
 
 const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
 const enableAutomaticTax = process.env.ENABLE_STRIPE_AUTOMATIC_TAX !== "false";
+const laundryProductTaxCode = (process.env.STRIPE_LAUNDRY_TAX_CODE || process.env.STRIPE_PRODUCT_TAX_CODE || process.env.STRIPE_TAX_CODE || "txcd_20090012").trim();
 const dynamicProductTaxCode = (process.env.STRIPE_PRODUCT_TAX_CODE || process.env.STRIPE_TAX_CODE || "").trim();
 
 type CreatePaymentLinkBody = {
@@ -176,7 +177,7 @@ export async function POST(request: Request) {
               unit_amount: laundryDepositAmountCents,
               tax_behavior: "exclusive" as const,
               product_data: {
-                ...(dynamicProductTaxCode ? { tax_code: dynamicProductTaxCode } : {}),
+                tax_code: laundryProductTaxCode,
                 name: useCustomInitial ? customTitle : "Laundry Rescue non-refundable deposit / minimum",
                 description: [
                   customNote || "Non-refundable Laundry Rescue deposit/minimum. This amount is credited toward the final laundry total after dry weight, add-ons, bulky items, or approved changes are reviewed.",
@@ -209,9 +210,8 @@ export async function POST(request: Request) {
     const checkoutParams: any = {
       mode: "payment",
       line_items: lineItems,
-      automatic_tax: { enabled: enableAutomaticTax },
+      automatic_tax: { enabled: isLaundryRescue ? true : enableAutomaticTax },
       billing_address_collection: "required",
-      shipping_address_collection: { allowed_countries: ["US"] },
       phone_number_collection: { enabled: true },
       allow_promotion_codes: !useCustomInitial && !isLaundryRescue,
       customer_email: email || undefined,

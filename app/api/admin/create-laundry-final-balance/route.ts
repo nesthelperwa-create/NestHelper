@@ -11,7 +11,7 @@ export const runtime = "nodejs";
 
 const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
 const enableAutomaticTax = process.env.ENABLE_STRIPE_AUTOMATIC_TAX !== "false";
-const dynamicProductTaxCode = (process.env.STRIPE_PRODUCT_TAX_CODE || process.env.STRIPE_TAX_CODE || "").trim();
+const laundryProductTaxCode = (process.env.STRIPE_LAUNDRY_TAX_CODE || process.env.STRIPE_PRODUCT_TAX_CODE || process.env.STRIPE_TAX_CODE || "txcd_20090012").trim();
 
 type LaundryFinalBalanceBody = {
   requestId?: string;
@@ -242,7 +242,7 @@ export async function POST(request: Request) {
       customer: customerId,
       collection_method: collectionMethod,
       ...(autoCharge ? { default_payment_method: savedPaymentMethodId } : { days_until_due: 7 }),
-      automatic_tax: { enabled: enableAutomaticTax },
+      automatic_tax: { enabled: true },
       auto_advance: false,
       description: autoCharge ? "Laundry Rescue final balance — auto-charge authorized" : "Laundry Rescue final balance",
       footer: autoCharge
@@ -276,7 +276,7 @@ export async function POST(request: Request) {
       currency: "usd",
       amount: moneyToCents(laundryBaseAmount),
       tax_behavior: "exclusive",
-      ...(dynamicProductTaxCode ? { tax_code: dynamicProductTaxCode } : {}),
+      tax_code: laundryProductTaxCode,
       description: [
         "Laundry Rescue wash, dry, fold, and coordination — dry weight",
         `Calculation: ${formatNumber(dryWeightLbs)} lb × ${formatMoney(ratePerLb)} per lb`,
@@ -292,7 +292,7 @@ export async function POST(request: Request) {
         currency: "usd",
         amount: moneyToCents(addOnsAmount),
         tax_behavior: "exclusive",
-        ...(dynamicProductTaxCode ? { tax_code: dynamicProductTaxCode } : {}),
+        tax_code: laundryProductTaxCode,
         description: [
           "Laundry add-ons / bulky items / approved extra work",
           "Includes approved items such as bulky pieces, rush changes, special handling, extra sorting, stain attention, or other reviewed laundry extras.",

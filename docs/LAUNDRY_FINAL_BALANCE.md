@@ -14,7 +14,7 @@ Deposit Checkout Sent → Deposit Paid - Final Pending
 
 not fully paid.
 
-The deposit checkout is tax-exclusive and uses Stripe automatic tax unless `ENABLE_STRIPE_AUTOMATIC_TAX=false`. The deposit/minimum is non-refundable and is credited toward the final laundry total before tax.
+The deposit checkout is tax-exclusive and uses Stripe automatic tax when `ENABLE_STRIPE_AUTOMATIC_TAX=true`. The deposit/minimum is non-refundable and is credited toward the final laundry total before tax.
 
 During Stripe checkout, the customer must choose one final-balance option:
 
@@ -86,4 +86,11 @@ Completed
 
 ## Important
 
-Tax shows when Stripe Tax is set up and `ENABLE_STRIPE_AUTOMATIC_TAX` is not set to `false` in the deployed environment. Stripe still needs a customer location and a Stripe Tax product tax code/default tax category. If Vercel has `ENABLE_STRIPE_AUTOMATIC_TAX=false`, tax will not be added.
+Tax only shows when Stripe Tax is set up and `ENABLE_STRIPE_AUTOMATIC_TAX=true` in the deployed environment. For sandbox testing, it may be disabled until Stripe live/tax setup is complete.
+
+
+## Laundry Rescue tax and final-balance choice note
+
+Laundry Rescue deposits created from either Quick Checkout or the saved Family Payment Breakdown are Checkout Sessions, not normal Stripe invoices, so Stripe can collect the customer’s required final-balance choice: auto-charge saved card after weigh-in, or email final invoice before delivery. The final balance after dry weight remains a Stripe invoice with line-item details.
+
+Laundry Rescue tax is forced on in code for deposit Checkout and final balance invoices with Stripe automatic tax enabled. The default Laundry Rescue product tax code is `txcd_20090012` (Linen Services - Laundry only) unless `STRIPE_LAUNDRY_TAX_CODE`, `STRIPE_PRODUCT_TAX_CODE`, or `STRIPE_TAX_CODE` is set in Vercel. Stripe Tax must be active in the Stripe account and the customer location must be collected/valid for tax to appear.

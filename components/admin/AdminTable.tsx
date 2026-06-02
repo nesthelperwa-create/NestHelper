@@ -734,7 +734,15 @@ export default function AdminTable({
   async function createFamilyInvoice(sendEmail: boolean) {
     if (!selected) return;
     setFamilyInvoiceBusy(true);
-    setActiveAction(sendEmail ? "Creating family invoice and sending NestHelper email..." : "Creating family Stripe invoice...");
+    setActiveAction(
+      selected.service === "laundry-rescue"
+        ? sendEmail
+          ? "Creating Laundry Rescue deposit checkout and sending NestHelper email..."
+          : "Creating Laundry Rescue deposit checkout..."
+        : sendEmail
+          ? "Creating family invoice and sending NestHelper email..."
+          : "Creating family Stripe invoice..."
+    );
     setFamilyInvoiceMessage("");
     setFamilyInvoiceError("");
 
@@ -749,11 +757,15 @@ export default function AdminTable({
 
       if (!res.ok || !data.ok) throw new Error(data.error || "Unable to create family invoice.");
 
+      const isLaundryDepositCheckout = Boolean(data.isLaundryDepositCheckout);
       const nextInvoiceStatus = data.status || (sendEmail && data.emailSent ? "Invoice Link Sent" : "Invoice Created");
       setSelected((prev) => prev ? {
         ...prev,
         status: nextInvoiceStatus,
         paymentStatus: data.paymentStatus || nextInvoiceStatus,
+        laundryPaymentStatus: isLaundryDepositCheckout ? (data.paymentStatus || nextInvoiceStatus) : prev.laundryPaymentStatus,
+        checkoutUrl: isLaundryDepositCheckout ? data.hostedInvoiceUrl : prev.checkoutUrl,
+        checkoutSessionId: isLaundryDepositCheckout ? data.invoiceId : prev.checkoutSessionId,
         familyInvoiceId: data.invoiceId,
         familyInvoiceNumber: data.invoiceNumber,
         familyInvoiceUrl: data.hostedInvoiceUrl,
@@ -765,7 +777,13 @@ export default function AdminTable({
         familyInvoiceSentAt: sendEmail && data.emailSent ? new Date().toISOString() : prev.familyInvoiceSentAt,
       } : prev);
       setStatusValue(nextInvoiceStatus);
-      if (sendEmail && data.emailSent) {
+      if (isLaundryDepositCheckout && sendEmail && data.emailSent) {
+        setFamilyInvoiceMessage("Laundry Rescue deposit checkout created and sent to the customer. Stripe will collect the final-balance choice: auto-charge or invoice-before-delivery.");
+      } else if (isLaundryDepositCheckout && sendEmail && data.emailWarning) {
+        setFamilyInvoiceMessage(`Laundry deposit checkout created, but customer email was not sent. ${data.emailWarning} Open or copy the checkout link below.`);
+      } else if (isLaundryDepositCheckout) {
+        setFamilyInvoiceMessage("Laundry Rescue deposit checkout created. Open or copy the checkout link below. Customer will choose auto-charge or invoice-before-delivery in Stripe.");
+      } else if (sendEmail && data.emailSent) {
         setFamilyInvoiceMessage("Family Stripe invoice created and sent to the customer by NestHelper email.");
       } else if (sendEmail && data.emailWarning) {
         setFamilyInvoiceMessage(`Family invoice created, but customer email was not sent. ${data.emailWarning} Open or copy the invoice link below.`);
@@ -1596,7 +1614,7 @@ export default function AdminTable({
                     </p>
                     {selected.service === "laundry-rescue" && (
                       <p className="mt-2 rounded-2xl bg-white px-4 py-3 text-sm font-bold text-[#075c58]">
-                        Laundry Rescue quick checkout is for the deposit/minimum only. After dry weigh-in, use the final balance invoice section below.
+                        For Laundry Rescue, both the saved breakdown payment and quick checkout create a deposit checkout so Stripe can ask the customer to choose auto-charge or invoice-before-delivery. After dry weigh-in, use the final balance section below.
                       </p>
                     )}
                   </div>
@@ -1649,34 +1667,36 @@ export default function AdminTable({
                   <div className="mt-4 rounded-3xl border border-cyan-200 bg-white p-4">
                     <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                       <div className="max-w-2xl">
-                        <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Optional family invoice</p>
-                        <h5 className="mt-1 text-base font-black text-[#075c58]">Create a Stripe invoice from the saved family breakdown</h5>
+                        <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">{selected.service === "laundry-rescue" ? "Laundry deposit approval" : "Optional family invoice"}</p>
+                        <h5 className="mt-1 text-base font-black text-[#075c58]">{selected.service === "laundry-rescue" ? "Create a deposit checkout from the saved laundry breakdown" : "Create a Stripe invoice from the saved family breakdown"}</h5>
                         <p className="mt-1 text-sm leading-6 text-slate-700">
-                          Use this when you want a formal invoice/PDF instead of only a checkout receipt: Errand Helper, custom family quotes, recurring family help, Laundry Rescue balance, approved add-ons, or refund/credit documentation.
+                          {selected.service === "laundry-rescue"
+                            ? "This uses the saved breakdown amount to create a taxable, non-refundable Laundry Rescue deposit checkout. Stripe asks the customer to choose auto-charge for the final balance or invoice-before-delivery."
+                            : "Use this when you want a formal invoice/PDF instead of only a checkout receipt: Errand Helper, custom family quotes, recurring family help, approved add-ons, or refund/credit documentation."}
                         </p>
                       </div>
                       <div className="flex flex-col gap-2 sm:flex-row lg:flex-col">
                         <button type="button" disabled={familyInvoiceBusy || !hasSavedFamilyPaymentBreakdown} onClick={() => createFamilyInvoice(true)} className={getAdminActionClass("primary")}>
-                          {familyInvoiceBusy ? <><ActionSpinner /> Creating...</> : "Create + email family invoice"}
+                          {familyInvoiceBusy ? <><ActionSpinner /> Creating...</> : selected.service === "laundry-rescue" ? "Create + email laundry deposit checkout" : "Create + email family invoice"}
                         </button>
                         <button type="button" disabled={familyInvoiceBusy || !hasSavedFamilyPaymentBreakdown} onClick={() => createFamilyInvoice(false)} className={getAdminActionClass("secondary")}>
-                          Create family invoice only
+                          {selected.service === "laundry-rescue" ? "Create laundry deposit checkout only" : "Create family invoice only"}
                         </button>
                       </div>
                     </div>
                     {!hasSavedFamilyPaymentBreakdown && (
-                      <p className="mt-3 rounded-2xl bg-amber-50 px-4 py-3 text-xs font-bold leading-5 text-amber-800">Save the Family Payment Breakdown draft first. The invoice uses those saved line items, including the service period when entered.</p>
+                      <p className="mt-3 rounded-2xl bg-amber-50 px-4 py-3 text-xs font-bold leading-5 text-amber-800">Save the Family Payment Breakdown draft first. For Laundry Rescue, the saved amount becomes the deposit checkout amount; for other services, the invoice uses the saved line items.</p>
                     )}
                     {(selected.familyInvoiceUrl || selected.familyInvoicePdf) && (
                       <div className="mt-4 rounded-2xl border border-cyan-100 bg-cyan-50/50 p-4">
-                        <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Current family invoice</p>
+                        <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">{selected.service === "laundry-rescue" ? "Current laundry deposit checkout" : "Current family invoice"}</p>
                         {selected.familyInvoiceEmailWarning && <p className="mt-2 rounded-2xl bg-amber-50 px-3 py-2 text-xs font-bold text-amber-800">{selected.familyInvoiceEmailWarning}</p>}
                         {selected.familyInvoiceServicePeriodLabel && <p className="mt-2 text-xs font-bold text-slate-600">Service period: {selected.familyInvoiceServicePeriodLabel}</p>}
                         {selected.familyInvoiceUrl && <p className="mt-2 break-all text-sm text-[#075c58]">{selected.familyInvoiceUrl}</p>}
                         <div className="mt-3 flex flex-wrap gap-2">
-                          {selected.familyInvoiceUrl && <a href={selected.familyInvoiceUrl} target="_blank" rel="noreferrer" className="rounded-full bg-[#075c58] px-4 py-2 text-xs font-black text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-[#064b48]">Open invoice</a>}
+                          {selected.familyInvoiceUrl && <a href={selected.familyInvoiceUrl} target="_blank" rel="noreferrer" className="rounded-full bg-[#075c58] px-4 py-2 text-xs font-black text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-[#064b48]">{selected.service === "laundry-rescue" ? "Open checkout" : "Open invoice"}</a>}
                           {selected.familyInvoicePdf && <a href={selected.familyInvoicePdf} target="_blank" rel="noreferrer" className="rounded-full border border-[#075c58] bg-white px-4 py-2 text-xs font-black text-[#075c58] transition hover:bg-[#f4ecdc]">Open PDF</a>}
-                          {selected.familyInvoiceUrl && <button type="button" onClick={() => copyToClipboard(selected.familyInvoiceUrl || "")} className="rounded-full border border-[#075c58] bg-white px-4 py-2 text-xs font-black text-[#075c58] transition hover:bg-[#f4ecdc]">Copy invoice link</button>}
+                          {selected.familyInvoiceUrl && <button type="button" onClick={() => copyToClipboard(selected.familyInvoiceUrl || "")} className="rounded-full border border-[#075c58] bg-white px-4 py-2 text-xs font-black text-[#075c58] transition hover:bg-[#f4ecdc]">{selected.service === "laundry-rescue" ? "Copy checkout link" : "Copy invoice link"}</button>}
                         </div>
                       </div>
                     )}

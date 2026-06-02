@@ -12,12 +12,38 @@ import { sendFamilyInvoiceEmail } from "@/lib/sendFamilyInvoiceEmail";
 export const runtime = "nodejs";
 
 const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
-const enableAutomaticTax = process.env.ENABLE_STRIPE_AUTOMATIC_TAX === "true";
+const enableAutomaticTax = process.env.ENABLE_STRIPE_AUTOMATIC_TAX !== "false";
+const laundryProductTaxCode = (process.env.STRIPE_LAUNDRY_TAX_CODE || process.env.STRIPE_PRODUCT_TAX_CODE || process.env.STRIPE_TAX_CODE || "txcd_20090012").trim();
 
 type CreateFamilyInvoiceBody = {
   requestId?: string;
   sendEmail?: boolean;
 };
+
+type LaundryFinalPaymentCustomField = {
+  key: string;
+  label: { type: "custom"; custom: string };
+  type: "dropdown";
+  optional: boolean;
+  dropdown: { options: Array<{ label: string; value: string }> };
+};
+
+function buildLaundryFinalPaymentCustomFields(): LaundryFinalPaymentCustomField[] {
+  return [
+    {
+      key: "laundry_final_payment_preference",
+      label: { type: "custom", custom: "Final Laundry Rescue balance" },
+      type: "dropdown",
+      optional: false,
+      dropdown: {
+        options: [
+          { label: "Auto-charge saved card after weigh-in", value: "autocharge" },
+          { label: "Email final invoice before delivery", value: "invoicebeforedelivery" },
+        ],
+      },
+    },
+  ];
+}
 
 function getString(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
@@ -94,6 +120,168 @@ function buildLineDescription(line: Record<string, unknown>, servicePeriodLabel 
     .slice(0, 900);
 }
 
+function formatMoney(value: number) {
+  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(Number.isFinite(value) ? value : 0);
+}
+
+async function createLaundryDepositCheckoutFromBreakdown(params: {
+  stripe: Stripe;
+  requestRef: any;
+  requestId: string;
+  data: Record<string, unknown>;
+  breakdown: Record<string, unknown>;
+  amountDueNowCents: number;
+  shouldSendEmail: boolean;
+  adminEmail: string;
+}) {
+  const { stripe, requestRef, requestId, data, breakdown, amountDueNowCents, shouldSendEmail, adminEmail } = params;
+  const email = getString(data.email);
+  const fullName = getString(data.fullName) || getString(data.contactName) || "NestHelper customer";
+  const serviceTitle = getServiceTitle(data) || "Laundry Rescue";
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+  const customerBreakdownText = getString(breakdown.customerBreakdownText);
+  const servicePeriodLabel = getString(breakdown.servicePeriodLabel) || formatServicePeriodLabel(breakdown.servicePeriodStart, breakdown.servicePeriodEnd);
+  const depositAmount = amountDueNowCents / 100;
+
+  const checkoutParams: any = {
+    mode: "payment",
+    payment_method_types: ["card"],
+    customer_creation: "always",
+    customer_email: email || undefined,
+    line_items: [
+      {
+        price_data: {
+          currency: "usd",
+          unit_amount: amountDueNowCents,
+          tax_behavior: "exclusive" as const,
+          product_data: {
+            tax_code: laundryProductTaxCode,
+            name: "Laundry Rescue non-refundable deposit / minimum",
+            description: [
+              customerBreakdownText || getString(breakdown.customerNote) || "Non-refundable Laundry Rescue deposit/minimum credited toward the final total after dry weigh-in.",
+              servicePeriodLabel ? `Service period: ${servicePeriodLabel}` : "",
+            ].filter(Boolean).join("\n").slice(0, 1000),
+          },
+        },
+        quantity: 1,
+      },
+    ],
+    automatic_tax: { enabled: true },
+    billing_address_collection: "required",
+    phone_number_collection: { enabled: true },
+    client_reference_id: requestId,
+    payment_intent_data: { setup_future_usage: "off_session" },
+    custom_fields: buildLaundryFinalPaymentCustomFields(),
+    custom_text: {
+      submit: {
+        message:
+          "Laundry Rescue deposit/minimum is non-refundable and credited toward the final total. If you choose auto-charge, NestHelper may charge your saved payment method for the final balance after dry weight and add-ons are confirmed. If you choose invoice-before-delivery, laundry is held until the final invoice is fully paid.",
+      },
+    },
+    success_url: `${siteUrl}/checkout?success=true&payment_type=laundry_deposit&service_id=laundry-rescue&session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${siteUrl}/checkout?cancelled=true&payment_type=laundry_deposit&service_id=laundry-rescue&request_id=${requestId}`,
+    metadata: {
+      requestId,
+      serviceId: "laundry-rescue",
+      serviceTitle,
+      paymentType: "laundry_deposit",
+      paymentMode: "invoice_builder_deposit_checkout",
+      laundryDepositNonRefundable: "true",
+      laundryDepositAmount: String(Number(depositAmount.toFixed(2))),
+      laundryFinalPaymentOptions: "auto_charge_or_invoice_before_delivery",
+      servicePeriodLabel,
+      servicePeriodStart: getString(breakdown.servicePeriodStart),
+      servicePeriodEnd: getString(breakdown.servicePeriodEnd),
+      customerName: fullName,
+      customerEmail: email,
+      customerPhone: getString(data.phone),
+    },
+  };
+
+  const session = await stripe.checkout.sessions.create(checkoutParams as any);
+  const checkoutUrl = session.url || "";
+  if (!checkoutUrl) throw new Error("Stripe created the Laundry Rescue deposit checkout, but no hosted checkout link was returned.");
+
+  let emailSent = false;
+  let emailWarning = "";
+
+  if (shouldSendEmail && email) {
+    try {
+      const result = (await sendFamilyInvoiceEmail({
+        to: email,
+        customerName: fullName,
+        requestId,
+        invoiceUrl: checkoutUrl,
+        invoicePdf: "",
+        invoiceNumber: "Shown in Stripe checkout",
+        amountDueCents: amountDueNowCents,
+        dueDate: null,
+        serviceTitle: "Laundry Rescue deposit / minimum",
+        quoteTitle: "Laundry Rescue deposit and final-balance choice",
+        quoteBreakdownText: [
+          customerBreakdownText,
+          "This non-refundable deposit/minimum is taxable and credited toward the final Laundry Rescue total.",
+          "During Stripe checkout, the customer chooses either auto-charge for the final balance after dry weigh-in or invoice-before-delivery. Laundry is not released until the final balance is fully paid.",
+        ].filter(Boolean).join("\n\n"),
+        servicePeriodLabel,
+        replyToEmail: emailAliases.laundry,
+      })) as any;
+
+      if (result?.skipped) {
+        emailWarning = "Laundry deposit checkout was created, but the NestHelper email was skipped because email settings or the customer email are missing.";
+      } else if (result?.error) {
+        emailWarning = result.error?.message || "Laundry deposit checkout was created, but the NestHelper email could not be sent.";
+      } else {
+        emailSent = true;
+      }
+    } catch (emailError: any) {
+      console.error("Laundry deposit checkout NestHelper email failed", emailError);
+      emailWarning = emailError?.message || "Laundry deposit checkout was created, but the NestHelper email could not be sent.";
+    }
+  }
+
+  const nextStatus = shouldSendEmail && emailSent ? "Deposit Checkout Sent" : "Deposit Checkout Created";
+
+  await requestRef.update({
+    status: nextStatus,
+    paymentStatus: nextStatus,
+    laundryPaymentStatus: nextStatus,
+    checkoutUrl,
+    checkoutSessionId: session.id,
+    familyInvoiceUrl: checkoutUrl,
+    familyInvoicePdf: "",
+    familyInvoiceEmailSent: emailSent,
+    familyInvoiceEmailWarning: emailWarning,
+    familyInvoiceDeliveryMethod: shouldSendEmail ? "nesthelper_email" : "manual",
+    familyInvoiceServicePeriodLabel: servicePeriodLabel,
+    laundryDepositCheckoutUrl: checkoutUrl,
+    laundryDepositCheckoutSessionId: session.id,
+    laundryDepositExpectedAmountCents: amountDueNowCents,
+    laundryDepositNonRefundable: true,
+    laundryDepositTaxMode: "Stripe automatic tax with Laundry Services product tax code",
+    laundryFinalPaymentChoiceRequired: true,
+    laundryFinalPaymentOptions: "auto_charge_or_invoice_before_delivery",
+    updatedAt: FieldValue.serverTimestamp(),
+    updatedBy: adminEmail || "admin",
+  });
+
+  return {
+    ok: true,
+    invoiceId: session.id,
+    invoiceNumber: "",
+    customerId: typeof session.customer === "string" ? session.customer : "",
+    hostedInvoiceUrl: checkoutUrl,
+    invoicePdf: "",
+    emailSent,
+    emailWarning,
+    status: nextStatus,
+    paymentStatus: nextStatus,
+    servicePeriodLabel,
+    deliveryMethod: shouldSendEmail ? "nesthelper_email" : "manual",
+    isLaundryDepositCheckout: true,
+  };
+}
+
 export async function POST(request: Request) {
   try {
     getFirebaseAdminDb();
@@ -143,6 +331,20 @@ export async function POST(request: Request) {
         { ok: false, error: "Save a family payment breakdown with an amount due now before creating an invoice." },
         { status: 400 }
       );
+    }
+
+    if (getString(data.service) === "laundry-rescue") {
+      const laundryCheckout = await createLaundryDepositCheckoutFromBreakdown({
+        stripe,
+        requestRef,
+        requestId,
+        data,
+        breakdown,
+        amountDueNowCents,
+        shouldSendEmail,
+        adminEmail: decoded.email || "admin",
+      });
+      return NextResponse.json(laundryCheckout);
     }
 
     const customerName = getString(data.fullName) || getString(data.contactName) || "NestHelper customer";
