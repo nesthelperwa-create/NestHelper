@@ -118,3 +118,13 @@ Use `FOUNDINGFAMILY` or a similar code during beta. Because discounts differ by 
 ## Sandbox tax note
 
 For sandbox testing, `ENABLE_STRIPE_AUTOMATIC_TAX=false` lets checkout links work before the Stripe head office/tax profile is fully completed. Before real customer payments, complete Stripe business/tax setup and set `ENABLE_STRIPE_AUTOMATIC_TAX=true` if you want Stripe Checkout to calculate tax automatically.
+
+
+Optional tax env vars:
+
+```text
+ENABLE_STRIPE_AUTOMATIC_TAX=true
+STRIPE_PRODUCT_TAX_CODE=your_stripe_tax_code_if_you_do_not_set_a_default_in_stripe
+```
+
+If `ENABLE_STRIPE_AUTOMATIC_TAX=false` is set in Vercel, Stripe will not add tax to Checkout or invoices.

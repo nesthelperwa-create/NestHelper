@@ -13,7 +13,7 @@ import { sendPaymentLinkEmail } from "@/lib/sendPaymentLinkEmail";
 export const runtime = "nodejs";
 
 const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
-const enableAutomaticTax = process.env.ENABLE_STRIPE_AUTOMATIC_TAX === "true";
+const enableAutomaticTax = process.env.ENABLE_STRIPE_AUTOMATIC_TAX !== "false";
 const dynamicProductTaxCode = (process.env.STRIPE_PRODUCT_TAX_CODE || process.env.STRIPE_TAX_CODE || "").trim();
 
 type CreatePaymentLinkBody = {
@@ -211,6 +211,7 @@ export async function POST(request: Request) {
       line_items: lineItems,
       automatic_tax: { enabled: enableAutomaticTax },
       billing_address_collection: "required",
+      shipping_address_collection: { allowed_countries: ["US"] },
       phone_number_collection: { enabled: true },
       allow_promotion_codes: !useCustomInitial && !isLaundryRescue,
       customer_email: email || undefined,

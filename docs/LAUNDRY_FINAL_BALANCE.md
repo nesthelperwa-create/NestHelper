@@ -14,7 +14,7 @@ Deposit Checkout Sent → Deposit Paid - Final Pending
 
 not fully paid.
 
-The deposit checkout is tax-exclusive and uses Stripe automatic tax when `ENABLE_STRIPE_AUTOMATIC_TAX=true`. The deposit/minimum is non-refundable and is credited toward the final laundry total before tax.
+The deposit checkout is tax-exclusive and uses Stripe automatic tax unless `ENABLE_STRIPE_AUTOMATIC_TAX=false`. The deposit/minimum is non-refundable and is credited toward the final laundry total before tax.
 
 During Stripe checkout, the customer must choose one final-balance option:
 
@@ -86,4 +86,4 @@ Completed
 
 ## Important
 
-Tax only shows when Stripe Tax is set up and `ENABLE_STRIPE_AUTOMATIC_TAX=true` in the deployed environment. For sandbox testing, it may be disabled until Stripe live/tax setup is complete.
+Tax shows when Stripe Tax is set up and `ENABLE_STRIPE_AUTOMATIC_TAX` is not set to `false` in the deployed environment. Stripe still needs a customer location and a Stripe Tax product tax code/default tax category. If Vercel has `ENABLE_STRIPE_AUTOMATIC_TAX=false`, tax will not be added.
