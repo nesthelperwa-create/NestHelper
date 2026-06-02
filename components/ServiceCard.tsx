@@ -111,6 +111,7 @@ export function ServiceCard({ service, equalCollapsedHeight = false }: { service
   const detailsId = `service-details-${service.id}`;
   const featured = service.id === "family-reset-3hr";
   const isLaundry = service.id === "laundry-rescue";
+  const equalClosed = equalCollapsedHeight && !open;
   const collapsedHeightClass = equalCollapsedHeight ? "h-[670px] sm:h-[650px]" : "min-h-[610px] md:h-[650px]";
 
   useEffect(() => {
@@ -211,7 +212,7 @@ export function ServiceCard({ service, equalCollapsedHeight = false }: { service
         </div>
       </div>
 
-      <div className="flex flex-1 flex-col p-5 sm:p-6">
+      <div className={`flex flex-1 flex-col p-5 sm:p-6 ${equalClosed ? "pb-[10.25rem] sm:pb-[10.5rem]" : ""}`}>
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
             <h3 className={`text-2xl font-black leading-tight text-nest-teal ${open ? "" : "min-h-[3.1rem]"}`}>{service.title}</h3>
@@ -234,8 +235,8 @@ export function ServiceCard({ service, equalCollapsedHeight = false }: { service
           </button>
         </div>
 
-        <div className="mt-5 overflow-hidden rounded-3xl border border-nest-gold/14 bg-gradient-to-br from-nest-cream via-white to-nest-mint/20 shadow-sm">
-          <div className="grid min-h-[8.4rem] gap-0 sm:grid-cols-[1fr_8.4rem]">
+        <div className={`mt-5 shrink-0 overflow-hidden rounded-3xl border border-nest-gold/14 bg-gradient-to-br from-nest-cream via-white to-nest-mint/20 shadow-sm ${equalClosed ? "h-[8.75rem]" : ""}`}>
+          <div className={`grid gap-0 sm:grid-cols-[1fr_8.4rem] ${equalClosed ? "h-full" : "min-h-[8.4rem]"}`}>
             <div className="flex flex-col justify-center p-4 sm:p-5">
               <div className="text-xs font-black uppercase tracking-[0.16em] text-nest-ink/55">Starting at</div>
               <div className={`mt-1 break-words font-black leading-tight text-nest-teal ${isLaundry ? "text-[1.55rem] sm:text-[1.62rem]" : "text-3xl"}`}>
@@ -322,7 +323,7 @@ export function ServiceCard({ service, equalCollapsedHeight = false }: { service
           </div>
         </div>
 
-        <div className="mt-auto pt-5">
+        <div className={`shrink-0 pt-5 ${equalClosed ? "absolute bottom-5 left-5 right-5 sm:bottom-6 sm:left-6 sm:right-6" : "mt-auto"}`}>
           <button
             type="button"
             onClick={toggleDetails}
