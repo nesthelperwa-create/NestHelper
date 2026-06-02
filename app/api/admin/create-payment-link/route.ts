@@ -68,8 +68,8 @@ function buildLaundryFinalPaymentCustomFields(): LaundryFinalPaymentCustomField[
       optional: false,
       dropdown: {
         options: [
-          { label: "Auto-charge saved card after weigh-in", value: "auto_charge" },
-          { label: "Email final invoice before delivery", value: "invoice_before_delivery" },
+          { label: "Auto-charge saved card after weigh-in", value: "autocharge" },
+          { label: "Email final invoice before delivery", value: "invoicebeforedelivery" },
         ],
       },
     },

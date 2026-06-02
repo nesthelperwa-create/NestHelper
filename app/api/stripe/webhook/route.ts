@@ -81,10 +81,17 @@ function getCheckoutCustomFieldValue(session: Stripe.Checkout.Session, key: stri
   return getString(field?.dropdown?.value || field?.text?.value || field?.numeric?.value);
 }
 
+function normalizeLaundryFinalPreference(value: string) {
+  const preference = getString(value).toLowerCase();
+  if (preference === "autocharge" || preference === "auto_charge") return "auto_charge";
+  if (preference === "invoicebeforedelivery" || preference === "invoice_before_delivery") return "invoice_before_delivery";
+  return "invoice_before_delivery";
+}
+
 function getLaundryFinalPreferenceLabel(preference: string) {
   if (preference === "auto_charge") return "Auto-charge saved card after dry weigh-in";
   if (preference === "invoice_before_delivery") return "Send final invoice link before delivery";
-  return "Not selected";
+  return "Send final invoice link before delivery";
 }
 
 function getEmailResultError(result: unknown) {
@@ -468,7 +475,7 @@ export async function POST(request: Request) {
         const isCustomInitialPayment = getString(session.metadata?.customInitialPayment) === "true";
         const checkoutServicePeriodLabel = getString(session.metadata?.servicePeriodLabel) || getString(existingData.checkoutServicePeriodLabel) || getString(existingData.familyInvoiceServicePeriodLabel) || getString(existingData.commercialInvoiceServicePeriodLabel);
         const isLaundryDeposit = serviceId === "laundry-rescue" && !isLaundryFinalBalance && !isAdditionalPayment;
-        const laundryFinalPreference = isLaundryDeposit ? getCheckoutCustomFieldValue(session, "laundry_final_payment_preference") || "invoice_before_delivery" : "";
+        const laundryFinalPreference = isLaundryDeposit ? normalizeLaundryFinalPreference(getCheckoutCustomFieldValue(session, "laundry_final_payment_preference")) : "";
         const laundryAutoChargeAuthorized = laundryFinalPreference === "auto_charge";
         const status = isAdditionalPayment ? "Additional Paid" : isLaundryFinalBalance ? "Fully Paid" : isLaundryDeposit ? "Deposit Paid - Final Pending" : "Paid";
         const paymentStatus = isAdditionalPayment ? "Additional Paid" : isLaundryFinalBalance ? "Final Balance Paid" : isLaundryDeposit ? "Deposit Paid - Final Pending" : "Paid";
