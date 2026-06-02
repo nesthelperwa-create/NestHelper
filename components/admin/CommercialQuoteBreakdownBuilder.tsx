@@ -16,6 +16,7 @@ export type QuoteLineItem = {
   multiplierLabel: string;
   recurring: boolean;
   note: string;
+  taxMode: "auto" | "taxable" | "nontaxable";
 };
 
 type AdminDoc = { id: string; [key: string]: any };
@@ -46,7 +47,7 @@ function BuilderSpinner() {
   return <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" aria-hidden="true" />;
 }
 
-const LINE_PRESETS: Record<string, Omit<QuoteLineItem, "id" | "note">> = {
+const LINE_PRESETS: Record<string, Omit<QuoteLineItem, "id" | "note" | "taxMode">> = {
   routineVisit: {
     preset: "routineVisit",
     label: "Routine Commercial Reset — by sq ft",
@@ -226,6 +227,45 @@ const QUOTE_TYPES = ["Sq-ft visit quote", "Sq-ft recurring monthly plan", "Flat 
 const REFUND_STATUSES = ["No refund due", "Reviewing refund", "Partial refund due", "Full refund due", "Partial refund issued", "Full refund issued", "Credit offered"];
 const REFUND_REASONS = ["Service canceled", "Customer overpaid", "Add-on removed", "Partial service completed", "Service issue / make-it-right", "Duplicate payment", "Laundry or balance adjustment", "Other"];
 
+const TAXABLE_COMMERCIAL_PRESETS = new Set([
+  "firstTimeReset",
+  "carpetDeepCleaning",
+  "spotTreatment",
+  "floorScrub",
+  "buffShine",
+  "waxFinish",
+  "stripWax",
+  "turnover",
+  "linenRestock",
+]);
+
+function normalizeTaxMode(value: unknown): "auto" | "taxable" | "nontaxable" {
+  const clean = safeString(value).toLowerCase().replace(/[\s_-]+/g, "");
+  if (clean === "taxable" || clean === "salestax" || clean === "yes" || clean === "true") return "taxable";
+  if (clean === "nontaxable" || clean === "notax" || clean === "no" || clean === "false") return "nontaxable";
+  return "auto";
+}
+
+function getCommercialLineTaxMode(line: Pick<QuoteLineItem, "preset" | "label" | "description" | "note" | "taxMode">) {
+  const explicit = normalizeTaxMode(line.taxMode);
+  if (explicit === "taxable" || explicit === "nontaxable") return explicit;
+
+  const searchable = [line.label, line.description, line.note]
+    .map((value) => safeString(value).toLowerCase())
+    .filter(Boolean)
+    .join(" ");
+
+  if (TAXABLE_COMMERCIAL_PRESETS.has(line.preset)) return "taxable";
+  if (/(carpet|deep clean|deep-clean|first[-\s]?time|floor scrub|buff|shine|wax|strip|turnover|linen|restock|specialty|specialized|non[-\s]?repetitive|construction cleanup|move[-\s]?out)/.test(searchable)) return "taxable";
+  return "nontaxable";
+}
+
+function getCommercialLineTaxBadge(line: QuoteLineItem) {
+  if (line.taxMode === "taxable") return "Taxable override";
+  if (line.taxMode === "nontaxable") return "No-tax override";
+  return getCommercialLineTaxMode(line) === "taxable" ? "Auto: taxable" : "Auto: no tax";
+}
+
 function getSubmittedSqFtValue(item: AdminDoc) {
   const raw = String(item.squareFootage || item.squareFeet || item.sqFt || item.spaceSize || "");
   if (!raw || raw.toLowerCase().includes("not sure")) return "1000";
@@ -288,7 +328,7 @@ function money(value: number) {
 
 function makeLine(presetKey = "routineVisit", item?: AdminDoc): QuoteLineItem {
   const preset = LINE_PRESETS[presetKey] || LINE_PRESETS.routineVisit;
-  const line: QuoteLineItem = { id: makeId(), ...preset, note: "" };
+  const line: QuoteLineItem = { id: makeId(), ...preset, note: "", taxMode: "auto" };
 
   if (presetKey === "routineVisit") {
     line.quantity = item ? getSubmittedSqFtValue(item) : line.quantity;
@@ -362,6 +402,7 @@ function getInitialLines(item: AdminDoc) {
       multiplierLabel: safeString(line.multiplierLabel) || "service",
       recurring: Boolean(line.recurring),
       note: safeString(line.note),
+      taxMode: normalizeTaxMode(line.taxMode),
     }));
   }
 
@@ -486,6 +527,7 @@ export default function CommercialQuoteBreakdownBuilder({ item, formatMoney, onS
   const laterAmount = money(toNumber(additionalAmount));
   const totalQuoted = money(amountDueNow + laterAmount);
   const servicePeriodLabel = useMemo(() => formatServicePeriodLabel(servicePeriodStart, servicePeriodEnd), [servicePeriodStart, servicePeriodEnd]);
+  const taxableLineCount = useMemo(() => lineItems.filter((line) => getCommercialLineTaxMode(line) === "taxable").length, [lineItems]);
 
   function markDirty() {
     setDirty(true);
@@ -648,7 +690,12 @@ export default function CommercialQuoteBreakdownBuilder({ item, formatMoney, onS
         servicePeriodStart,
         servicePeriodEnd,
         servicePeriodLabel,
-        lineItems: lineItems.map((line) => ({ ...line, amount: calculateLineAmount(line) })),
+        lineItems: lineItems.map((line) => ({
+          ...line,
+          taxMode: normalizeTaxMode(line.taxMode),
+          inferredTaxMode: getCommercialLineTaxMode(line),
+          amount: calculateLineAmount(line),
+        })),
         subtotal,
         discountCredit: discount,
         amountDueNow,
@@ -657,7 +704,7 @@ export default function CommercialQuoteBreakdownBuilder({ item, formatMoney, onS
         customerNote,
         internalNotes,
         customerBreakdownText,
-        taxNote: "Sales tax, if applicable, is shown at checkout or invoice.",
+        taxNote: "Commercial invoice tax is automatic by line item: routine janitorial defaults to no sales tax; specialty, deep-cleaning, floor/carpet, turnover, linen/restock, and manually taxable lines are sent to Stripe as taxable.",
       };
       const refundTracking = {
         status: refundStatus,
@@ -712,7 +759,7 @@ export default function CommercialQuoteBreakdownBuilder({ item, formatMoney, onS
         <div>
           <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Professional quote builder</p>
           <h5 className="mt-1 text-base font-black text-[#075c58]">Build a customer-ready breakdown</h5>
-          <p className="mt-1 text-sm leading-6 text-slate-700">Use sq-ft calculators for routine commercial service, plus dropdown line items for recurring plans, add-ons, credits, and refund notes. Save the breakdown first. The admin can then create a Stripe invoice from it or use it with a quick checkout link when needed.</p>
+          <p className="mt-1 text-sm leading-6 text-slate-700">Use sq-ft calculators for routine commercial service, plus dropdown line items for recurring plans, add-ons, credits, and refund notes. Tax mode is automatic by line item: routine janitorial defaults to no sales tax, while specialty/floor/carpet/turnover/linen lines default to taxable.</p>
         </div>
         <button
           type="button"
@@ -778,11 +825,15 @@ export default function CommercialQuoteBreakdownBuilder({ item, formatMoney, onS
                     {lineItems.map((line, index) => (
                       <div key={line.id} className="rounded-3xl border border-cyan-100 bg-cyan-50/35 p-4">
                         <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                          <p className="text-sm font-black text-[#075c58]">Line {index + 1}: {line.label}</p>
+                          <div>
+                            <p className="text-sm font-black text-[#075c58]">Line {index + 1}: {line.label}</p>
+                            <span className={`mt-2 inline-flex rounded-full px-3 py-1 text-[11px] font-black uppercase tracking-[0.1em] ${getCommercialLineTaxMode(line) === "taxable" ? "bg-amber-100 text-amber-800" : "bg-emerald-50 text-emerald-800"}`}>{getCommercialLineTaxBadge(line)}</span>
+                          </div>
                           <div className="text-right"><p className="text-xs font-black uppercase tracking-[0.14em] text-[#b98a2f]">Calculated amount</p><p className="text-lg font-black text-[#075c58]">{formatMoney(calculateLineAmount(line))}</p></div>
                         </div>
                         <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                           <label className="grid min-w-0 gap-2 text-[11px] font-black uppercase tracking-[0.08em] text-slate-500">Line type<select value={line.preset} onChange={(e) => changePreset(line.id, e.target.value)} className="w-full min-w-0 rounded-2xl border border-cyan-200 bg-white px-3 py-2 text-sm font-bold normal-case tracking-normal text-[#075c58] outline-none focus:border-[#075c58]">{PRESET_ORDER.map((key) => <option key={key} value={key}>{LINE_PRESETS[key].label}</option>)}</select></label>
+                          <label className="grid min-w-0 gap-2 text-[11px] font-black uppercase tracking-[0.08em] text-slate-500">Tax mode<select value={line.taxMode} onChange={(e) => updateLine(line.id, { taxMode: normalizeTaxMode(e.target.value) })} className="w-full min-w-0 rounded-2xl border border-cyan-200 bg-white px-3 py-2 text-sm font-bold normal-case tracking-normal text-[#075c58] outline-none focus:border-[#075c58]"><option value="auto">Auto</option><option value="taxable">Force taxable</option><option value="nontaxable">Force no tax</option></select></label>
                           <label className="grid min-w-0 gap-2 text-[11px] font-black uppercase tracking-[0.08em] text-slate-500">Area / qty<input value={line.quantity} onChange={(e) => updateLine(line.id, { quantity: e.target.value })} inputMode="decimal" className="w-full min-w-0 rounded-2xl border border-cyan-200 bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal outline-none focus:border-[#075c58]" /></label>
                           <label className="grid min-w-0 gap-2 text-[11px] font-black uppercase tracking-[0.08em] text-slate-500">Rate<input value={line.rate} onChange={(e) => updateLine(line.id, { rate: e.target.value })} inputMode="decimal" className="w-full min-w-0 rounded-2xl border border-cyan-200 bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal outline-none focus:border-[#075c58]" /></label>
                           <label className="grid min-w-0 gap-2 text-[11px] font-black uppercase tracking-[0.08em] text-slate-500">Visits / multiplier<input value={line.multiplier} onChange={(e) => updateLine(line.id, { multiplier: e.target.value })} inputMode="decimal" className="w-full min-w-0 rounded-2xl border border-cyan-200 bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal outline-none focus:border-[#075c58]" /></label>
@@ -833,7 +884,7 @@ export default function CommercialQuoteBreakdownBuilder({ item, formatMoney, onS
                     {laterAmount > 0 && <div className="flex justify-between gap-3"><span>Possible later/add-on</span><strong>{formatMoney(laterAmount)}</strong></div>}
                     <div className="flex justify-between gap-3"><span>Total tracked</span><strong>{formatMoney(totalQuoted)}</strong></div>
                   </div>
-                  <p className="mt-3 text-xs font-semibold leading-5 text-slate-600">Sales tax, if applicable, is still shown in Stripe checkout/invoice. The quote builder tracks service scope, sq-ft math, and customer-facing breakdown.</p>
+                  <p className="mt-3 text-xs font-semibold leading-5 text-slate-600">Stripe invoice tax is automatic by line item. Taxable lines in this draft: <strong>{taxableLineCount}</strong>. Routine recurring janitorial defaults to no sales tax; specialty/deep/floor/carpet/turnover/linen lines default to taxable. Use the Tax mode dropdown only when you need to override the automatic choice.</p>
                   <div className="mt-4 grid gap-2">
                     <button type="button" onClick={() => onApplyFirstPayment?.(amountDueNow, quoteTitle, customerNote)} className={getBuilderButtonClass("primary")}>Use amount due now for first payment</button>
                     <button type="button" onClick={() => onApplyAdditionalPayment?.(laterAmount, customerNote)} className={getBuilderButtonClass("secondary")}>Use later amount for add-on link</button>

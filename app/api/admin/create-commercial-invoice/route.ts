@@ -10,7 +10,9 @@ import { sendCommercialInvoiceEmail } from "@/lib/sendCommercialInvoiceEmail";
 export const runtime = "nodejs";
 
 const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
-const enableAutomaticTax = process.env.ENABLE_STRIPE_AUTOMATIC_TAX === "true";
+const enableAutomaticTax = process.env.ENABLE_STRIPE_AUTOMATIC_TAX !== "false";
+const nontaxableProductTaxCode = (process.env.STRIPE_NONTAXABLE_TAX_CODE || "txcd_00000000").trim();
+const commercialCleaningTaxCode = (process.env.STRIPE_COMMERCIAL_CLEANING_TAX_CODE || "txcd_20010004").trim();
 
 type CreateCommercialInvoiceBody = {
   requestId?: string;
@@ -116,6 +118,56 @@ function buildLineDescription(line: Record<string, unknown>, servicePeriodLabel 
     .slice(0, 900);
 }
 
+
+const COMMERCIAL_TAXABLE_PRESETS = new Set([
+  "firstTimeReset",
+  "carpetDeepCleaning",
+  "spotTreatment",
+  "floorScrub",
+  "buffShine",
+  "waxFinish",
+  "stripWax",
+  "turnover",
+  "linenRestock",
+]);
+
+const COMMERCIAL_NONTAXABLE_PRESETS = new Set([
+  "routineVisit",
+  "recurringMonthly",
+  "laborHours",
+]);
+
+function getCommercialLineTaxMode(line: Record<string, unknown>) {
+  const preset = getString(line.preset);
+  const explicitTaxMode = getString(line.taxMode || line.taxStatus || line.taxable).toLowerCase();
+  const searchable = [line.label, line.description, line.note]
+    .map((value) => getString(value).toLowerCase())
+    .filter(Boolean)
+    .join(" ");
+
+  if (["taxable", "sales_tax", "sales tax", "true", "yes"].includes(explicitTaxMode)) return "taxable";
+  if (["nontaxable", "non_taxable", "no_tax", "no tax", "false", "no"].includes(explicitTaxMode)) return "nontaxable";
+  if (COMMERCIAL_TAXABLE_PRESETS.has(preset)) return "taxable";
+  if (COMMERCIAL_NONTAXABLE_PRESETS.has(preset)) return "nontaxable";
+  if (/\b(carpet|deep clean|deep-clean|first[-\s]?time|floor scrub|buff|shine|wax|strip|turnover|linen|restock|specialty|specialized|non[-\s]?repetitive)\b/.test(searchable)) return "taxable";
+  return "nontaxable";
+}
+
+function getCommercialTaxCounts(lineItems: Record<string, unknown>[]) {
+  return lineItems.reduce(
+    (counts, line) => {
+      if (getCommercialLineTaxMode(line) === "taxable") counts.taxable += 1;
+      else counts.nontaxable += 1;
+      return counts;
+    },
+    { taxable: 0, nontaxable: 0 }
+  );
+}
+
+function commercialBreakdownHasTaxableLines(lineItems: Record<string, unknown>[]) {
+  return getCommercialTaxCounts(lineItems).taxable > 0;
+}
+
 export async function POST(request: Request) {
   try {
     getFirebaseAdminDb();
@@ -158,6 +210,8 @@ export async function POST(request: Request) {
     const breakdown = (data.commercialQuoteBreakdown || {}) as Record<string, unknown>;
     const lineItems = Array.isArray(breakdown.lineItems) ? (breakdown.lineItems as Record<string, unknown>[]) : [];
     const amountDueNowCents = moneyToCents(breakdown.amountDueNow);
+    const commercialTaxCounts = getCommercialTaxCounts(lineItems);
+    const hasTaxableCommercialLines = commercialTaxCounts.taxable > 0;
 
     if (!lineItems.length || amountDueNowCents <= 0) {
       return NextResponse.json(
@@ -191,7 +245,7 @@ export async function POST(request: Request) {
       customer: customer.id,
       collection_method: "send_invoice",
       days_until_due: 7,
-      automatic_tax: { enabled: enableAutomaticTax },
+      automatic_tax: { enabled: enableAutomaticTax && hasTaxableCommercialLines },
       auto_advance: false,
       description: getString(breakdown.quoteTitle) || "NestHelper Commercial Reset invoice",
       footer:
@@ -204,6 +258,7 @@ export async function POST(request: Request) {
         servicePeriodStart: getString(breakdown.servicePeriodStart),
         servicePeriodEnd: getString(breakdown.servicePeriodEnd),
         servicePeriodLabel,
+        taxHandling: hasTaxableCommercialLines ? "mixed_or_taxable_commercial_lines" : "nontaxable_routine_janitorial",
         siteUrl,
       },
     });
@@ -219,12 +274,15 @@ export async function POST(request: Request) {
         invoice: invoice.id,
         currency: "usd",
         amount,
+        tax_behavior: "exclusive",
+        tax_code: getCommercialLineTaxMode(line) === "taxable" ? commercialCleaningTaxCode : nontaxableProductTaxCode,
         description: buildLineDescription(line, servicePeriodLabel),
         metadata: {
           requestId,
           serviceId: "commercial-reset",
           preset: getString(line.preset),
           lineLabel: getString(line.label) || "Commercial Reset line item",
+          taxMode: getCommercialLineTaxMode(line),
         },
       });
 
@@ -340,6 +398,9 @@ export async function POST(request: Request) {
       commercialInvoiceServicePeriodEnd: getString(breakdown.servicePeriodEnd),
       commercialInvoiceServicePeriodLabel: servicePeriodLabel,
       commercialInvoiceCustomerId: customer.id,
+      commercialInvoiceTaxHandling: hasTaxableCommercialLines ? "Stripe automatic tax for taxable Commercial Reset lines; nontaxable tax code for routine janitorial lines" : "No sales tax applied by NestHelper for routine/repetitive janitorial-style Commercial Reset lines",
+      commercialInvoiceTaxableLineCount: commercialTaxCounts.taxable,
+      commercialInvoiceNontaxableLineCount: commercialTaxCounts.nontaxable,
       commercialInvoiceDeliveryMethod: shouldSendEmail ? "nesthelper_email" : "manual",
       commercialInvoiceEmailSent: emailSent,
       commercialInvoiceEmailWarning: emailWarning,
@@ -362,6 +423,8 @@ export async function POST(request: Request) {
       status: nextStatus,
       paymentStatus: nextStatus,
       deliveryMethod: shouldSendEmail ? "nesthelper_email" : "manual",
+      taxableLineCount: commercialTaxCounts.taxable,
+      nontaxableLineCount: commercialTaxCounts.nontaxable,
     });
   } catch (error: any) {
     console.error("Unable to create commercial invoice", error);

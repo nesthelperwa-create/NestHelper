@@ -14,8 +14,9 @@ export const runtime = "nodejs";
 
 const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
 const enableAutomaticTax = process.env.ENABLE_STRIPE_AUTOMATIC_TAX !== "false";
-const laundryProductTaxCode = (process.env.STRIPE_LAUNDRY_TAX_CODE || process.env.STRIPE_PRODUCT_TAX_CODE || process.env.STRIPE_TAX_CODE || "txcd_20090012").trim();
-const dynamicProductTaxCode = (process.env.STRIPE_PRODUCT_TAX_CODE || process.env.STRIPE_TAX_CODE || "").trim();
+const laundryProductTaxCode = (process.env.STRIPE_LAUNDRY_TAX_CODE || "txcd_20090012").trim();
+const nontaxableProductTaxCode = (process.env.STRIPE_NONTAXABLE_TAX_CODE || "txcd_00000000").trim();
+const commercialCleaningTaxCode = (process.env.STRIPE_COMMERCIAL_CLEANING_TAX_CODE || "txcd_20010004").trim();
 
 type CreatePaymentLinkBody = {
   requestId?: string;
@@ -94,6 +95,46 @@ function getServicePriceLabel(serviceId: string, mode: "standard" | "founding") 
 
 function getDefaultCustomTitle(serviceTitle: string, isLaundryRescue: boolean) {
   return isLaundryRescue ? "Laundry Rescue custom deposit" : `${serviceTitle} custom checkout`;
+}
+
+
+const COMMERCIAL_TAXABLE_PRESETS = new Set([
+  "firstTimeReset",
+  "carpetDeepCleaning",
+  "spotTreatment",
+  "floorScrub",
+  "buffShine",
+  "waxFinish",
+  "stripWax",
+  "turnover",
+  "linenRestock",
+]);
+
+const COMMERCIAL_NONTAXABLE_PRESETS = new Set([
+  "routineVisit",
+  "recurringMonthly",
+  "laborHours",
+]);
+
+function getCommercialLineTaxMode(line: Record<string, unknown>) {
+  const preset = getString(line.preset);
+  const explicitTaxMode = getString(line.taxMode || line.taxStatus || line.taxable).toLowerCase();
+  const searchable = [line.label, line.description, line.note]
+    .map((value) => getString(value).toLowerCase())
+    .filter(Boolean)
+    .join(" ");
+
+  if (["taxable", "sales_tax", "sales tax", "true", "yes"].includes(explicitTaxMode)) return "taxable";
+  if (["nontaxable", "non_taxable", "no_tax", "no tax", "false", "no"].includes(explicitTaxMode)) return "nontaxable";
+  if (COMMERCIAL_TAXABLE_PRESETS.has(preset)) return "taxable";
+  if (COMMERCIAL_NONTAXABLE_PRESETS.has(preset)) return "nontaxable";
+  if (/\b(carpet|deep clean|deep-clean|first[-\s]?time|floor scrub|buff|shine|wax|strip|turnover|linen|restock|specialty|specialized|non[-\s]?repetitive)\b/.test(searchable)) return "taxable";
+  return "nontaxable";
+}
+
+function commercialBreakdownHasTaxableLines(breakdown: Record<string, unknown>) {
+  const lines = Array.isArray(breakdown.lineItems) ? (breakdown.lineItems as Record<string, unknown>[]) : [];
+  return lines.some((line) => getCommercialLineTaxMode(line) === "taxable");
 }
 
 export async function POST(request: Request) {
@@ -196,7 +237,7 @@ export async function POST(request: Request) {
                 unit_amount: customAmountCents,
                 tax_behavior: "exclusive" as const,
                 product_data: {
-                  ...(dynamicProductTaxCode ? { tax_code: dynamicProductTaxCode } : {}),
+                  tax_code: isCommercialReset && commercialBreakdownHasTaxableLines(savedCommercialBreakdown) ? commercialCleaningTaxCode : nontaxableProductTaxCode,
                   name: customTitle,
                   description: [customNote || `${serviceTitle} — ${formatMoney(customAmount)}`, servicePeriodLabel ? `Service period: ${servicePeriodLabel}` : ""].filter(Boolean).join("\n"),
                 },
@@ -210,7 +251,7 @@ export async function POST(request: Request) {
     const checkoutParams: any = {
       mode: "payment",
       line_items: lineItems,
-      automatic_tax: { enabled: isLaundryRescue ? true : enableAutomaticTax },
+      automatic_tax: { enabled: enableAutomaticTax && (isLaundryRescue || (isCommercialReset && useCustomInitial && commercialBreakdownHasTaxableLines(savedCommercialBreakdown))) },
       billing_address_collection: "required",
       phone_number_collection: { enabled: true },
       allow_promotion_codes: !useCustomInitial && !isLaundryRescue,
@@ -231,6 +272,11 @@ export async function POST(request: Request) {
         laundryDepositNonRefundable: isLaundryRescue ? "true" : "",
         laundryDepositAmount: isLaundryRescue ? String(Number(laundryDepositAmount.toFixed(2))) : "",
         laundryFinalPaymentOptions: isLaundryRescue ? "auto_charge_or_invoice_before_delivery" : "",
+        taxHandling: isLaundryRescue
+          ? "taxable_laundry_rescue"
+          : isCommercialReset && useCustomInitial && commercialBreakdownHasTaxableLines(savedCommercialBreakdown)
+            ? "taxable_commercial_specialty"
+            : "nontaxable_default",
         servicePeriodLabel,
         servicePeriodStart: isCommercialReset ? getString(savedCommercialBreakdown.servicePeriodStart) : getString(savedFamilyBreakdown.servicePeriodStart),
         servicePeriodEnd: isCommercialReset ? getString(savedCommercialBreakdown.servicePeriodEnd) : getString(savedFamilyBreakdown.servicePeriodEnd),
