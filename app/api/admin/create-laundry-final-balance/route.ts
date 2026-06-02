@@ -83,7 +83,7 @@ function shouldAutoChargeFinalBalance(data: Record<string, unknown>) {
   return Boolean(data.laundryAutoChargeAuthorized) && getString(data.laundryFinalPaymentCollectionMethod) === "auto_charge";
 }
 
-function getInvoiceTaxAmount(invoice: any) {
+function getInvoiceTaxAmount(invoice: Stripe.Invoice) {
   const totalTaxes = Array.isArray(invoice.total_taxes)
     ? (invoice.total_taxes as Array<{ amount?: number | null }>).reduce((sum: number, item) => sum + cleanNumber(item.amount), 0)
     : 0;
@@ -267,7 +267,7 @@ export async function POST(request: Request) {
         balanceDue: String(Number(balanceDue.toFixed(2))),
         siteUrl,
       },
-    } as any);
+    });
 
     await stripe.invoiceItems.create({
       customer: customerId,
@@ -281,7 +281,7 @@ export async function POST(request: Request) {
         `Dry weight total before deposit credit: ${formatMoney(laundryBaseAmount)}`,
       ].join("\n"),
       metadata: { requestId, serviceId: "laundry-rescue", lineType: "dry_weight" },
-    } as any);
+    });
 
     if (addOnsAmount > 0) {
       await stripe.invoiceItems.create({
@@ -298,7 +298,7 @@ export async function POST(request: Request) {
           .filter(Boolean)
           .join("\n"),
         metadata: { requestId, serviceId: "laundry-rescue", lineType: "add_ons" },
-      } as any);
+      });
     }
 
     const finalized = await stripe.invoices.finalizeInvoice(invoice.id, { auto_advance: false });
@@ -335,11 +335,11 @@ export async function POST(request: Request) {
       );
     }
 
-    let paidInvoice: any = null;
+    let paidInvoice: Stripe.Invoice | null = null;
 
     if (autoCharge) {
       try {
-        paidInvoice = await stripe.invoices.pay(finalized.id, { payment_method: savedPaymentMethodId } as any);
+        paidInvoice = await stripe.invoices.pay(finalized.id, { payment_method: savedPaymentMethodId });
       } catch (error: any) {
         console.error("Laundry final auto-charge failed", error);
         await requestRef.update({
