@@ -30,6 +30,41 @@ export const policies: Policy[] = [
     ]
   },
   {
+    slug: "referral-program-policy",
+    title: "Referral Program Policy",
+    intro: "This policy explains how NestHelper family-to-family referral links, one-time use codes, and referral credits work.",
+    sections: [
+      {
+        heading: "Family-to-family only",
+        body: "The referral program is for family Parent Reset services only. Commercial Reset, Laundry Rescue, Errand Helper, partner services, helper applications, and business quote requests are excluded unless NestHelper approves an exception in writing."
+      },
+      {
+        heading: "Eligible services",
+        body: "Eligible services generally include Parent Reset, Family Reset, and Helper Block requests that are reviewed by NestHelper, approved, paid when required, scheduled, and completed. A submitted request, quote, checkout link, deposit, canceled visit, refunded visit, or incomplete visit does not qualify by itself."
+      },
+      {
+        heading: "One-time referral links",
+        body: "Each generated referral share link is intended for one referred family request only. Once a referral link is claimed by a referred family request, the same link cannot be redeemed by another customer."
+      },
+      {
+        heading: "Separate referral records",
+        body: "NestHelper tracks the original referring family’s generated share link and code separately from the referred family’s incoming referral code. This helps NestHelper review the referral, prevent duplicate use, and keep reward status clear in the admin dashboard."
+      },
+      {
+        heading: "Reward or credit timing",
+        body: "The original referring family becomes eligible for a reward or credit only after the referred family completes an eligible family reset. NestHelper may email the reward or credit information automatically after completion is recorded."
+      },
+      {
+        heading: "Credits are not cash",
+        body: "Referral rewards or credits are not cash, are not payable as cash, and are not transferable unless NestHelper approves it in writing. Credits may be applied to a future eligible family reset according to NestHelper’s current offer and availability."
+      },
+      {
+        heading: "Misuse and review",
+        body: "NestHelper may deny, reverse, or cancel a referral reward for self-referrals, duplicate accounts, fake or incomplete requests, chargebacks, refunded services, misuse, fraud, unsafe conduct, or activity outside the spirit of the family referral program."
+      }
+    ]
+  },
+  {
     slug: "privacy-policy",
     title: "Privacy Policy",
     intro: "We collect only the information needed to review requests, communicate, schedule service, process payments, and improve operations.",
@@ -268,41 +303,6 @@ export const policies: Policy[] = [
       {
         heading: "Excluded rental work",
         body: "Short-term rental turnover service does not include repairs, maintenance, pest treatment, biohazard cleanup, mold remediation, construction cleanup, guest messaging, refunds, platform communication, property management, emergency response, or work outside the approved cleaning scope unless separately reviewed and confirmed."
-      }
-    ]
-  },
-  {
-    slug: "referral-program-policy",
-    title: "Referral Program Policy",
-    intro: "The NestHelper family referral program is a simple way to thank families who share NestHelper with another local family.",
-    sections: [
-      {
-        heading: "Family-to-family program",
-        body: "The referral program is currently intended for eligible Parent Reset family services only. It is not currently offered for Commercial Reset, business cleaning, short-term rental turnover, partner/provider referrals, helper hiring, or contractor recruiting unless NestHelper approves a separate written arrangement."
-      },
-      {
-        heading: "How referral links work",
-        body: "A referring family may receive a unique referral link or referral code to share with another local family. When the new family submits a request through that link or enters the code on the request form, NestHelper may store the referral code with the request for admin review."
-      },
-      {
-        heading: "New-family credit",
-        body: "Eligible new families may receive a NestHelper credit toward their first completed Parent Reset, Family Reset, Helper Block, or Errand Helper service. Laundry Rescue may qualify for a smaller laundry credit because final pricing depends on dry weight, add-ons, and delivery/payment handling. Credits are reviewed before payment and are not automatically guaranteed by submitting a form."
-      },
-      {
-        heading: "Referrer credit",
-        body: "The referring family may receive a NestHelper credit after the referred family completes and pays for their first eligible service. A submitted request, canceled booking, declined request, unpaid request, duplicate household, or self-referral does not qualify for referrer credit."
-      },
-      {
-        heading: "Credit limits and exclusions",
-        body: "Referral credits are not redeemable for cash, cannot be transferred without approval, cannot be used for past services, taxes, tips, replacement fees, already-due laundry balances, or other excluded charges, and may not be combined with every promotion. NestHelper may limit one referral credit per new household or service request."
-      },
-      {
-        heading: "Disclosure and fairness",
-        body: "Families should be honest when sharing NestHelper. Referral credit should not be described as a paid review or guaranteed discount. If a family posts publicly while expecting referral credit, they should disclose that they may receive NestHelper credit. NestHelper may decline referral credit for misleading posts, fake referrals, duplicate accounts, abuse, or activity that does not match the spirit of the program."
-      },
-      {
-        heading: "Program changes",
-        body: "NestHelper may change, pause, or end the referral program at any time. Credits are reviewed case by case, and final eligibility depends on service fit, completion, payment, and program terms in effect at the time of the request."
       }
     ]
   },

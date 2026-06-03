@@ -1,4 +1,4 @@
-import { FieldValue } from "firebase-admin/firestore";
+import { FieldValue, type DocumentReference } from "firebase-admin/firestore";
 import { getFirebaseAdminDb } from "./firebaseAdmin";
 import { sendAdminEmail } from "./sendAdminEmail";
 import { sendCustomerConfirmationEmail } from "./sendCustomerConfirmationEmail";
@@ -10,9 +10,10 @@ export type SaveSubmissionInput = {
   emailSubject: string;
   emailTitle: string;
   adminPath: string;
+  beforeNotifications?: (input: { docId: string; docRef: DocumentReference; cleaned: Record<string, unknown> }) => Promise<Record<string, unknown> | void>;
 };
 
-export async function saveSubmission({ collection, payload, emailSubject, emailTitle, adminPath }: SaveSubmissionInput) {
+export async function saveSubmission({ collection, payload, emailSubject, emailTitle, adminPath, beforeNotifications }: SaveSubmissionInput) {
   const db = getFirebaseAdminDb();
   const cleaned = Object.fromEntries(
     Object.entries(payload || {}).map(([key, value]) => [key, typeof value === "string" ? value.trim() : value])
@@ -25,6 +26,18 @@ export async function saveSubmission({ collection, payload, emailSubject, emailT
     createdAt: FieldValue.serverTimestamp(),
     updatedAt: FieldValue.serverTimestamp(),
   });
+
+  if (beforeNotifications) {
+    try {
+      const extraUpdates = await beforeNotifications({ docId: doc.id, docRef: doc, cleaned });
+      if (extraUpdates && Object.keys(extraUpdates).length) {
+        Object.assign(cleaned, extraUpdates);
+      }
+    } catch (error) {
+      await doc.delete().catch(() => undefined);
+      throw error;
+    }
+  }
 
   const routedAliasEmail = getSubmissionNotificationEmail(collection, cleaned);
   const customerReplyEmail = getCustomerReplyEmail(collection, cleaned);

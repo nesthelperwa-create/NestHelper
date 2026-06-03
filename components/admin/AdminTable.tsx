@@ -6,7 +6,6 @@ import { firebaseAuth, firestoreDb } from "@/lib/firebaseClient";
 import StatusBadge from "./StatusBadge";
 import CommercialQuoteBreakdownBuilder from "./CommercialQuoteBreakdownBuilder";
 import FamilyPaymentBreakdownBuilder from "./FamilyPaymentBreakdownBuilder";
-import { normalizeReferralCode, REFERRAL_PROGRAM } from "@/lib/referrals";
 
 type AdminDoc = { id: string; status?: string; createdAt?: unknown; checkoutUrl?: string; promoCode?: string; [key: string]: any };
 type CheckoutMode = "standard" | "founding" | "custom";
@@ -175,21 +174,21 @@ function getServiceLook(item: AdminDoc | null | undefined) {
   const key = getServiceKey(item);
   return key ? SERVICE_LOOKS[key] || DEFAULT_SERVICE_LOOK : DEFAULT_SERVICE_LOOK;
 }
-function getReferralRequestLink(code: string) {
-  const normalized = normalizeReferralCode(code);
-  if (!normalized) return "";
-  const baseUrl = typeof window !== "undefined" ? window.location.origin : "https://www.nesthelperwa.com";
-  return `${baseUrl.replace(/\/$/, "")}/request?ref=${encodeURIComponent(normalized)}`;
-}
-
-function hasFamilyReferral(item: AdminDoc | null | undefined) {
-  if (!item || isCommercialRequest(item)) return false;
-  return Boolean(normalizeReferralCode(item.referralCode || "") || item.referralCreditStatus);
-}
-
 
 function isCommercialRequest(item: AdminDoc | null | undefined) {
   return getServiceKey(item) === "commercial-reset";
+}
+
+function isFamilyReferralEligibleRequest(item: AdminDoc | null | undefined) {
+  return ["parent-reset-2hr", "family-reset-3hr", "helper-block-4hr"].includes(String(item?.service || ""));
+}
+
+function isCompletedRequest(item: AdminDoc | null | undefined) {
+  return String(item?.status || "").trim().toLowerCase() === "completed";
+}
+
+function getReferralStatusText(item: AdminDoc | null | undefined) {
+  return String(item?.outgoingReferralStatus || item?.incomingReferralStatus || "Not started");
 }
 
 function getDefaultCommercialQuoteType(item: AdminDoc | null | undefined) {
@@ -473,14 +472,6 @@ export default function AdminTable({
   const [additionalPaymentMessage, setAdditionalPaymentMessage] = useState("");
   const [additionalPaymentError, setAdditionalPaymentError] = useState("");
   const [commercialQuoteStatus, setCommercialQuoteStatus] = useState("Not quoted");
-  const [referralCreditStatus, setReferralCreditStatus] = useState("Pending review");
-  const [referralReferrerName, setReferralReferrerName] = useState("");
-  const [referralNewCustomerCreditAmount, setReferralNewCustomerCreditAmount] = useState("25");
-  const [referralReferrerCreditAmount, setReferralReferrerCreditAmount] = useState("25");
-  const [referralAdminNotes, setReferralAdminNotes] = useState("");
-  const [referralBusy, setReferralBusy] = useState(false);
-  const [referralMessage, setReferralMessage] = useState("");
-  const [referralError, setReferralError] = useState("");
   const [commercialQuoteType, setCommercialQuoteType] = useState("Flat visit quote");
   const [commercialInitialAmount, setCommercialInitialAmount] = useState("");
   const [commercialAdditionalAmount, setCommercialAdditionalAmount] = useState("");
@@ -489,6 +480,9 @@ export default function AdminTable({
   const [commercialQuoteBusy, setCommercialQuoteBusy] = useState(false);
   const [commercialQuoteMessage, setCommercialQuoteMessage] = useState("");
   const [commercialQuoteError, setCommercialQuoteError] = useState("");
+  const [referralBusy, setReferralBusy] = useState(false);
+  const [referralMessage, setReferralMessage] = useState("");
+  const [referralError, setReferralError] = useState("");
   const [activeAction, setActiveAction] = useState("");
 
   useEffect(() => {
@@ -531,13 +525,6 @@ export default function AdminTable({
     setAdditionalPaymentNote("");
     setAdditionalPaymentMessage("");
     setAdditionalPaymentError("");
-    setReferralCreditStatus(selected?.referralCreditStatus ? String(selected.referralCreditStatus) : "Pending review");
-    setReferralReferrerName(selected?.referralReferrerName ? String(selected.referralReferrerName) : "");
-    setReferralNewCustomerCreditAmount(selected?.referralNewCustomerCreditAmount ? String(selected.referralNewCustomerCreditAmount) : selected?.service === "laundry-rescue" ? String(REFERRAL_PROGRAM.laundryCredit) : String(REFERRAL_PROGRAM.defaultNewCustomerCredit));
-    setReferralReferrerCreditAmount(selected?.referralReferrerCreditAmount ? String(selected.referralReferrerCreditAmount) : selected?.service === "laundry-rescue" ? String(REFERRAL_PROGRAM.laundryCredit) : String(REFERRAL_PROGRAM.defaultReferrerCredit));
-    setReferralAdminNotes(selected?.referralAdminNotes ? String(selected.referralAdminNotes) : "");
-    setReferralMessage("");
-    setReferralError("");
     setCommercialQuoteStatus(selected?.commercialQuoteStatus ? String(selected.commercialQuoteStatus) : "Not quoted");
     setCommercialQuoteType(selected?.commercialQuoteType ? String(selected.commercialQuoteType) : getDefaultCommercialQuoteType(selected));
     setCommercialInitialAmount(selected?.commercialInitialAmount ? String(selected.commercialInitialAmount) : selected?.customInitialAmount ? String(selected.customInitialAmount) : "");
@@ -546,6 +533,8 @@ export default function AdminTable({
     setCommercialInternalQuoteNotes(selected?.commercialInternalQuoteNotes ? String(selected.commercialInternalQuoteNotes) : "");
     setCommercialQuoteMessage("");
     setCommercialQuoteError("");
+    setReferralMessage("");
+    setReferralError("");
     setActiveAction("");
   }, [selected?.id]);
 
@@ -624,7 +613,7 @@ export default function AdminTable({
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok || !data.ok) throw new Error(data.error || "Unable to update status.");
-    return data as { ok: boolean; emailSent?: boolean; emailSkipped?: boolean; emailError?: string };
+    return data as { ok: boolean; emailSent?: boolean; emailSkipped?: boolean; emailError?: string; referralRewardEmailSent?: boolean; referralRewardEmailError?: string };
   }
 
   async function submitStatusUpdate() {
@@ -637,6 +626,12 @@ export default function AdminTable({
     try {
       const data = await updateStatus(selected, statusValue, { notifyCustomer, customerNote: statusNote });
       setSelected((prev) => (prev ? { ...prev, status: statusValue, lastStatusEmailNote: notifyCustomer ? statusNote : prev.lastStatusEmailNote } : prev));
+
+      if (data.referralRewardEmailSent) {
+        setReferralMessage("Referral reward/credit email was automatically sent to the original referring family.");
+      } else if (data.referralRewardEmailError) {
+        setReferralError(data.referralRewardEmailError);
+      }
 
       if (notifyCustomer && data.emailSent) {
         setStatusMessage("Status updated and customer email sent.");
@@ -675,50 +670,44 @@ export default function AdminTable({
     setReferralMessage("Referral link copied.");
   }
 
-  async function saveReferralTracking() {
+  async function createReferralLink(sendEmail = true) {
     if (!selected) return;
-    const referralCode = normalizeReferralCode(selected.referralCode || "");
-    if (!referralCode) {
-      setReferralError("No referral code is available for this request.");
-      return;
-    }
-
     setReferralBusy(true);
-    setActiveAction("Saving family referral tracking...");
+    setActiveAction(sendEmail ? "Creating and emailing family referral link..." : "Creating family referral link...");
     setReferralMessage("");
     setReferralError("");
 
     try {
       const token = await firebaseAuth.currentUser?.getIdToken();
-      const res = await fetch("/api/admin/update-referral", {
+      const res = await fetch("/api/admin/create-referral-link", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({
-          id: selected.id,
-          referralCode,
-          referralCreditStatus,
-          referralReferrerName,
-          referralNewCustomerCreditAmount: toNumber(referralNewCustomerCreditAmount),
-          referralReferrerCreditAmount: toNumber(referralReferrerCreditAmount),
-          referralAdminNotes,
-        }),
+        body: JSON.stringify({ requestId: selected.id, sendEmail }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok || !data.ok) throw new Error(data.error || "Unable to save referral tracking.");
+
+      if (!res.ok || !data.ok) {
+        throw new Error(data.error || "Unable to create referral link.");
+      }
 
       setSelected((prev) => prev ? {
         ...prev,
-        referralCode,
-        referralProgram: REFERRAL_PROGRAM.programName,
-        referralCreditStatus,
-        referralReferrerName,
-        referralNewCustomerCreditAmount: toNumber(referralNewCustomerCreditAmount),
-        referralReferrerCreditAmount: toNumber(referralReferrerCreditAmount),
-        referralAdminNotes,
+        outgoingReferralCode: data.code,
+        outgoingReferralLink: data.url,
+        outgoingReferralStatus: data.status || prev.outgoingReferralStatus || "Active",
+        outgoingReferralEmailSent: data.emailSent || prev.outgoingReferralEmailSent,
+        outgoingReferralEmailError: data.emailWarning || "",
       } : prev);
-      setReferralMessage("Family referral tracking saved.");
+
+      setReferralMessage(data.emailWarning
+        ? `Referral link ready, but email warning: ${data.emailWarning}`
+        : data.emailSent
+          ? "Family referral link created and emailed to the customer."
+          : data.reused
+            ? "Existing family referral link loaded. Copy or resend it as needed."
+            : "Family referral link created. Copy it or email it when ready.");
     } catch (error) {
-      setReferralError(error instanceof Error ? error.message : "Unable to save referral tracking.");
+      setReferralError(error instanceof Error ? error.message : "Unable to create referral link.");
     } finally {
       setReferralBusy(false);
       setActiveAction("");
@@ -1178,7 +1167,9 @@ export default function AdminTable({
   const hasSavedFamilyPaymentBreakdown = Boolean(selected?.familyPaymentBreakdown?.customerBreakdownText);
   const showCommercialQuotePanel = showPaymentActions && selectedIsCommercial;
   const showFamilyPaymentBreakdownPanel = showPaymentActions && !selectedIsCommercial;
-  const showFamilyReferralPanel = showPaymentActions && hasFamilyReferral(selected);
+  const showFamilyReferralPanel = showPaymentActions && !selectedIsCommercial;
+  const selectedIsFamilyReferralEligible = isFamilyReferralEligibleRequest(selected);
+  const selectedCanGenerateReferral = Boolean(selectedIsFamilyReferralEligible && isCompletedRequest(selected));
   const anyActionBusy = checkoutBusy || commercialInvoiceBusy || commercialQuoteEmailBusy || familyInvoiceBusy || statusBusy || laundryFinalBusy || additionalPaymentBusy || commercialQuoteBusy || referralBusy;
 
   return (
@@ -1416,107 +1407,70 @@ export default function AdminTable({
               </div>
             )}
 
-            {showFamilyReferralPanel && selected && (
-              <div className="mb-5 rounded-3xl border border-[#eadfc8] bg-[#fbf6ea] p-5 shadow-sm">
+            {showFamilyReferralPanel && (
+              <div className="mb-5 rounded-3xl border border-[#eadfc8] bg-gradient-to-br from-white via-white to-[#fbf6ea] p-5 shadow-sm">
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                  <div className="max-w-2xl">
-                    <p className="text-xs font-black uppercase tracking-[0.2em] text-[#b98a2f]">Family referral tracking</p>
-                    <h4 className="mt-1 text-xl font-black text-[#075c58]">Track the family-to-family referral credit</h4>
+                  <div className="max-w-3xl">
+                    <p className="text-xs font-black uppercase tracking-[0.2em] text-[#b98a2f]">Family referrals</p>
+                    <h4 className="mt-1 text-xl font-black text-[#075c58]">Generate and track one-time family referral links</h4>
                     <p className="mt-2 text-sm leading-6 text-slate-700">
-                      Referral credit is reviewed after the new family books, pays, and completes their first eligible family service. Commercial Reset is intentionally excluded for now.
+                      Family referral links are only for completed Parent Reset, Family Reset, or Helper Block customers. They are one-time use. Commercial Reset is intentionally excluded.
                     </p>
                   </div>
-                  <StatusBadge status={referralCreditStatus} />
+                  <StatusBadge status={getReferralStatusText(selected)} />
                 </div>
 
-                <div className="mt-4 grid gap-3 md:grid-cols-[1.1fr_0.9fr]">
+                <div className="mt-4 grid gap-3 md:grid-cols-2">
                   <div className="rounded-2xl border border-[#eadfc8] bg-white p-4">
-                    <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Referral code</p>
-                    <p className="mt-1 break-all text-lg font-black text-[#075c58]">{normalizeReferralCode(selected.referralCode || "")}</p>
-                    <p className="mt-2 break-all text-xs font-semibold leading-5 text-slate-500">{getReferralRequestLink(selected.referralCode || "")}</p>
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      <button type="button" onClick={() => copyReferralLink(getReferralRequestLink(selected.referralCode || ""))} className="rounded-full border border-[#075c58] bg-white px-4 py-2 text-xs font-black text-[#075c58] transition hover:bg-[#f4ecdc]">
-                        Copy referral link
+                    <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Outgoing share link for this customer</p>
+                    <p className="mt-2 text-sm font-bold leading-6 text-slate-700">
+                      {selected.outgoingReferralCode
+                        ? `Code: ${selected.outgoingReferralCode}`
+                        : selectedIsFamilyReferralEligible
+                          ? selectedCanGenerateReferral
+                            ? "Ready to generate after you choose this completed customer."
+                            : "Mark this eligible family request Completed before generating the customer’s referral link."
+                          : "This service is not eligible for a family referral share link."}
+                    </p>
+                    {selected.outgoingReferralLink && (
+                      <div className="mt-3 rounded-2xl bg-[#fbf6ea] p-3">
+                        <p className="break-all text-sm font-bold text-[#075c58]">{selected.outgoingReferralLink}</p>
+                        <p className="mt-2 text-xs font-semibold text-slate-600">Status: {selected.outgoingReferralStatus || "Active"}</p>
+                        {selected.outgoingReferralEmailError && <p className="mt-2 text-xs font-bold text-amber-800">Email note: {selected.outgoingReferralEmailError}</p>}
+                      </div>
+                    )}
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        disabled={referralBusy || (!selected.outgoingReferralLink && !selectedCanGenerateReferral)}
+                        onClick={() => createReferralLink(true)}
+                        className={getAdminActionClass("primary")}
+                      >
+                        {referralBusy ? <><ActionSpinner /> Working...</> : selected.outgoingReferralLink ? "Resend referral link email" : "Create + email referral link"}
                       </button>
-                      <a href="/referrals" target="_blank" rel="noreferrer" className="rounded-full bg-[#075c58] px-4 py-2 text-xs font-black text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-[#064b48]">
-                        View referral page
-                      </a>
+                      {selected.outgoingReferralLink && (
+                        <button type="button" onClick={() => copyReferralLink(selected.outgoingReferralLink || "")} className={getAdminActionClass("secondary")}>Copy referral link</button>
+                      )}
                     </div>
                   </div>
 
                   <div className="rounded-2xl border border-[#eadfc8] bg-white p-4">
-                    <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Current credit</p>
-                    <p className="mt-1 text-sm font-bold leading-6 text-slate-700">
-                      New family: <span className="text-[#075c58]">{formatMoney(toNumber(referralNewCustomerCreditAmount))}</span><br />
-                      Referring family: <span className="text-[#075c58]">{formatMoney(toNumber(referralReferrerCreditAmount))}</span>
+                    <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Incoming referred-family tracking</p>
+                    {selected.incomingReferralCode ? (
+                      <div className="mt-2 text-sm font-bold leading-6 text-slate-700">
+                        <p>Incoming code: <span className="text-[#075c58]">{selected.incomingReferralCode}</span></p>
+                        <p>Status: <span className="text-[#075c58]">{selected.incomingReferralStatus || "Pending referred family completion"}</span></p>
+                        {selected.incomingReferralReferrerName && <p>Referring family: {selected.incomingReferralReferrerName}</p>}
+                        {selected.incomingReferralRewardCode && <p>Reward code: {selected.incomingReferralRewardCode}</p>}
+                        {selected.incomingReferralRewardEmailError && <p className="mt-2 text-amber-800">Reward email note: {selected.incomingReferralRewardEmailError}</p>}
+                      </div>
+                    ) : (
+                      <p className="mt-2 text-sm font-bold leading-6 text-slate-700">This request was not submitted through a family referral link.</p>
+                    )}
+                    <p className="mt-3 rounded-2xl bg-[#fbf6ea] px-4 py-3 text-xs font-bold leading-5 text-slate-600">
+                      When a referred eligible family reset is marked Completed, NestHelper automatically emails the original referring family about their reward/credit and updates both records.
                     </p>
-                    {selected.referralSource && <p className="mt-2 text-xs font-semibold text-slate-500">Source: {formatValue("referralSource", selected.referralSource)}</p>}
                   </div>
-                </div>
-
-                <div className="mt-4 grid gap-3 md:grid-cols-2">
-                  <label className="grid gap-2 text-sm font-bold text-slate-700">
-                    Referral status
-                    <select
-                      value={referralCreditStatus}
-                      onChange={(e) => setReferralCreditStatus(e.target.value)}
-                      className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-bold text-[#075c58] outline-none focus:border-[#075c58]"
-                    >
-                      {REFERRAL_PROGRAM.statuses.map((status) => <option key={status}>{status}</option>)}
-                    </select>
-                  </label>
-
-                  <label className="grid gap-2 text-sm font-bold text-slate-700">
-                    Referring family name / note
-                    <input
-                      value={referralReferrerName}
-                      onChange={(e) => setReferralReferrerName(e.target.value)}
-                      placeholder="Example: Smith family"
-                      className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]"
-                    />
-                  </label>
-                </div>
-
-                <div className="mt-4 grid gap-3 md:grid-cols-2">
-                  <label className="grid gap-2 text-sm font-bold text-slate-700">
-                    New-family credit amount
-                    <input
-                      value={referralNewCustomerCreditAmount}
-                      onChange={(e) => setReferralNewCustomerCreditAmount(e.target.value)}
-                      inputMode="decimal"
-                      className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]"
-                    />
-                  </label>
-
-                  <label className="grid gap-2 text-sm font-bold text-slate-700">
-                    Referrer credit amount
-                    <input
-                      value={referralReferrerCreditAmount}
-                      onChange={(e) => setReferralReferrerCreditAmount(e.target.value)}
-                      inputMode="decimal"
-                      className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]"
-                    />
-                  </label>
-                </div>
-
-                <label className="mt-4 grid gap-2 text-sm font-bold text-slate-700">
-                  Private referral notes
-                  <textarea
-                    value={referralAdminNotes}
-                    onChange={(e) => setReferralAdminNotes(e.target.value)}
-                    placeholder="Example: New family completed first Parent Reset on 6/12. Issue $25 credit to Smith family on next request."
-                    rows={3}
-                    className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
-                  />
-                </label>
-
-                <div className="mt-4 flex flex-wrap gap-3">
-                  <button type="button" disabled={referralBusy} onClick={saveReferralTracking} className={getAdminActionClass("primary")}>
-                    {referralBusy ? <><ActionSpinner /> Saving...</> : "Save referral tracking"}
-                  </button>
-                  <p className="max-w-xl text-xs leading-5 text-slate-500">
-                    This only updates admin tracking. Apply the actual customer credit in the checkout, invoice, or payment breakdown before sending payment.
-                  </p>
                 </div>
 
                 {referralMessage && <p className="mt-3 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">{referralMessage}</p>}

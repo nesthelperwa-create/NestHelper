@@ -45,13 +45,9 @@ const serviceRequestAllowedFields = [
   "alternateDate",
   "urgency",
   "promoCode",
-  "referralCode",
-  "referralProgram",
-  "referralSource",
-  "referralCreditStatus",
-  "referralNewCustomerCreditAmount",
-  "referralReferrerCreditAmount",
-  "referralCapturedAt",
+  "incomingReferralCode",
+  "incomingReferralProgram",
+  "incomingReferralLandingPage",
   "parkingAccess",
   "homeType",
   "pets",
@@ -191,11 +187,6 @@ const textLimits: Record<string, number> = {
   licenseInfo: 1200,
   insuranceInfo: 1200,
   capacity: 1000,
-  referralCode: 32,
-  referralProgram: 80,
-  referralSource: 60,
-  referralCreditStatus: 60,
-  referralCapturedAt: 60,
 };
 
 const honeypotFields = [

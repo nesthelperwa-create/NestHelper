@@ -1,0 +1,77 @@
+import { Resend } from "resend";
+import { getPublicReplyEmail } from "./emailRouting";
+
+function escapeHtml(value: unknown) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function clean(value: unknown) {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+export async function sendReferralShareEmail({
+  to,
+  customerName,
+  referralUrl,
+  referralCode,
+  rewardLabel,
+  replyToEmail,
+}: {
+  to: string;
+  customerName?: string;
+  referralUrl: string;
+  referralCode: string;
+  rewardLabel: string;
+  replyToEmail?: string;
+}) {
+  const apiKey = process.env.RESEND_API_KEY;
+  const from = process.env.NOTIFICATION_FROM_EMAIL || "NestHelper <onboarding@resend.dev>";
+  const replyTo = replyToEmail || getPublicReplyEmail();
+
+  if (!apiKey || !to || !to.includes("@")) {
+    console.warn("Skipping referral share email. Missing RESEND_API_KEY or customer email.");
+    return { skipped: true };
+  }
+
+  const safeName = clean(customerName);
+  const greeting = safeName ? `Hi ${safeName},` : "Hi,";
+  const safeUrl = referralUrl;
+
+  const html = `
+    <div style="font-family:Arial,sans-serif;background:#faf7ef;padding:14px;margin:0;width:100%;box-sizing:border-box;">
+      <div style="width:100%;max-width:680px;margin:0 auto;background:#fff;border-radius:18px;border:1px solid #eadfc8;overflow:hidden;box-sizing:border-box;">
+        <div style="background:#075c58;color:#fff;padding:22px 18px;box-sizing:border-box;">
+          <div style="font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:#f1c96b;">Family referral</div>
+          <h1 style="margin:8px 0 0;font-size:22px;line-height:1.25;">Share NestHelper with another family.</h1>
+        </div>
+        <div style="padding:22px 18px;color:#233;line-height:1.6;box-sizing:border-box;overflow-wrap:anywhere;word-break:break-word;">
+          <p style="margin:0 0 16px 0;">${escapeHtml(greeting)}</p>
+          <p style="margin:0 0 18px 0;">Thank you for trusting NestHelper with your family reset. Here is your one-time family referral link.</p>
+          <div style="margin:0 0 20px 0;padding:14px;border-radius:14px;background:#fbf6ea;border:1px solid #eadfc8;box-sizing:border-box;">
+            <div style="font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#b98a2f;font-weight:700;margin-bottom:6px;">Your share code</div>
+            <div style="font-size:20px;font-weight:800;color:#075c58;margin-bottom:10px;">${escapeHtml(referralCode)}</div>
+            <a href="${escapeHtml(safeUrl)}" style="display:inline-block;background:#075c58;color:#fff;text-decoration:none;padding:12px 18px;border-radius:999px;font-weight:700;max-width:100%;box-sizing:border-box;white-space:normal;text-align:center;">Share referral link</a>
+            <p style="margin:12px 0 0 0;font-size:13px;color:#667;overflow-wrap:anywhere;word-break:break-word;">${escapeHtml(safeUrl)}</p>
+          </div>
+          <h2 style="font-size:18px;margin:0 0 10px 0;color:#0f4f4a;">How it works</h2>
+          <ol style="margin:0 0 18px 20px;padding:0;">
+            <li style="margin:0 0 8px 0;">Share the link with one family who may need a Parent Reset, Family Reset, or Helper Block.</li>
+            <li style="margin:0 0 8px 0;">The referral link can only be used once.</li>
+            <li style="margin:0 0 8px 0;">After the referred family completes an eligible family reset, NestHelper will email you about ${escapeHtml(rewardLabel)}.</li>
+          </ol>
+          <p style="margin:0 0 18px 0;">Questions? Reply to this email or contact us at ${escapeHtml(replyTo)}.</p>
+          <p style="font-size:12px;color:#667;line-height:1.5;margin-top:22px;">Referral rewards are subject to NestHelper’s Referral Program Policy. Commercial Reset, Laundry Rescue, Errand Helper, canceled visits, refunded visits, and incomplete visits are not eligible unless NestHelper says otherwise in writing.</p>
+        </div>
+      </div>
+    </div>`;
+
+  const text = `Share NestHelper with another family\n\n${greeting}\n\nThank you for trusting NestHelper with your family reset. Here is your one-time family referral link.\n\nReferral code: ${referralCode}\nReferral link: ${safeUrl}\n\nHow it works:\n1. Share the link with one family who may need a Parent Reset, Family Reset, or Helper Block.\n2. The referral link can only be used once.\n3. After the referred family completes an eligible family reset, NestHelper will email you about ${rewardLabel}.\n\nQuestions? Reply to this email or contact us at ${replyTo}.`;
+
+  const resend = new Resend(apiKey);
+  return resend.emails.send({ from, to, subject: "Your NestHelper family referral link", html, text, replyTo });
+}

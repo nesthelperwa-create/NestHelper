@@ -1,15 +1,13 @@
 "use client";
 
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import type { FormEvent, ReactNode } from "react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { ArrowRight, CheckCircle2, Clock, CreditCard, Gift, MapPin, ShieldCheck } from "lucide-react";
 import { services, laundryAddOns } from "@/lib/services";
 import { formatPhoneNumber } from "@/lib/formatPhoneNumber";
 import { focusFirstInvalidField } from "@/lib/formInvalidFocus";
 import { PhotoUploadField, photoUploadSummary, type PhotoUpload } from "@/components/forms/PhotoUploadField";
-import { getReferralCreditAmount, normalizeReferralCode, REFERRAL_PROGRAM } from "@/lib/referrals";
 
 const defaultState = {
   fullName: "",
@@ -27,7 +25,9 @@ const defaultState = {
   alternateDate: "",
   urgency: "Flexible — anytime this week is okay",
   promoCode: "",
-  referralCode: "",
+  incomingReferralCode: "",
+  incomingReferralProgram: "",
+  incomingReferralLandingPage: "",
   homeType: "Single-family home",
   pets: "No pets",
   petDetails: "",
@@ -100,6 +100,14 @@ function getServiceCategory(serviceId: string) {
 function normalizeZipInput(value: string) {
   return value.replace(/[^0-9-]/g, "").slice(0, 10);
 }
+function normalizeReferralInput(value: string) {
+  return value.toUpperCase().replace(/[^A-Z0-9-]/g, "").slice(0, 32);
+}
+
+function isReferralEligibleService(serviceId: string) {
+  return ["parent-reset-2hr", "family-reset-3hr", "helper-block-4hr"].includes(serviceId);
+}
+
 
 function hasLikelyStreetAddress(address: string) {
   return /\d/.test(address) && /[a-zA-Z]/.test(address) && address.trim().length >= 5;
@@ -149,10 +157,8 @@ function getHomeScopeWarning(serviceId: string, areas: string[]) {
   return "";
 }
 
-function cleanForSelectedService(form: RequestFormState, linkedReferralCode = "") {
+function cleanForSelectedService(form: RequestFormState) {
   const category = getServiceCategory(form.service);
-  const referralCode = normalizeReferralCode(form.referralCode);
-  const referralCreditAmount = getReferralCreditAmount(form.service);
   const base = {
     fullName: form.fullName,
     email: form.email,
@@ -175,14 +181,10 @@ function cleanForSelectedService(form: RequestFormState, linkedReferralCode = ""
     alternateDate: form.alternateDate,
     urgency: form.urgency,
     promoCode: form.promoCode,
-    ...(referralCode ? {
-      referralCode,
-      referralProgram: REFERRAL_PROGRAM.programName,
-      referralSource: linkedReferralCode && linkedReferralCode === referralCode ? "family_referral_link" : "manual_entry",
-      referralCreditStatus: "Pending review",
-      referralNewCustomerCreditAmount: referralCreditAmount,
-      referralReferrerCreditAmount: referralCreditAmount,
-      referralCapturedAt: new Date().toISOString(),
+    ...(form.incomingReferralCode ? {
+      incomingReferralCode: form.incomingReferralCode,
+      incomingReferralProgram: form.incomingReferralProgram || "family-to-family",
+      incomingReferralLandingPage: form.incomingReferralLandingPage || "/referrals",
     } : {}),
     selectedServiceTitle: services.find((service) => service.id === form.service)?.title || "",
     parkingAccess: form.parkingAccess,
@@ -242,15 +244,16 @@ function cleanForSelectedService(form: RequestFormState, linkedReferralCode = ""
 export function RequestForm() {
   const params = useSearchParams();
   const requestedService = params.get("service") || "";
-  const requestedReferralCode = normalizeReferralCode(params.get("ref") || params.get("referral") || "");
-  const [form, setForm] = useState({ ...defaultState, service: requestedService, referralCode: requestedReferralCode });
+  const requestedReferralCode = normalizeReferralInput(params.get("ref") || params.get("referral") || params.get("referralCode") || "");
+  const [form, setForm] = useState({
+    ...defaultState,
+    service: requestedService,
+    incomingReferralCode: requestedReferralCode,
+    incomingReferralProgram: requestedReferralCode ? "family-to-family" : "",
+    incomingReferralLandingPage: requestedReferralCode ? "/referrals" : "",
+  });
   const [status, setStatus] = useState<Status>("idle");
   const [message, setMessage] = useState("");
-
-  useEffect(() => {
-    if (!requestedReferralCode) return;
-    setForm((prev) => (prev.referralCode ? prev : { ...prev, referralCode: requestedReferralCode }));
-  }, [requestedReferralCode]);
 
   const selectedService = useMemo(() => services.find((service) => service.id === form.service), [form.service]);
   const serviceCategory = getServiceCategory(form.service);
@@ -260,6 +263,8 @@ export function RequestForm() {
   const wholeHomeSelected = form.homeAreas.includes(WHOLE_HOME_OPTION);
   const homeScopeWarning = isHomeReset ? getHomeScopeWarning(form.service, form.homeAreas) : "";
   const petDetailsRequired = isHomeReset && form.pets !== "No pets";
+  const referralApplies = Boolean(form.incomingReferralCode && isReferralEligibleService(form.service));
+  const referralNeedsEligiblePackage = Boolean(form.incomingReferralCode && form.service && !isReferralEligibleService(form.service));
 
   function update(name: keyof RequestFormState, value: unknown) {
     setForm((prev) => ({ ...prev, [name]: value }) as RequestFormState);
@@ -335,18 +340,20 @@ export function RequestForm() {
       const response = await fetch("/api/submit-request", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(cleanForSelectedService(form, requestedReferralCode)),
+        body: JSON.stringify(cleanForSelectedService(form)),
       });
       const result = await response.json().catch(() => null);
       if (!response.ok || !result?.ok) throw new Error(result?.error || "Request submission failed");
 
       setStatus("success");
-      setMessage("Request received. We’ll review your service area, timing, scope, safety notes, and pricing before sending a secure checkout link. A confirmation email is on its way.");
+      setMessage(form.incomingReferralCode
+        ? "Request received with the family referral link. We’ll review the request and keep the referral pending until the eligible reset is completed."
+        : "Request received. We’ll review your service area, timing, scope, safety notes, and pricing before sending a secure checkout link. A confirmation email is on its way.");
       setForm({ ...defaultState, service: requestedService });
     } catch (err) {
       console.error(err);
       setStatus("error");
-      setMessage("Something went wrong. Please try again or contact NestHelper directly.");
+      setMessage(err instanceof Error ? err.message : "Something went wrong. Please try again or contact NestHelper directly.");
     }
   }
 
@@ -369,30 +376,34 @@ export function RequestForm() {
         </div>
       </div>
 
+      {form.incomingReferralCode && (
+        <div className={`rounded-[1.75rem] border p-5 shadow-sm ${referralNeedsEligiblePackage ? "border-amber-200 bg-amber-50 text-amber-900" : "border-nest-gold/20 bg-nest-mint/25 text-nest-ink/82"}`}>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
+            <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-nest-teal shadow-sm">
+              <Gift className="h-5 w-5" />
+            </span>
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-nest-gold">Family referral link</p>
+              <h3 className="mt-1 text-xl font-black text-nest-teal">Referral code {form.incomingReferralCode} is attached.</h3>
+              <p className="mt-2 text-sm font-semibold leading-6">
+                {referralNeedsEligiblePackage
+                  ? "This family referral can only be used for Parent Reset, Family Reset, or Helper Block. Please choose an eligible family reset package before submitting."
+                  : referralApplies
+                    ? "This one-time referral will stay pending until your eligible family reset is completed. After completion, the referring family gets their thank-you credit email automatically."
+                    : "Choose Parent Reset, Family Reset, or Helper Block to use this family referral link."}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <Section title="1. Contact information" description="We use this to confirm the request, send prep notes, and share the checkout link if approved.">
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Full name" required><input className="input" required autoComplete="name" value={form.fullName} onChange={(e) => update("fullName", e.target.value)} /></Field>
           <Field label="Phone" required><input className="input" required autoComplete="tel" inputMode="tel" value={form.phone} onChange={(e) => update("phone", formatPhoneNumber(e.target.value))} /></Field>
           <Field label="Email" required><input type="email" className="input" required autoComplete="email" value={form.email} onChange={(e) => update("email", e.target.value)} /></Field>
-          <Field label="Promo code (optional)"><input className="input" placeholder="Optional promo code" value={form.promoCode} onChange={(e) => update("promoCode", e.target.value.toUpperCase())} /></Field>
-          <Field label="Family referral code (optional)"><input className="input" placeholder="Example: NH-SMITH25" value={form.referralCode} onChange={(e) => update("referralCode", normalizeReferralCode(e.target.value))} /></Field>
+          <Field label="Promo/referral code (optional)"><input className="input" placeholder="Optional code" value={form.promoCode} onChange={(e) => update("promoCode", e.target.value.toUpperCase())} /></Field>
         </div>
-        {form.referralCode && (
-          <div className="rounded-2xl border border-nest-gold/20 bg-nest-cream/75 p-4 text-sm font-semibold leading-6 text-nest-ink/72">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-              <div className="flex gap-3">
-                <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-white text-nest-teal shadow-sm"><Gift size={18} /></span>
-                <div>
-                  <p className="font-black text-nest-teal">Family referral code saved: {form.referralCode}</p>
-                  <p className="mt-1">If eligible, the new-family credit is reviewed before payment. Referrer credit is issued after the first service is completed and paid.</p>
-                </div>
-              </div>
-              <Link href="/policies/referral-program-policy" className="shrink-0 rounded-full bg-white px-3 py-2 text-xs font-black text-nest-teal shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
-                Referral policy
-              </Link>
-            </div>
-          </div>
-        )}
       </Section>
 
       <Section title="2. Service address" description="Parent Reset service is focused on Woodinville, Bothell, Kirkland, Redmond, and nearby Eastside/Northshore communities. Pierce County is currently listed for Commercial Reset only.">
