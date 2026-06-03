@@ -1,5 +1,19 @@
-export const REFERRAL_PROGRAM = "family-to-family";
-
+export const REFERRAL_PROGRAM = {
+  id: "family-to-family",
+  label: "Family Referrals",
+  statuses: [
+    "Pending review",
+    "Pending referred family completion",
+    "Claimed",
+    "Reward email pending",
+    "Reward sent",
+    "Reward email failed",
+    "Credit approved",
+    "Credit sent",
+    "Credit used",
+    "Not eligible"
+  ] as string[],
+};
 import crypto from "crypto";
 import { FieldValue, type DocumentReference, type Firestore } from "firebase-admin/firestore";
 
