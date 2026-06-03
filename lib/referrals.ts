@@ -128,7 +128,7 @@ export async function createFamilyReferralLinkForRequest({
     throw new Error("Referral links are only for family Parent Reset services. Commercial Reset was not changed.");
   }
 
-  if (!isFamilyReferralEligibleService(serviceId, payload.selectedServiceTitle || payload.packageType || payload.requestType)) {
+  if (!isFamilyReferralEligibleService(serviceId, requestData.selectedServiceTitle || requestData.packageType || requestData.requestType)) {
     throw new Error("Referral links can only be generated for completed Parent Reset, Family Reset, or Helper Block requests.");
   }
 
