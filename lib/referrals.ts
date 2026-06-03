@@ -128,7 +128,7 @@ export async function createFamilyReferralLinkForRequest({
     throw new Error("Referral links are only for family Parent Reset services. Commercial Reset was not changed.");
   }
 
-  if (!isFamilyReferralEligibleService(serviceId, requestData.selectedServiceTitle || requestData.packageType || requestData.requestType)) {
+  if (!isFamilyReferralEligibleService(serviceId, payload.selectedServiceTitle || payload.packageType || payload.requestType)) {
     throw new Error("Referral links can only be generated for completed Parent Reset, Family Reset, or Helper Block requests.");
   }
 
@@ -241,7 +241,7 @@ export async function claimIncomingFamilyReferral({
   const referredEmail = cleanEmail(payload.email);
   const referredName = getString(payload.fullName) || getString(payload.name) || getString(payload.contactName);
 
-  if (!isFamilyReferralEligibleService(serviceId, requestData.selectedServiceTitle || requestData.packageType || requestData.requestType)) {
+  if (!isFamilyReferralEligibleService(serviceId, payload.selectedServiceTitle || payload.packageType || payload.requestType)) {
     throw new Error("This referral link can only be used for an eligible family reset: Parent Reset, Family Reset, or Helper Block.");
   }
 
