@@ -2,8 +2,8 @@ export const REFERRAL_PROGRAM = {
   id: "family-to-family",
   programName: "Family Referrals",
   label: "Family Referrals",
-  defaultNewCustomerCredit: "$25 off an eligible Parent Reset",
-  laundryCredit: "$15 off Laundry Rescue",
+  defaultNewCustomerCredit: 25,
+  laundryCredit: 15,
   referrerReward: "a NestHelper family referral credit",
   rewardLabel: "a NestHelper family referral credit",
   statuses: [
