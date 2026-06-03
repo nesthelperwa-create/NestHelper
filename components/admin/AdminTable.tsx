@@ -6,6 +6,7 @@ import { firebaseAuth, firestoreDb } from "@/lib/firebaseClient";
 import StatusBadge from "./StatusBadge";
 import CommercialQuoteBreakdownBuilder from "./CommercialQuoteBreakdownBuilder";
 import FamilyPaymentBreakdownBuilder from "./FamilyPaymentBreakdownBuilder";
+import { normalizeReferralCode, REFERRAL_PROGRAM } from "@/lib/referrals";
 
 type AdminDoc = { id: string; status?: string; createdAt?: unknown; checkoutUrl?: string; promoCode?: string; [key: string]: any };
 type CheckoutMode = "standard" | "founding" | "custom";
@@ -174,6 +175,18 @@ function getServiceLook(item: AdminDoc | null | undefined) {
   const key = getServiceKey(item);
   return key ? SERVICE_LOOKS[key] || DEFAULT_SERVICE_LOOK : DEFAULT_SERVICE_LOOK;
 }
+function getReferralRequestLink(code: string) {
+  const normalized = normalizeReferralCode(code);
+  if (!normalized) return "";
+  const baseUrl = typeof window !== "undefined" ? window.location.origin : "https://www.nesthelperwa.com";
+  return `${baseUrl.replace(/\/$/, "")}/request?ref=${encodeURIComponent(normalized)}`;
+}
+
+function hasFamilyReferral(item: AdminDoc | null | undefined) {
+  if (!item || isCommercialRequest(item)) return false;
+  return Boolean(normalizeReferralCode(item.referralCode || "") || item.referralCreditStatus);
+}
+
 
 function isCommercialRequest(item: AdminDoc | null | undefined) {
   return getServiceKey(item) === "commercial-reset";
@@ -460,6 +473,14 @@ export default function AdminTable({
   const [additionalPaymentMessage, setAdditionalPaymentMessage] = useState("");
   const [additionalPaymentError, setAdditionalPaymentError] = useState("");
   const [commercialQuoteStatus, setCommercialQuoteStatus] = useState("Not quoted");
+  const [referralCreditStatus, setReferralCreditStatus] = useState("Pending review");
+  const [referralReferrerName, setReferralReferrerName] = useState("");
+  const [referralNewCustomerCreditAmount, setReferralNewCustomerCreditAmount] = useState("25");
+  const [referralReferrerCreditAmount, setReferralReferrerCreditAmount] = useState("25");
+  const [referralAdminNotes, setReferralAdminNotes] = useState("");
+  const [referralBusy, setReferralBusy] = useState(false);
+  const [referralMessage, setReferralMessage] = useState("");
+  const [referralError, setReferralError] = useState("");
   const [commercialQuoteType, setCommercialQuoteType] = useState("Flat visit quote");
   const [commercialInitialAmount, setCommercialInitialAmount] = useState("");
   const [commercialAdditionalAmount, setCommercialAdditionalAmount] = useState("");
@@ -510,6 +531,13 @@ export default function AdminTable({
     setAdditionalPaymentNote("");
     setAdditionalPaymentMessage("");
     setAdditionalPaymentError("");
+    setReferralCreditStatus(selected?.referralCreditStatus ? String(selected.referralCreditStatus) : "Pending review");
+    setReferralReferrerName(selected?.referralReferrerName ? String(selected.referralReferrerName) : "");
+    setReferralNewCustomerCreditAmount(selected?.referralNewCustomerCreditAmount ? String(selected.referralNewCustomerCreditAmount) : selected?.service === "laundry-rescue" ? String(REFERRAL_PROGRAM.laundryCredit) : String(REFERRAL_PROGRAM.defaultNewCustomerCredit));
+    setReferralReferrerCreditAmount(selected?.referralReferrerCreditAmount ? String(selected.referralReferrerCreditAmount) : selected?.service === "laundry-rescue" ? String(REFERRAL_PROGRAM.laundryCredit) : String(REFERRAL_PROGRAM.defaultReferrerCredit));
+    setReferralAdminNotes(selected?.referralAdminNotes ? String(selected.referralAdminNotes) : "");
+    setReferralMessage("");
+    setReferralError("");
     setCommercialQuoteStatus(selected?.commercialQuoteStatus ? String(selected.commercialQuoteStatus) : "Not quoted");
     setCommercialQuoteType(selected?.commercialQuoteType ? String(selected.commercialQuoteType) : getDefaultCommercialQuoteType(selected));
     setCommercialInitialAmount(selected?.commercialInitialAmount ? String(selected.commercialInitialAmount) : selected?.customInitialAmount ? String(selected.customInitialAmount) : "");
@@ -640,6 +668,61 @@ export default function AdminTable({
   async function copyAdditionalPaymentLink(text: string) {
     await navigator.clipboard.writeText(text);
     setAdditionalPaymentMessage("Additional payment checkout link copied.");
+  }
+
+  async function copyReferralLink(text: string) {
+    await navigator.clipboard.writeText(text);
+    setReferralMessage("Referral link copied.");
+  }
+
+  async function saveReferralTracking() {
+    if (!selected) return;
+    const referralCode = normalizeReferralCode(selected.referralCode || "");
+    if (!referralCode) {
+      setReferralError("No referral code is available for this request.");
+      return;
+    }
+
+    setReferralBusy(true);
+    setActiveAction("Saving family referral tracking...");
+    setReferralMessage("");
+    setReferralError("");
+
+    try {
+      const token = await firebaseAuth.currentUser?.getIdToken();
+      const res = await fetch("/api/admin/update-referral", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          id: selected.id,
+          referralCode,
+          referralCreditStatus,
+          referralReferrerName,
+          referralNewCustomerCreditAmount: toNumber(referralNewCustomerCreditAmount),
+          referralReferrerCreditAmount: toNumber(referralReferrerCreditAmount),
+          referralAdminNotes,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.ok) throw new Error(data.error || "Unable to save referral tracking.");
+
+      setSelected((prev) => prev ? {
+        ...prev,
+        referralCode,
+        referralProgram: REFERRAL_PROGRAM.programName,
+        referralCreditStatus,
+        referralReferrerName,
+        referralNewCustomerCreditAmount: toNumber(referralNewCustomerCreditAmount),
+        referralReferrerCreditAmount: toNumber(referralReferrerCreditAmount),
+        referralAdminNotes,
+      } : prev);
+      setReferralMessage("Family referral tracking saved.");
+    } catch (error) {
+      setReferralError(error instanceof Error ? error.message : "Unable to save referral tracking.");
+    } finally {
+      setReferralBusy(false);
+      setActiveAction("");
+    }
   }
 
   async function emailCommercialQuoteOnly() {
@@ -1095,7 +1178,8 @@ export default function AdminTable({
   const hasSavedFamilyPaymentBreakdown = Boolean(selected?.familyPaymentBreakdown?.customerBreakdownText);
   const showCommercialQuotePanel = showPaymentActions && selectedIsCommercial;
   const showFamilyPaymentBreakdownPanel = showPaymentActions && !selectedIsCommercial;
-  const anyActionBusy = checkoutBusy || commercialInvoiceBusy || commercialQuoteEmailBusy || familyInvoiceBusy || statusBusy || laundryFinalBusy || additionalPaymentBusy || commercialQuoteBusy;
+  const showFamilyReferralPanel = showPaymentActions && hasFamilyReferral(selected);
+  const anyActionBusy = checkoutBusy || commercialInvoiceBusy || commercialQuoteEmailBusy || familyInvoiceBusy || statusBusy || laundryFinalBusy || additionalPaymentBusy || commercialQuoteBusy || referralBusy;
 
   return (
     <section className="space-y-5">
@@ -1177,8 +1261,8 @@ export default function AdminTable({
       <AdminActionFeedback
         busy={anyActionBusy}
         activeAction={activeAction}
-        messages={[statusMessage, checkoutMessage, commercialInvoiceMessage, commercialQuoteEmailMessage, familyInvoiceMessage, laundryFinalMessage, additionalPaymentMessage, commercialQuoteMessage]}
-        errors={[statusError, checkoutError, commercialInvoiceError, commercialQuoteEmailError, familyInvoiceError, laundryFinalError, additionalPaymentError, commercialQuoteError]}
+        messages={[statusMessage, checkoutMessage, commercialInvoiceMessage, commercialQuoteEmailMessage, familyInvoiceMessage, laundryFinalMessage, additionalPaymentMessage, commercialQuoteMessage, referralMessage]}
+        errors={[statusError, checkoutError, commercialInvoiceError, commercialQuoteEmailError, familyInvoiceError, laundryFinalError, additionalPaymentError, commercialQuoteError, referralError]}
       />
 
       <div className="max-w-full overflow-hidden rounded-3xl border border-[#eadfc8] bg-white shadow-xl shadow-[#075c58]/5">
@@ -1257,8 +1341,8 @@ export default function AdminTable({
               <AdminActionFeedback
                 busy={anyActionBusy}
                 activeAction={activeAction}
-                messages={[statusMessage, checkoutMessage, commercialInvoiceMessage, commercialQuoteEmailMessage, familyInvoiceMessage, laundryFinalMessage, additionalPaymentMessage, commercialQuoteMessage]}
-                errors={[statusError, checkoutError, commercialInvoiceError, commercialQuoteEmailError, familyInvoiceError, laundryFinalError, additionalPaymentError, commercialQuoteError]}
+                messages={[statusMessage, checkoutMessage, commercialInvoiceMessage, commercialQuoteEmailMessage, familyInvoiceMessage, laundryFinalMessage, additionalPaymentMessage, commercialQuoteMessage, referralMessage]}
+                errors={[statusError, checkoutError, commercialInvoiceError, commercialQuoteEmailError, familyInvoiceError, laundryFinalError, additionalPaymentError, commercialQuoteError, referralError]}
               />
             </div>
 
@@ -1329,6 +1413,114 @@ export default function AdminTable({
 
                 {statusMessage && <p className="mt-3 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">{statusMessage}</p>}
                 {statusError && <p className="mt-3 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{statusError}</p>}
+              </div>
+            )}
+
+            {showFamilyReferralPanel && selected && (
+              <div className="mb-5 rounded-3xl border border-[#eadfc8] bg-[#fbf6ea] p-5 shadow-sm">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="max-w-2xl">
+                    <p className="text-xs font-black uppercase tracking-[0.2em] text-[#b98a2f]">Family referral tracking</p>
+                    <h4 className="mt-1 text-xl font-black text-[#075c58]">Track the family-to-family referral credit</h4>
+                    <p className="mt-2 text-sm leading-6 text-slate-700">
+                      Referral credit is reviewed after the new family books, pays, and completes their first eligible family service. Commercial Reset is intentionally excluded for now.
+                    </p>
+                  </div>
+                  <StatusBadge status={referralCreditStatus} />
+                </div>
+
+                <div className="mt-4 grid gap-3 md:grid-cols-[1.1fr_0.9fr]">
+                  <div className="rounded-2xl border border-[#eadfc8] bg-white p-4">
+                    <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Referral code</p>
+                    <p className="mt-1 break-all text-lg font-black text-[#075c58]">{normalizeReferralCode(selected.referralCode || "")}</p>
+                    <p className="mt-2 break-all text-xs font-semibold leading-5 text-slate-500">{getReferralRequestLink(selected.referralCode || "")}</p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <button type="button" onClick={() => copyReferralLink(getReferralRequestLink(selected.referralCode || ""))} className="rounded-full border border-[#075c58] bg-white px-4 py-2 text-xs font-black text-[#075c58] transition hover:bg-[#f4ecdc]">
+                        Copy referral link
+                      </button>
+                      <a href="/referrals" target="_blank" rel="noreferrer" className="rounded-full bg-[#075c58] px-4 py-2 text-xs font-black text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-[#064b48]">
+                        View referral page
+                      </a>
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl border border-[#eadfc8] bg-white p-4">
+                    <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Current credit</p>
+                    <p className="mt-1 text-sm font-bold leading-6 text-slate-700">
+                      New family: <span className="text-[#075c58]">{formatMoney(toNumber(referralNewCustomerCreditAmount))}</span><br />
+                      Referring family: <span className="text-[#075c58]">{formatMoney(toNumber(referralReferrerCreditAmount))}</span>
+                    </p>
+                    {selected.referralSource && <p className="mt-2 text-xs font-semibold text-slate-500">Source: {formatValue("referralSource", selected.referralSource)}</p>}
+                  </div>
+                </div>
+
+                <div className="mt-4 grid gap-3 md:grid-cols-2">
+                  <label className="grid gap-2 text-sm font-bold text-slate-700">
+                    Referral status
+                    <select
+                      value={referralCreditStatus}
+                      onChange={(e) => setReferralCreditStatus(e.target.value)}
+                      className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-bold text-[#075c58] outline-none focus:border-[#075c58]"
+                    >
+                      {REFERRAL_PROGRAM.statuses.map((status) => <option key={status}>{status}</option>)}
+                    </select>
+                  </label>
+
+                  <label className="grid gap-2 text-sm font-bold text-slate-700">
+                    Referring family name / note
+                    <input
+                      value={referralReferrerName}
+                      onChange={(e) => setReferralReferrerName(e.target.value)}
+                      placeholder="Example: Smith family"
+                      className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]"
+                    />
+                  </label>
+                </div>
+
+                <div className="mt-4 grid gap-3 md:grid-cols-2">
+                  <label className="grid gap-2 text-sm font-bold text-slate-700">
+                    New-family credit amount
+                    <input
+                      value={referralNewCustomerCreditAmount}
+                      onChange={(e) => setReferralNewCustomerCreditAmount(e.target.value)}
+                      inputMode="decimal"
+                      className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]"
+                    />
+                  </label>
+
+                  <label className="grid gap-2 text-sm font-bold text-slate-700">
+                    Referrer credit amount
+                    <input
+                      value={referralReferrerCreditAmount}
+                      onChange={(e) => setReferralReferrerCreditAmount(e.target.value)}
+                      inputMode="decimal"
+                      className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]"
+                    />
+                  </label>
+                </div>
+
+                <label className="mt-4 grid gap-2 text-sm font-bold text-slate-700">
+                  Private referral notes
+                  <textarea
+                    value={referralAdminNotes}
+                    onChange={(e) => setReferralAdminNotes(e.target.value)}
+                    placeholder="Example: New family completed first Parent Reset on 6/12. Issue $25 credit to Smith family on next request."
+                    rows={3}
+                    className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
+                  />
+                </label>
+
+                <div className="mt-4 flex flex-wrap gap-3">
+                  <button type="button" disabled={referralBusy} onClick={saveReferralTracking} className={getAdminActionClass("primary")}>
+                    {referralBusy ? <><ActionSpinner /> Saving...</> : "Save referral tracking"}
+                  </button>
+                  <p className="max-w-xl text-xs leading-5 text-slate-500">
+                    This only updates admin tracking. Apply the actual customer credit in the checkout, invoice, or payment breakdown before sending payment.
+                  </p>
+                </div>
+
+                {referralMessage && <p className="mt-3 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">{referralMessage}</p>}
+                {referralError && <p className="mt-3 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{referralError}</p>}
               </div>
             )}
 

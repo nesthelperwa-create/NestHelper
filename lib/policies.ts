@@ -272,6 +272,41 @@ export const policies: Policy[] = [
     ]
   },
   {
+    slug: "referral-program-policy",
+    title: "Referral Program Policy",
+    intro: "The NestHelper family referral program is a simple way to thank families who share NestHelper with another local family.",
+    sections: [
+      {
+        heading: "Family-to-family program",
+        body: "The referral program is currently intended for eligible Parent Reset family services only. It is not currently offered for Commercial Reset, business cleaning, short-term rental turnover, partner/provider referrals, helper hiring, or contractor recruiting unless NestHelper approves a separate written arrangement."
+      },
+      {
+        heading: "How referral links work",
+        body: "A referring family may receive a unique referral link or referral code to share with another local family. When the new family submits a request through that link or enters the code on the request form, NestHelper may store the referral code with the request for admin review."
+      },
+      {
+        heading: "New-family credit",
+        body: "Eligible new families may receive a NestHelper credit toward their first completed Parent Reset, Family Reset, Helper Block, or Errand Helper service. Laundry Rescue may qualify for a smaller laundry credit because final pricing depends on dry weight, add-ons, and delivery/payment handling. Credits are reviewed before payment and are not automatically guaranteed by submitting a form."
+      },
+      {
+        heading: "Referrer credit",
+        body: "The referring family may receive a NestHelper credit after the referred family completes and pays for their first eligible service. A submitted request, canceled booking, declined request, unpaid request, duplicate household, or self-referral does not qualify for referrer credit."
+      },
+      {
+        heading: "Credit limits and exclusions",
+        body: "Referral credits are not redeemable for cash, cannot be transferred without approval, cannot be used for past services, taxes, tips, replacement fees, already-due laundry balances, or other excluded charges, and may not be combined with every promotion. NestHelper may limit one referral credit per new household or service request."
+      },
+      {
+        heading: "Disclosure and fairness",
+        body: "Families should be honest when sharing NestHelper. Referral credit should not be described as a paid review or guaranteed discount. If a family posts publicly while expecting referral credit, they should disclose that they may receive NestHelper credit. NestHelper may decline referral credit for misleading posts, fake referrals, duplicate accounts, abuse, or activity that does not match the spirit of the program."
+      },
+      {
+        heading: "Program changes",
+        body: "NestHelper may change, pause, or end the referral program at any time. Credits are reviewed case by case, and final eligibility depends on service fit, completion, payment, and program terms in effect at the time of the request."
+      }
+    ]
+  },
+  {
     slug: "non-discrimination-policy",
     title: "Non-Discrimination Policy",
     intro: "NestHelper is built to serve families and review helpers fairly.",

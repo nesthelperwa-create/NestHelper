@@ -17,6 +17,7 @@ export default function AdminRequestsPage() {
           { key: "city", label: "City" },
           { key: "preferredDate", label: "Preferred Date" },
           { key: "promoCode", label: "Promo" },
+          { key: "referralCode", label: "Referral" },
         ]}
         statuses={["New", "Reviewed", "Quoted", "Quote Sent", "Quote Approved", "Approved", "Checkout Sent", "Deposit Checkout Sent", "Deposit Paid", "Deposit Paid - Final Pending", "Final Invoice Created", "Final Invoice Sent", "Final Auto-Charge Processing", "Final Auto-Charge Failed", "Final Balance Paid", "Paid", "Fully Paid", "Additional Payment Sent", "Additional Paid", "Scheduled", "Completed", "Declined", "Needs Info", "Follow-Up Needed", "Canceled"]}
         enablePaymentActions

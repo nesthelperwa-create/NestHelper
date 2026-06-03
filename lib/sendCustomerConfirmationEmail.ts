@@ -36,6 +36,13 @@ function getConfirmationContent(collection: SubmissionCollection, payload: Recor
   if (collection === "serviceRequests") {
     const service = formatValue(payload.selectedServiceTitle || payload.service || "Service request");
     const isCommercial = String(payload.service || payload.selectedServiceTitle || payload.packageType || payload.requestType || "").toLowerCase().includes("commercial");
+    const referralCode = isCommercial ? "" : formatValue(payload.referralCode).trim();
+    const familyNextSteps = [
+      "NestHelper will review the request details.",
+      "If the request is a good fit, we’ll follow up with availability, any questions, and a secure checkout link.",
+      "For Laundry Rescue, dry weight and any add-ons are confirmed before the final balance is charged.",
+      ...(referralCode ? ["Your family referral code was captured. If eligible, the new-family credit is reviewed before payment and the referrer credit is handled after the first completed paid service."] : []),
+    ];
     return {
       subject: isCommercial ? "We received your NestHelper Commercial Reset request" : "We received your NestHelper request",
       eyebrow: isCommercial ? "Commercial quote request received" : "Request received",
@@ -49,17 +56,14 @@ function getConfirmationContent(collection: SubmissionCollection, payload: Recor
             "If the request looks like a good fit, we’ll follow up with any questions, walkthrough needs, availability, and quote guidance.",
             "After a quote is approved, we can send a secure checkout link before service is scheduled.",
           ]
-        : [
-            "NestHelper will review the request details.",
-            "If the request is a good fit, we’ll follow up with availability, any questions, and a secure checkout link.",
-            "For Laundry Rescue, dry weight and any add-ons are confirmed before the final balance is charged.",
-          ],
+        : familyNextSteps,
       summary: {
         "Request ID": submissionId,
         Service: service,
         "Preferred date": formatValue(payload.preferredDate),
         "Preferred time window": formatValue(payload.preferredWindow),
         City: formatValue(payload.city),
+        ...(!isCommercial && referralCode ? { "Referral code": referralCode } : {}),
       },
       closing: `If anything changes, reply to this email or contact us at ${customerSupportEmail}.`,
     };

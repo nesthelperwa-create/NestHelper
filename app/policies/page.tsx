@@ -9,7 +9,7 @@ export default function PoliciesPage() {
       <PageHero
         eyebrow="Policies"
         title="Clear expectations protect families, businesses, and helpers."
-        text="Review scope, cancellation, laundry handling, commercial reset boundaries, safety, privacy, and the NestHelper Reset Promise before requesting service."
+        text="Review scope, cancellation, laundry handling, referrals, commercial reset boundaries, safety, privacy, and the NestHelper Reset Promise before requesting service."
       />
 
       <section className="mx-auto max-w-6xl px-4 py-14 sm:px-6 lg:px-8">
