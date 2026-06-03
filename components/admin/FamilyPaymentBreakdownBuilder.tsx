@@ -525,8 +525,7 @@ export default function FamilyPaymentBreakdownBuilder({
     setDiscountCredit(String(referralCreditAmount));
     setInternalNotes((prev) => {
       const note = `${referralCreditLabel} applied before sending payment.`;
-      return prev && prev.includes(note) ? prev : [prev, note].filter(Boolean).join("
-");
+      return prev && prev.includes(note) ? prev : [prev, note].filter(Boolean).join("\n");
     });
     if (!customerNote.toLowerCase().includes("referral credit")) {
       setCustomerNote((prev) => `${prev}${prev.endsWith(" ") ? "" : " "}${referralCreditLabel} has been included in this payment breakdown.`);
