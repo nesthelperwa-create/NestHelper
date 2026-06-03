@@ -180,7 +180,7 @@ function isCommercialRequest(item: AdminDoc | null | undefined) {
 }
 
 function isFamilyReferralEligibleRequest(item: AdminDoc | null | undefined) {
-  return ["parent-reset-2hr", "family-reset-3hr", "helper-block-4hr"].includes(String(item?.service || ""));
+  return ["parent-reset-2hr", "family-reset-3hr", "helper-block-4hr", "errand-helper", "laundry-rescue"].includes(getServiceKey(item));
 }
 
 function isCompletedRequest(item: AdminDoc | null | undefined) {

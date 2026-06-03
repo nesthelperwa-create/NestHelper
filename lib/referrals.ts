@@ -26,6 +26,8 @@ export const FAMILY_REFERRAL_ELIGIBLE_SERVICES = new Set([
   "parent-reset-2hr",
   "family-reset-3hr",
   "helper-block-4hr",
+  "errand-helper",
+  "laundry-rescue",
 ]);
 
 const COMPLETED_STATUSES = new Set(["completed"]);
@@ -54,8 +56,19 @@ export function getReferralRewardLabel() {
   return process.env.REFERRAL_REWARD_LABEL || "a NestHelper family referral credit";
 }
 
-export function isFamilyReferralEligibleService(serviceId: unknown) {
-  return FAMILY_REFERRAL_ELIGIBLE_SERVICES.has(getString(serviceId));
+export function getFamilyReferralServiceKey(serviceId: unknown, fallback?: unknown) {
+  const raw = `${getString(serviceId)} ${getString(fallback)}`.toLowerCase();
+  if (raw.includes("commercial")) return "commercial-reset";
+  if (raw.includes("parent-reset") || raw.includes("parent reset") || raw.includes("2-hour")) return "parent-reset-2hr";
+  if (raw.includes("family-reset") || raw.includes("family reset") || raw.includes("3-hour")) return "family-reset-3hr";
+  if (raw.includes("helper-block") || raw.includes("helper block") || raw.includes("4-hour")) return "helper-block-4hr";
+  if (raw.includes("errand")) return "errand-helper";
+  if (raw.includes("laundry")) return "laundry-rescue";
+  return getString(serviceId);
+}
+
+export function isFamilyReferralEligibleService(serviceId: unknown, fallback?: unknown) {
+  return FAMILY_REFERRAL_ELIGIBLE_SERVICES.has(getFamilyReferralServiceKey(serviceId, fallback));
 }
 
 export function isCompletedStatus(status: unknown) {
@@ -115,7 +128,7 @@ export async function createFamilyReferralLinkForRequest({
     throw new Error("Referral links are only for family Parent Reset services. Commercial Reset was not changed.");
   }
 
-  if (!isFamilyReferralEligibleService(serviceId)) {
+  if (!isFamilyReferralEligibleService(serviceId, requestData.selectedServiceTitle || requestData.packageType || requestData.requestType)) {
     throw new Error("Referral links can only be generated for completed Parent Reset, Family Reset, or Helper Block requests.");
   }
 
@@ -228,7 +241,7 @@ export async function claimIncomingFamilyReferral({
   const referredEmail = cleanEmail(payload.email);
   const referredName = getString(payload.fullName) || getString(payload.name) || getString(payload.contactName);
 
-  if (!isFamilyReferralEligibleService(serviceId)) {
+  if (!isFamilyReferralEligibleService(serviceId, requestData.selectedServiceTitle || requestData.packageType || requestData.requestType)) {
     throw new Error("This referral link can only be used for an eligible family reset: Parent Reset, Family Reset, or Helper Block.");
   }
 

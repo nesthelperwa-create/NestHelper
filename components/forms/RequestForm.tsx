@@ -105,7 +105,7 @@ function normalizeReferralInput(value: string) {
 }
 
 function isReferralEligibleService(serviceId: string) {
-  return ["parent-reset-2hr", "family-reset-3hr", "helper-block-4hr"].includes(serviceId);
+  return ["parent-reset-2hr", "family-reset-3hr", "helper-block-4hr", "errand-helper", "laundry-rescue"].includes(serviceId);
 }
 
 
@@ -387,10 +387,10 @@ export function RequestForm() {
               <h3 className="mt-1 text-xl font-black text-nest-teal">Referral code {form.incomingReferralCode} is attached.</h3>
               <p className="mt-2 text-sm font-semibold leading-6">
                 {referralNeedsEligiblePackage
-                  ? "This family referral can only be used for Parent Reset, Family Reset, or Helper Block. Please choose an eligible family reset package before submitting."
+                  ? "This family referral can only be used for eligible NestHelper family services. Please choose an eligible family reset package before submitting."
                   : referralApplies
                     ? "This one-time referral will stay pending until your eligible family reset is completed. After completion, the referring family gets their thank-you credit email automatically."
-                    : "Choose Parent Reset, Family Reset, or Helper Block to use this family referral link."}
+                    : "Choose an eligible NestHelper family service to use this referral link."}
               </p>
             </div>
           </div>
