@@ -14,7 +14,7 @@ type ReferralsPageProps = {
 
 export const metadata = {
   title: "Family Referrals | NestHelper",
-  description: "Share NestHelper with another family through a one-time family referral link for eligible Parent Reset services.",
+  description: "A simple one-time NestHelper family referral link for eligible family services.",
 };
 
 export default async function ReferralsPage({ searchParams }: ReferralsPageProps) {
@@ -26,28 +26,50 @@ export default async function ReferralsPage({ searchParams }: ReferralsPageProps
     <>
       <PageHero
         eyebrow="Family Referrals"
-        title="Share a reset with another family."
-        text="NestHelper family referrals are simple, one-time share links for eligible Parent Reset services. A referring family can receive a thank-you credit after the referred family completes an eligible reset."
+        title={referralCode ? "Your referral link is ready." : "Family referrals, kept simple."}
+        text={
+          referralCode
+            ? "Share this page with one family. The family you send it to can tap the button below to request help with your referral attached."
+            : "NestHelper family referrals are one-time share links for eligible family services. Rewards are reviewed after the referred family completes their reset."
+        }
         cta={false}
       />
 
-      <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
+      <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
         {referralCode && (
           <div className="mb-8 overflow-hidden rounded-[2rem] border border-nest-gold/20 bg-gradient-to-br from-white via-nest-cream to-nest-mint/30 p-5 shadow-soft sm:p-7">
-            <div className="grid gap-5 lg:grid-cols-[0.75fr_1.25fr] lg:items-center">
+            <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
               <div>
-                <p className="pill-label w-fit"><Gift size={15} /> Referral attached</p>
-                <h2 className="mt-4 text-3xl font-black text-nest-teal sm:text-4xl">Referral code {referralCode}</h2>
-              </div>
-              <div>
-                <p className="font-medium leading-7 text-nest-ink/72">
-                  This referral link can be used once for an eligible family reset request: Parent Reset, Family Reset, or Helper Block. It stays pending until the completed reset is marked complete by NestHelper.
+                <p className="pill-label w-fit"><Gift size={15} /> One-time referral link</p>
+                <h2 className="mt-4 text-3xl font-black text-nest-teal sm:text-4xl">Share this page with one family.</h2>
+                <p className="mt-3 font-medium leading-7 text-nest-ink/72">
+                  Forward the email or copy this page link from your browser. The link works once, so send it to the family you want to refer.
                 </p>
-                <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-                  <ButtonLink href={requestHref}>Start referred family request</ButtonLink>
-                  <ButtonLink href="/policies/referral-program-policy" variant="secondary">Read referral policy</ButtonLink>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="rounded-3xl border border-nest-gold/18 bg-white p-5 shadow-sm">
+                  <h3 className="text-xl font-black text-nest-teal">If you are sharing</h3>
+                  <p className="mt-2 text-sm font-semibold leading-6 text-nest-ink/68">
+                    Send this page link to one family. After they complete an eligible NestHelper family service, we will email you about your thank-you credit.
+                  </p>
+                </div>
+
+                <div className="rounded-3xl border border-nest-gold/18 bg-white p-5 shadow-sm">
+                  <h3 className="text-xl font-black text-nest-teal">If you received this link</h3>
+                  <p className="mt-2 text-sm font-semibold leading-6 text-nest-ink/68">
+                    Tap below and submit your request. Your referral code will stay attached automatically.
+                  </p>
+                  <div className="mt-4 flex flex-col gap-3">
+                    <ButtonLink href={requestHref}>Request help with this referral</ButtonLink>
+                    <ButtonLink href="/policies/referral-program-policy" variant="secondary">Referral policy</ButtonLink>
+                  </div>
                 </div>
               </div>
+            </div>
+
+            <div className="mt-5 rounded-2xl bg-white/75 p-4 text-sm font-black text-nest-ink/70 shadow-sm">
+              Referral code: <span className="text-nest-teal">{referralCode}</span>
             </div>
           </div>
         )}
@@ -57,14 +79,14 @@ export default async function ReferralsPage({ searchParams }: ReferralsPageProps
             <p className="pill-label w-fit"><HeartHandshake size={15} /> Family Referrals</p>
             <h2 className="mt-4 text-3xl font-black text-nest-teal sm:text-4xl">A simple thank-you for sharing NestHelper.</h2>
             <p className="mt-4 font-medium leading-7 text-nest-ink/72">
-              After a completed eligible family reset, NestHelper may email a one-time referral share link to that customer. The customer can share that link with one other family. When the referred family completes an eligible family reset, the original referring family receives a reward or credit email from NestHelper.
+              After a completed eligible family service, NestHelper may email a one-time referral link to that customer. They can share it with one family. When the referred family completes an eligible service, the original family receives a reward or credit email.
             </p>
             <div className="mt-6 grid gap-3">
               {[
-                "Family-to-family referrals only",
-                "One-time use referral link",
-                "Eligible family reset must be completed",
-                "Reward/credit email is sent after completion",
+                "Share the one-time link with one family",
+                "The referred family submits a request through the link",
+                "NestHelper reviews, schedules, and completes the service",
+                "The original family gets a reward or credit email",
               ].map((item) => (
                 <div key={item} className="flex gap-3 rounded-2xl bg-nest-cream p-4 font-black text-nest-ink/75">
                   <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white text-nest-teal shadow-sm"><CheckCircle2 size={17} /></span>
@@ -77,36 +99,31 @@ export default async function ReferralsPage({ searchParams }: ReferralsPageProps
           <div className="grid gap-6">
             <InfoCard
               icon={<ShieldCheck className="h-6 w-6" />}
-              title="Eligible family services"
-              text="Referral links apply to Parent Reset, Family Reset, and Helper Block requests that are reviewed, approved, paid when required, scheduled, and completed."
+              title="Family services only"
+              text="Referral links are for eligible NestHelper family services. Commercial Reset is separate and is not part of this family referral program."
             />
             <InfoCard
               icon={<LockKeyhole className="h-6 w-6" />}
               title="One-time use"
-              text="A referral link can only be claimed by one referred family request. Once used, the same link cannot be used again."
+              text="Each referral link can only be claimed by one referred family request. Once used, the same link cannot be used again."
             />
             <InfoCard
               icon={<Sparkles className="h-6 w-6" />}
-              title="Tracked by NestHelper"
-              text="NestHelper tracks the original family’s share link separately from the referred family’s incoming referral code so rewards are handled clearly."
+              title="Reward after completion"
+              text="Referral rewards are reviewed after the referred family’s eligible service is completed, not just when a form is submitted."
             />
           </div>
         </div>
 
-        <div className="mt-10 rounded-[2.5rem] border border-nest-gold/18 bg-gradient-to-br from-nest-mint/25 via-white to-nest-cream p-6 shadow-soft sm:p-8">
-          <div className="grid gap-6 lg:grid-cols-[0.75fr_1.25fr] lg:items-center">
+        <div className="mt-8 rounded-[2rem] border border-nest-gold/18 bg-gradient-to-br from-nest-mint/25 via-white to-nest-cream p-6 shadow-soft sm:p-7">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="pill-label w-fit"><Gift size={15} /> Good to know</p>
-              <h2 className="mt-4 text-3xl font-black text-nest-teal sm:text-4xl">Referrals are reviewed before rewards are issued.</h2>
+              <h2 className="mt-3 text-2xl font-black text-nest-teal sm:text-3xl">Referrals are reviewed before rewards are issued.</h2>
             </div>
-            <div>
-              <p className="font-medium leading-7 text-nest-ink/72">
-                Commercial Reset, Laundry Rescue, Errand Helper, canceled visits, refunded visits, incomplete visits, self-referrals, duplicate accounts, and misuse are not eligible unless NestHelper approves an exception in writing.
-              </p>
-              <Link href="/policies/referral-program-policy" className="mt-5 inline-flex items-center gap-2 font-black text-nest-gold transition hover:gap-3 hover:text-nest-teal">
-                Read the Referral Program Policy <ArrowRight size={18} />
-              </Link>
-            </div>
+            <Link href="/policies/referral-program-policy" className="inline-flex items-center gap-2 font-black text-nest-gold transition hover:gap-3 hover:text-nest-teal">
+              Read the policy <ArrowRight size={18} />
+            </Link>
           </div>
         </div>
       </section>

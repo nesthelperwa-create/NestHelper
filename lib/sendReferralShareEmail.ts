@@ -47,31 +47,35 @@ export async function sendReferralShareEmail({
       <div style="width:100%;max-width:680px;margin:0 auto;background:#fff;border-radius:18px;border:1px solid #eadfc8;overflow:hidden;box-sizing:border-box;">
         <div style="background:#075c58;color:#fff;padding:22px 18px;box-sizing:border-box;">
           <div style="font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:#f1c96b;">Family referral</div>
-          <h1 style="margin:8px 0 0;font-size:22px;line-height:1.25;">Share NestHelper with another family.</h1>
+          <h1 style="margin:8px 0 0;font-size:22px;line-height:1.25;">Your NestHelper referral share page is ready.</h1>
         </div>
         <div style="padding:22px 18px;color:#233;line-height:1.6;box-sizing:border-box;overflow-wrap:anywhere;word-break:break-word;">
           <p style="margin:0 0 16px 0;">${escapeHtml(greeting)}</p>
-          <p style="margin:0 0 18px 0;">Thank you for trusting NestHelper with your family reset. Here is your one-time family referral link.</p>
+          <p style="margin:0 0 18px 0;">Thank you for trusting NestHelper. You can share the link below with one family who may need help resetting the home.</p>
+
           <div style="margin:0 0 20px 0;padding:14px;border-radius:14px;background:#fbf6ea;border:1px solid #eadfc8;box-sizing:border-box;">
             <div style="font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#b98a2f;font-weight:700;margin-bottom:6px;">Your share code</div>
             <div style="font-size:20px;font-weight:800;color:#075c58;margin-bottom:10px;">${escapeHtml(referralCode)}</div>
-            <a href="${escapeHtml(safeUrl)}" style="display:inline-block;background:#075c58;color:#fff;text-decoration:none;padding:12px 18px;border-radius:999px;font-weight:700;max-width:100%;box-sizing:border-box;white-space:normal;text-align:center;">Share referral link</a>
+            <a href="${escapeHtml(safeUrl)}" style="display:inline-block;background:#075c58;color:#fff;text-decoration:none;padding:12px 18px;border-radius:999px;font-weight:700;max-width:100%;box-sizing:border-box;white-space:normal;text-align:center;">Open referral share page</a>
             <p style="margin:12px 0 0 0;font-size:13px;color:#667;overflow-wrap:anywhere;word-break:break-word;">${escapeHtml(safeUrl)}</p>
           </div>
-          <h2 style="font-size:18px;margin:0 0 10px 0;color:#0f4f4a;">How it works</h2>
+
+          <h2 style="font-size:18px;margin:0 0 10px 0;color:#0f4f4a;">What to do</h2>
           <ol style="margin:0 0 18px 20px;padding:0;">
-            <li style="margin:0 0 8px 0;">Share the link with one family who may need a Parent Reset, Family Reset, or Helper Block.</li>
-            <li style="margin:0 0 8px 0;">The referral link can only be used once.</li>
-            <li style="margin:0 0 8px 0;">After the referred family completes an eligible family reset, NestHelper will email you about ${escapeHtml(rewardLabel)}.</li>
+            <li style="margin:0 0 8px 0;">Open the referral share page above.</li>
+            <li style="margin:0 0 8px 0;">Copy that page link or forward this email to one family.</li>
+            <li style="margin:0 0 8px 0;">They tap “Request help with this referral” and submit their request.</li>
           </ol>
+
+          <p style="margin:0 0 18px 0;">After the referred family completes an eligible NestHelper family service, we will email you about ${escapeHtml(rewardLabel)}.</p>
           <p style="margin:0 0 18px 0;">Questions? Reply to this email or contact us at ${escapeHtml(replyTo)}.</p>
-          <p style="font-size:12px;color:#667;line-height:1.5;margin-top:22px;">Referral rewards are subject to NestHelper’s Referral Program Policy. Commercial Reset, Laundry Rescue, Errand Helper, canceled visits, refunded visits, and incomplete visits are not eligible unless NestHelper says otherwise in writing.</p>
+          <p style="font-size:12px;color:#667;line-height:1.5;margin-top:22px;">Referral rewards are subject to NestHelper’s Referral Program Policy. Commercial Reset, canceled visits, refunded visits, incomplete visits, self-referrals, duplicate accounts, and misuse are not eligible unless NestHelper approves an exception in writing.</p>
         </div>
       </div>
     </div>`;
 
-  const text = `Share NestHelper with another family\n\n${greeting}\n\nThank you for trusting NestHelper with your family reset. Here is your one-time family referral link.\n\nReferral code: ${referralCode}\nReferral link: ${safeUrl}\n\nHow it works:\n1. Share the link with one family who may need a Parent Reset, Family Reset, or Helper Block.\n2. The referral link can only be used once.\n3. After the referred family completes an eligible family reset, NestHelper will email you about ${rewardLabel}.\n\nQuestions? Reply to this email or contact us at ${replyTo}.`;
+  const text = `Your NestHelper referral share page is ready\n\n${greeting}\n\nThank you for trusting NestHelper. You can share the link below with one family who may need help resetting the home.\n\nReferral code: ${referralCode}\nReferral share page: ${safeUrl}\n\nWhat to do:\n1. Open the referral share page above.\n2. Copy that page link or forward this email to one family.\n3. They tap “Request help with this referral” and submit their request.\n\nAfter the referred family completes an eligible NestHelper family service, we will email you about ${rewardLabel}.\n\nQuestions? Reply to this email or contact us at ${replyTo}.`;
 
   const resend = new Resend(apiKey);
-  return resend.emails.send({ from, to, subject: "Your NestHelper family referral link", html, text, replyTo });
+  return resend.emails.send({ from, to, subject: "Your NestHelper referral share page", html, text, replyTo });
 }
