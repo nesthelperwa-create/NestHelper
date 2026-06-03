@@ -36,11 +36,11 @@ export const policies: Policy[] = [
     sections: [
       {
         heading: "Family-to-family only",
-        body: "The referral program is for family Parent Reset services only. Commercial Reset, Laundry Rescue, Errand Helper, partner services, helper applications, and business quote requests are excluded unless NestHelper approves an exception in writing."
+        body: "The referral program is for eligible NestHelper family services only, including Parent Reset, Family Reset, Helper Block, Errand Helper, and Laundry Rescue when NestHelper approves the request. Commercial Reset, partner services, helper applications, and business quote requests are excluded unless NestHelper approves an exception in writing."
       },
       {
         heading: "Eligible services",
-        body: "Eligible services generally include Parent Reset, Family Reset, and Helper Block requests that are reviewed by NestHelper, approved, paid when required, scheduled, and completed. A submitted request, quote, checkout link, deposit, canceled visit, refunded visit, or incomplete visit does not qualify by itself."
+        body: "Eligible services generally include Parent Reset, Family Reset, Helper Block, Errand Helper, and Laundry Rescue requests that are reviewed by NestHelper, approved, paid when required, scheduled, and completed. A submitted request, quote, checkout link, deposit, canceled visit, refunded visit, or incomplete visit does not qualify by itself."
       },
       {
         heading: "One-time referral links",
@@ -52,11 +52,11 @@ export const policies: Policy[] = [
       },
       {
         heading: "Reward or credit timing",
-        body: "The original referring family becomes eligible for a reward or credit only after the referred family completes an eligible family reset. NestHelper may email the reward or credit information automatically after completion is recorded."
+        body: "The original referring family becomes eligible for a reward or credit only after the referred family completes an eligible family service. NestHelper may email the reward or credit information automatically after completion is recorded."
       },
       {
         heading: "Credits are not cash",
-        body: "Referral rewards or credits are not cash, are not payable as cash, and are not transferable unless NestHelper approves it in writing. Credits may be applied to a future eligible family reset according to NestHelper’s current offer and availability."
+        body: "Referral rewards or credits are not cash, are not payable as cash, and are not transferable unless NestHelper approves it in writing. Credits may be applied to a future eligible family service according to NestHelper’s current offer and availability."
       },
       {
         heading: "Misuse and review",

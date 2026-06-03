@@ -1414,7 +1414,7 @@ export default function AdminTable({
                     <p className="text-xs font-black uppercase tracking-[0.2em] text-[#b98a2f]">Family referrals</p>
                     <h4 className="mt-1 text-xl font-black text-[#075c58]">Generate and track one-time family referral links</h4>
                     <p className="mt-2 text-sm leading-6 text-slate-700">
-                      Family referral links are only for completed Parent Reset, Family Reset, or Helper Block customers. They are one-time use. Commercial Reset is intentionally excluded.
+                      Family referral links are only for completed eligible family-service customers. They are one-time use. Commercial Reset is intentionally excluded.
                     </p>
                   </div>
                   <StatusBadge status={getReferralStatusText(selected)} />

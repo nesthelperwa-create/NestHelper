@@ -71,6 +71,11 @@ export function isFamilyReferralEligibleService(serviceId: unknown, fallback?: u
   return FAMILY_REFERRAL_ELIGIBLE_SERVICES.has(getFamilyReferralServiceKey(serviceId, fallback));
 }
 
+export function getFamilyReferralNewCustomerCreditAmount(serviceId: unknown, fallback?: unknown) {
+  const serviceKey = getFamilyReferralServiceKey(serviceId, fallback);
+  return serviceKey === "laundry-rescue" ? REFERRAL_PROGRAM.laundryCredit : REFERRAL_PROGRAM.defaultNewCustomerCredit;
+}
+
 export function isCompletedStatus(status: unknown) {
   return COMPLETED_STATUSES.has(getString(status).toLowerCase());
 }
@@ -125,11 +130,11 @@ export async function createFamilyReferralLinkForRequest({
   const referrerName = getString(requestData.fullName) || getString(requestData.name) || getString(requestData.contactName);
 
   if (serviceId === "commercial-reset") {
-    throw new Error("Referral links are only for family Parent Reset services. Commercial Reset was not changed.");
+    throw new Error("Referral links are only for eligible NestHelper family services. Commercial Reset was not changed.");
   }
 
   if (!isFamilyReferralEligibleService(serviceId, requestData.selectedServiceTitle || requestData.packageType || requestData.requestType)) {
-    throw new Error("Referral links can only be generated for completed Parent Reset, Family Reset, or Helper Block requests.");
+    throw new Error("Referral links can only be generated for completed eligible NestHelper family service requests.");
   }
 
   if (!isCompletedStatus(status)) {
@@ -242,7 +247,7 @@ export async function claimIncomingFamilyReferral({
   const referredName = getString(payload.fullName) || getString(payload.name) || getString(payload.contactName);
 
   if (!isFamilyReferralEligibleService(serviceId, payload.selectedServiceTitle || payload.packageType || payload.requestType)) {
-    throw new Error("This referral link can only be used for an eligible family reset: Parent Reset, Family Reset, or Helper Block.");
+    throw new Error("This referral link can only be used for an eligible NestHelper family service.");
   }
 
   const linkRef = db.collection("referralLinks").doc(code);
@@ -274,6 +279,8 @@ export async function claimIncomingFamilyReferral({
       incomingReferralReferrerName: getString(linkData.referrerName),
       incomingReferralReferrerEmail: referrerEmail,
       incomingReferralReferrerServiceTitle: getString(linkData.referrerServiceTitle),
+      incomingReferralNewCustomerCreditAmount: getFamilyReferralNewCustomerCreditAmount(serviceId, payload.selectedServiceTitle || payload.packageType || payload.requestType),
+      incomingReferralReferrerCreditAmount: getFamilyReferralNewCustomerCreditAmount(serviceId, payload.selectedServiceTitle || payload.packageType || payload.requestType),
     };
 
     const claimUpdate = {
@@ -326,7 +333,7 @@ export async function reserveReferralRewardForCompletedRequest({
 }) {
   const code = normalizeReferralCode(requestData.incomingReferralCode || requestData.incomingReferralLinkId);
   if (!code) return null;
-  if (!isFamilyReferralEligibleService(requestData.service)) return null;
+  if (!isFamilyReferralEligibleService(requestData.service, requestData.selectedServiceTitle || requestData.packageType || requestData.requestType)) return null;
 
   const rewardCode = normalizeReferralCode(`NHF-THANKS-${code.replace(/-/g, "").slice(-6)}`);
   const linkRef = db.collection("referralLinks").doc(code);

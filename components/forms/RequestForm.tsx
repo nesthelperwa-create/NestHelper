@@ -389,7 +389,7 @@ export function RequestForm() {
                 {referralNeedsEligiblePackage
                   ? "This family referral can only be used for eligible NestHelper family services. Please choose an eligible family reset package before submitting."
                   : referralApplies
-                    ? "This one-time referral will stay pending until your eligible family reset is completed. After completion, the referring family gets their thank-you credit email automatically."
+                    ? "This one-time referral will stay pending until your eligible family service is completed. After completion, the referring family gets their thank-you credit email automatically."
                     : "Choose an eligible NestHelper family service to use this referral link."}
               </p>
             </div>

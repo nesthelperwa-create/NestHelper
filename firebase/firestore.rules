@@ -7,8 +7,8 @@ service cloud.firestore {
 
     function adminEmails() {
       return [
-        "REPLACE_WITH_YOUR_ADMIN_EMAIL@gmail.com",
-        "hello@nesthelperwa.com"
+        "hello@nesthelperwa.com",
+        "nesthelperwa@gmail.com"
       ];
     }
 
