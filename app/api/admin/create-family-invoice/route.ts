@@ -67,6 +67,23 @@ function moneyToCents(value: unknown) {
   return Math.round(Math.max(0, cleanNumber(value)) * 100);
 }
 
+function hasIncomingFamilyReferral(data: Record<string, unknown>) {
+  return Boolean(data.incomingReferralCode || data.incomingReferralLinkId || data.referralCode || data.referralShareCode);
+}
+
+function getExpectedReferralCreditAmount(data: Record<string, unknown>) {
+  if (!hasIncomingFamilyReferral(data)) return 0;
+  const savedAmount = cleanNumber(
+    data.incomingReferralNewCustomerCreditAmount ||
+      data.incomingReferralCreditAmount ||
+      data.referralNewCustomerCreditAmount ||
+      data.referralCreditAmount
+  );
+  if (savedAmount > 0) return savedAmount;
+  const raw = `${getString(data.service)} ${getString(data.selectedServiceTitle)} ${getString(data.packageType)}`.toLowerCase();
+  return raw.includes("laundry") ? 15 : 25;
+}
+
 function getServiceTitle(data: Record<string, unknown>) {
   const serviceId = getString(data.service);
   return getString(data.selectedServiceTitle) || services.find((item) => item.id === serviceId)?.title || serviceId || "NestHelper family service";
@@ -325,6 +342,18 @@ export async function POST(request: Request) {
     const lineItems = Array.isArray(breakdown.lineItems) ? (breakdown.lineItems as Record<string, unknown>[]) : [];
     const amountDueNowCents = moneyToCents(breakdown.amountDueNow);
     const servicePeriodLabel = getString(breakdown.servicePeriodLabel) || formatServicePeriodLabel(breakdown.servicePeriodStart, breakdown.servicePeriodEnd);
+    const expectedReferralCredit = getExpectedReferralCreditAmount(data);
+    const savedDiscountCredit = cleanNumber(breakdown.discountCredit);
+
+    if (expectedReferralCredit > 0 && savedDiscountCredit < expectedReferralCredit) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error: `This request has a family referral credit. Open the Family Payment Breakdown, apply/save the $${expectedReferralCredit} referral credit, then create the invoice.`,
+        },
+        { status: 400 }
+      );
+    }
 
     if (!lineItems.length || amountDueNowCents <= 0) {
       return NextResponse.json(

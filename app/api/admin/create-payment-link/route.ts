@@ -48,6 +48,23 @@ function formatMoney(value: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(Number.isFinite(value) ? value : 0);
 }
 
+function hasIncomingFamilyReferral(data: Record<string, unknown>) {
+  return Boolean(data.incomingReferralCode || data.incomingReferralLinkId || data.referralCode || data.referralShareCode);
+}
+
+function getExpectedReferralCreditAmount(data: Record<string, unknown>) {
+  if (!hasIncomingFamilyReferral(data)) return 0;
+  const savedAmount = cleanNumber(
+    data.incomingReferralNewCustomerCreditAmount ||
+      data.incomingReferralCreditAmount ||
+      data.referralNewCustomerCreditAmount ||
+      data.referralCreditAmount
+  );
+  if (savedAmount > 0) return savedAmount;
+  const raw = `${getString(data.service)} ${getString(data.selectedServiceTitle)} ${getString(data.packageType)}`.toLowerCase();
+  return raw.includes("laundry") ? 15 : 25;
+}
+
 function getLaundryDepositAmount(mode: "standard" | "founding", customAmount: number, useCustomInitial: boolean) {
   if (useCustomInitial && customAmount > 0) return customAmount;
   return mode === "founding" ? 49 : 59;
@@ -200,6 +217,18 @@ export async function POST(request: Request) {
     if (!isLaundryRescue && !useCustomInitial && !priceId) {
       return NextResponse.json(
         { ok: false, error: `Missing Stripe ${mode} price ID for this service. Check the service selection and Vercel Stripe price env vars.` },
+        { status: 400 }
+      );
+    }
+
+    const expectedReferralCredit = !isCommercialReset ? getExpectedReferralCreditAmount(data) : 0;
+    const savedDiscountCredit = cleanNumber(savedFamilyBreakdown.discountCredit);
+    if (expectedReferralCredit > 0 && (!useCustomInitial || savedDiscountCredit < expectedReferralCredit)) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error: `This request has a family referral credit. Open the Family Payment Breakdown, apply/save the $${expectedReferralCredit} referral credit, then use Fill checkout with referral price or create a family invoice.`,
+        },
         { status: 400 }
       );
     }
