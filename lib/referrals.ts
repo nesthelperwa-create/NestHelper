@@ -1,3 +1,5 @@
+export const REFERRAL_PROGRAM = "family-to-family";
+
 import crypto from "crypto";
 import { FieldValue, type DocumentReference, type Firestore } from "firebase-admin/firestore";
 
