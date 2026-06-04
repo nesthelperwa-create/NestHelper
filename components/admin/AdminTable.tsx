@@ -775,6 +775,344 @@ function ApplicationQuickRead({ item, documentCount }: { item: AdminDoc; documen
   );
 }
 
+
+
+type AdminExportEntry = { key: string; label: string; value: string };
+type AdminExportSection = { title: string; entries: AdminExportEntry[] };
+
+const EXPORT_HIDE_KEYS = new Set([
+  "photoUploads",
+  "uploadedPhotos",
+  "photoDataUrls",
+  "imageDataUrls",
+  "applicationDocuments",
+]);
+
+const EXPORT_ADMIN_TRACKING_KEYWORDS = [
+  "status",
+  "payment",
+  "checkout",
+  "invoice",
+  "stripe",
+  "quote",
+  "referral",
+  "credit",
+  "refund",
+  "onboarding",
+  "internal",
+  "approvedbio",
+  "donotassign",
+  "reliability",
+  "strengths",
+  "concerns",
+  "updated",
+  "paidat",
+];
+
+function getCollectionDisplayLabel(collectionName: string) {
+  const labels: Record<string, string> = {
+    serviceRequests: "Service request",
+    helperApplications: "Helper application",
+    partnerApplications: "Partner / contractor application",
+    contactMessages: "Contact message",
+  };
+  return labels[collectionName] || "Admin record";
+}
+
+function safeFilePart(value: string) {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 80) || "record";
+}
+
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function exportValueToText(key: string, value: unknown): string {
+  if (value === null || value === undefined || value === "") return "—";
+  if (isPhotoDataField(key)) return Array.isArray(value) ? `${value.length} uploaded photo${value.length === 1 ? "" : "s"}` : "Uploaded photos";
+  if (isApplicationDocumentField(key)) return Array.isArray(value) ? `${value.length} uploaded document${value.length === 1 ? "" : "s"}` : formatValue(key, value);
+  if (Array.isArray(value)) {
+    const simple = value.every((entry) => ["string", "number", "boolean"].includes(typeof entry));
+    return simple ? value.map((entry) => exportValueToText(key, entry)).join(", ") : value.map((entry) => JSON.stringify(entry, null, 2)).join("\n\n");
+  }
+  if (typeof value === "object") {
+    if ("toDate" in value && typeof value.toDate === "function") return formatDate(value);
+    return JSON.stringify(value, null, 2);
+  }
+  return formatValue(key, value);
+}
+
+function isAdminTrackingExportKey(key: string) {
+  const normalized = key.toLowerCase();
+  return EXPORT_ADMIN_TRACKING_KEYWORDS.some((keyword) => normalized.includes(keyword));
+}
+
+function getAdminExportEntries(item: AdminDoc) {
+  return Object.entries(item)
+    .filter(([key]) => !EXPORT_HIDE_KEYS.has(key) && !isPhotoDataField(key) && !isApplicationDocumentField(key))
+    .map(([key, value]) => ({ key, label: DETAIL_FIELD_LABELS[key] || key, value: exportValueToText(key, value) }))
+    .filter((entry) => entry.value !== "—");
+}
+
+function getAdminRecordExportSections(collectionName: string, item: AdminDoc): AdminExportSection[] {
+  const allEntries = getAdminExportEntries(item);
+  const used = new Set<string>();
+  const priorityKeys = ["id", "createdAt", "updatedAt", "status", ...(DETAIL_FIELD_ORDER[collectionName] || [])];
+  const primaryEntries = priorityKeys
+    .map((key) => allEntries.find((entry) => entry.key === key))
+    .filter((entry): entry is AdminExportEntry => Boolean(entry));
+  primaryEntries.forEach((entry) => used.add(entry.key));
+
+  const submittedEntries = allEntries.filter((entry) => !used.has(entry.key) && !isAdminTrackingExportKey(entry.key));
+  submittedEntries.forEach((entry) => used.add(entry.key));
+
+  const adminEntries = allEntries.filter((entry) => !used.has(entry.key));
+
+  const photos = getPhotoUploads(item);
+  const photoEntries = photos.map((photo, index) => ({
+    key: `photo-${index + 1}`,
+    label: `Photo ${index + 1}`,
+    value: [photo.name || "Uploaded photo", photo.type || "image", formatPhotoSize(photo.size)].filter(Boolean).join(" · "),
+  }));
+
+  const documents = getApplicationDocuments(item);
+  const documentEntries = documents.map((document, index) => ({
+    key: document.storagePath || document.id || `document-${index + 1}`,
+    label: document.label || `Document ${index + 1}`,
+    value: [document.originalName || `Document ${index + 1}`, document.contentType || "file", formatFileSize(document.size)].filter(Boolean).join(" · "),
+  }));
+
+  return [
+    { title: "Main details", entries: primaryEntries },
+    { title: "Submitted answers", entries: submittedEntries },
+    { title: "Uploaded photos", entries: photoEntries },
+    { title: "Uploaded application documents", entries: documentEntries },
+    { title: "Admin / payment / onboarding tracking", entries: adminEntries },
+  ].filter((section) => section.entries.length);
+}
+
+function getAdminRecordExportFilename(collectionName: string, item: AdminDoc, extension: string) {
+  const label = safeFilePart(getCollectionDisplayLabel(collectionName));
+  const name = safeFilePart(getRecordDisplayName(item));
+  const createdDate = getDateObject(item.createdAt)?.toISOString().slice(0, 10) || new Date().toISOString().slice(0, 10);
+  return `nesthelper-${label}-${name}-${createdDate}.${extension}`;
+}
+
+function getAdminRecordPlainText(collectionName: string, item: AdminDoc) {
+  const title = `${getCollectionDisplayLabel(collectionName)} — ${getRecordDisplayName(item)}`;
+  const lines = [title, `Exported: ${new Date().toLocaleString()}`, ""];
+  getAdminRecordExportSections(collectionName, item).forEach((section) => {
+    lines.push(section.title.toUpperCase());
+    section.entries.forEach((entry) => {
+      lines.push(`${entry.label}: ${entry.value}`);
+    });
+    lines.push("");
+  });
+  return lines.join("\n");
+}
+
+function getAdminRecordPrintableHtml(collectionName: string, item: AdminDoc) {
+  const title = `${getCollectionDisplayLabel(collectionName)} — ${getRecordDisplayName(item)}`;
+  const sections = getAdminRecordExportSections(collectionName, item);
+  const sectionsHtml = sections.map((section) => `
+    <section>
+      <h2>${escapeHtml(section.title)}</h2>
+      <dl>
+        ${section.entries.map((entry) => `
+          <div class="row">
+            <dt>${escapeHtml(entry.label)}</dt>
+            <dd>${escapeHtml(entry.value).replace(/\n/g, "<br />")}</dd>
+          </div>
+        `).join("")}
+      </dl>
+    </section>
+  `).join("");
+
+  return `<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>${escapeHtml(title)}</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 32px; color: #1f2937; font-family: Arial, sans-serif; line-height: 1.45; }
+    .header { border-bottom: 3px solid #075c58; margin-bottom: 22px; padding-bottom: 16px; }
+    .eyebrow { color: #b98a2f; font-size: 12px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; }
+    h1 { color: #075c58; font-size: 28px; margin: 6px 0; }
+    .meta { color: #64748b; font-size: 13px; font-weight: 700; }
+    section { break-inside: avoid; margin-top: 22px; }
+    h2 { color: #075c58; font-size: 16px; margin: 0 0 10px; text-transform: uppercase; letter-spacing: .08em; }
+    dl { border: 1px solid #eadfc8; border-radius: 14px; overflow: hidden; margin: 0; }
+    .row { display: grid; grid-template-columns: 190px 1fr; border-top: 1px solid #eadfc8; }
+    .row:first-child { border-top: 0; }
+    dt { background: #fbf6ea; color: #475569; font-size: 12px; font-weight: 800; padding: 10px 12px; text-transform: uppercase; letter-spacing: .06em; }
+    dd { margin: 0; padding: 10px 12px; white-space: pre-wrap; word-break: break-word; }
+    .note { margin-top: 24px; color: #64748b; font-size: 12px; }
+    @media print { body { padding: 18px; } .no-print { display: none; } }
+    @media (max-width: 720px) { body { padding: 18px; } .row { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="eyebrow">NestHelper admin export</div>
+    <h1>${escapeHtml(title)}</h1>
+    <div class="meta">Created: ${escapeHtml(formatDate(item.createdAt))} · Status: ${escapeHtml(formatValue("status", item.status))} · Exported: ${escapeHtml(new Date().toLocaleString())}</div>
+  </div>
+  ${sectionsHtml}
+  <p class="note">Private admin export. Uploaded photos/documents are listed by metadata; open private files from the admin dashboard when needed.</p>
+</body>
+</html>`;
+}
+
+function downloadTextFile(filename: string, contents: string, mimeType = "text/plain;charset=utf-8") {
+  const blob = new Blob([contents], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+
+function printAdminRecord(collectionName: string, item: AdminDoc) {
+  const printWindow = window.open("", "_blank", "width=900,height=900");
+  if (!printWindow) {
+    window.alert("Your browser blocked the print window. Allow pop-ups for this admin page, then try again.");
+    return;
+  }
+  printWindow.document.open();
+  printWindow.document.write(getAdminRecordPrintableHtml(collectionName, item));
+  printWindow.document.close();
+  printWindow.focus();
+  window.setTimeout(() => printWindow.print(), 300);
+}
+
+function getAdminRecordsPrintableHtml(collectionName: string, title: string, records: AdminDoc[]) {
+  const sectionsHtml = records.map((record, recordIndex) => {
+    const recordTitle = `${getCollectionDisplayLabel(collectionName)} — ${getRecordDisplayName(record)}`;
+    const recordSections = getAdminRecordExportSections(collectionName, record).map((section) => `
+      <section>
+        <h2>${escapeHtml(section.title)}</h2>
+        <dl>
+          ${section.entries.map((entry) => `
+            <div class="row">
+              <dt>${escapeHtml(entry.label)}</dt>
+              <dd>${escapeHtml(entry.value).replace(/\n/g, "<br />")}</dd>
+            </div>
+          `).join("")}
+        </dl>
+      </section>
+    `).join("");
+
+    return `
+      <article class="record">
+        <div class="record-header">
+          <div class="eyebrow">NestHelper admin export</div>
+          <h1>${escapeHtml(recordTitle)}</h1>
+          <div class="meta">Created: ${escapeHtml(formatDate(record.createdAt))} · Status: ${escapeHtml(formatValue("status", record.status))} · Exported: ${escapeHtml(new Date().toLocaleString())}</div>
+        </div>
+        ${recordSections}
+      </article>
+      ${recordIndex < records.length - 1 ? '<div class="page-break"></div>' : ''}
+    `;
+  }).join("");
+
+  return `<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>${escapeHtml(title)}</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 32px; color: #1f2937; font-family: Arial, sans-serif; line-height: 1.45; }
+    .record { margin-bottom: 36px; }
+    .record-header { border-bottom: 3px solid #075c58; margin-bottom: 22px; padding-bottom: 16px; }
+    .eyebrow { color: #b98a2f; font-size: 12px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; }
+    h1 { color: #075c58; font-size: 26px; margin: 6px 0; }
+    .meta { color: #64748b; font-size: 13px; font-weight: 700; }
+    section { break-inside: avoid; margin-top: 22px; }
+    h2 { color: #075c58; font-size: 16px; margin: 0 0 10px; text-transform: uppercase; letter-spacing: .08em; }
+    dl { border: 1px solid #eadfc8; border-radius: 14px; overflow: hidden; margin: 0; }
+    .row { display: grid; grid-template-columns: 190px 1fr; border-top: 1px solid #eadfc8; }
+    .row:first-child { border-top: 0; }
+    dt { background: #fbf6ea; color: #475569; font-size: 12px; font-weight: 800; padding: 10px 12px; text-transform: uppercase; letter-spacing: .06em; }
+    dd { margin: 0; padding: 10px 12px; white-space: pre-wrap; word-break: break-word; }
+    .page-break { break-after: page; page-break-after: always; }
+    .note { margin-top: 24px; color: #64748b; font-size: 12px; }
+    @media print { body { padding: 18px; } }
+    @media (max-width: 720px) { body { padding: 18px; } .row { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  ${sectionsHtml || `<p>No records selected.</p>`}
+  <p class="note">Private admin export. Uploaded photos/documents are listed by metadata; open private files from the admin dashboard when needed.</p>
+</body>
+</html>`;
+}
+
+function printAdminRecords(collectionName: string, title: string, records: AdminDoc[]) {
+  if (!records.length) return;
+  const printWindow = window.open("", "_blank", "width=900,height=900");
+  if (!printWindow) {
+    window.alert("Your browser blocked the print window. Allow pop-ups for this admin page, then try again.");
+    return;
+  }
+  printWindow.document.open();
+  printWindow.document.write(getAdminRecordsPrintableHtml(collectionName, title, records));
+  printWindow.document.close();
+  printWindow.focus();
+  window.setTimeout(() => printWindow.print(), 300);
+}
+
+function downloadAdminRecord(collectionName: string, item: AdminDoc) {
+  downloadTextFile(
+    getAdminRecordExportFilename(collectionName, item, "txt"),
+    getAdminRecordPlainText(collectionName, item)
+  );
+}
+
+function csvEscape(value: string) {
+  return `"${value.replace(/"/g, '""')}"`;
+}
+
+function getFilteredCsvFilename(title: string) {
+  return `nesthelper-${safeFilePart(title)}-${new Date().toISOString().slice(0, 10)}.csv`;
+}
+
+function getAdminCsvExport(collectionName: string, records: AdminDoc[]) {
+  const priorityKeys = ["id", "createdAt", "status", ...(DETAIL_FIELD_ORDER[collectionName] || [])];
+  const keys = Array.from(new Set([
+    ...priorityKeys,
+    ...records.flatMap((record) => Object.keys(record)),
+    "uploadedPhotoCount",
+    "uploadedDocumentCount",
+  ])).filter((key) => {
+    if (key === "uploadedPhotoCount" || key === "uploadedDocumentCount") return true;
+    return !EXPORT_HIDE_KEYS.has(key) && !isPhotoDataField(key) && !isApplicationDocumentField(key);
+  });
+
+  const csvLabels: Record<string, string> = { uploadedPhotoCount: "Uploaded photos", uploadedDocumentCount: "Uploaded docs" };
+  const header = keys.map((key) => csvEscape(csvLabels[key] || DETAIL_FIELD_LABELS[key] || key)).join(",");
+  const rows = records.map((record) => keys.map((key) => {
+    if (key === "uploadedPhotoCount") return csvEscape(String(getPhotoUploads(record).length));
+    if (key === "uploadedDocumentCount") return csvEscape(String(getApplicationDocuments(record).length || record.applicationDocumentCount || 0));
+    return csvEscape(exportValueToText(key, record[key]));
+  }).join(","));
+  return [header, ...rows].join("\n");
+}
+
 function ServiceLegend({ activeServiceFilter, onToggleServiceFilter, counts }: { activeServiceFilter: string; onToggleServiceFilter: (key: string) => void; counts: Record<string, number> }) {
   return (
     <div className="mt-3 flex flex-wrap gap-2" aria-label="Filter service requests by service type">
@@ -2053,6 +2391,24 @@ Only continue for obvious fake/test submissions with no customer, payment, invoi
           </p>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
+          <button
+            type="button"
+            onClick={() => printAdminRecords(collectionName, title, filtered)}
+            disabled={!filtered.length}
+            className={getAdminActionClass("quiet")}
+            title="Print the full details for every record currently matching your filters."
+          >
+            Print filtered
+          </button>
+          <button
+            type="button"
+            onClick={() => downloadTextFile(getFilteredCsvFilename(title), getAdminCsvExport(collectionName, filtered), "text/csv;charset=utf-8")}
+            disabled={!filtered.length}
+            className={getAdminActionClass("quiet")}
+            title="Download the currently filtered list as a spreadsheet-friendly CSV."
+          >
+            Download filtered CSV
+          </button>
           <label className="flex items-center gap-2 text-sm font-bold text-slate-700">
             Per page
             <select
@@ -2128,6 +2484,22 @@ Only continue for obvious fake/test submissions with no customer, payment, invoi
             </div>
             <div className="mt-3 grid gap-2">
               <button onClick={() => setSelected(item)} className="w-full rounded-full bg-[#075c58] px-4 py-3 text-xs font-black text-white shadow-sm transition hover:bg-[#064b48]">Open details</button>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => printAdminRecord(collectionName, item)}
+                  className="w-full rounded-full border border-[#d8c18f] bg-white px-4 py-3 text-xs font-black text-[#075c58] shadow-sm transition hover:bg-[#f4ecdc]"
+                >
+                  Print
+                </button>
+                <button
+                  type="button"
+                  onClick={() => downloadAdminRecord(collectionName, item)}
+                  className="w-full rounded-full border border-[#d8c18f] bg-white px-4 py-3 text-xs font-black text-[#075c58] shadow-sm transition hover:bg-[#f4ecdc]"
+                >
+                  Download
+                </button>
+              </div>
               <select
                 value={item.status || "New"}
                 onChange={async (e) => {
@@ -2169,7 +2541,7 @@ Only continue for obvious fake/test submissions with no customer, payment, invoi
 
       <div className="hidden max-w-full overflow-hidden rounded-3xl border border-[#eadfc8] bg-white shadow-xl shadow-[#075c58]/5 md:block">
         <div className="overflow-x-auto [scrollbar-gutter:stable]">
-          <table className="w-full min-w-[1180px] divide-y divide-[#eadfc8] text-sm">
+          <table className="w-full min-w-[1240px] divide-y divide-[#eadfc8] text-sm">
             <thead className="bg-[#f4ecdc] text-left text-xs uppercase tracking-wider text-[#075c58]">
               <tr>
                 <th className="px-4 py-4">Status</th>
@@ -2177,7 +2549,7 @@ Only continue for obvious fake/test submissions with no customer, payment, invoi
                   <th key={col.key} className="px-4 py-4">{col.label}</th>
                 ))}
                 <th className="px-4 py-4">Created</th>
-                <th className="sticky right-0 z-20 min-w-[220px] bg-[#f4ecdc] px-4 py-4 shadow-[-10px_0_18px_rgba(0,0,0,0.04)]">Actions</th>
+                <th className="sticky right-0 z-20 min-w-[260px] bg-[#f4ecdc] px-4 py-4 shadow-[-10px_0_18px_rgba(0,0,0,0.04)]">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#f0e7d7]">
@@ -2188,9 +2560,25 @@ Only continue for obvious fake/test submissions with no customer, payment, invoi
                     <td key={col.key} className="max-w-[220px] truncate px-4 py-4 text-slate-700">{renderAdminCell(col.key, item)}</td>
                   ))}
                   <td className="px-4 py-4 text-slate-500">{formatDate(item.createdAt)}</td>
-                  <td className="sticky right-0 z-10 min-w-[220px] bg-white/95 px-3 py-4 align-top shadow-[-10px_0_18px_rgba(0,0,0,0.04)] backdrop-blur">
-                    <div className="grid min-w-[190px] gap-2">
+                  <td className="sticky right-0 z-10 min-w-[260px] bg-white/95 px-3 py-4 align-top shadow-[-10px_0_18px_rgba(0,0,0,0.04)] backdrop-blur">
+                    <div className="grid min-w-[230px] gap-2">
                       <button onClick={() => setSelected(item)} className="w-full whitespace-nowrap rounded-full bg-[#075c58] px-3 py-2 text-xs font-black text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-[#064b48] focus:outline-none focus:ring-4 focus:ring-[#075c58]/20">Open details</button>
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          type="button"
+                          onClick={() => printAdminRecord(collectionName, item)}
+                          className="w-full whitespace-nowrap rounded-full border border-[#d8c18f] bg-white px-3 py-2 text-xs font-black text-[#075c58] shadow-sm transition hover:-translate-y-0.5 hover:bg-[#f4ecdc] focus:outline-none focus:ring-4 focus:ring-[#075c58]/15"
+                        >
+                          Print
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => downloadAdminRecord(collectionName, item)}
+                          className="w-full whitespace-nowrap rounded-full border border-[#d8c18f] bg-white px-3 py-2 text-xs font-black text-[#075c58] shadow-sm transition hover:-translate-y-0.5 hover:bg-[#f4ecdc] focus:outline-none focus:ring-4 focus:ring-[#075c58]/15"
+                        >
+                          Download
+                        </button>
+                      </div>
                       {!getRecordDeleteBlockReason(collectionName, item) && (
                         <button
                           type="button"
@@ -2287,7 +2675,11 @@ Only continue for obvious fake/test submissions with no customer, payment, invoi
                 <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#b98a2f]">Admin details</p>
                 <h3 className="text-2xl font-bold text-[#075c58]">Submission Details</h3>
               </div>
-              <button onClick={() => setSelected(null)} className={getAdminActionClass("quiet")}>Close details</button>
+              <div className="flex flex-wrap items-center justify-end gap-2">
+                <button type="button" onClick={() => printAdminRecord(collectionName, selected)} className={getAdminActionClass("quiet")}>Print</button>
+                <button type="button" onClick={() => downloadAdminRecord(collectionName, selected)} className={getAdminActionClass("quiet")}>Download</button>
+                <button onClick={() => setSelected(null)} className={getAdminActionClass("quiet")}>Close details</button>
+              </div>
             </div>
 
             <div className="mb-5 space-y-3">
