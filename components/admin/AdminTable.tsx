@@ -506,6 +506,8 @@ export default function AdminTable({
   const [paymentFilter, setPaymentFilter] = useState("all");
   const [dateFilter, setDateFilter] = useState("all");
   const [queueFilter, setQueueFilter] = useState(collectionName === "serviceRequests" ? "active" : "all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState<"25" | "all">("25");
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [checkoutMode, setCheckoutMode] = useState<CheckoutMode>("standard");
   const [customInitialAmount, setCustomInitialAmount] = useState("");
@@ -688,6 +690,22 @@ export default function AdminTable({
       return true;
     });
   }, [items, filter, serviceFilter, statusFilter, paymentFilter, dateFilter, queueFilter, collectionName]);
+
+  const pageLimit = pageSize === "all" ? filtered.length || 1 : 25;
+  const totalPages = pageSize === "all" ? 1 : Math.max(1, Math.ceil(filtered.length / pageLimit));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const pageStartIndex = pageSize === "all" ? 0 : (safeCurrentPage - 1) * pageLimit;
+  const pagedItems = pageSize === "all" ? filtered : filtered.slice(pageStartIndex, pageStartIndex + pageLimit);
+  const pageFirstRecord = filtered.length ? pageStartIndex + 1 : 0;
+  const pageLastRecord = filtered.length ? Math.min(pageStartIndex + pagedItems.length, filtered.length) : 0;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filter, serviceFilter, statusFilter, paymentFilter, dateFilter, queueFilter, collectionName, pageSize]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) setCurrentPage(totalPages);
+  }, [currentPage, totalPages]);
 
   const activeFilterCount = [filter.trim(), serviceFilter, statusFilter !== "all" ? statusFilter : "", paymentFilter !== "all" ? paymentFilter : "", dateFilter !== "all" ? dateFilter : "", collectionName === "serviceRequests" && queueFilter !== "active" ? queueFilter : ""].filter(Boolean).length;
 
@@ -1345,7 +1363,7 @@ export default function AdminTable({
             <p className="text-sm font-bold uppercase tracking-[0.2em] text-[#b98a2f]">Admin</p>
             <h2 className="text-3xl font-bold text-[#075c58]">{title}</h2>
             <p className="mt-1 text-slate-600">
-              Showing <span className="font-black text-[#075c58]">{filtered.length}</span> of <span className="font-black">{items.length}</span> records
+              Showing <span className="font-black text-[#075c58]">{pageFirstRecord}-{pageLastRecord}</span> of <span className="font-black text-[#075c58]">{filtered.length}</span> matching records · <span className="font-black">{items.length}</span> total
               {activeFilterCount > 0 ? ` · ${activeFilterCount} filter${activeFilterCount === 1 ? "" : "s"} on` : ""}
             </p>
           </div>
@@ -1453,6 +1471,51 @@ export default function AdminTable({
         errors={[statusError, checkoutError, commercialInvoiceError, commercialQuoteEmailError, familyInvoiceError, laundryFinalError, additionalPaymentError, commercialQuoteError, referralError]}
       />
 
+      <div className="flex flex-col gap-3 rounded-3xl border border-[#eadfc8] bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-500">List view</p>
+          <p className="mt-1 text-sm font-semibold text-slate-600">
+            {pageSize === "all" ? `Showing all ${filtered.length} matching records.` : `Showing ${pageFirstRecord}-${pageLastRecord} of ${filtered.length} matching records.`}
+          </p>
+        </div>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
+          <label className="flex items-center gap-2 text-sm font-bold text-slate-700">
+            Per page
+            <select
+              value={pageSize}
+              onChange={(e) => setPageSize(e.target.value === "all" ? "all" : "25")}
+              className="min-h-10 rounded-2xl border border-[#eadfc8] bg-white px-3 py-2 font-bold text-[#075c58] outline-none focus:border-[#075c58] focus:ring-4 focus:ring-[#075c58]/15"
+            >
+              <option value="25">25</option>
+              <option value="all">Show all</option>
+            </select>
+          </label>
+          {pageSize !== "all" && (
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                disabled={safeCurrentPage <= 1}
+                className={getAdminActionClass("quiet")}
+              >
+                Previous
+              </button>
+              <span className="rounded-full bg-[#fbf6ea] px-3 py-2 text-xs font-black text-[#075c58] ring-1 ring-[#eadfc8]">
+                Page {safeCurrentPage} of {totalPages}
+              </span>
+              <button
+                type="button"
+                onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                disabled={safeCurrentPage >= totalPages}
+                className={getAdminActionClass("quiet")}
+              >
+                Next
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
       <div className="max-w-full overflow-hidden rounded-3xl border border-[#eadfc8] bg-white shadow-xl shadow-[#075c58]/5">
         <div className="overflow-x-auto [scrollbar-gutter:stable]">
           <table className="w-full min-w-[1180px] divide-y divide-[#eadfc8] text-sm">
@@ -1467,7 +1530,7 @@ export default function AdminTable({
               </tr>
             </thead>
             <tbody className="divide-y divide-[#f0e7d7]">
-              {filtered.map((item) => (
+              {pagedItems.map((item) => (
                 <tr key={item.id} className={`transition-colors ${getServiceLook(item).row}`}>
                   <td className="px-4 py-4"><StatusBadge status={item.status} /></td>
                   {columns.map((col) => (
@@ -1512,6 +1575,31 @@ export default function AdminTable({
           </table>
         </div>
       </div>
+
+      {pageSize !== "all" && filtered.length > 25 && (
+        <div className="flex flex-col gap-2 rounded-3xl border border-[#eadfc8] bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm font-semibold text-slate-600">Showing {pageFirstRecord}-{pageLastRecord} of {filtered.length} matching records.</p>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+              disabled={safeCurrentPage <= 1}
+              className={getAdminActionClass("quiet")}
+            >
+              Previous
+            </button>
+            <span className="rounded-full bg-[#fbf6ea] px-3 py-2 text-xs font-black text-[#075c58] ring-1 ring-[#eadfc8]">Page {safeCurrentPage} of {totalPages}</span>
+            <button
+              type="button"
+              onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+              disabled={safeCurrentPage >= totalPages}
+              className={getAdminActionClass("quiet")}
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
 
       {selected && (
         <div className="fixed inset-0 z-50 grid place-items-center bg-black/50 p-2 sm:p-4">
