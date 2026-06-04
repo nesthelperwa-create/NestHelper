@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowRight, CheckCircle2, Gift, HeartHandshake, LockKeyhole, ShieldCheck, Sparkles } from "lucide-react";
 import { PageHero } from "@/components/PageHero";
 import { ButtonLink } from "@/components/ui/ButtonLink";
+import { CopyReferralLinkButton } from "@/components/CopyReferralLinkButton";
 
 function normalizeReferralCode(value: unknown) {
   return typeof value === "string" ? value.toUpperCase().replace(/[^A-Z0-9-]/g, "").slice(0, 32) : "";
@@ -28,6 +29,8 @@ export default async function ReferralsPage({ searchParams }: ReferralsPageProps
   const params = await searchParams;
   const referralCode = normalizeReferralCode(params.ref || params.referral || params.referralCode);
   const requestHref = referralCode ? `/request?ref=${encodeURIComponent(referralCode)}` : "/contact";
+  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://www.nesthelperwa.com").replace(/\/$/, "");
+  const referralShareUrl = referralCode ? `${siteUrl}/referrals?ref=${encodeURIComponent(referralCode)}` : "";
 
   return (
     <>
@@ -50,7 +53,7 @@ export default async function ReferralsPage({ searchParams }: ReferralsPageProps
                 <p className="pill-label w-fit"><Gift size={15} /> One-time referral link</p>
                 <h2 className="mt-4 text-3xl font-black text-nest-teal sm:text-4xl">Share this page with one family.</h2>
                 <p className="mt-3 font-medium leading-7 text-nest-ink/72">
-                  Forward the email or copy this page link from your browser. The link works once, so send it to the family you want to refer.
+                  Tap “Copy referral link,” then paste it into a text or email to one family. The link works once, so send it only to the family you want to refer.
                 </p>
               </div>
 
@@ -58,8 +61,11 @@ export default async function ReferralsPage({ searchParams }: ReferralsPageProps
                 <div className="rounded-3xl border border-nest-gold/18 bg-white p-5 shadow-sm">
                   <h3 className="text-xl font-black text-nest-teal">If you are sharing</h3>
                   <p className="mt-2 text-sm font-semibold leading-6 text-nest-ink/68">
-                    Send this page link to one family. After they complete an eligible family service, we will email you about your thank-you credit.
+                    Copy the referral link below and paste it into a text or email. After they complete an eligible family service, we will email you about your thank-you credit.
                   </p>
+                  <div className="mt-4">
+                    <CopyReferralLinkButton referralUrl={referralShareUrl} />
+                  </div>
                 </div>
 
                 <div className="rounded-3xl border border-nest-gold/18 bg-white p-5 shadow-sm">
@@ -75,8 +81,12 @@ export default async function ReferralsPage({ searchParams }: ReferralsPageProps
               </div>
             </div>
 
-            <div className="mt-5 rounded-2xl bg-white/75 p-4 text-sm font-black text-nest-ink/70 shadow-sm">
-              Referral code: <span className="text-nest-teal">{referralCode}</span>
+            <div className="mt-5 grid gap-3 rounded-2xl bg-white/75 p-4 text-sm font-black text-nest-ink/70 shadow-sm sm:grid-cols-[1fr_auto] sm:items-center">
+              <div>
+                <div>Referral code: <span className="text-nest-teal">{referralCode}</span></div>
+                <div className="mt-1 break-words text-xs font-bold text-nest-ink/55">{referralShareUrl}</div>
+              </div>
+              <CopyReferralLinkButton referralUrl={referralShareUrl} />
             </div>
           </div>
         )}

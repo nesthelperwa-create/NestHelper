@@ -70,10 +70,11 @@ export async function sendReferralRewardEmail({
           <div style="margin:0 0 20px 0;padding:14px;border-radius:14px;background:#f5fbfa;border:1px solid #cde7e5;box-sizing:border-box;">
             <div style="font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#0b766f;font-weight:700;margin-bottom:6px;">Fresh one-time referral link</div>
             <div style="font-size:16px;font-weight:700;color:#075c58;margin-bottom:8px;">Know another family who could use a reset?</div>
-            <p style="margin:0 0 12px 0;">We included a fresh one-time family referral link below. Share it with one family you know.</p>
-            <div style="margin:0 0 10px 0;"><a href="${escapeHtml(nextReferralUrl)}" style="display:inline-block;background:#075c58;color:#fff;text-decoration:none;padding:12px 16px;border-radius:999px;font-weight:700;">Open your new share link</a></div>
+            <p style="margin:0 0 12px 0;">We included a fresh one-time family referral link below. Open the share page, tap Copy referral link, then paste it into a text or email to one family.</p>
+            <div style="margin:0 0 10px 0;"><a href="${escapeHtml(nextReferralUrl)}" style="display:inline-block;background:#075c58;color:#fff;text-decoration:none;padding:12px 16px;border-radius:999px;font-weight:700;">Open share page + copy link</a></div>
             <div style="font-size:12px;color:#456;overflow-wrap:anywhere;word-break:break-word;">${escapeHtml(nextReferralUrl)}</div>
             ${clean(nextReferralCode) ? `<div style="font-size:12px;color:#456;margin-top:8px;">Code: <strong>${escapeHtml(nextReferralCode)}</strong></div>` : ""}
+            <div style="font-size:12px;color:#456;margin-top:8px;">Tip: the share page has a Copy referral link button for easy texting or emailing.</div>
           </div>` : ""}
           <p style="margin:0 0 18px 0;">Questions? Reply to this email or contact us at ${escapeHtml(replyTo)}.</p>
           <p style="font-size:12px;color:#667;line-height:1.5;margin-top:22px;">Referral credits are not cash, are not transferable unless NestHelper approves it, and are subject to NestHelper’s Referral Program Policy.</p>
