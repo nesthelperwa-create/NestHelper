@@ -165,11 +165,29 @@ async function createLaundryDepositCheckoutFromBreakdown(params: {
     ? `Referral/customer credit of ${formatMoney(discountCredit)} has already been deducted from this deposit/minimum. The amount shown is the remaining amount due.`
     : "";
 
+  const address = getAddress(data);
+  const customerWithServiceAddress = address
+    ? await stripe.customers.create({
+        email: email || undefined,
+        name: fullName || undefined,
+        phone: getString(data.phone) || undefined,
+        address,
+        metadata: { requestId, serviceId: "laundry-rescue", addressSource: "nesthelper_service_request" },
+      })
+    : null;
+
   const checkoutParams: any = {
     mode: "payment",
     payment_method_types: ["card"],
-    customer_creation: "always",
-    customer_email: email || undefined,
+    ...(customerWithServiceAddress
+      ? {
+          customer: customerWithServiceAddress.id,
+          customer_update: { address: "auto", name: "auto", shipping: "auto" },
+        }
+      : {
+          customer_creation: "always",
+          customer_email: email || undefined,
+        }),
     line_items: [
       {
         price_data: {

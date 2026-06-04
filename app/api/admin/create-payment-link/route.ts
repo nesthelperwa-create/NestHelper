@@ -49,6 +49,54 @@ function formatMoney(value: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(Number.isFinite(value) ? value : 0);
 }
 
+function getStripeServiceAddress(data: Record<string, unknown>): Stripe.AddressParam | undefined {
+  const line1 = getString(data.serviceAddressLine1) || getString(data.address) || getString(data.serviceAddress) || getString(data.streetAddress);
+  const line2 = getString(data.serviceAddressLine2) || getString(data.address2) || getString(data.unit) || getString(data.apartment);
+  const city = getString(data.serviceCity) || getString(data.city);
+  const state = getString(data.serviceState) || getString(data.state) || "WA";
+  const postal_code = getString(data.serviceZip) || getString(data.zip) || getString(data.zipCode) || getString(data.postalCode);
+
+  if (!line1 || !city || !postal_code) return undefined;
+  return {
+    line1,
+    line2: line2 || undefined,
+    city,
+    state,
+    postal_code,
+    country: "US",
+  };
+}
+
+async function createStripeCustomerFromRequestAddress({
+  data,
+  requestId,
+  serviceId,
+  serviceTitle,
+}: {
+  data: Record<string, unknown>;
+  requestId: string;
+  serviceId: string;
+  serviceTitle: string;
+}) {
+  if (!stripe) return null;
+  const address = getStripeServiceAddress(data);
+  if (!address) return null;
+
+  return stripe.customers.create({
+    email: getString(data.email) || undefined,
+    name: getString(data.fullName) || getString(data.contactName) || undefined,
+    phone: getString(data.phone) || undefined,
+    address,
+    metadata: {
+      requestId,
+      serviceId,
+      serviceTitle,
+      addressSource: "nesthelper_service_request",
+    },
+  });
+}
+
+
 function hasIncomingFamilyReferral(data: Record<string, unknown>) {
   return Boolean(data.incomingReferralCode || data.incomingReferralLinkId || data.referralCode || data.referralShareCode);
 }
@@ -325,7 +373,14 @@ export async function POST(request: Request) {
     };
 
     if (isLaundryRescue) {
-      checkoutParams.customer_creation = "always";
+      const customerWithServiceAddress = await createStripeCustomerFromRequestAddress({ data, requestId, serviceId, serviceTitle });
+      if (customerWithServiceAddress) {
+        checkoutParams.customer = customerWithServiceAddress.id;
+        checkoutParams.customer_update = { address: "auto", name: "auto", shipping: "auto" };
+        checkoutParams.metadata.serviceAddressProvidedToStripe = "true";
+      } else {
+        checkoutParams.customer_creation = "always";
+      }
       checkoutParams.payment_method_types = ["card"];
       checkoutParams.payment_intent_data = { setup_future_usage: "off_session" };
       checkoutParams.custom_fields = buildLaundryFinalPaymentCustomFields();
