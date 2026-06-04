@@ -59,7 +59,7 @@ const COMMERCIAL_QUOTE_TYPES = [
   "Short-term rental turnover",
 ];
 
-const BULK_DELETE_PHRASE = "DELETE REQUESTS";
+const BULK_DELETE_PHRASE = "DELETE RECORDS";
 const MAX_BULK_DELETE = 500;
 
 function getDateObject(value: unknown) {
@@ -927,6 +927,43 @@ function getCollectionDisplayLabel(collectionName: string) {
   return labels[collectionName] || "Admin record";
 }
 
+
+function getCleanupLabels(collectionName: string) {
+  const labels: Record<string, { singular: string; plural: string; title: string; note: string }> = {
+    serviceRequests: {
+      singular: "service request",
+      plural: "service requests",
+      title: "Delete selected service requests",
+      note: "It removes selected request records from the NestHelper admin list. Stripe payments, invoices, emails, and receipts stay in their original systems.",
+    },
+    helperApplications: {
+      singular: "helper application",
+      plural: "helper applications",
+      title: "Delete selected helper applications",
+      note: "It removes selected helper application records from the NestHelper admin list. Uploaded application documents are also removed from Firebase Storage when possible.",
+    },
+    partnerApplications: {
+      singular: "partner/business application",
+      plural: "partner/business applications",
+      title: "Delete selected partner/business applications",
+      note: "It removes selected partner/business application records from the NestHelper admin list. Uploaded application documents are also removed from Firebase Storage when possible.",
+    },
+    contactMessages: {
+      singular: "contact message",
+      plural: "contact messages",
+      title: "Delete selected contact messages",
+      note: "It removes selected contact messages from the NestHelper admin list. Emails already sent or received stay in your email system.",
+    },
+  };
+
+  return labels[collectionName] || {
+    singular: "record",
+    plural: "records",
+    title: "Delete selected records",
+    note: "It removes selected records from the NestHelper admin list.",
+  };
+}
+
 function safeFilePart(value: string) {
   return value
     .trim()
@@ -1576,7 +1613,7 @@ export default function AdminTable({
   const [deleteMessage, setDeleteMessage] = useState("");
   const [deleteError, setDeleteError] = useState("");
   const [cleanupModeOpen, setCleanupModeOpen] = useState(false);
-  const [selectedRequestIds, setSelectedRequestIds] = useState<Set<string>>(() => new Set());
+  const [selectedCleanupIds, setSelectedCleanupIds] = useState<Set<string>>(() => new Set());
   const [cleanupPhrase, setCleanupPhrase] = useState("");
   const [applicationStatus, setApplicationStatus] = useState("New");
   const [onboardingChecklist, setOnboardingChecklist] = useState<OnboardingChecklist>({});
@@ -1611,15 +1648,13 @@ export default function AdminTable({
     return () => unsub();
   }, [collectionName, enablePaymentActions]);
   useEffect(() => {
-    if (collectionName !== "serviceRequests") {
-      setCleanupModeOpen(false);
-      setCleanupPhrase("");
-      setSelectedRequestIds(new Set());
-    }
+    setCleanupModeOpen(false);
+    setCleanupPhrase("");
+    setSelectedCleanupIds(new Set());
   }, [collectionName]);
 
   useEffect(() => {
-    setSelectedRequestIds((prev) => {
+    setSelectedCleanupIds((prev) => {
       if (!prev.size) return prev;
       const liveIds = new Set(items.map((item) => item.id));
       let changed = false;
@@ -1791,14 +1826,15 @@ export default function AdminTable({
 
   const activeFilterCount = [filter.trim(), serviceFilter, statusFilter !== "all" ? statusFilter : "", paymentFilter !== "all" ? paymentFilter : "", referralFilter !== "all" ? referralFilter : "", promoFilter !== "all" ? promoFilter : "", dateFilter !== "all" ? dateFilter : "", collectionName === "serviceRequests" && queueFilter !== "all" ? queueFilter : ""].filter(Boolean).length;
   const pageNumberItems = useMemo(() => getPageNumberItems(safeCurrentPage, totalPages), [safeCurrentPage, totalPages]);
-  const requestCleanupEnabled = collectionName === "serviceRequests";
-  const selectedRequestCount = selectedRequestIds.size;
-  const selectedPageCount = pagedItems.filter((item) => selectedRequestIds.has(item.id)).length;
-  const allPagedRequestsSelected = requestCleanupEnabled && pagedItems.length > 0 && selectedPageCount === pagedItems.length;
-  const selectedFilteredCount = filtered.filter((item) => selectedRequestIds.has(item.id)).length;
+  const cleanupEnabled = ["serviceRequests", "helperApplications", "partnerApplications", "contactMessages"].includes(collectionName);
+  const cleanupLabels = getCleanupLabels(collectionName);
+  const selectedCleanupCount = selectedCleanupIds.size;
+  const selectedPageCount = pagedItems.filter((item) => selectedCleanupIds.has(item.id)).length;
+  const allPagedCleanupSelected = cleanupEnabled && pagedItems.length > 0 && selectedPageCount === pagedItems.length;
+  const selectedFilteredCount = filtered.filter((item) => selectedCleanupIds.has(item.id)).length;
 
-  function toggleRequestSelection(id: string, checked: boolean) {
-    setSelectedRequestIds((prev) => {
+  function toggleCleanupSelection(id: string, checked: boolean) {
+    setSelectedCleanupIds((prev) => {
       const next = new Set(prev);
       if (checked) next.add(id);
       else next.delete(id);
@@ -1806,16 +1842,16 @@ export default function AdminTable({
     });
   }
 
-  function selectPagedRequests() {
-    setSelectedRequestIds((prev) => {
+  function selectPagedRecords() {
+    setSelectedCleanupIds((prev) => {
       const next = new Set(prev);
       pagedItems.forEach((item) => next.add(item.id));
       return next;
     });
   }
 
-  function togglePagedRequests(checked: boolean) {
-    setSelectedRequestIds((prev) => {
+  function togglePagedRecords(checked: boolean) {
+    setSelectedCleanupIds((prev) => {
       const next = new Set(prev);
       pagedItems.forEach((item) => {
         if (checked) next.add(item.id);
@@ -1825,16 +1861,16 @@ export default function AdminTable({
     });
   }
 
-  function selectFilteredRequests() {
-    setSelectedRequestIds((prev) => {
+  function selectFilteredRecords() {
+    setSelectedCleanupIds((prev) => {
       const next = new Set(prev);
       filtered.slice(0, MAX_BULK_DELETE).forEach((item) => next.add(item.id));
       return next;
     });
   }
 
-  function clearSelectedRequests() {
-    setSelectedRequestIds(new Set());
+  function clearSelectedRecords() {
+    setSelectedCleanupIds(new Set());
     setCleanupPhrase("");
   }
 
@@ -1943,7 +1979,7 @@ Only continue for obvious fake/test submissions with no customer, payment, invoi
       if (!res.ok || !data.ok) throw new Error(data.error || "Unable to delete this record.");
 
       setItems((prev) => prev.filter((existing) => existing.id !== item.id));
-      setSelectedRequestIds((prev) => {
+      setSelectedCleanupIds((prev) => {
         const next = new Set(prev);
         next.delete(item.id);
         return next;
@@ -1958,34 +1994,34 @@ Only continue for obvious fake/test submissions with no customer, payment, invoi
     }
   }
 
-  async function bulkDeleteSelectedRequests() {
-    if (collectionName !== "serviceRequests" || deleteBusy) return;
-    const ids = Array.from(selectedRequestIds);
+  async function bulkDeleteSelectedRecords() {
+    if (!cleanupEnabled || deleteBusy) return;
+    const ids = Array.from(selectedCleanupIds);
     if (!ids.length) {
-      setDeleteError("Select at least one request to delete.");
+      setDeleteError(`Select at least one ${cleanupLabels.singular} to delete.`);
       setDeleteMessage("");
       return;
     }
     if (ids.length > MAX_BULK_DELETE) {
-      setDeleteError(`Select ${MAX_BULK_DELETE} or fewer requests at a time.`);
+      setDeleteError(`Select ${MAX_BULK_DELETE} or fewer records at a time.`);
       setDeleteMessage("");
       return;
     }
     if (cleanupPhrase.trim() !== BULK_DELETE_PHRASE) {
-      setDeleteError(`Type ${BULK_DELETE_PHRASE} to confirm pre-launch request cleanup.`);
+      setDeleteError(`Type ${BULK_DELETE_PHRASE} to confirm pre-launch cleanup.`);
       setDeleteMessage("");
       return;
     }
 
     const confirmed = window.confirm(
-      `Delete ${ids.length} selected service request${ids.length === 1 ? "" : "s"} from the admin list?
+      `Delete ${ids.length} selected ${ids.length === 1 ? cleanupLabels.singular : cleanupLabels.plural} from the admin list?
 
-This removes the selected Firestore request records from NestHelper admin. It does not delete Stripe payments, invoices, emails, or customer receipts. Only use this before live customers.`
+This is for pre-launch cleanup only. ${cleanupLabels.note} Ask me to remove this delete option before going live.`
     );
     if (!confirmed) return;
 
     setDeleteBusy(true);
-    setActiveAction(`Deleting ${ids.length} selected request${ids.length === 1 ? "" : "s"}...`);
+    setActiveAction(`Deleting ${ids.length} selected ${ids.length === 1 ? cleanupLabels.singular : cleanupLabels.plural}...`);
     setDeleteMessage("");
     setDeleteError("");
 
@@ -1995,24 +2031,26 @@ This removes the selected Firestore request records from NestHelper admin. It do
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({
-          collection: "serviceRequests",
+          collection: collectionName,
           ids,
-          confirmBulkDeleteRequests: true,
+          confirmBulkDeleteRecords: true,
           cleanupPhrase: cleanupPhrase.trim(),
         }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok || !data.ok) throw new Error(data.error || "Unable to delete selected requests.");
+      if (!res.ok || !data.ok) throw new Error(data.error || "Unable to delete selected records.");
 
       const deletedIds = new Set<string>(Array.isArray(data.deletedIds) ? data.deletedIds : ids);
       setItems((prev) => prev.filter((existing) => !deletedIds.has(existing.id)));
-      setSelectedRequestIds(new Set());
+      setSelectedCleanupIds(new Set());
       setCleanupPhrase("");
       setSelected((prev) => (prev && deletedIds.has(prev.id) ? null : prev));
+      const deletedCount = data.deletedCount || deletedIds.size;
       const missingNote = data.missingCount ? ` ${data.missingCount} already-missing record${data.missingCount === 1 ? " was" : "s were"} skipped.` : "";
-      setDeleteMessage(`${data.deletedCount || deletedIds.size} request${(data.deletedCount || deletedIds.size) === 1 ? "" : "s"} deleted from the admin list.${missingNote}`);
+      const fileNote = data.deletedFileCount ? ` ${data.deletedFileCount} uploaded file${data.deletedFileCount === 1 ? "" : "s"} also removed.` : "";
+      setDeleteMessage(`${deletedCount} ${deletedCount === 1 ? cleanupLabels.singular : cleanupLabels.plural} deleted from the admin list.${missingNote}${fileNote}`);
     } catch (error) {
-      setDeleteError(error instanceof Error ? error.message : "Unable to delete selected requests.");
+      setDeleteError(error instanceof Error ? error.message : "Unable to delete selected records.");
     } finally {
       setDeleteBusy(false);
       setActiveAction("");
@@ -2833,14 +2871,14 @@ This removes the selected Firestore request records from NestHelper admin. It do
           </p>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
-          {requestCleanupEnabled && (
+          {cleanupEnabled && (
             <button
               type="button"
               onClick={() => setCleanupModeOpen((prev) => !prev)}
               className={cleanupModeOpen ? getAdminActionClass("danger") : getAdminActionClass("quiet")}
-              title="Show pre-launch request cleanup tools."
+              title="Show pre-launch cleanup tools."
             >
-              {cleanupModeOpen ? "Hide cleanup" : selectedRequestCount ? `Cleanup (${selectedRequestCount})` : "Pre-launch cleanup"}
+              {cleanupModeOpen ? "Hide cleanup" : selectedCleanupCount ? `Cleanup (${selectedCleanupCount})` : "Pre-launch cleanup"}
             </button>
           )}
           <details className="rounded-2xl border border-[#eadfc8] bg-white px-3 py-2 text-sm font-bold text-slate-700 shadow-sm">
@@ -2917,28 +2955,28 @@ This removes the selected Firestore request records from NestHelper admin. It do
         </div>
       </div>
 
-      {requestCleanupEnabled && cleanupModeOpen && (
+      {cleanupEnabled && cleanupModeOpen && (
         <div className="rounded-3xl border-2 border-red-200 bg-red-50 p-4 shadow-sm">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
             <div>
               <p className="text-xs font-black uppercase tracking-[0.16em] text-red-700">Pre-launch cleanup</p>
-              <h3 className="mt-1 text-lg font-black text-red-900">Delete selected service requests</h3>
+              <h3 className="mt-1 text-lg font-black text-red-900">{cleanupLabels.title}</h3>
               <p className="mt-1 max-w-3xl text-sm font-semibold leading-6 text-red-900/80">
-                Use this only before live customers. It removes selected request records from the NestHelper admin list. Stripe payments, invoices, emails, and receipts stay in their original systems.
+                Use this only before live customers. {cleanupLabels.note}
               </p>
             </div>
             <div className="rounded-2xl bg-white px-4 py-3 text-sm font-black text-red-800 ring-1 ring-red-200">
-              {selectedRequestCount} selected
+              {selectedCleanupCount} selected
             </div>
           </div>
           <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-            <button type="button" onClick={() => togglePagedRequests(!allPagedRequestsSelected)} disabled={!pagedItems.length || deleteBusy} className={getAdminActionClass("quiet")}>
-              {allPagedRequestsSelected ? "Unselect page" : "Select page"}
+            <button type="button" onClick={() => togglePagedRecords(!allPagedCleanupSelected)} disabled={!pagedItems.length || deleteBusy} className={getAdminActionClass("quiet")}>
+              {allPagedCleanupSelected ? "Unselect page" : "Select page"}
             </button>
-            <button type="button" onClick={selectFilteredRequests} disabled={!filtered.length || deleteBusy} className={getAdminActionClass("quiet")}>
+            <button type="button" onClick={selectFilteredRecords} disabled={!filtered.length || deleteBusy} className={getAdminActionClass("quiet")}>
               Select filtered{filtered.length > MAX_BULK_DELETE ? ` (${MAX_BULK_DELETE} max)` : ""}
             </button>
-            <button type="button" onClick={clearSelectedRequests} disabled={!selectedRequestCount || deleteBusy} className={getAdminActionClass("quiet")}>Clear selected</button>
+            <button type="button" onClick={clearSelectedRecords} disabled={!selectedCleanupCount || deleteBusy} className={getAdminActionClass("quiet")}>Clear selected</button>
             <button type="button" onClick={() => setCleanupModeOpen(false)} className={getAdminActionClass("quiet")}>Done</button>
           </div>
           <div className="mt-4 grid gap-3 lg:grid-cols-[1fr_auto] lg:items-end">
@@ -2953,15 +2991,15 @@ This removes the selected Firestore request records from NestHelper admin. It do
             </label>
             <button
               type="button"
-              onClick={bulkDeleteSelectedRequests}
-              disabled={!selectedRequestCount || cleanupPhrase.trim() !== BULK_DELETE_PHRASE || deleteBusy}
+              onClick={bulkDeleteSelectedRecords}
+              disabled={!selectedCleanupCount || cleanupPhrase.trim() !== BULK_DELETE_PHRASE || deleteBusy}
               className={getAdminActionClass("danger")}
             >
-              {deleteBusy ? <><ActionSpinner /> Deleting...</> : `Delete ${selectedRequestCount || "selected"}`}
+              {deleteBusy ? <><ActionSpinner /> Deleting...</> : `Delete ${selectedCleanupCount || "selected"}`}
             </button>
           </div>
           <p className="mt-3 text-xs font-bold text-red-800/80">
-            Tip: filter/search first, choose Select filtered, type the confirmation phrase, then delete. For normal live records later, mark them Canceled or Archived instead of deleting.
+            Tip: filter/search first, choose Select filtered, type the confirmation phrase, then delete. Ask me to remove this cleanup tool before live customer/applicant records start coming in.
           </p>
         </div>
       )}
@@ -2971,11 +3009,11 @@ This removes the selected Firestore request records from NestHelper admin. It do
           <div key={`mobile-${item.id}`} className={`rounded-3xl border border-[#eadfc8] p-4 shadow-sm ${getServiceLook(item).row}`}>
             <div className="flex items-start justify-between gap-3">
               <div className="flex min-w-0 items-start gap-3">
-                {requestCleanupEnabled && cleanupModeOpen && (
+                {cleanupEnabled && cleanupModeOpen && (
                   <input
                     type="checkbox"
-                    checked={selectedRequestIds.has(item.id)}
-                    onChange={(e) => toggleRequestSelection(item.id, e.target.checked)}
+                    checked={selectedCleanupIds.has(item.id)}
+                    onChange={(e) => toggleCleanupSelection(item.id, e.target.checked)}
                     aria-label={`Select ${getRecordDisplayName(item)} for cleanup`}
                     className="mt-1 h-5 w-5 rounded border-red-300 accent-red-700"
                   />
@@ -3045,13 +3083,13 @@ This removes the selected Firestore request records from NestHelper admin. It do
           <table className="w-full min-w-[1240px] divide-y divide-[#eadfc8] text-sm">
             <thead className="bg-[#f4ecdc] text-left text-xs uppercase tracking-wider text-[#075c58]">
               <tr>
-                {requestCleanupEnabled && cleanupModeOpen && (
+                {cleanupEnabled && cleanupModeOpen && (
                   <th className="w-12 px-4 py-4">
                     <input
                       type="checkbox"
-                      checked={allPagedRequestsSelected}
-                      onChange={(e) => togglePagedRequests(e.target.checked)}
-                      aria-label="Select visible requests for cleanup"
+                      checked={allPagedCleanupSelected}
+                      onChange={(e) => togglePagedRecords(e.target.checked)}
+                      aria-label="Select visible records for cleanup"
                       className="h-5 w-5 rounded border-red-300 accent-red-700"
                     />
                   </th>
@@ -3067,12 +3105,12 @@ This removes the selected Firestore request records from NestHelper admin. It do
             <tbody className="divide-y divide-[#f0e7d7]">
               {pagedItems.map((item) => (
                 <tr key={item.id} className={`transition-colors ${getServiceLook(item).row}`}>
-                  {requestCleanupEnabled && cleanupModeOpen && (
+                  {cleanupEnabled && cleanupModeOpen && (
                     <td className="px-4 py-4 align-top">
                       <input
                         type="checkbox"
-                        checked={selectedRequestIds.has(item.id)}
-                        onChange={(e) => toggleRequestSelection(item.id, e.target.checked)}
+                        checked={selectedCleanupIds.has(item.id)}
+                        onChange={(e) => toggleCleanupSelection(item.id, e.target.checked)}
                         aria-label={`Select ${getRecordDisplayName(item)} for cleanup`}
                         className="h-5 w-5 rounded border-red-300 accent-red-700"
                       />
@@ -3092,7 +3130,7 @@ This removes the selected Firestore request records from NestHelper admin. It do
                           onClick={() => deleteTestRecord(item)}
                           disabled={deleteBusy}
                           className="w-full whitespace-nowrap rounded-full border border-red-200 bg-red-50 px-3 py-2 text-xs font-black text-red-700 shadow-sm transition hover:-translate-y-0.5 hover:bg-red-100 focus:outline-none focus:ring-4 focus:ring-red-700/15 disabled:opacity-60"
-                          title="Delete obvious test/fake records only. Protected payment/invoice/referral records are hidden."
+                          title="Delete obvious test/fake records only. Protected payment/invoice/referral service requests are hidden."
                         >
                           Delete single test
                         </button>
@@ -3126,7 +3164,7 @@ This removes the selected Firestore request records from NestHelper admin. It do
                 </tr>
               ))}
               {!filtered.length && (
-                <tr><td colSpan={columns.length + 3 + (requestCleanupEnabled && cleanupModeOpen ? 1 : 0)} className="px-4 py-12 text-center text-slate-500">No records match the current filters.</td></tr>
+                <tr><td colSpan={columns.length + 3 + (cleanupEnabled && cleanupModeOpen ? 1 : 0)} className="px-4 py-12 text-center text-slate-500">No records match the current filters.</td></tr>
               )}
             </tbody>
           </table>

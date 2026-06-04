@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 import { getAuth } from "firebase-admin/auth";
 import { getApps } from "firebase-admin/app";
-import { getFirebaseAdminDb } from "@/lib/firebaseAdmin";
+import { getFirebaseAdminDb, getFirebaseAdminStorageBucket } from "@/lib/firebaseAdmin";
 import { isAllowedAdminEmail } from "@/lib/adminAuth";
 
 const allowedCollections = new Set(["serviceRequests", "helperApplications", "partnerApplications", "contactMessages"]);
-const BULK_DELETE_PHRASE = "DELETE REQUESTS";
+const BULK_DELETE_PHRASE = "DELETE RECORDS";
+const LEGACY_BULK_DELETE_PHRASE = "DELETE REQUESTS";
 const MAX_BULK_DELETE = 500;
 
 type DeleteRecordBody = {
@@ -13,6 +14,7 @@ type DeleteRecordBody = {
   id?: string;
   ids?: unknown;
   confirmDeleteTestRecord?: boolean;
+  confirmBulkDeleteRecords?: boolean;
   confirmBulkDeleteRequests?: boolean;
   cleanupPhrase?: string;
 };
@@ -97,14 +99,53 @@ function getBulkIds(value: unknown) {
   return ids;
 }
 
-async function deleteServiceRequestBatch(ids: string[]) {
+function isValidCleanupPhrase(value: unknown) {
+  const phrase = getString(value);
+  return phrase === BULK_DELETE_PHRASE || phrase === LEGACY_BULK_DELETE_PHRASE;
+}
+
+function getApplicationDocumentStoragePaths(data: Record<string, unknown>) {
+  const documents = Array.isArray(data.applicationDocuments) ? data.applicationDocuments : [];
+  const paths: string[] = [];
+
+  documents.forEach((document) => {
+    if (!document || typeof document !== "object") return;
+    const storagePath = getString((document as { storagePath?: unknown }).storagePath);
+    if (storagePath) paths.push(storagePath);
+  });
+
+  return paths;
+}
+
+async function deleteStorageFiles(paths: string[]) {
+  if (!paths.length) return { deletedFileCount: 0, fileDeleteErrorCount: 0 };
+
+  const bucket = getFirebaseAdminStorageBucket();
+  let deletedFileCount = 0;
+  let fileDeleteErrorCount = 0;
+
+  for (const path of paths) {
+    try {
+      await bucket.file(path).delete({ ignoreNotFound: true });
+      deletedFileCount += 1;
+    } catch (error) {
+      console.error("Unable to delete application document file", path, error);
+      fileDeleteErrorCount += 1;
+    }
+  }
+
+  return { deletedFileCount, fileDeleteErrorCount };
+}
+
+async function deleteRecordBatch(collectionName: string, ids: string[]) {
   const db = getFirebaseAdminDb();
   const deletedIds: string[] = [];
   const missingIds: string[] = [];
+  const storagePathsToDelete: string[] = [];
 
   for (let i = 0; i < ids.length; i += 400) {
     const chunk = ids.slice(i, i + 400);
-    const refs = chunk.map((id) => db.collection("serviceRequests").doc(id));
+    const refs = chunk.map((id) => db.collection(collectionName).doc(id));
     const snaps = await db.getAll(...refs);
     const batch = db.batch();
     let batchCount = 0;
@@ -115,6 +156,12 @@ async function deleteServiceRequestBatch(ids: string[]) {
         missingIds.push(id);
         return;
       }
+
+      const data = snap.data() || {};
+      if (collectionName === "helperApplications" || collectionName === "partnerApplications") {
+        storagePathsToDelete.push(...getApplicationDocumentStoragePaths(data));
+      }
+
       batch.delete(snap.ref);
       deletedIds.push(id);
       batchCount += 1;
@@ -123,7 +170,9 @@ async function deleteServiceRequestBatch(ids: string[]) {
     if (batchCount > 0) await batch.commit();
   }
 
-  return { deletedIds, missingIds };
+  const storageResult = await deleteStorageFiles(storagePathsToDelete);
+
+  return { deletedIds, missingIds, ...storageResult };
 }
 
 export async function POST(request: Request) {
@@ -136,31 +185,31 @@ export async function POST(request: Request) {
     if (!isAllowedAdminEmail(decoded.email)) return NextResponse.json({ ok: false }, { status: 403 });
 
     const body = (await request.json().catch(() => ({}))) as DeleteRecordBody;
-    const { collection, id, confirmDeleteTestRecord, confirmBulkDeleteRequests, cleanupPhrase } = body;
+    const { collection, id, confirmDeleteTestRecord, confirmBulkDeleteRecords, confirmBulkDeleteRequests, cleanupPhrase } = body;
     const bulkIds = getBulkIds(body.ids);
 
     if (!collection || !allowedCollections.has(collection)) {
       return NextResponse.json({ ok: false, error: "Invalid delete request." }, { status: 400 });
     }
 
-    if (bulkIds.length > 0 || confirmBulkDeleteRequests) {
-      if (collection !== "serviceRequests") {
-        return NextResponse.json({ ok: false, error: "Bulk cleanup is only available for service requests." }, { status: 400 });
+    if (bulkIds.length > 0 || confirmBulkDeleteRecords || confirmBulkDeleteRequests) {
+      if (!confirmBulkDeleteRecords && !confirmBulkDeleteRequests) {
+        return NextResponse.json({ ok: false, error: "Missing bulk cleanup confirmation." }, { status: 400 });
       }
 
-      if (!confirmBulkDeleteRequests || getString(cleanupPhrase) !== BULK_DELETE_PHRASE) {
-        return NextResponse.json({ ok: false, error: `Type ${BULK_DELETE_PHRASE} to confirm pre-launch request cleanup.` }, { status: 400 });
+      if (!isValidCleanupPhrase(cleanupPhrase)) {
+        return NextResponse.json({ ok: false, error: `Type ${BULK_DELETE_PHRASE} to confirm pre-launch cleanup.` }, { status: 400 });
       }
 
       if (!bulkIds.length) {
-        return NextResponse.json({ ok: false, error: "Select at least one request to delete." }, { status: 400 });
+        return NextResponse.json({ ok: false, error: "Select at least one record to delete." }, { status: 400 });
       }
 
       if (bulkIds.length > MAX_BULK_DELETE) {
-        return NextResponse.json({ ok: false, error: `Select ${MAX_BULK_DELETE} or fewer requests at a time.` }, { status: 400 });
+        return NextResponse.json({ ok: false, error: `Select ${MAX_BULK_DELETE} or fewer records at a time.` }, { status: 400 });
       }
 
-      const result = await deleteServiceRequestBatch(bulkIds);
+      const result = await deleteRecordBatch(collection, bulkIds);
       return NextResponse.json({
         ok: true,
         collection,
@@ -168,8 +217,10 @@ export async function POST(request: Request) {
         missingIds: result.missingIds,
         deletedCount: result.deletedIds.length,
         missingCount: result.missingIds.length,
+        deletedFileCount: result.deletedFileCount,
+        fileDeleteErrorCount: result.fileDeleteErrorCount,
         deletedBy: decoded.email || "admin",
-        mode: "prelaunch_request_cleanup",
+        mode: "prelaunch_bulk_cleanup",
       });
     }
 
@@ -191,9 +242,20 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: false, error: protectedReason }, { status: 409 });
     }
 
-    await docRef.delete();
+    const storagePathsToDelete = collection === "helperApplications" || collection === "partnerApplications"
+      ? getApplicationDocumentStoragePaths(data)
+      : [];
 
-    return NextResponse.json({ ok: true, deletedId: id, collection, deletedBy: decoded.email || "admin" });
+    await docRef.delete();
+    const storageResult = await deleteStorageFiles(storagePathsToDelete);
+
+    return NextResponse.json({
+      ok: true,
+      deletedId: id,
+      collection,
+      deletedBy: decoded.email || "admin",
+      ...storageResult,
+    });
   } catch (error) {
     console.error("Admin delete-record failed", error);
     return NextResponse.json({ ok: false, error: "Unable to delete this record." }, { status: 500 });
