@@ -59,9 +59,6 @@ const COMMERCIAL_QUOTE_TYPES = [
   "Short-term rental turnover",
 ];
 
-const BULK_DELETE_PHRASE = "DELETE RECORDS";
-const MAX_BULK_DELETE = 500;
-
 function getDateObject(value: unknown) {
   if (!value) return null;
   if (typeof value === "object" && value && "toDate" in value && typeof value.toDate === "function") {
@@ -928,41 +925,6 @@ function getCollectionDisplayLabel(collectionName: string) {
 }
 
 
-function getCleanupLabels(collectionName: string) {
-  const labels: Record<string, { singular: string; plural: string; title: string; note: string }> = {
-    serviceRequests: {
-      singular: "service request",
-      plural: "service requests",
-      title: "Delete selected service requests",
-      note: "It removes selected request records from the NestHelper admin list. Stripe payments, invoices, emails, and receipts stay in their original systems.",
-    },
-    helperApplications: {
-      singular: "helper application",
-      plural: "helper applications",
-      title: "Delete selected helper applications",
-      note: "It removes selected helper application records from the NestHelper admin list. Uploaded application documents are also removed from Firebase Storage when possible.",
-    },
-    partnerApplications: {
-      singular: "partner/business application",
-      plural: "partner/business applications",
-      title: "Delete selected partner/business applications",
-      note: "It removes selected partner/business application records from the NestHelper admin list. Uploaded application documents are also removed from Firebase Storage when possible.",
-    },
-    contactMessages: {
-      singular: "contact message",
-      plural: "contact messages",
-      title: "Delete selected contact messages",
-      note: "It removes selected contact messages from the NestHelper admin list. Emails already sent or received stay in your email system.",
-    },
-  };
-
-  return labels[collectionName] || {
-    singular: "record",
-    plural: "records",
-    title: "Delete selected records",
-    note: "It removes selected records from the NestHelper admin list.",
-  };
-}
 
 function safeFilePart(value: string) {
   return value
@@ -1609,12 +1571,6 @@ export default function AdminTable({
   const [referralBusy, setReferralBusy] = useState(false);
   const [referralMessage, setReferralMessage] = useState("");
   const [referralError, setReferralError] = useState("");
-  const [deleteBusy, setDeleteBusy] = useState(false);
-  const [deleteMessage, setDeleteMessage] = useState("");
-  const [deleteError, setDeleteError] = useState("");
-  const [cleanupModeOpen, setCleanupModeOpen] = useState(false);
-  const [selectedCleanupIds, setSelectedCleanupIds] = useState<Set<string>>(() => new Set());
-  const [cleanupPhrase, setCleanupPhrase] = useState("");
   const [applicationStatus, setApplicationStatus] = useState("New");
   const [onboardingChecklist, setOnboardingChecklist] = useState<OnboardingChecklist>({});
   const [internalNotes, setInternalNotes] = useState("");
@@ -1647,30 +1603,6 @@ export default function AdminTable({
     const unsub = onSnapshot(q, (snap) => setCustomerCredits(snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }))));
     return () => unsub();
   }, [collectionName, enablePaymentActions]);
-  useEffect(() => {
-    setCleanupModeOpen(false);
-    setCleanupPhrase("");
-    setSelectedCleanupIds(new Set());
-  }, [collectionName]);
-
-  useEffect(() => {
-    setSelectedCleanupIds((prev) => {
-      if (!prev.size) return prev;
-      const liveIds = new Set(items.map((item) => item.id));
-      let changed = false;
-      const next = new Set<string>();
-      prev.forEach((id) => {
-        if (liveIds.has(id)) {
-          next.add(id);
-        } else {
-          changed = true;
-        }
-      });
-      return changed ? next : prev;
-    });
-  }, [items]);
-
-
   useEffect(() => {
     const nextStatus = selected?.status || "New";
     const nextMode = guessCheckoutMode(selected);
@@ -1715,7 +1647,6 @@ export default function AdminTable({
     setCommercialQuoteError("");
     setReferralMessage("");
     setReferralError("");
-    setDeleteError("");
     setApplicationStatus(selected?.status ? String(selected.status) : "New");
     setOnboardingChecklist(selected?.onboardingChecklist && typeof selected.onboardingChecklist === "object" ? selected.onboardingChecklist : {});
     setInternalNotes(selected?.internalNotes ? String(selected.internalNotes) : selected?.adminNotes ? String(selected.adminNotes) : "");
@@ -1826,54 +1757,6 @@ export default function AdminTable({
 
   const activeFilterCount = [filter.trim(), serviceFilter, statusFilter !== "all" ? statusFilter : "", paymentFilter !== "all" ? paymentFilter : "", referralFilter !== "all" ? referralFilter : "", promoFilter !== "all" ? promoFilter : "", dateFilter !== "all" ? dateFilter : "", collectionName === "serviceRequests" && queueFilter !== "all" ? queueFilter : ""].filter(Boolean).length;
   const pageNumberItems = useMemo(() => getPageNumberItems(safeCurrentPage, totalPages), [safeCurrentPage, totalPages]);
-  const cleanupEnabled = ["serviceRequests", "helperApplications", "partnerApplications", "contactMessages"].includes(collectionName);
-  const cleanupLabels = getCleanupLabels(collectionName);
-  const selectedCleanupCount = selectedCleanupIds.size;
-  const selectedPageCount = pagedItems.filter((item) => selectedCleanupIds.has(item.id)).length;
-  const allPagedCleanupSelected = cleanupEnabled && pagedItems.length > 0 && selectedPageCount === pagedItems.length;
-  const selectedFilteredCount = filtered.filter((item) => selectedCleanupIds.has(item.id)).length;
-
-  function toggleCleanupSelection(id: string, checked: boolean) {
-    setSelectedCleanupIds((prev) => {
-      const next = new Set(prev);
-      if (checked) next.add(id);
-      else next.delete(id);
-      return next;
-    });
-  }
-
-  function selectPagedRecords() {
-    setSelectedCleanupIds((prev) => {
-      const next = new Set(prev);
-      pagedItems.forEach((item) => next.add(item.id));
-      return next;
-    });
-  }
-
-  function togglePagedRecords(checked: boolean) {
-    setSelectedCleanupIds((prev) => {
-      const next = new Set(prev);
-      pagedItems.forEach((item) => {
-        if (checked) next.add(item.id);
-        else next.delete(item.id);
-      });
-      return next;
-    });
-  }
-
-  function selectFilteredRecords() {
-    setSelectedCleanupIds((prev) => {
-      const next = new Set(prev);
-      filtered.slice(0, MAX_BULK_DELETE).forEach((item) => next.add(item.id));
-      return next;
-    });
-  }
-
-  function clearSelectedRecords() {
-    setSelectedCleanupIds(new Set());
-    setCleanupPhrase("");
-  }
-
   function clearAllFilters() {
     setFilter("");
     setServiceFilter("");
@@ -1936,123 +1819,6 @@ export default function AdminTable({
       setStatusError(error instanceof Error ? error.message : "Unable to update status.");
     } finally {
       setStatusBusy(false);
-      setActiveAction("");
-    }
-  }
-
-  async function deleteTestRecord(item: AdminDoc) {
-    if (!item || deleteBusy) return;
-
-    const blockReason = getRecordDeleteBlockReason(collectionName, item);
-    if (blockReason) {
-      setDeleteError(blockReason);
-      setDeleteMessage("");
-      return;
-    }
-
-    const deletedName = getRecordDisplayName(item);
-    const confirmed = window.confirm(
-      `Delete this test record for ${deletedName}?
-
-Only continue for obvious fake/test submissions with no customer, payment, invoice, tax, or referral history. Real records should be marked Canceled or Archived instead.`
-    );
-    if (!confirmed) return;
-
-    setDeleteBusy(true);
-    setActiveAction("Deleting test record from the admin list...");
-    setDeleteMessage("");
-    setDeleteError("");
-
-    try {
-      const token = await firebaseAuth.currentUser?.getIdToken();
-      const res = await fetch("/api/admin/delete-record", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({
-          collection: collectionName,
-          id: item.id,
-          confirmDeleteTestRecord: true,
-        }),
-      });
-      const data = await res.json().catch(() => ({}));
-
-      if (!res.ok || !data.ok) throw new Error(data.error || "Unable to delete this record.");
-
-      setItems((prev) => prev.filter((existing) => existing.id !== item.id));
-      setSelectedCleanupIds((prev) => {
-        const next = new Set(prev);
-        next.delete(item.id);
-        return next;
-      });
-      setDeleteMessage(`${deletedName} was deleted from ${title}.`);
-      setSelected((prev) => (prev?.id === item.id ? null : prev));
-    } catch (error) {
-      setDeleteError(error instanceof Error ? error.message : "Unable to delete this record.");
-    } finally {
-      setDeleteBusy(false);
-      setActiveAction("");
-    }
-  }
-
-  async function bulkDeleteSelectedRecords() {
-    if (!cleanupEnabled || deleteBusy) return;
-    const ids = Array.from(selectedCleanupIds);
-    if (!ids.length) {
-      setDeleteError(`Select at least one ${cleanupLabels.singular} to delete.`);
-      setDeleteMessage("");
-      return;
-    }
-    if (ids.length > MAX_BULK_DELETE) {
-      setDeleteError(`Select ${MAX_BULK_DELETE} or fewer records at a time.`);
-      setDeleteMessage("");
-      return;
-    }
-    if (cleanupPhrase.trim() !== BULK_DELETE_PHRASE) {
-      setDeleteError(`Type ${BULK_DELETE_PHRASE} to confirm pre-launch cleanup.`);
-      setDeleteMessage("");
-      return;
-    }
-
-    const confirmed = window.confirm(
-      `Delete ${ids.length} selected ${ids.length === 1 ? cleanupLabels.singular : cleanupLabels.plural} from the admin list?
-
-This is for pre-launch cleanup only. ${cleanupLabels.note} Ask me to remove this delete option before going live.`
-    );
-    if (!confirmed) return;
-
-    setDeleteBusy(true);
-    setActiveAction(`Deleting ${ids.length} selected ${ids.length === 1 ? cleanupLabels.singular : cleanupLabels.plural}...`);
-    setDeleteMessage("");
-    setDeleteError("");
-
-    try {
-      const token = await firebaseAuth.currentUser?.getIdToken();
-      const res = await fetch("/api/admin/delete-record", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({
-          collection: collectionName,
-          ids,
-          confirmBulkDeleteRecords: true,
-          cleanupPhrase: cleanupPhrase.trim(),
-        }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok || !data.ok) throw new Error(data.error || "Unable to delete selected records.");
-
-      const deletedIds = new Set<string>(Array.isArray(data.deletedIds) ? data.deletedIds : ids);
-      setItems((prev) => prev.filter((existing) => !deletedIds.has(existing.id)));
-      setSelectedCleanupIds(new Set());
-      setCleanupPhrase("");
-      setSelected((prev) => (prev && deletedIds.has(prev.id) ? null : prev));
-      const deletedCount = data.deletedCount || deletedIds.size;
-      const missingNote = data.missingCount ? ` ${data.missingCount} already-missing record${data.missingCount === 1 ? " was" : "s were"} skipped.` : "";
-      const fileNote = data.deletedFileCount ? ` ${data.deletedFileCount} uploaded file${data.deletedFileCount === 1 ? "" : "s"} also removed.` : "";
-      setDeleteMessage(`${deletedCount} ${deletedCount === 1 ? cleanupLabels.singular : cleanupLabels.plural} deleted from the admin list.${missingNote}${fileNote}`);
-    } catch (error) {
-      setDeleteError(error instanceof Error ? error.message : "Unable to delete selected records.");
-    } finally {
-      setDeleteBusy(false);
       setActiveAction("");
     }
   }
@@ -2716,7 +2482,7 @@ This is for pre-launch cleanup only. ${cleanupLabels.note} Ask me to remove this
   const selectedAvailableCustomerCredits = getAvailableCustomerCreditsForRequest(selected, customerCredits);
   const selectedAvailableCustomerCreditTotal = getAvailableCustomerCreditTotal(selectedAvailableCustomerCredits);
   const selectedOutgoingReferralHistory = getOutgoingReferralHistory(selected);
-  const anyActionBusy = checkoutBusy || commercialInvoiceBusy || commercialQuoteEmailBusy || familyInvoiceBusy || statusBusy || laundryFinalBusy || additionalPaymentBusy || commercialQuoteBusy || referralBusy || deleteBusy || applicationOnboardingBusy || Boolean(busyDocumentPath);
+  const anyActionBusy = checkoutBusy || commercialInvoiceBusy || commercialQuoteEmailBusy || familyInvoiceBusy || statusBusy || laundryFinalBusy || additionalPaymentBusy || commercialQuoteBusy || referralBusy || applicationOnboardingBusy || Boolean(busyDocumentPath);
 
   return (
     <section className="space-y-5">
@@ -2859,8 +2625,8 @@ This is for pre-launch cleanup only. ${cleanupLabels.note} Ask me to remove this
       <AdminActionFeedback
         busy={anyActionBusy}
         activeAction={activeAction}
-        messages={[statusMessage, checkoutMessage, commercialInvoiceMessage, commercialQuoteEmailMessage, familyInvoiceMessage, laundryFinalMessage, additionalPaymentMessage, commercialQuoteMessage, referralMessage, deleteMessage]}
-        errors={[statusError, checkoutError, commercialInvoiceError, commercialQuoteEmailError, familyInvoiceError, laundryFinalError, additionalPaymentError, commercialQuoteError, referralError, deleteError]}
+        messages={[statusMessage, checkoutMessage, commercialInvoiceMessage, commercialQuoteEmailMessage, familyInvoiceMessage, laundryFinalMessage, additionalPaymentMessage, commercialQuoteMessage, referralMessage]}
+        errors={[statusError, checkoutError, commercialInvoiceError, commercialQuoteEmailError, familyInvoiceError, laundryFinalError, additionalPaymentError, commercialQuoteError, referralError]}
       />
 
       <div className="flex flex-col gap-3 rounded-3xl border border-[#eadfc8] bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
@@ -2871,16 +2637,6 @@ This is for pre-launch cleanup only. ${cleanupLabels.note} Ask me to remove this
           </p>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
-          {cleanupEnabled && (
-            <button
-              type="button"
-              onClick={() => setCleanupModeOpen((prev) => !prev)}
-              className={cleanupModeOpen ? getAdminActionClass("danger") : getAdminActionClass("quiet")}
-              title="Show pre-launch cleanup tools."
-            >
-              {cleanupModeOpen ? "Hide cleanup" : selectedCleanupCount ? `Cleanup (${selectedCleanupCount})` : "Pre-launch cleanup"}
-            </button>
-          )}
           <details className="rounded-2xl border border-[#eadfc8] bg-white px-3 py-2 text-sm font-bold text-slate-700 shadow-sm">
             <summary className="cursor-pointer list-none text-[#075c58]">Export list</summary>
             <div className="mt-3 grid gap-2 sm:min-w-[220px]">
@@ -2955,69 +2711,13 @@ This is for pre-launch cleanup only. ${cleanupLabels.note} Ask me to remove this
         </div>
       </div>
 
-      {cleanupEnabled && cleanupModeOpen && (
-        <div className="rounded-3xl border-2 border-red-200 bg-red-50 p-4 shadow-sm">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-            <div>
-              <p className="text-xs font-black uppercase tracking-[0.16em] text-red-700">Pre-launch cleanup</p>
-              <h3 className="mt-1 text-lg font-black text-red-900">{cleanupLabels.title}</h3>
-              <p className="mt-1 max-w-3xl text-sm font-semibold leading-6 text-red-900/80">
-                Use this only before live customers. {cleanupLabels.note}
-              </p>
-            </div>
-            <div className="rounded-2xl bg-white px-4 py-3 text-sm font-black text-red-800 ring-1 ring-red-200">
-              {selectedCleanupCount} selected
-            </div>
-          </div>
-          <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-            <button type="button" onClick={() => togglePagedRecords(!allPagedCleanupSelected)} disabled={!pagedItems.length || deleteBusy} className={getAdminActionClass("quiet")}>
-              {allPagedCleanupSelected ? "Unselect page" : "Select page"}
-            </button>
-            <button type="button" onClick={selectFilteredRecords} disabled={!filtered.length || deleteBusy} className={getAdminActionClass("quiet")}>
-              Select filtered{filtered.length > MAX_BULK_DELETE ? ` (${MAX_BULK_DELETE} max)` : ""}
-            </button>
-            <button type="button" onClick={clearSelectedRecords} disabled={!selectedCleanupCount || deleteBusy} className={getAdminActionClass("quiet")}>Clear selected</button>
-            <button type="button" onClick={() => setCleanupModeOpen(false)} className={getAdminActionClass("quiet")}>Done</button>
-          </div>
-          <div className="mt-4 grid gap-3 lg:grid-cols-[1fr_auto] lg:items-end">
-            <label className="grid gap-2 text-sm font-bold text-red-900">
-              Type {BULK_DELETE_PHRASE} to enable bulk delete
-              <input
-                value={cleanupPhrase}
-                onChange={(e) => setCleanupPhrase(e.target.value)}
-                placeholder={BULK_DELETE_PHRASE}
-                className="min-h-12 rounded-2xl border border-red-200 bg-white px-4 py-3 text-sm font-bold text-red-900 outline-none focus:border-red-700 focus:ring-4 focus:ring-red-700/15"
-              />
-            </label>
-            <button
-              type="button"
-              onClick={bulkDeleteSelectedRecords}
-              disabled={!selectedCleanupCount || cleanupPhrase.trim() !== BULK_DELETE_PHRASE || deleteBusy}
-              className={getAdminActionClass("danger")}
-            >
-              {deleteBusy ? <><ActionSpinner /> Deleting...</> : `Delete ${selectedCleanupCount || "selected"}`}
-            </button>
-          </div>
-          <p className="mt-3 text-xs font-bold text-red-800/80">
-            Tip: filter/search first, choose Select filtered, type the confirmation phrase, then delete. Ask me to remove this cleanup tool before live customer/applicant records start coming in.
-          </p>
-        </div>
-      )}
+
 
       <div className="grid gap-3 md:hidden">
         {pagedItems.map((item) => (
           <div key={`mobile-${item.id}`} className={`rounded-3xl border border-[#eadfc8] p-4 shadow-sm ${getServiceLook(item).row}`}>
             <div className="flex items-start justify-between gap-3">
               <div className="flex min-w-0 items-start gap-3">
-                {cleanupEnabled && cleanupModeOpen && (
-                  <input
-                    type="checkbox"
-                    checked={selectedCleanupIds.has(item.id)}
-                    onChange={(e) => toggleCleanupSelection(item.id, e.target.checked)}
-                    aria-label={`Select ${getRecordDisplayName(item)} for cleanup`}
-                    className="mt-1 h-5 w-5 rounded border-red-300 accent-red-700"
-                  />
-                )}
                 <div className="min-w-0">
                   <p className="truncate text-base font-black text-[#075c58]">{getRecordDisplayName(item)}</p>
                   <p className="mt-1 text-xs font-bold text-slate-600">{getRecordContactLine(item)}</p>
@@ -3062,16 +2762,6 @@ This is for pre-launch cleanup only. ${cleanupLabels.note} Ask me to remove this
               >
                 {dropdownStatuses.map((status) => <option key={status}>{status}</option>)}
               </select>
-              {cleanupModeOpen && !getRecordDeleteBlockReason(collectionName, item) && (
-                <button
-                  type="button"
-                  onClick={() => deleteTestRecord(item)}
-                  disabled={deleteBusy}
-                  className="w-full rounded-full border border-red-200 bg-red-50 px-4 py-3 text-xs font-black text-red-700 shadow-sm transition hover:bg-red-100 disabled:opacity-60"
-                >
-                  Delete single test
-                </button>
-              )}
             </div>
           </div>
         ))}
@@ -3083,17 +2773,6 @@ This is for pre-launch cleanup only. ${cleanupLabels.note} Ask me to remove this
           <table className="w-full min-w-[1240px] divide-y divide-[#eadfc8] text-sm">
             <thead className="bg-[#f4ecdc] text-left text-xs uppercase tracking-wider text-[#075c58]">
               <tr>
-                {cleanupEnabled && cleanupModeOpen && (
-                  <th className="w-12 px-4 py-4">
-                    <input
-                      type="checkbox"
-                      checked={allPagedCleanupSelected}
-                      onChange={(e) => togglePagedRecords(e.target.checked)}
-                      aria-label="Select visible records for cleanup"
-                      className="h-5 w-5 rounded border-red-300 accent-red-700"
-                    />
-                  </th>
-                )}
                 <th className="px-4 py-4">Status</th>
                 {columns.map((col) => (
                   <th key={col.key} className="px-4 py-4">{col.label}</th>
@@ -3105,17 +2784,6 @@ This is for pre-launch cleanup only. ${cleanupLabels.note} Ask me to remove this
             <tbody className="divide-y divide-[#f0e7d7]">
               {pagedItems.map((item) => (
                 <tr key={item.id} className={`transition-colors ${getServiceLook(item).row}`}>
-                  {cleanupEnabled && cleanupModeOpen && (
-                    <td className="px-4 py-4 align-top">
-                      <input
-                        type="checkbox"
-                        checked={selectedCleanupIds.has(item.id)}
-                        onChange={(e) => toggleCleanupSelection(item.id, e.target.checked)}
-                        aria-label={`Select ${getRecordDisplayName(item)} for cleanup`}
-                        className="h-5 w-5 rounded border-red-300 accent-red-700"
-                      />
-                    </td>
-                  )}
                   <td className="px-4 py-4"><StatusBadge status={item.status} /></td>
                   {columns.map((col) => (
                     <td key={col.key} className="max-w-[220px] truncate px-4 py-4 text-slate-700">{renderAdminCell(col.key, item)}</td>
@@ -3124,17 +2792,6 @@ This is for pre-launch cleanup only. ${cleanupLabels.note} Ask me to remove this
                   <td className="sticky right-0 z-10 min-w-[190px] bg-white/95 px-3 py-4 align-top shadow-[-10px_0_18px_rgba(0,0,0,0.04)] backdrop-blur">
                     <div className="grid min-w-[170px] gap-2">
                       <button onClick={() => setSelected(item)} className="w-full whitespace-nowrap rounded-full bg-[#075c58] px-3 py-2 text-xs font-black text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-[#064b48] focus:outline-none focus:ring-4 focus:ring-[#075c58]/20">Open details</button>
-                      {cleanupModeOpen && !getRecordDeleteBlockReason(collectionName, item) && (
-                        <button
-                          type="button"
-                          onClick={() => deleteTestRecord(item)}
-                          disabled={deleteBusy}
-                          className="w-full whitespace-nowrap rounded-full border border-red-200 bg-red-50 px-3 py-2 text-xs font-black text-red-700 shadow-sm transition hover:-translate-y-0.5 hover:bg-red-100 focus:outline-none focus:ring-4 focus:ring-red-700/15 disabled:opacity-60"
-                          title="Delete obvious test/fake records only. Protected payment/invoice/referral service requests are hidden."
-                        >
-                          Delete single test
-                        </button>
-                      )}
                       <select
                         value={item.status || "New"}
                         onChange={async (e) => {
@@ -3164,7 +2821,7 @@ This is for pre-launch cleanup only. ${cleanupLabels.note} Ask me to remove this
                 </tr>
               ))}
               {!filtered.length && (
-                <tr><td colSpan={columns.length + 3 + (cleanupEnabled && cleanupModeOpen ? 1 : 0)} className="px-4 py-12 text-center text-slate-500">No records match the current filters.</td></tr>
+                <tr><td colSpan={columns.length + 3} className="px-4 py-12 text-center text-slate-500">No records match the current filters.</td></tr>
               )}
             </tbody>
           </table>
