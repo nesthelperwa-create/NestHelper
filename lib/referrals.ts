@@ -439,6 +439,127 @@ export async function reserveReferralRewardForCompletedRequest({
   });
 }
 
+
+export async function ensureCustomerReferralCreditForCompletedRequest({
+  db,
+  requestId,
+  requestData,
+  createdBy,
+}: {
+  db: Firestore;
+  requestId: string;
+  requestData: Record<string, unknown>;
+  createdBy?: string | null;
+}) {
+  const code = normalizeReferralCode(requestData.incomingReferralCode || requestData.incomingReferralLinkId);
+  if (!code) return { ok: false, reason: "No incoming referral code.", created: false, existing: false };
+
+  const completedEnough =
+    isCompletedStatus(requestData.status) ||
+    Boolean(requestData.incomingReferralRewardEmailSent) ||
+    getString(requestData.incomingReferralStatus).toLowerCase().includes("reward");
+
+  if (!completedEnough) return { ok: false, reason: "Referred request is not completed yet.", created: false, existing: false };
+  if (!isFamilyReferralEligibleService(requestData.service, requestData.selectedServiceTitle || requestData.packageType || requestData.requestType)) {
+    return { ok: false, reason: "Referred request is not an eligible family service.", created: false, existing: false };
+  }
+
+  const linkRef = db.collection("referralLinks").doc(code);
+  const referredRequestRef = db.collection("serviceRequests").doc(requestId);
+
+  return db.runTransaction(async (transaction) => {
+    const linkSnap = await transaction.get(linkRef);
+    if (!linkSnap.exists) return { ok: false, reason: "Referral link was not found.", created: false, existing: false };
+
+    const linkData = linkSnap.data() || {};
+    const referrerEmail = cleanEmail(linkData.referrerEmail || requestData.incomingReferralReferrerEmail);
+    if (!referrerEmail) return { ok: false, reason: "Referrer email is missing.", created: false, existing: false };
+
+    const rewardCode = normalizeReferralCode(
+      linkData.rewardCode ||
+        linkData.rewardCreditId ||
+        requestData.incomingReferralRewardCode ||
+        requestData.outgoingReferralRewardCode ||
+        `NHF-THANKS-${code.replace(/-/g, "").slice(-6)}`
+    );
+    if (!rewardCode) return { ok: false, reason: "Reward code could not be created.", created: false, existing: false };
+
+    const creditRef = db.collection("customerCredits").doc(rewardCode);
+    const creditSnap = await transaction.get(creditRef);
+    const creditAmount = getSafeCreditAmount(
+      requestData.incomingReferralReferrerCreditAmount || linkData.rewardCreditAmount,
+      getFamilyReferralNewCustomerCreditAmount(requestData.service, requestData.selectedServiceTitle || requestData.packageType || requestData.requestType)
+    );
+
+    if (creditSnap.exists) {
+      const existing = creditSnap.data() || {};
+      const existingAmount = getSafeCreditAmount(existing.remainingAmount || existing.amount);
+      if (existingAmount > 0) {
+        return { ok: true, reason: "Saved credit already exists.", created: false, existing: true, rewardCode, creditAmount: existingAmount, referrerEmail };
+      }
+    }
+
+    const referrerRequestId = getString(linkData.referrerRequestId || requestData.incomingReferralReferrerRequestId);
+    const referrerName = getString(linkData.referrerName || requestData.incomingReferralReferrerName);
+    const referredName = getString(requestData.fullName) || getString(requestData.name);
+    const referredServiceTitle = getReferralServiceTitle(requestData.service, requestData.selectedServiceTitle || requestData.packageType || requestData.requestType);
+
+    transaction.set(creditRef, {
+      creditId: rewardCode,
+      creditCode: rewardCode,
+      program: "family-to-family",
+      type: "family_referral",
+      status: "Available",
+      amount: creditAmount,
+      remainingAmount: creditAmount,
+      customerEmail: referrerEmail,
+      customerEmailKey: referrerEmail,
+      customerName: referrerName,
+      sourceReferralCode: code,
+      sourceReferralLinkId: code,
+      sourceReferrerRequestId: referrerRequestId,
+      sourceReferredRequestId: requestId,
+      sourceReferredName: referredName,
+      sourceReferredServiceTitle: referredServiceTitle,
+      earnedAt: FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
+      createdBy: createdBy || "admin-sync",
+      backfilled: true,
+    }, { merge: true });
+
+    transaction.update(linkRef, {
+      rewardCode,
+      rewardCreditId: rewardCode,
+      rewardCreditAmount: creditAmount,
+      completedByRequestId: requestId,
+      completedAt: linkData.completedAt || FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+
+    transaction.update(referredRequestRef, {
+      incomingReferralRewardCode: rewardCode,
+      incomingReferralRewardCreditAmount: creditAmount,
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+
+    if (referrerRequestId) {
+      transaction.update(db.collection("serviceRequests").doc(referrerRequestId), {
+        outgoingReferralStatus: "Credit available",
+        outgoingReferralCreditStatus: "Available",
+        outgoingReferralRewardCode: rewardCode,
+        outgoingReferralCreditId: rewardCode,
+        outgoingReferralCreditAmount: creditAmount,
+        outgoingReferralCompletedByRequestId: requestId,
+        updatedAt: FieldValue.serverTimestamp(),
+      });
+    }
+
+    return { ok: true, reason: "Saved credit created.", created: true, existing: false, rewardCode, creditAmount, referrerEmail };
+  });
+}
+
+
 export async function markReferralRewardSent({
   db,
   code,

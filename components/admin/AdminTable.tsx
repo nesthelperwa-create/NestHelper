@@ -595,6 +595,8 @@ export default function AdminTable({
     return Array.from(merged).filter(Boolean).sort((a, b) => a.localeCompare(b));
   }, [items, statuses]);
 
+  const dropdownStatuses = availableStatuses;
+
   const filtered = useMemo(() => {
     const term = filter.toLowerCase().trim();
     const now = new Date();
@@ -748,6 +750,45 @@ export default function AdminTable({
             : "Family referral link created. Copy it or email it when ready.");
     } catch (error) {
       setReferralError(error instanceof Error ? error.message : "Unable to create referral link.");
+    } finally {
+      setReferralBusy(false);
+      setActiveAction("");
+    }
+  }
+
+
+
+  async function syncCustomerCreditsForSelected() {
+    if (!selected) return;
+    setReferralBusy(true);
+    setActiveAction("Syncing saved customer referral credits...");
+    setReferralMessage("");
+    setReferralError("");
+
+    try {
+      const token = await firebaseAuth.currentUser?.getIdToken();
+      const res = await fetch("/api/admin/sync-customer-credits", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ requestId: selected.id }),
+      });
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok || !data.ok) {
+        throw new Error(data.error || "Unable to sync customer credits.");
+      }
+
+      const created = Number(data.created || 0);
+      const existing = Number(data.existing || 0);
+      setReferralMessage(
+        created > 0
+          ? `Saved customer credit created. Refresh or reopen this request if it does not appear right away.`
+          : existing > 0
+            ? "Saved customer credit already exists for this email."
+            : data.message || "No completed referral credit was found for this customer email yet."
+      );
+    } catch (error) {
+      setReferralError(error instanceof Error ? error.message : "Unable to sync customer credits.");
     } finally {
       setReferralBusy(false);
       setActiveAction("");
@@ -1344,7 +1385,7 @@ export default function AdminTable({
                         className="w-full min-w-0 rounded-full border border-[#d8c18f] bg-white px-3 py-2 text-xs font-bold text-slate-700 shadow-sm outline-none transition hover:border-[#075c58] focus:border-[#075c58] focus:ring-4 focus:ring-[#075c58]/15"
                         title="Quick internal status update. Open View to send a customer email."
                       >
-                        {statuses.map((status) => <option key={status}>{status}</option>)}
+                        {dropdownStatuses.map((status) => <option key={status}>{status}</option>)}
                       </select>
                     </div>
                   </td>
@@ -1404,7 +1445,7 @@ export default function AdminTable({
                       }}
                       className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-bold text-[#075c58] outline-none focus:border-[#075c58]"
                     >
-                      {statuses.map((status) => <option key={status}>{status}</option>)}
+                      {dropdownStatuses.map((status) => <option key={status}>{status}</option>)}
                     </select>
                   </label>
 
@@ -1493,7 +1534,19 @@ export default function AdminTable({
                       {selected.outgoingReferralLink && (
                         <button type="button" onClick={() => copyReferralLink(selected.outgoingReferralLink || "")} className={getAdminActionClass("secondary")}>Copy referral link</button>
                       )}
+                      <button
+                        type="button"
+                        disabled={referralBusy || !selected.email}
+                        onClick={syncCustomerCreditsForSelected}
+                        className={getAdminActionClass("quiet")}
+                        title="Use this if an older referral reward email was sent before saved credits were added."
+                      >
+                        Sync saved credits
+                      </button>
                     </div>
+                    <p className="mt-2 text-xs font-semibold leading-5 text-slate-500">
+                      Sync saved credits checks this customer email for completed referrals and creates any missing available credit record.
+                    </p>
                   </div>
 
                   <div className="rounded-2xl border border-[#eadfc8] bg-white p-4">
