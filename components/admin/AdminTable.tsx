@@ -10,6 +10,35 @@ import FamilyPaymentBreakdownBuilder from "./FamilyPaymentBreakdownBuilder";
 type AdminDoc = { id: string; status?: string; createdAt?: unknown; checkoutUrl?: string; promoCode?: string; [key: string]: any };
 type CustomerCredit = { id: string; status?: string; amount?: number; remainingAmount?: number; customerEmail?: string; customerEmailKey?: string; creditCode?: string; [key: string]: any };
 type CheckoutMode = "standard" | "founding" | "custom";
+type ApplicationDocument = { id?: string; label?: string; originalName?: string; contentType?: string; size?: number; storagePath?: string; uploadedAtIso?: string };
+type OnboardingChecklist = Record<string, boolean>;
+
+const APPLICATION_CHECKLIST_ITEMS = [
+  { key: "applicationReviewed", label: "Application reviewed" },
+  { key: "phoneScreenComplete", label: "Phone screen complete" },
+  { key: "referencesChecked", label: "References checked" },
+  { key: "backgroundCheckStarted", label: "Background check started" },
+  { key: "backgroundCheckCleared", label: "Background check cleared" },
+  { key: "licenseInsuranceReviewed", label: "License/insurance reviewed" },
+  { key: "trialJobComplete", label: "Trial job complete" },
+  { key: "approved", label: "Approved" },
+  { key: "backupOnly", label: "Backup-only" },
+  { key: "notApproved", label: "Not approved" },
+  { key: "archived", label: "Archived" },
+];
+
+const APPLICATION_STATUS_OPTIONS = [
+  "New",
+  "Reviewing",
+  "Needs Documents",
+  "Phone Screen",
+  "References",
+  "Background Check",
+  "Approved",
+  "Backup List",
+  "Rejected",
+  "Archived",
+];
 
 const COMMERCIAL_QUOTE_STATUSES = [
   "Not quoted",
@@ -461,6 +490,30 @@ function formatPhotoSize(bytes: unknown) {
   return `${Math.round(next / 1024)} KB`;
 }
 
+function formatFileSize(bytes: unknown) {
+  const next = Number(bytes);
+  if (!Number.isFinite(next) || next <= 0) return "file size unavailable";
+  if (next < 1024) return `${Math.round(next)} B`;
+  if (next < 1024 * 1024) return `${Math.round(next / 1024)} KB`;
+  return `${(next / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function getApplicationDocuments(item: AdminDoc | null | undefined): ApplicationDocument[] {
+  const value = item?.applicationDocuments;
+  if (!Array.isArray(value)) return [];
+  return value.filter((document) => document && typeof document === "object" && typeof document.storagePath === "string");
+}
+
+function isApplicationDocumentField(key: string) {
+  const normalized = key.trim().toLowerCase();
+  return [
+    "applicationdocuments",
+    "applicationdocumentcount",
+    "applicationdocumentsummary",
+    "applicationdocumentsuploadedat",
+  ].includes(normalized);
+}
+
 function AdminPhotoUploads({ photos }: { photos: UploadedPhoto[] }) {
   const [previewPhoto, setPreviewPhoto] = useState<{ photo: UploadedPhoto; index: number } | null>(null);
 
@@ -526,6 +579,46 @@ function AdminPhotoUploads({ photos }: { photos: UploadedPhoto[] }) {
   );
 }
 
+function AdminApplicationDocuments({
+  documents,
+  collectionName,
+  recordId,
+  onOpenDocument,
+  busyDocumentPath,
+}: {
+  documents: ApplicationDocument[];
+  collectionName: string;
+  recordId: string;
+  onOpenDocument: (document: ApplicationDocument) => void;
+  busyDocumentPath: string;
+}) {
+  if (!documents.length) return null;
+
+  return (
+    <div className="rounded-2xl border border-[#eadfc8] bg-white p-4 sm:col-span-2">
+      <p className="text-xs font-bold uppercase tracking-widest text-[#b98a2f]">Uploaded application documents</p>
+      <p className="mt-1 text-xs leading-5 text-slate-500">Documents are stored privately. Opening a file creates a short-lived admin-only link.</p>
+      <div className="mt-3 grid gap-3 md:grid-cols-2">
+        {documents.map((document, index) => (
+          <div key={document.storagePath || document.id || index} className="rounded-2xl border border-[#eadfc8] bg-[#fbf6ea] p-4">
+            <p className="text-xs font-black uppercase tracking-[0.14em] text-[#b98a2f]">{document.label || "Other"}</p>
+            <p className="mt-1 break-words text-sm font-black text-[#075c58]">{document.originalName || `Document ${index + 1}`}</p>
+            <p className="mt-1 text-xs font-semibold text-slate-500">{formatFileSize(document.size)} · {document.contentType || "file"}</p>
+            <button
+              type="button"
+              onClick={() => onOpenDocument(document)}
+              disabled={!document.storagePath || busyDocumentPath === document.storagePath}
+              className="mt-3 rounded-full bg-[#075c58] px-4 py-2 text-xs font-black text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-[#064b48] disabled:opacity-60"
+            >
+              {busyDocumentPath === document.storagePath ? "Opening..." : "Open document"}
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function ServiceLegend({ activeServiceFilter, onToggleServiceFilter, counts }: { activeServiceFilter: string; onToggleServiceFilter: (key: string) => void; counts: Record<string, number> }) {
   return (
     <div className="mt-3 flex flex-wrap gap-2" aria-label="Filter service requests by service type">
@@ -549,6 +642,56 @@ function ServiceLegend({ activeServiceFilter, onToggleServiceFilter, counts }: {
       })}
     </div>
   );
+}
+
+
+function getRecordDeleteBlockReason(collectionName: string, item: AdminDoc | null | undefined) {
+  if (!item) return "Open a record first.";
+  if (!["serviceRequests", "helperApplications", "partnerApplications", "contactMessages"].includes(collectionName)) return "This admin list does not support deleting records.";
+  if (collectionName !== "serviceRequests") return "";
+
+  const paymentText = getAdminPaymentText(item);
+  const statusText = String(item.status || "").toLowerCase();
+  if (paymentText.includes("paid") || statusText.includes("completed") || statusText.includes("scheduled")) {
+    return "This request looks paid, completed, or scheduled. Keep it for customer/payment records and mark it Canceled or Archived instead.";
+  }
+
+  const protectedKeys = [
+    "checkoutUrl",
+    "checkoutSessionId",
+    "paymentIntentId",
+    "stripeCustomerId",
+    "commercialInvoiceId",
+    "commercialInvoiceUrl",
+    "commercialInvoicePdf",
+    "familyInvoiceId",
+    "familyInvoiceUrl",
+    "familyInvoicePdf",
+    "laundryFinalInvoiceId",
+    "laundryFinalInvoiceUrl",
+    "laundryFinalCheckoutUrl",
+    "additionalCheckoutUrl",
+    "additionalCheckoutSessionId",
+    "outgoingReferralCode",
+    "outgoingReferralLink",
+    "incomingReferralCode",
+    "outgoingReferralCreditId",
+    "incomingReferralRewardCode",
+  ];
+  const hasProtectedData = protectedKeys.some((key) => {
+    const value = item[key];
+    if (value === null || value === undefined || value === "") return false;
+    if (typeof value === "number") return Number.isFinite(value) && value !== 0;
+    if (typeof value === "boolean") return value;
+    if (Array.isArray(value)) return value.length > 0;
+    return true;
+  });
+
+  if (hasProtectedData) {
+    return "This request already has payment, invoice, checkout, or referral data attached. Keep it for audit history and mark it Canceled or Archived instead.";
+  }
+
+  return "";
 }
 
 function renderAdminCell(key: string, item: AdminDoc) {
@@ -633,6 +776,24 @@ export default function AdminTable({
   const [referralBusy, setReferralBusy] = useState(false);
   const [referralMessage, setReferralMessage] = useState("");
   const [referralError, setReferralError] = useState("");
+  const [deleteConfirm, setDeleteConfirm] = useState(false);
+  const [deleteBusy, setDeleteBusy] = useState(false);
+  const [deleteMessage, setDeleteMessage] = useState("");
+  const [deleteError, setDeleteError] = useState("");
+  const [applicationStatus, setApplicationStatus] = useState("New");
+  const [onboardingChecklist, setOnboardingChecklist] = useState<OnboardingChecklist>({});
+  const [internalNotes, setInternalNotes] = useState("");
+  const [bestFitServices, setBestFitServices] = useState("");
+  const [strengths, setStrengths] = useState("");
+  const [concerns, setConcerns] = useState("");
+  const [approvedBio, setApprovedBio] = useState("");
+  const [doNotAssignNotes, setDoNotAssignNotes] = useState("");
+  const [reliabilityRating, setReliabilityRating] = useState("");
+  const [applicationOnboardingBusy, setApplicationOnboardingBusy] = useState(false);
+  const [applicationOnboardingMessage, setApplicationOnboardingMessage] = useState("");
+  const [applicationOnboardingError, setApplicationOnboardingError] = useState("");
+  const [busyDocumentPath, setBusyDocumentPath] = useState("");
+  const [documentOpenError, setDocumentOpenError] = useState("");
   const [activeAction, setActiveAction] = useState("");
 
   useEffect(() => {
@@ -696,6 +857,21 @@ export default function AdminTable({
     setCommercialQuoteError("");
     setReferralMessage("");
     setReferralError("");
+    setDeleteConfirm(false);
+    setDeleteError("");
+    setApplicationStatus(selected?.status ? String(selected.status) : "New");
+    setOnboardingChecklist(selected?.onboardingChecklist && typeof selected.onboardingChecklist === "object" ? selected.onboardingChecklist : {});
+    setInternalNotes(selected?.internalNotes ? String(selected.internalNotes) : selected?.adminNotes ? String(selected.adminNotes) : "");
+    setBestFitServices(selected?.bestFitServices ? String(selected.bestFitServices) : "");
+    setStrengths(selected?.strengths ? String(selected.strengths) : "");
+    setConcerns(selected?.concerns ? String(selected.concerns) : "");
+    setApprovedBio(selected?.approvedBio ? String(selected.approvedBio) : "");
+    setDoNotAssignNotes(selected?.doNotAssignNotes ? String(selected.doNotAssignNotes) : "");
+    setReliabilityRating(selected?.reliabilityRating ? String(selected.reliabilityRating) : "");
+    setApplicationOnboardingMessage("");
+    setApplicationOnboardingError("");
+    setBusyDocumentPath("");
+    setDocumentOpenError("");
     setActiveAction("");
   }, [selected?.id]);
 
@@ -857,6 +1033,130 @@ export default function AdminTable({
     } finally {
       setStatusBusy(false);
       setActiveAction("");
+    }
+  }
+
+  async function deleteSelectedRecord() {
+    if (!selected || deleteBusy) return;
+
+    const blockReason = getRecordDeleteBlockReason(collectionName, selected);
+    if (blockReason) {
+      setDeleteError(blockReason);
+      return;
+    }
+
+    if (!deleteConfirm) {
+      setDeleteError("Check the confirmation box before deleting this test record.");
+      return;
+    }
+
+    setDeleteBusy(true);
+    setActiveAction("Deleting test record from the admin list...");
+    setDeleteMessage("");
+    setDeleteError("");
+
+    try {
+      const token = await firebaseAuth.currentUser?.getIdToken();
+      const res = await fetch("/api/admin/delete-record", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          collection: collectionName,
+          id: selected.id,
+          confirmDeleteTestRecord: true,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok || !data.ok) throw new Error(data.error || "Unable to delete this record.");
+
+      const deletedName = String(selected.fullName || selected.name || selected.businessName || selected.email || "test record");
+      setItems((prev) => prev.filter((item) => item.id !== selected.id));
+      setDeleteMessage(`${deletedName} was deleted from ${title}.`);
+      setSelected(null);
+      setDeleteConfirm(false);
+    } catch (error) {
+      setDeleteError(error instanceof Error ? error.message : "Unable to delete this record.");
+    } finally {
+      setDeleteBusy(false);
+      setActiveAction("");
+    }
+  }
+
+  function toggleOnboardingChecklist(key: string, checked: boolean) {
+    setOnboardingChecklist((prev) => ({ ...prev, [key]: checked }));
+  }
+
+  async function saveApplicationOnboarding() {
+    if (!selected || !["helperApplications", "partnerApplications"].includes(collectionName)) return;
+    setApplicationOnboardingBusy(true);
+    setActiveAction("Saving application onboarding details...");
+    setApplicationOnboardingMessage("");
+    setApplicationOnboardingError("");
+
+    try {
+      const token = await firebaseAuth.currentUser?.getIdToken();
+      const res = await fetch("/api/admin/update-application-onboarding", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          collection: collectionName,
+          id: selected.id,
+          status: applicationStatus,
+          onboardingChecklist,
+          internalNotes,
+          bestFitServices,
+          strengths,
+          concerns,
+          approvedBio,
+          doNotAssignNotes,
+          reliabilityRating,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.ok) throw new Error(data.error || "Unable to save onboarding details.");
+
+      const updates = {
+        status: applicationStatus,
+        onboardingChecklist,
+        internalNotes,
+        bestFitServices,
+        strengths,
+        concerns,
+        approvedBio,
+        doNotAssignNotes,
+        reliabilityRating,
+      };
+      setSelected((prev) => (prev ? { ...prev, ...updates } : prev));
+      setItems((prev) => prev.map((item) => item.id === selected.id ? { ...item, ...updates } : item));
+      setApplicationOnboardingMessage("Application onboarding details saved.");
+    } catch (error) {
+      setApplicationOnboardingError(error instanceof Error ? error.message : "Unable to save onboarding details.");
+    } finally {
+      setApplicationOnboardingBusy(false);
+      setActiveAction("");
+    }
+  }
+
+  async function openApplicationDocument(document: ApplicationDocument) {
+    if (!selected || !document.storagePath) return;
+    setBusyDocumentPath(document.storagePath);
+    setDocumentOpenError("");
+
+    try {
+      const token = await firebaseAuth.currentUser?.getIdToken();
+      const res = await fetch("/api/admin/application-document-url", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ collection: collectionName, id: selected.id, storagePath: document.storagePath }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.ok || !data.url) throw new Error(data.error || "Unable to open this document.");
+      window.open(data.url, "_blank", "noopener,noreferrer");
+    } catch (error) {
+      setDocumentOpenError(error instanceof Error ? error.message : "Unable to open this document.");
+    } finally {
+      setBusyDocumentPath("");
     }
   }
 
@@ -1409,6 +1709,8 @@ export default function AdminTable({
 
   const showPaymentActions = enablePaymentActions && collectionName === "serviceRequests" && selected;
   const showCustomerStatusActions = collectionName === "serviceRequests" && selected;
+  const showApplicationOnboardingPanel = Boolean(selected && ["helperApplications", "partnerApplications"].includes(collectionName));
+  const selectedApplicationDocuments = getApplicationDocuments(selected);
   const selectedLaundryFinalPaymentStatus = String(selected?.laundryPaymentStatus || selected?.paymentStatus || selected?.status || "");
   const laundryAutoChargeAuthorized = Boolean(
     selected?.service === "laundry-rescue" &&
@@ -1440,7 +1742,9 @@ export default function AdminTable({
   const selectedAvailableCustomerCredits = getAvailableCustomerCreditsForRequest(selected, customerCredits);
   const selectedAvailableCustomerCreditTotal = getAvailableCustomerCreditTotal(selectedAvailableCustomerCredits);
   const selectedOutgoingReferralHistory = getOutgoingReferralHistory(selected);
-  const anyActionBusy = checkoutBusy || commercialInvoiceBusy || commercialQuoteEmailBusy || familyInvoiceBusy || statusBusy || laundryFinalBusy || additionalPaymentBusy || commercialQuoteBusy || referralBusy;
+  const selectedDeleteBlockReason = getRecordDeleteBlockReason(collectionName, selected);
+  const canDeleteSelectedRecord = Boolean(selected && !selectedDeleteBlockReason);
+  const anyActionBusy = checkoutBusy || commercialInvoiceBusy || commercialQuoteEmailBusy || familyInvoiceBusy || statusBusy || laundryFinalBusy || additionalPaymentBusy || commercialQuoteBusy || referralBusy || deleteBusy || applicationOnboardingBusy || Boolean(busyDocumentPath);
 
   return (
     <section className="space-y-5">
@@ -1581,8 +1885,8 @@ export default function AdminTable({
       <AdminActionFeedback
         busy={anyActionBusy}
         activeAction={activeAction}
-        messages={[statusMessage, checkoutMessage, commercialInvoiceMessage, commercialQuoteEmailMessage, familyInvoiceMessage, laundryFinalMessage, additionalPaymentMessage, commercialQuoteMessage, referralMessage]}
-        errors={[statusError, checkoutError, commercialInvoiceError, commercialQuoteEmailError, familyInvoiceError, laundryFinalError, additionalPaymentError, commercialQuoteError, referralError]}
+        messages={[statusMessage, checkoutMessage, commercialInvoiceMessage, commercialQuoteEmailMessage, familyInvoiceMessage, laundryFinalMessage, additionalPaymentMessage, commercialQuoteMessage, referralMessage, deleteMessage]}
+        errors={[statusError, checkoutError, commercialInvoiceError, commercialQuoteEmailError, familyInvoiceError, laundryFinalError, additionalPaymentError, commercialQuoteError, referralError, deleteError]}
       />
 
       <div className="flex flex-col gap-3 rounded-3xl border border-[#eadfc8] bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
@@ -1761,10 +2065,142 @@ export default function AdminTable({
               <AdminActionFeedback
                 busy={anyActionBusy}
                 activeAction={activeAction}
-                messages={[statusMessage, checkoutMessage, commercialInvoiceMessage, commercialQuoteEmailMessage, familyInvoiceMessage, laundryFinalMessage, additionalPaymentMessage, commercialQuoteMessage, referralMessage]}
-                errors={[statusError, checkoutError, commercialInvoiceError, commercialQuoteEmailError, familyInvoiceError, laundryFinalError, additionalPaymentError, commercialQuoteError, referralError]}
+                messages={[statusMessage, checkoutMessage, commercialInvoiceMessage, commercialQuoteEmailMessage, familyInvoiceMessage, laundryFinalMessage, additionalPaymentMessage, commercialQuoteMessage, referralMessage, deleteMessage, applicationOnboardingMessage]}
+                errors={[statusError, checkoutError, commercialInvoiceError, commercialQuoteEmailError, familyInvoiceError, laundryFinalError, additionalPaymentError, commercialQuoteError, referralError, deleteError, applicationOnboardingError, documentOpenError]}
               />
             </div>
+
+            <div className="mb-5 rounded-3xl border border-red-100 bg-red-50/55 p-5 shadow-sm">
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                <div className="max-w-3xl">
+                  <p className="text-xs font-black uppercase tracking-[0.2em] text-red-700">Test cleanup</p>
+                  <h4 className="mt-1 text-xl font-black text-red-800">Delete this test record only when it has no payment, invoice, or referral history</h4>
+                  <p className="mt-2 text-sm leading-6 text-red-900/75">
+                    Use this for obvious fake/test submissions. For real customers, paid records, sent invoices, completed jobs, or referral activity, keep the record and change the status to Canceled or Archived instead.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  disabled={deleteBusy || !canDeleteSelectedRecord || !deleteConfirm}
+                  onClick={deleteSelectedRecord}
+                  className={getAdminActionClass("danger")}
+                >
+                  {deleteBusy ? <><ActionSpinner /> Deleting...</> : "Delete test record"}
+                </button>
+              </div>
+
+              {selectedDeleteBlockReason ? (
+                <p className="mt-3 rounded-2xl bg-white px-4 py-3 text-sm font-bold text-red-800">{selectedDeleteBlockReason}</p>
+              ) : (
+                <label className="mt-4 flex items-start gap-3 rounded-2xl border border-red-200 bg-white px-4 py-3 text-sm font-bold text-red-900">
+                  <input
+                    type="checkbox"
+                    checked={deleteConfirm}
+                    onChange={(e) => setDeleteConfirm(e.target.checked)}
+                    className="mt-1 h-5 w-5 rounded border-red-500 accent-red-700"
+                  />
+                  I confirm this is only a test/fake record and there is no customer, payment, invoice, tax, or referral history that must be kept.
+                </label>
+              )}
+
+              {deleteMessage && <p className="mt-3 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">{deleteMessage}</p>}
+              {deleteError && <p className="mt-3 rounded-2xl bg-red-100 px-4 py-3 text-sm font-bold text-red-800">{deleteError}</p>}
+            </div>
+
+            {showApplicationOnboardingPanel && (
+              <div className="mb-5 rounded-3xl border border-[#eadfc8] bg-gradient-to-br from-white via-white to-[#fbf6ea] p-5 shadow-sm">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="max-w-3xl">
+                    <p className="text-xs font-black uppercase tracking-[0.2em] text-[#b98a2f]">Applicant onboarding</p>
+                    <h4 className="mt-1 text-xl font-black text-[#075c58]">Track documents, screening, fit, and approval notes</h4>
+                    <p className="mt-2 text-sm leading-6 text-slate-700">
+                      This is admin-only. Use it to move helpers/partners from application to phone screen, documents, background check, approved, backup list, rejected, or archived.
+                    </p>
+                  </div>
+                  <StatusBadge status={applicationStatus} />
+                </div>
+
+                <div className="mt-4 grid gap-3 md:grid-cols-2">
+                  <label className="grid gap-2 text-sm font-bold text-slate-700">
+                    Application status
+                    <select
+                      value={applicationStatus}
+                      onChange={(e) => setApplicationStatus(e.target.value)}
+                      className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-bold text-[#075c58] outline-none focus:border-[#075c58]"
+                    >
+                      {Array.from(new Set([...APPLICATION_STATUS_OPTIONS, ...dropdownStatuses])).map((status) => <option key={status}>{status}</option>)}
+                    </select>
+                  </label>
+
+                  <label className="grid gap-2 text-sm font-bold text-slate-700">
+                    Reliability / fit rating
+                    <select
+                      value={reliabilityRating}
+                      onChange={(e) => setReliabilityRating(e.target.value)}
+                      className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-bold text-[#075c58] outline-none focus:border-[#075c58]"
+                    >
+                      <option value="">Not rated yet</option>
+                      <option>Excellent fit</option>
+                      <option>Good fit</option>
+                      <option>Backup / limited fit</option>
+                      <option>Needs more review</option>
+                      <option>Do not assign</option>
+                    </select>
+                  </label>
+                </div>
+
+                <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                  {APPLICATION_CHECKLIST_ITEMS.map((item) => (
+                    <label key={item.key} className={`flex items-center gap-3 rounded-2xl border p-3 text-sm font-bold transition ${onboardingChecklist[item.key] ? "border-emerald-200 bg-emerald-50 text-emerald-900" : "border-[#eadfc8] bg-white text-slate-700"}`}>
+                      <input
+                        type="checkbox"
+                        checked={Boolean(onboardingChecklist[item.key])}
+                        onChange={(e) => toggleOnboardingChecklist(item.key, e.target.checked)}
+                        className="h-5 w-5 rounded border-[#075c58] accent-[#075c58]"
+                      />
+                      {item.label}
+                    </label>
+                  ))}
+                </div>
+
+                <div className="mt-4 grid gap-3 md:grid-cols-2">
+                  <label className="grid gap-2 text-sm font-bold text-slate-700">
+                    Best-fit services
+                    <textarea value={bestFitServices} onChange={(e) => setBestFitServices(e.target.value)} rows={3} placeholder="Example: Laundry, organizing, family reset, backup errand helper." className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]" />
+                  </label>
+                  <label className="grid gap-2 text-sm font-bold text-slate-700">
+                    Strengths
+                    <textarea value={strengths} onChange={(e) => setStrengths(e.target.value)} rows={3} placeholder="What seems strong about this applicant?" className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]" />
+                  </label>
+                  <label className="grid gap-2 text-sm font-bold text-slate-700">
+                    Concerns / follow-up needed
+                    <textarea value={concerns} onChange={(e) => setConcerns(e.target.value)} rows={3} placeholder="Questions, gaps, schedule limits, or documents still needed." className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]" />
+                  </label>
+                  <label className="grid gap-2 text-sm font-bold text-slate-700">
+                    Do-not-assign notes
+                    <textarea value={doNotAssignNotes} onChange={(e) => setDoNotAssignNotes(e.target.value)} rows={3} placeholder="Only use for important internal restrictions." className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]" />
+                  </label>
+                  <label className="grid gap-2 text-sm font-bold text-slate-700 md:col-span-2">
+                    Internal notes
+                    <textarea value={internalNotes} onChange={(e) => setInternalNotes(e.target.value)} rows={4} placeholder="Phone screen notes, references, document review notes, assignment preferences, etc." className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]" />
+                  </label>
+                  <label className="grid gap-2 text-sm font-bold text-slate-700 md:col-span-2">
+                    Customer-facing approved bio draft
+                    <textarea value={approvedBio} onChange={(e) => setApprovedBio(e.target.value)} rows={3} placeholder="Optional bio if this helper/partner is approved later." className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]" />
+                  </label>
+                </div>
+
+                <div className="mt-4 flex flex-wrap items-center gap-3">
+                  <button type="button" disabled={applicationOnboardingBusy} onClick={saveApplicationOnboarding} className={getAdminActionClass("primary")}>
+                    {applicationOnboardingBusy ? <><ActionSpinner /> Saving...</> : "Save onboarding details"}
+                  </button>
+                  <p className="text-xs font-semibold text-slate-500">This does not email the applicant. It only updates the admin record.</p>
+                </div>
+
+                {applicationOnboardingMessage && <p className="mt-3 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">{applicationOnboardingMessage}</p>}
+                {applicationOnboardingError && <p className="mt-3 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{applicationOnboardingError}</p>}
+              </div>
+            )}
 
             {showCustomerStatusActions && (
               <div className="mb-5 rounded-3xl border border-[#eadfc8] bg-white p-5 shadow-sm">
@@ -2775,7 +3211,9 @@ export default function AdminTable({
 
             <div className="grid gap-3 sm:grid-cols-2">
               <AdminPhotoUploads photos={getPhotoUploads(selected)} />
-              {Object.entries(selected).filter(([key]) => !isPhotoDataField(key)).map(([key, value]) => (
+              <AdminApplicationDocuments documents={selectedApplicationDocuments} collectionName={collectionName} recordId={selected.id} onOpenDocument={openApplicationDocument} busyDocumentPath={busyDocumentPath} />
+              {documentOpenError && <div className="rounded-2xl border border-red-100 bg-red-50 p-4 text-sm font-bold text-red-700 sm:col-span-2">{documentOpenError}</div>}
+              {Object.entries(selected).filter(([key]) => !isPhotoDataField(key) && !isApplicationDocumentField(key)).map(([key, value]) => (
                 <div key={key} className="rounded-2xl border border-[#eadfc8] bg-[#fbf6ea] p-4">
                   <p className="text-xs font-bold uppercase tracking-widest text-[#b98a2f]">{key}</p>
                   <p className="mt-1 whitespace-pre-wrap break-words text-sm text-slate-800">{formatValue(key, value)}</p>

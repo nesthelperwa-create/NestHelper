@@ -12,7 +12,10 @@ import { sendAdditionalPaymentLinkEmail } from "@/lib/sendAdditionalPaymentLinkE
 export const runtime = "nodejs";
 
 const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
-const enableAutomaticTax = process.env.ENABLE_STRIPE_AUTOMATIC_TAX === "true";
+const enableAutomaticTax = process.env.ENABLE_STRIPE_AUTOMATIC_TAX !== "false";
+const nontaxableProductTaxCode = (process.env.STRIPE_NONTAXABLE_TAX_CODE || "txcd_00000000").trim();
+const laundryProductTaxCode = (process.env.STRIPE_LAUNDRY_TAX_CODE || process.env.STRIPE_PRODUCT_TAX_CODE || process.env.STRIPE_TAX_CODE || "txcd_20090012").trim();
+const commercialCleaningTaxCode = (process.env.STRIPE_COMMERCIAL_CLEANING_TAX_CODE || "txcd_20010004").trim();
 
 type AdditionalPaymentBody = {
   requestId?: string;
@@ -47,6 +50,12 @@ function getServiceTitle(data: Record<string, unknown>) {
 function getAdditionalPaymentReplyEmail(serviceId: string) {
   if (serviceId === "commercial-reset") return emailAliases.commercial;
   return serviceId === "laundry-rescue" ? emailAliases.laundry : emailAliases.billing;
+}
+
+function getAdditionalPaymentTaxCode(serviceId: string) {
+  if (serviceId === "laundry-rescue") return laundryProductTaxCode;
+  if (serviceId === "commercial-reset") return commercialCleaningTaxCode;
+  return nontaxableProductTaxCode;
 }
 
 export async function POST(request: Request) {
@@ -94,7 +103,9 @@ export async function POST(request: Request) {
           price_data: {
             currency: "usd",
             unit_amount: amountCents,
+            tax_behavior: "exclusive",
             product_data: {
+              tax_code: getAdditionalPaymentTaxCode(serviceId),
               name: "NestHelper additional balance",
               description: `${reason} — ${formatMoney(amount)}`,
             },

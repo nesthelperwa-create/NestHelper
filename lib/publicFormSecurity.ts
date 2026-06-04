@@ -2,6 +2,12 @@ import { NextResponse } from "next/server";
 
 type SubmissionCollection = "serviceRequests" | "helperApplications" | "partnerApplications" | "contactMessages";
 
+export type PublicSubmissionFile = {
+  fieldName: string;
+  label: string;
+  file: File;
+};
+
 type RateLimitEntry = {
   count: number;
   resetAt: number;
@@ -9,6 +15,20 @@ type RateLimitEntry = {
 
 const rateLimitStore = new Map<string, RateLimitEntry>();
 const WINDOW_MS = 15 * 60 * 1000;
+const MAX_APPLICATION_DOCUMENTS = 5;
+const MAX_APPLICATION_DOCUMENT_BYTES = 5_000_000;
+const MAX_APPLICATION_DOCUMENT_TOTAL_BYTES = 18_000_000;
+
+const allowedApplicationDocumentTypes = new Set([
+  "application/pdf",
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/heic",
+  "image/heif",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+]);
 
 const commonAllowedFields = [
   "fullName",
@@ -124,12 +144,20 @@ const helperAllowedFields = [
   "phone",
   "city",
   "availability",
+  "weeklyCapacity",
   "services",
+  "experienceLevel",
   "experience",
   "transportation",
-  "backgroundConsent",
+  "travelRadius",
+  "workStyle",
+  "comfortLevel",
+  "notWillingToDo",
   "references",
   "notes",
+  "uploadedDocumentLabels",
+  "uploadedDocumentSummary",
+  "backgroundConsent",
 ];
 
 const partnerAllowedFields = [
@@ -139,10 +167,18 @@ const partnerAllowedFields = [
   "phone",
   "serviceType",
   "website",
+  "businessStructure",
   "serviceArea",
+  "serviceAreaDetails",
+  "licenseStatus",
+  "insuranceStatus",
   "licenseInfo",
   "insuranceInfo",
   "capacity",
+  "availability",
+  "documentsAvailable",
+  "uploadedDocumentLabels",
+  "uploadedDocumentSummary",
   "notes",
   "consent",
 ];
@@ -158,8 +194,8 @@ const allowedFieldsByCollection: Record<SubmissionCollection, string[]> = {
 
 const maxPayloadBytesByCollection: Record<SubmissionCollection, number> = {
   serviceRequests: 3_000_000,
-  helperApplications: 80_000,
-  partnerApplications: 80_000,
+  helperApplications: 160_000,
+  partnerApplications: 160_000,
   contactMessages: 40_000,
 };
 
@@ -183,9 +219,11 @@ const textLimits: Record<string, number> = {
   references: 1200,
   services: 1200,
   serviceArea: 1200,
+  serviceAreaDetails: 1200,
   licenseInfo: 1200,
   insuranceInfo: 1200,
   capacity: 1000,
+  uploadedDocumentSummary: 900,
 };
 
 const honeypotFields = [
@@ -278,6 +316,9 @@ function validateRequired(collection: SubmissionCollection, payload: Record<stri
   const requireText = (field: string, label = field) => {
     if (!trimText(payload[field])) missing.push(label);
   };
+  const requireArray = (field: string, label = field) => {
+    if (!Array.isArray(payload[field]) || !(payload[field] as unknown[]).filter(Boolean).length) missing.push(label);
+  };
   const requireEmail = () => {
     if (!looksLikeEmail(payload.email)) missing.push("valid email");
   };
@@ -311,7 +352,7 @@ function validateRequired(collection: SubmissionCollection, payload: Record<stri
     requireText("ownerName", "owner/contact name");
     requireEmail();
     requireText("phone", "phone");
-    requireText("serviceType", "service type");
+    requireArray("serviceType", "service type");
     requireTrue("consent", "partner acknowledgement");
   }
 
@@ -362,6 +403,69 @@ function checkHoneypot(payload: Record<string, unknown>) {
   if (filled) throw new PublicFormError("Submission could not be accepted.", 400);
 }
 
+function isAllowedApplicationDocument(file: File) {
+  const type = (file.type || "").toLowerCase();
+  if (allowedApplicationDocumentTypes.has(type)) return true;
+  const name = file.name.toLowerCase();
+  return /\.(pdf|doc|docx|jpg|jpeg|png|webp|heic|heif)$/.test(name);
+}
+
+function cleanUploadLabel(value: unknown) {
+  const label = trimText(value, 80);
+  return label || "Other";
+}
+
+function parsePayloadFromFormData(formData: FormData) {
+  const rawPayload = formData.get("payload");
+  if (typeof rawPayload !== "string") throw new PublicFormError("Missing application details.", 400);
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(rawPayload);
+  } catch {
+    throw new PublicFormError("Invalid application details.", 400);
+  }
+
+  if (!isObject(parsed)) throw new PublicFormError("Invalid application details.", 400);
+  return parsed;
+}
+
+function parseApplicationDocuments(formData: FormData) {
+  const files: PublicSubmissionFile[] = [];
+  let totalBytes = 0;
+
+  for (const [fieldName, value] of formData.entries()) {
+    if (!fieldName.startsWith("documentFile_")) continue;
+    if (!(value instanceof File) || !value.name || value.size <= 0) continue;
+
+    if (files.length >= MAX_APPLICATION_DOCUMENTS) {
+      throw new PublicFormError(`Please upload no more than ${MAX_APPLICATION_DOCUMENTS} documents.`, 413);
+    }
+
+    if (value.size > MAX_APPLICATION_DOCUMENT_BYTES) {
+      throw new PublicFormError(`Each document must be under ${Math.round(MAX_APPLICATION_DOCUMENT_BYTES / 1_000_000)} MB.`, 413);
+    }
+
+    if (!isAllowedApplicationDocument(value)) {
+      throw new PublicFormError("Documents must be PDF, Word, JPG, PNG, WEBP, HEIC, or HEIF files.", 415);
+    }
+
+    totalBytes += value.size;
+    if (totalBytes > MAX_APPLICATION_DOCUMENT_TOTAL_BYTES) {
+      throw new PublicFormError("Uploaded documents are too large together. Please upload fewer files.", 413);
+    }
+
+    const index = fieldName.replace("documentFile_", "");
+    files.push({
+      fieldName,
+      label: cleanUploadLabel(formData.get(`documentLabel_${index}`)),
+      file: value,
+    });
+  }
+
+  return files;
+}
+
 export class PublicFormError extends Error {
   status: number;
 
@@ -403,6 +507,29 @@ export async function preparePublicSubmission(request: Request, collection: Subm
   }
 
   return cleaned;
+}
+
+export async function preparePublicMultipartSubmission(request: Request, collection: "helperApplications" | "partnerApplications") {
+  const contentType = request.headers.get("content-type") || "";
+  if (!contentType.toLowerCase().includes("multipart/form-data")) {
+    throw new PublicFormError("Invalid application format.", 415);
+  }
+
+  enforceRateLimit(request, collection);
+
+  const formData = await request.formData();
+  const parsed = parsePayloadFromFormData(formData);
+  checkHoneypot(parsed);
+
+  const cleaned = sanitizePayload(collection, parsed);
+  const files = parseApplicationDocuments(formData);
+  const missing = validateRequired(collection, cleaned);
+
+  if (missing.length) {
+    throw new PublicFormError(`Please complete: ${missing.join(", ")}.`, 400);
+  }
+
+  return { payload: cleaned, files };
 }
 
 export function publicFormErrorResponse(error: unknown, fallbackMessage: string) {

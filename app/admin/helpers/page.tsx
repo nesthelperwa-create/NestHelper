@@ -15,14 +15,12 @@ export default function AdminHelpersPage() {
           { key: "email", label: "Email" },
           { key: "city", label: "City" },
           { key: "availability", label: "Availability" },
+          { key: "services", label: "Services" },
           { key: "transportation", label: "Transport" },
-          { key: "experience", label: "Experience" },
+          { key: "applicationDocumentCount", label: "Docs" },
         ]}
-        statuses={["New", "Reviewing", "Interview", "Background Check Needed", "Approved", "Rejected", "On Hold"]}
+        statuses={["New", "Reviewing", "Needs Documents", "Phone Screen", "References", "Background Check", "Approved", "Backup List", "Rejected", "Archived", "On Hold"]}
       />
     </AdminShell>
   );
 }
-
-
-

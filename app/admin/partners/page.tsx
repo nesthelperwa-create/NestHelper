@@ -16,13 +16,11 @@ export default function AdminPartnersPage() {
           { key: "email", label: "Email" },
           { key: "serviceType", label: "Services" },
           { key: "serviceArea", label: "Service Area" },
-          { key: "insuranceInfo", label: "Insurance" },
+          { key: "insuranceStatus", label: "Insurance" },
+          { key: "applicationDocumentCount", label: "Docs" },
         ]}
-        statuses={["New", "Reviewing", "Need Documents", "Approved Partner", "Rejected", "On Hold"]}
+        statuses={["New", "Reviewing", "Needs Documents", "Phone Screen", "References", "Background Check", "Approved", "Approved Partner", "Backup List", "Rejected", "Archived", "On Hold"]}
       />
     </AdminShell>
   );
 }
-
-
-

@@ -891,7 +891,6 @@ export function CommercialResetForm() {
               <option>Nearby area — please review</option>
             </select>
           </Field>
-          <Field label="ZIP" required><input className="input" required autoComplete="postal-code" inputMode="numeric" pattern="\d{5}(-\d{4})?" placeholder="98402" value={form.zip} onChange={(e) => update("zip", normalizeZipInput(e.target.value))} /></Field>
           <Field label="Street address" required><input className="input" required autoComplete="address-line1" placeholder="123 Main St" value={form.address} onChange={(e) => update("address", e.target.value)} /></Field>
           <Field label="Suite / unit (optional)"><input className="input" autoComplete="address-line2" placeholder="Suite, unit, floor, gate/access note, etc." value={form.address2} onChange={(e) => update("address2", e.target.value)} /></Field>
           <Field label="City / community" required><input className="input" required autoComplete="address-level2" value={form.city} onChange={(e) => update("city", e.target.value)} /></Field>
@@ -900,6 +899,7 @@ export function CommercialResetForm() {
               <option value="WA">Washington</option>
             </select>
           </Field>
+          <Field label="ZIP" required><input className="input" required autoComplete="postal-code" inputMode="numeric" pattern="\d{5}(-\d{4})?" placeholder="98402" value={form.zip} onChange={(e) => update("zip", normalizeZipInput(e.target.value))} /></Field>
         </div>
         <p className="rounded-2xl border border-nest-gold/15 bg-nest-cream/70 px-4 py-3 text-xs font-bold leading-5 text-nest-ink/65">
           Use the service address so we can confirm area, access, availability, and any required taxes. If the address appears incomplete or outside our reviewed service area, NestHelper will follow up before sending a quote or payment link.

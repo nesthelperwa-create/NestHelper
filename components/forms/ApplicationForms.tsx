@@ -7,10 +7,7 @@ import { ArrowRight } from "lucide-react";
 import { formatPhoneNumber } from "@/lib/formatPhoneNumber";
 import { focusFirstInvalidField } from "@/lib/formInvalidFocus";
 
-
 type Status = "idle" | "loading" | "success" | "error";
-
-
 type ApplicationPath = "helper" | "partner";
 
 const applicationOptions: Array<{
@@ -39,6 +36,187 @@ const applicationOptions: Array<{
   },
 ];
 
+const helperServiceOptions = [
+  "Parent Reset / home reset support",
+  "Family Reset / deeper reset visits",
+  "Laundry folding and put-away",
+  "Errands / pickup and drop-off",
+  "Light organizing",
+  "Dishes / kitchen reset",
+  "Changing linens / bed reset",
+  "Pet-friendly homes",
+];
+
+const helperAvailabilityOptions = [
+  "Weekday mornings",
+  "Weekday afternoons",
+  "Weekday evenings",
+  "Saturday",
+  "Sunday",
+  "School-hour blocks",
+  "Occasional/on-call openings",
+];
+
+const helperWorkStyleOptions = [
+  "Comfortable around children/family homes",
+  "Comfortable with pets",
+  "Okay with laundry-heavy visits",
+  "Okay with errand driving",
+  "Prefers cleaning/reset visits only",
+  "Prefers organizing/laundry support",
+];
+
+const helperComfortOptions = [
+  "Comfortable around children",
+  "Comfortable around pets",
+  "Comfortable with laundry",
+  "Comfortable with kitchens",
+  "Comfortable with bathrooms",
+  "Comfortable lifting 20–30 lbs",
+  "Comfortable driving for errands",
+  "Comfortable working while family is home",
+  "Prefer empty homes only",
+];
+
+const helperNotWillingOptions = [
+  "No bathrooms",
+  "No pet messes",
+  "No biohazards",
+  "No heavy lifting",
+  "No driving errands",
+  "No homes with smoking",
+  "No homes with aggressive pets",
+  "Other / depends on the job",
+];
+
+const helperDocumentLabelOptions = [
+  "Resume / work history",
+  "Reference letter",
+  "Cleaning or caregiving experience proof",
+  "Food handler card",
+  "CPR / First Aid",
+  "Vehicle insurance",
+  "Portfolio / work photos",
+  "Other",
+];
+
+const partnerServiceOptions = [
+  "Residential cleaning support",
+  "Commercial/janitorial cleaning",
+  "Laundry wash/fold provider",
+  "Errand / delivery support",
+  "Home organizing",
+  "Carpet / floor care",
+  "Interior glass / specialty cleaning",
+  "Short-term rental turnover",
+];
+
+const partnerAreaOptions = [
+  "Woodinville",
+  "Bothell / Kenmore",
+  "Kirkland / Redmond",
+  "Bellevue / Eastside",
+  "Pierce County",
+  "Seattle / nearby",
+  "Other nearby area",
+];
+
+const partnerDocumentOptions = [
+  "Business license / UBI",
+  "Proof of insurance",
+  "Bonding info if applicable",
+  "References",
+  "Photos or portfolio",
+  "Online reviews / social proof",
+];
+
+const partnerDocumentLabelOptions = [
+  "Business license",
+  "Certificate of insurance",
+  "Bonding certificate",
+  "Service menu / rate sheet",
+  "Team roster",
+  "Background-check policy",
+  "Reference letter",
+  "Portfolio / work photos",
+  "Other",
+];
+
+const helperDefaultState = {
+  fullName: "",
+  email: "",
+  phone: "",
+  city: "",
+  availability: [] as string[],
+  weeklyCapacity: "",
+  services: [] as string[],
+  experienceLevel: "",
+  experience: "",
+  transportation: "",
+  travelRadius: "",
+  workStyle: [] as string[],
+  comfortLevel: [] as string[],
+  notWillingToDo: [] as string[],
+  references: "",
+  notes: "",
+  backgroundConsent: false,
+};
+
+type HelperFormState = typeof helperDefaultState;
+
+const partnerDefaultState = {
+  businessName: "",
+  ownerName: "",
+  email: "",
+  phone: "",
+  serviceType: [] as string[],
+  website: "",
+  businessStructure: "",
+  serviceArea: [] as string[],
+  serviceAreaDetails: "",
+  licenseStatus: "",
+  insuranceStatus: "",
+  licenseInfo: "",
+  insuranceInfo: "",
+  capacity: "",
+  availability: [] as string[],
+  documentsAvailable: [] as string[],
+  notes: "",
+  consent: false,
+};
+
+type PartnerFormState = typeof partnerDefaultState;
+
+type ApplicationDocumentDraft = {
+  id: string;
+  label: string;
+  file: File | null;
+};
+
+const emptyDocumentDraft = (): ApplicationDocumentDraft => ({
+  id: Math.random().toString(36).slice(2),
+  label: "",
+  file: null,
+});
+
+function buildApplicationFormData(payload: Record<string, unknown>, documents: ApplicationDocumentDraft[]) {
+  const selectedDocuments = documents.filter((document) => document.file);
+  const payloadWithSummary = {
+    ...payload,
+    uploadedDocumentLabels: selectedDocuments.map((document) => document.label || "Other"),
+    uploadedDocumentSummary: selectedDocuments.map((document) => `${document.label || "Other"}: ${document.file?.name || "uploaded file"}`).join("\n"),
+  };
+
+  const formData = new FormData();
+  formData.append("payload", JSON.stringify(payloadWithSummary));
+  selectedDocuments.forEach((document, index) => {
+    if (!document.file) return;
+    formData.append(`documentLabel_${index}`, document.label || "Other");
+    formData.append(`documentFile_${index}`, document.file);
+  });
+  return formData;
+}
+
 export function ApplicationFormChooser() {
   const [selected, setSelected] = useState<ApplicationPath | null>(null);
   const selectedOption = applicationOptions.find((option) => option.key === selected);
@@ -47,18 +225,17 @@ export function ApplicationFormChooser() {
     <section className="mx-auto max-w-6xl px-4 py-14 sm:px-6 lg:px-8">
       <div className="overflow-hidden rounded-[2.5rem] border border-nest-gold/18 bg-white/90 shadow-soft backdrop-blur">
         <div className="bg-gradient-to-br from-nest-cream via-white to-nest-mint/30 p-6 text-center sm:p-8">
-        <div className="mx-auto max-w-3xl">
-          <p className="text-sm font-black uppercase tracking-[0.22em] text-nest-gold">Choose your application path</p>
-          <h2 className="mt-3 text-3xl font-black tracking-tight text-nest-teal sm:text-4xl">Which best describes you?</h2>
-          <p className="mt-3 text-nest-ink/70">
-            Select one of the two cards below. The selected card will animate and the correct application will open underneath.
-          </p>
-          <div className="mx-auto mt-5 inline-flex items-center gap-2 rounded-full border border-nest-gold/25 bg-nest-cream px-4 py-2 text-sm font-black text-nest-teal shadow-sm">
-            <span className="flex h-2.5 w-2.5 rounded-full bg-nest-gold motion-safe:animate-pulse" />
-            Click or tap a card to continue
+          <div className="mx-auto max-w-3xl">
+            <p className="text-sm font-black uppercase tracking-[0.22em] text-nest-gold">Choose your application path</p>
+            <h2 className="mt-3 text-3xl font-black tracking-tight text-nest-teal sm:text-4xl">Which best describes you?</h2>
+            <p className="mt-3 text-nest-ink/70">
+              Select one of the two cards below. The selected card will animate and the correct application will open underneath.
+            </p>
+            <div className="mx-auto mt-5 inline-flex items-center gap-2 rounded-full border border-nest-gold/25 bg-nest-cream px-4 py-2 text-sm font-black text-nest-teal shadow-sm">
+              <span className="flex h-2.5 w-2.5 rounded-full bg-nest-gold motion-safe:animate-pulse" />
+              Click or tap a card to continue
+            </div>
           </div>
-        </div>
-
         </div>
 
         <div className="grid items-stretch gap-5 p-5 sm:p-6 lg:grid-cols-2 lg:p-8">
@@ -186,45 +363,134 @@ export function ApplicationFormChooser() {
 export function HelperApplicationForm() {
   const [status, setStatus] = useState<Status>("idle");
   const [message, setMessage] = useState("");
-  const [form, setForm] = useState({ fullName:"", email:"", phone:"", city:"", availability:"", services:"", experience:"", transportation:"", backgroundConsent:false, references:"", notes:"" });
-  const update = (name:string, value:unknown) => setForm(prev=>({...prev,[name]:value}));
-  async function submit(e:FormEvent){
-    e.preventDefault(); setStatus("loading"); setMessage("");
+  const [form, setForm] = useState<HelperFormState>(helperDefaultState);
+  const [documents, setDocuments] = useState<ApplicationDocumentDraft[]>([emptyDocumentDraft()]);
+  const update = (name: keyof HelperFormState, value: unknown) => setForm((prev) => ({ ...prev, [name]: value }));
+  const toggle = (name: "availability" | "services" | "workStyle" | "comfortLevel" | "notWillingToDo", value: string, checked: boolean) => {
+    setForm((prev) => ({
+      ...prev,
+      [name]: checked ? [...prev[name], value] : prev[name].filter((item) => item !== value),
+    }));
+  };
+
+  async function submit(e: FormEvent) {
+    e.preventDefault();
+    setStatus("loading");
+    setMessage("");
     try {
       const response = await fetch("/api/submit-helper-application", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: buildApplicationFormData(form, documents),
       });
       const result = await response.json().catch(() => null);
       if (!response.ok || !result?.ok) throw new Error(result?.error || "Helper application failed");
 
       setStatus("success");
       setMessage("Application received. We’ll review it and follow up about next steps. Sensitive ID/background-check steps happen through secure providers, not this form.");
-      setForm({ fullName:"", email:"", phone:"", city:"", availability:"", services:"", experience:"", transportation:"", backgroundConsent:false, references:"", notes:"" });
+      setForm(helperDefaultState);
+      setDocuments([emptyDocumentDraft()]);
+    } catch (err) {
+      console.error(err);
+      setStatus("error");
+      setMessage("Something went wrong. Please try again.");
     }
-    catch(err){ console.error(err); setStatus("error"); setMessage("Something went wrong. Please try again."); }
   }
+
   return (
     <form onSubmit={submit} onInvalidCapture={focusFirstInvalidField} className="grid gap-5 overflow-hidden rounded-[2.5rem] border border-nest-gold/18 bg-white/90 p-5 shadow-soft backdrop-blur sm:p-8">
       <div className="rounded-[1.75rem] bg-gradient-to-br from-nest-cream via-white to-nest-mint/30 p-5">
         <p className="text-xs font-black uppercase tracking-[0.22em] text-nest-gold">Individual helper</p>
         <h2 className="mt-2 text-2xl font-black text-nest-teal">Part-Time Helper Application</h2>
-        <p className="mt-2 text-nest-ink/70">For individuals interested in becoming a NestHelper Gold Star Checked helper.</p>
+        <p className="mt-2 text-nest-ink/70">For individuals interested in becoming a NestHelper Gold Star Checked helper. Most questions are simple choices; use the notes boxes only where details help.</p>
       </div>
+
       <Grid>
-        <Input label="Full name" value={form.fullName} onChange={(v)=>update('fullName',v)} required />
-        <Input label="Phone" value={form.phone} onChange={(v)=>update('phone',formatPhoneNumber(v))} required inputMode="tel" autoComplete="tel" placeholder="555-555-5555" />
-        <Input label="Email" type="email" value={form.email} onChange={(v)=>update('email',v)} required />
-        <Input label="City" value={form.city} onChange={(v)=>update('city',v)} required />
+        <Input label="Full name" value={form.fullName} onChange={(v) => update("fullName", v)} required />
+        <Input label="Phone" value={form.phone} onChange={(v) => update("phone", formatPhoneNumber(v))} required inputMode="tel" autoComplete="tel" placeholder="555-555-5555" />
+        <Input label="Email" type="email" value={form.email} onChange={(v) => update("email", v)} required />
+        <Input label="City" value={form.city} onChange={(v) => update("city", v)} required />
       </Grid>
-      <Textarea label="Availability" value={form.availability} onChange={(v)=>update('availability',v)} placeholder="Days/times you could work" />
-      <Textarea label="Services you’re comfortable with" value={form.services} onChange={(v)=>update('services',v)} placeholder="Home reset, laundry folding, errands, organizing, etc." />
-      <Textarea label="Relevant experience" value={form.experience} onChange={(v)=>update('experience',v)} />
-      <Input label="Reliable transportation?" value={form.transportation} onChange={(v)=>update('transportation',v)} placeholder="Yes/no/details" />
-      <Textarea label="References" value={form.references} onChange={(v)=>update('references',v)} placeholder="Names/contact info or 'available upon request'" />
-      <Textarea label="Anything else?" value={form.notes} onChange={(v)=>update('notes',v)} />
-      <label className="flex gap-3 rounded-2xl bg-nest-cream p-4 text-sm font-semibold"><input type="checkbox" required className="mt-1" checked={form.backgroundConsent} onChange={(e)=>update('backgroundConsent',e.target.checked)} /> I understand Gold Star Checked onboarding may include identity review, background screening, references, service standards, and role-specific checks. I will not submit SSN/ID photos through this website form.</label>
+
+      <CheckboxGroup
+        label="When are you usually available?"
+        options={helperAvailabilityOptions}
+        values={form.availability}
+        onChange={(option, checked) => toggle("availability", option, checked)}
+      />
+
+      <Grid>
+        <Select label="Weekly capacity" value={form.weeklyCapacity} onChange={(v) => update("weeklyCapacity", v)} placeholder="Choose one">
+          <option>1 short shift per week</option>
+          <option>2–3 shifts per week</option>
+          <option>4+ shifts per week</option>
+          <option>Occasional fill-in only</option>
+          <option>Not sure yet</option>
+        </Select>
+        <Select label="Reliable transportation?" value={form.transportation} onChange={(v) => update("transportation", v)} placeholder="Choose one" required>
+          <option>Yes — I have a reliable vehicle</option>
+          <option>Yes — I can reliably get to visits without my own vehicle</option>
+          <option>Sometimes — depends on location</option>
+          <option>No / not right now</option>
+        </Select>
+        <Select label="Travel radius" value={form.travelRadius} onChange={(v) => update("travelRadius", v)} placeholder="Choose one">
+          <option>Within 5 miles</option>
+          <option>Within 10 miles</option>
+          <option>Within 15 miles</option>
+          <option>Within 25 miles</option>
+          <option>Depends on the visit/pay</option>
+        </Select>
+        <Select label="Experience level" value={form.experienceLevel} onChange={(v) => update("experienceLevel", v)} placeholder="Choose one">
+          <option>New but willing to learn NestHelper standards</option>
+          <option>Some personal/family home-help experience</option>
+          <option>Paid cleaning/home-help experience</option>
+          <option>Professional cleaning/organizing experience</option>
+          <option>Caregiving/family support background</option>
+        </Select>
+      </Grid>
+
+      <CheckboxGroup
+        label="Services you’re comfortable with"
+        options={helperServiceOptions}
+        values={form.services}
+        onChange={(option, checked) => toggle("services", option, checked)}
+      />
+
+      <CheckboxGroup
+        label="Work-style fit"
+        options={helperWorkStyleOptions}
+        values={form.workStyle}
+        onChange={(option, checked) => toggle("workStyle", option, checked)}
+      />
+
+      <CheckboxGroup
+        label="Comfort level"
+        options={helperComfortOptions}
+        values={form.comfortLevel}
+        onChange={(option, checked) => toggle("comfortLevel", option, checked)}
+      />
+
+      <CheckboxGroup
+        label="Not willing to do / needs approval first"
+        options={helperNotWillingOptions}
+        values={form.notWillingToDo}
+        onChange={(option, checked) => toggle("notWillingToDo", option, checked)}
+      />
+
+      <Textarea label="Relevant experience details" value={form.experience} onChange={(v) => update("experience", v)} placeholder="Briefly share home-help, cleaning, laundry, organizing, childcare-adjacent, errands, or customer service experience." />
+      <Textarea label="References" value={form.references} onChange={(v) => update("references", v)} placeholder="Names/contact info or 'available upon request'." />
+      <Textarea label="Anything else?" value={form.notes} onChange={(v) => update("notes", v)} placeholder="Schedule limits, areas you prefer, languages, allergies/sensitivities, or anything NestHelper should know." />
+
+      <ApplicationDocumentUploadSection
+        documents={documents}
+        setDocuments={setDocuments}
+        labelOptions={helperDocumentLabelOptions}
+        description="Optional only. Upload documents you already have; NestHelper can request the rest later through onboarding."
+      />
+
+      <label className="flex gap-3 rounded-2xl bg-nest-cream p-4 text-sm font-semibold">
+        <input type="checkbox" required className="mt-1" checked={form.backgroundConsent} onChange={(e) => update("backgroundConsent", e.target.checked)} />
+        I understand Gold Star Checked onboarding may include identity review, background screening, references, service standards, and role-specific checks. I will not submit SSN/ID photos through this website form.
+      </label>
       <Submit status={status}>Submit Helper Application</Submit>
       {message && <Message status={status}>{message}</Message>}
     </form>
@@ -234,54 +500,272 @@ export function HelperApplicationForm() {
 export function PartnerApplicationForm() {
   const [status, setStatus] = useState<Status>("idle");
   const [message, setMessage] = useState("");
-  const [form, setForm] = useState({ businessName:"", ownerName:"", email:"", phone:"", serviceType:"", website:"", serviceArea:"", licenseInfo:"", insuranceInfo:"", capacity:"", notes:"", consent:false });
-  const update = (name:string, value:unknown) => setForm(prev=>({...prev,[name]:value}));
-  async function submit(e:FormEvent){
-    e.preventDefault(); setStatus("loading"); setMessage("");
+  const [form, setForm] = useState<PartnerFormState>(partnerDefaultState);
+  const [documents, setDocuments] = useState<ApplicationDocumentDraft[]>([emptyDocumentDraft()]);
+  const update = (name: keyof PartnerFormState, value: unknown) => setForm((prev) => ({ ...prev, [name]: value }));
+  const toggle = (name: "serviceType" | "serviceArea" | "availability" | "documentsAvailable", value: string, checked: boolean) => {
+    setForm((prev) => ({
+      ...prev,
+      [name]: checked ? [...prev[name], value] : prev[name].filter((item) => item !== value),
+    }));
+  };
+
+  async function submit(e: FormEvent) {
+    e.preventDefault();
+    setStatus("loading");
+    setMessage("");
     try {
       const response = await fetch("/api/submit-partner-application", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: buildApplicationFormData(form, documents),
       });
       const result = await response.json().catch(() => null);
       if (!response.ok || !result?.ok) throw new Error(result?.error || "Partner application failed");
 
       setStatus("success");
       setMessage("Partner application received. We’ll review service fit, standards, insurance/business information, and availability before next steps.");
-      setForm({ businessName:"", ownerName:"", email:"", phone:"", serviceType:"", website:"", serviceArea:"", licenseInfo:"", insuranceInfo:"", capacity:"", notes:"", consent:false });
+      setForm(partnerDefaultState);
+      setDocuments([emptyDocumentDraft()]);
+    } catch (err) {
+      console.error(err);
+      setStatus("error");
+      setMessage("Something went wrong. Please try again.");
     }
-    catch(err){ console.error(err); setStatus("error"); setMessage("Something went wrong. Please try again."); }
   }
+
   return (
     <form onSubmit={submit} onInvalidCapture={focusFirstInvalidField} className="grid gap-5 overflow-hidden rounded-[2.5rem] border border-nest-gold/18 bg-white/90 p-5 shadow-soft backdrop-blur sm:p-8">
       <div className="rounded-[1.75rem] bg-gradient-to-br from-nest-cream via-white to-nest-mint/30 p-5">
         <p className="text-xs font-black uppercase tracking-[0.22em] text-nest-gold">Partner provider</p>
         <h2 className="mt-2 text-2xl font-black text-nest-teal">Independent Contractor / Partner Provider Application</h2>
-        <p className="mt-2 text-nest-ink/70">For cleaners, laundromats, errand providers, and local businesses interested in partnering with NestHelper.</p>
+        <p className="mt-2 text-nest-ink/70">For cleaners, laundromats, errand providers, organizers, and local businesses interested in partnering with NestHelper.</p>
       </div>
+
       <Grid>
-        <Input label="Business name" value={form.businessName} onChange={(v)=>update('businessName',v)} required />
-        <Input label="Owner/contact name" value={form.ownerName} onChange={(v)=>update('ownerName',v)} required />
-        <Input label="Phone" value={form.phone} onChange={(v)=>update('phone',formatPhoneNumber(v))} required inputMode="tel" autoComplete="tel" placeholder="555-555-5555" />
-        <Input label="Email" type="email" value={form.email} onChange={(v)=>update('email',v)} required />
+        <Input label="Business name" value={form.businessName} onChange={(v) => update("businessName", v)} required />
+        <Input label="Owner/contact name" value={form.ownerName} onChange={(v) => update("ownerName", v)} required />
+        <Input label="Phone" value={form.phone} onChange={(v) => update("phone", formatPhoneNumber(v))} required inputMode="tel" autoComplete="tel" placeholder="555-555-5555" />
+        <Input label="Email" type="email" value={form.email} onChange={(v) => update("email", v)} required />
       </Grid>
-      <Input label="Service type" value={form.serviceType} onChange={(v)=>update('serviceType',v)} placeholder="Cleaning, laundromat, errands, organizing, etc." required />
-      <Input label="Website/social link" value={form.website} onChange={(v)=>update('website',v)} />
-      <Textarea label="Service area" value={form.serviceArea} onChange={(v)=>update('serviceArea',v)} />
-      <Textarea label="Business license / UBI / insurance info" value={form.licenseInfo} onChange={(v)=>update('licenseInfo',v)} placeholder="Basic info only. We’ll request documents securely later if needed." />
-      <Textarea label="Insurance / bonding details" value={form.insuranceInfo} onChange={(v)=>update('insuranceInfo',v)} />
-      <Textarea label="Capacity and availability" value={form.capacity} onChange={(v)=>update('capacity',v)} />
-      <Textarea label="Anything else?" value={form.notes} onChange={(v)=>update('notes',v)} />
-      <label className="flex gap-3 rounded-2xl bg-nest-cream p-4 text-sm font-semibold"><input type="checkbox" required className="mt-1" checked={form.consent} onChange={(e)=>update('consent',e.target.checked)} /> I understand this application does not guarantee partnership. NestHelper may review business records, insurance, service quality, reliability, and customer standards.</label>
+
+      <CheckboxGroup
+        label="Service types"
+        options={partnerServiceOptions}
+        values={form.serviceType}
+        onChange={(option, checked) => toggle("serviceType", option, checked)}
+      />
+
+      <Grid>
+        <Input label="Website/social link" value={form.website} onChange={(v) => update("website", v)} placeholder="Website, Instagram, Facebook, Google profile, etc." />
+        <Select label="Business structure" value={form.businessStructure} onChange={(v) => update("businessStructure", v)} placeholder="Choose one">
+          <option>LLC</option>
+          <option>Sole proprietor</option>
+          <option>Corporation</option>
+          <option>Partnership</option>
+          <option>Independent contractor / individual provider</option>
+          <option>Not sure yet</option>
+        </Select>
+        <Select label="Business license / UBI status" value={form.licenseStatus} onChange={(v) => update("licenseStatus", v)} placeholder="Choose one">
+          <option>Active Washington business license / UBI</option>
+          <option>Applied / pending</option>
+          <option>Licensed in another state</option>
+          <option>No license yet</option>
+          <option>Not sure</option>
+        </Select>
+        <Select label="Insurance status" value={form.insuranceStatus} onChange={(v) => update("insuranceStatus", v)} placeholder="Choose one">
+          <option>General liability insurance active</option>
+          <option>Bonded and insured</option>
+          <option>Insurance pending</option>
+          <option>No insurance yet</option>
+          <option>Not sure</option>
+        </Select>
+        <Select label="Capacity" value={form.capacity} onChange={(v) => update("capacity", v)} placeholder="Choose one">
+          <option>1–2 jobs per week</option>
+          <option>3–5 jobs per week</option>
+          <option>6+ jobs per week</option>
+          <option>Recurring route capacity</option>
+          <option>Occasional overflow only</option>
+          <option>Not sure yet</option>
+        </Select>
+      </Grid>
+
+      <CheckboxGroup
+        label="Service areas"
+        options={partnerAreaOptions}
+        values={form.serviceArea}
+        onChange={(option, checked) => toggle("serviceArea", option, checked)}
+      />
+      <Textarea label="Service area details" value={form.serviceAreaDetails} onChange={(v) => update("serviceAreaDetails", v)} placeholder="Add exact cities, ZIP codes, travel limits, or areas you do not cover." />
+
+      <CheckboxGroup
+        label="Availability / schedule fit"
+        options={helperAvailabilityOptions}
+        values={form.availability}
+        onChange={(option, checked) => toggle("availability", option, checked)}
+      />
+
+      <CheckboxGroup
+        label="Documents or proof you can provide later"
+        options={partnerDocumentOptions}
+        values={form.documentsAvailable}
+        onChange={(option, checked) => toggle("documentsAvailable", option, checked)}
+      />
+
+      <ApplicationDocumentUploadSection
+        documents={documents}
+        setDocuments={setDocuments}
+        labelOptions={partnerDocumentLabelOptions}
+        description="Optional only. Upload business documents you already have. Do not upload SSNs or private tax IDs here."
+      />
+
+      <Textarea label="Business license / UBI details" value={form.licenseInfo} onChange={(v) => update("licenseInfo", v)} placeholder="Basic info only. We’ll request documents securely later if needed." />
+      <Textarea label="Insurance / bonding details" value={form.insuranceInfo} onChange={(v) => update("insuranceInfo", v)} placeholder="Carrier/type/status is enough here. Optional certificates can be uploaded above if you already have them." />
+      <Textarea label="Anything else?" value={form.notes} onChange={(v) => update("notes", v)} placeholder="Experience, service standards, equipment, detergents/products, team size, special notes, or questions." />
+
+      <label className="flex gap-3 rounded-2xl bg-nest-cream p-4 text-sm font-semibold">
+        <input type="checkbox" required className="mt-1" checked={form.consent} onChange={(e) => update("consent", e.target.checked)} />
+        I understand this application does not guarantee partnership. NestHelper may review business records, insurance, service quality, reliability, and customer standards.
+      </label>
       <Submit status={status}>Submit Partner Application</Submit>
       {message && <Message status={status}>{message}</Message>}
     </form>
   );
 }
 
-function Input({label,value,onChange,type="text",required=false,placeholder="",inputMode,autoComplete}:{label:string;value:string;onChange:(v:string)=>void;type?:string;required?:boolean;placeholder?:string;inputMode?:HTMLAttributes<HTMLInputElement>["inputMode"];autoComplete?:string}){return <label className="grid gap-2"><span className="label">{label}</span><input type={type} required={required} value={value} placeholder={placeholder} inputMode={inputMode} autoComplete={autoComplete} onChange={(e)=>onChange(e.target.value)} className="input" /></label>}
-function Textarea({label,value,onChange,placeholder=""}:{label:string;value:string;onChange:(v:string)=>void;placeholder?:string}){return <label className="grid gap-2"><span className="label">{label}</span><textarea value={value} placeholder={placeholder} onChange={(e)=>onChange(e.target.value)} className="input min-h-28" /></label>}
-function Grid({children}:{children:ReactNode}){return <div className="grid gap-4 sm:grid-cols-2">{children}</div>}
-function Submit({status,children}:{status:Status;children:ReactNode}){return <button disabled={status==="loading"} className="focus-ring inline-flex items-center justify-center gap-2 rounded-full bg-nest-teal px-6 py-4 font-black text-white shadow-soft transition hover:-translate-y-0.5 hover:bg-nest-teal2 hover:shadow-lift disabled:opacity-60">{status==="loading"?"Submitting...":children}{status!=="loading"&&<ArrowRight size={18} />}</button>}
-function Message({status,children}:{status:Status;children:ReactNode}){return <p className={`rounded-2xl p-4 font-semibold ${status==="success"?"bg-nest-mint/45 text-nest-teal":"bg-red-50 text-red-700"}`}>{children}</p>}
+function ApplicationDocumentUploadSection({
+  documents,
+  setDocuments,
+  labelOptions,
+  description,
+}: {
+  documents: ApplicationDocumentDraft[];
+  setDocuments: (updater: ApplicationDocumentDraft[] | ((prev: ApplicationDocumentDraft[]) => ApplicationDocumentDraft[])) => void;
+  labelOptions: string[];
+  description: string;
+}) {
+  const updateDocument = (id: string, patch: Partial<ApplicationDocumentDraft>) => {
+    setDocuments((prev) => prev.map((document) => (document.id === id ? { ...document, ...patch } : document)));
+  };
+
+  const addDocument = () => setDocuments((prev) => (prev.length >= 5 ? prev : [...prev, emptyDocumentDraft()]));
+  const removeDocument = (id: string) => setDocuments((prev) => (prev.length <= 1 ? [emptyDocumentDraft()] : prev.filter((document) => document.id !== id)));
+
+  return (
+    <div className="rounded-[1.75rem] border border-nest-gold/20 bg-nest-cream p-5">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <p className="text-xs font-black uppercase tracking-[0.22em] text-nest-gold">Optional documents</p>
+          <h3 className="mt-1 text-xl font-black text-nest-teal">Upload and label files you already have</h3>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-nest-ink/70">
+            {description} Accepted files: PDF, Word, JPG, PNG, WEBP, HEIC/HEIF. Max 5 files, 5 MB each.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={addDocument}
+          disabled={documents.length >= 5}
+          className="w-fit rounded-full border border-nest-teal/20 bg-white px-4 py-2 text-xs font-black text-nest-teal shadow-sm transition hover:-translate-y-0.5 hover:border-nest-gold disabled:opacity-50"
+        >
+          Add another file
+        </button>
+      </div>
+
+      <div className="mt-4 grid gap-3">
+        {documents.map((document, index) => (
+          <div key={document.id} className="grid gap-3 rounded-2xl border border-nest-gold/15 bg-white p-4 md:grid-cols-[minmax(0,240px)_1fr_auto] md:items-end">
+            <Select label={`File ${index + 1} label`} value={document.label} onChange={(v) => updateDocument(document.id, { label: v })} placeholder="Choose label">
+              {labelOptions.map((option) => <option key={option}>{option}</option>)}
+            </Select>
+            <label className="grid gap-2">
+              <span className="label">File</span>
+              <input
+                type="file"
+                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp,.heic,.heif,application/pdf,image/*,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                onChange={(e) => updateDocument(document.id, { file: e.target.files?.[0] || null })}
+                className="input file:mr-3 file:rounded-full file:border-0 file:bg-nest-teal file:px-4 file:py-2 file:text-sm file:font-black file:text-white"
+              />
+              {document.file && <span className="text-xs font-semibold text-nest-ink/60">Selected: {document.file.name}</span>}
+            </label>
+            <button
+              type="button"
+              onClick={() => removeDocument(document.id)}
+              className="rounded-full border border-red-200 bg-red-50 px-4 py-3 text-xs font-black text-red-700 transition hover:bg-red-100"
+            >
+              Remove
+            </button>
+          </div>
+        ))}
+      </div>
+
+      <p className="mt-4 rounded-2xl bg-white px-4 py-3 text-xs font-semibold leading-5 text-nest-ink/65">
+        Privacy note: do not upload Social Security numbers, full tax IDs, or sensitive identity/background-check documents unless NestHelper specifically requests them through a secure onboarding step.
+      </p>
+    </div>
+  );
+}
+
+function Input({ label, value, onChange, type = "text", required = false, placeholder = "", inputMode, autoComplete }: { label: string; value: string; onChange: (v: string) => void; type?: string; required?: boolean; placeholder?: string; inputMode?: HTMLAttributes<HTMLInputElement>["inputMode"]; autoComplete?: string }) {
+  return (
+    <label className="grid gap-2">
+      <span className="label">{label}{required && <span className="ml-1 text-red-600">*</span>}</span>
+      <input type={type} required={required} value={value} placeholder={placeholder} inputMode={inputMode} autoComplete={autoComplete} onChange={(e) => onChange(e.target.value)} className="input" />
+    </label>
+  );
+}
+
+function Select({ label, value, onChange, required = false, placeholder = "Choose one", children }: { label: string; value: string; onChange: (v: string) => void; required?: boolean; placeholder?: string; children: ReactNode }) {
+  return (
+    <label className="grid gap-2">
+      <span className="label">{label}{required && <span className="ml-1 text-red-600">*</span>}</span>
+      <select required={required} value={value} onChange={(e) => onChange(e.target.value)} className="input">
+        <option value="">{placeholder}</option>
+        {children}
+      </select>
+    </label>
+  );
+}
+
+function Textarea({ label, value, onChange, placeholder = "" }: { label: string; value: string; onChange: (v: string) => void; placeholder?: string }) {
+  return (
+    <label className="grid gap-2">
+      <span className="label">{label}</span>
+      <textarea value={value} placeholder={placeholder} onChange={(e) => onChange(e.target.value)} className="input min-h-28" />
+    </label>
+  );
+}
+
+function CheckboxGroup({ label, options, values, onChange }: { label: string; options: string[]; values: string[]; onChange: (option: string, checked: boolean) => void }) {
+  return (
+    <div>
+      <div className="label mb-3">{label}</div>
+      <div className="grid gap-2 sm:grid-cols-2">
+        {options.map((option) => {
+          const checked = values.includes(option);
+          return (
+            <label key={option} className={`flex items-center gap-3 rounded-2xl border p-3 text-sm font-semibold transition ${checked ? "border-nest-gold/45 bg-nest-mint/35 text-nest-teal shadow-sm" : "border-nest-gold/10 bg-nest-cream text-nest-ink/78 hover:bg-nest-mint/25"}`}>
+              <input type="checkbox" className="h-4 w-4 accent-nest-teal" checked={checked} onChange={(e) => onChange(option, e.target.checked)} />
+              <span>{option}</span>
+            </label>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function Grid({ children }: { children: ReactNode }) {
+  return <div className="grid gap-4 sm:grid-cols-2">{children}</div>;
+}
+
+function Submit({ status, children }: { status: Status; children: ReactNode }) {
+  return (
+    <button disabled={status === "loading"} className="focus-ring inline-flex items-center justify-center gap-2 rounded-full bg-nest-teal px-6 py-4 font-black text-white shadow-soft transition hover:-translate-y-0.5 hover:bg-nest-teal2 hover:shadow-lift disabled:opacity-60">
+      {status === "loading" ? "Submitting..." : children}
+      {status !== "loading" && <ArrowRight size={18} />}
+    </button>
+  );
+}
+
+function Message({ status, children }: { status: Status; children: ReactNode }) {
+  return <p className={`rounded-2xl p-4 font-semibold ${status === "success" ? "bg-nest-mint/45 text-nest-teal" : "bg-red-50 text-red-700"}`}>{children}</p>;
+}
