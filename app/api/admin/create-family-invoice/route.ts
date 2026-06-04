@@ -160,6 +160,10 @@ async function createLaundryDepositCheckoutFromBreakdown(params: {
   const customerBreakdownText = getString(breakdown.customerBreakdownText);
   const servicePeriodLabel = getString(breakdown.servicePeriodLabel) || formatServicePeriodLabel(breakdown.servicePeriodStart, breakdown.servicePeriodEnd);
   const depositAmount = amountDueNowCents / 100;
+  const discountCredit = cleanNumber(breakdown.discountCredit);
+  const referralCreditAlreadyDeductedNote = discountCredit > 0
+    ? `Referral/customer credit of ${formatMoney(discountCredit)} has already been deducted from this deposit/minimum. The amount shown is the remaining amount due.`
+    : "";
 
   const checkoutParams: any = {
     mode: "payment",
@@ -177,6 +181,7 @@ async function createLaundryDepositCheckoutFromBreakdown(params: {
             name: "Laundry Rescue non-refundable deposit / minimum",
             description: [
               customerBreakdownText || getString(breakdown.customerNote) || "Non-refundable Laundry Rescue deposit/minimum credited toward the final total after dry weigh-in.",
+              referralCreditAlreadyDeductedNote,
               servicePeriodLabel ? `Service period: ${servicePeriodLabel}` : "",
             ].filter(Boolean).join("\n").slice(0, 1000),
           },
@@ -213,6 +218,7 @@ async function createLaundryDepositCheckoutFromBreakdown(params: {
       customerName: fullName,
       customerEmail: email,
       customerPhone: getString(data.phone),
+      referralCreditDeductedAmount: referralCreditAlreadyDeductedNote ? String(Number(discountCredit.toFixed(2))) : "",
     },
   };
 
@@ -238,6 +244,7 @@ async function createLaundryDepositCheckoutFromBreakdown(params: {
         quoteTitle: "Laundry Rescue deposit and final-balance choice",
         quoteBreakdownText: [
           customerBreakdownText,
+          referralCreditAlreadyDeductedNote,
           "This non-refundable deposit/minimum is taxable and credited toward the final Laundry Rescue total.",
           "During Stripe checkout, the customer chooses either auto-charge for the final balance after dry weigh-in or invoice-before-delivery. Laundry is not released until the final balance is fully paid.",
         ].filter(Boolean).join("\n\n"),
@@ -358,6 +365,9 @@ export async function POST(request: Request) {
     const availableCustomerCreditAmount = getTotalCustomerCreditAmount(availableCustomerCredits);
     const totalRequiredCredit = expectedReferralCredit + availableCustomerCreditAmount;
     const savedDiscountCredit = cleanNumber(breakdown.discountCredit);
+    const referralCreditAlreadyDeductedNote = savedDiscountCredit > 0
+      ? `Referral/customer credit of ${formatMoney(savedDiscountCredit)} has already been deducted from this invoice. The amount shown is the remaining amount due.`
+      : "";
 
     if (totalRequiredCredit > 0 && savedDiscountCredit < totalRequiredCredit) {
       return NextResponse.json(
@@ -420,6 +430,7 @@ export async function POST(request: Request) {
         servicePeriodEnd: getString(breakdown.servicePeriodEnd),
         servicePeriodLabel,
         siteUrl,
+        referralCreditDeductedAmount: referralCreditAlreadyDeductedNote ? String(Number(savedDiscountCredit.toFixed(2))) : "",
       },
     });
 
@@ -451,7 +462,7 @@ export async function POST(request: Request) {
         invoice: invoice.id,
         currency: "usd",
         amount: -discountCredit,
-        description: "Discount / credit\nApplied from the approved NestHelper family payment breakdown.",
+        description: ["Referral/customer credit", "Deducted from this final amount due.", "Applied from the approved NestHelper family payment breakdown."].join("\n"),
         metadata: { requestId, serviceId: getString(data.service) || "family-service" },
       });
       attachedLineCount += 1;
@@ -506,7 +517,7 @@ export async function POST(request: Request) {
           dueDate: finalized.due_date,
           serviceTitle,
           quoteTitle: getString(breakdown.quoteTitle) || `${serviceTitle} payment breakdown`,
-          quoteBreakdownText: getString(breakdown.customerBreakdownText),
+          quoteBreakdownText: [getString(breakdown.customerBreakdownText), referralCreditAlreadyDeductedNote].filter(Boolean).join("\n\n"),
           servicePeriodLabel,
           replyToEmail: emailAliases.billing,
         })) as any;

@@ -37,7 +37,7 @@ export default async function ReferralsPage({ searchParams }: ReferralsPageProps
         text={
           referralCode
             ? "Use the button below to request an eligible NestHelper family service with this one-time referral attached."
-            : "NestHelper family referrals are simple: your referred family gets money off, and you get a NestHelper credit after their eligible service is completed."
+            : "NestHelper family referrals are simple: your referred family gets a discount, and you get a NestHelper credit after their eligible service is completed."
         }
         cta={false}
       />
@@ -48,7 +48,7 @@ export default async function ReferralsPage({ searchParams }: ReferralsPageProps
             <div className="grid gap-6 lg:grid-cols-[1fr_0.9fr] lg:items-center">
               <div>
                 <p className="pill-label w-fit"><Gift size={15} /> One-time family referral</p>
-                <h2 className="mt-4 text-3xl font-black text-nest-teal sm:text-4xl">Your family gets money off.</h2>
+                <h2 className="mt-4 text-3xl font-black text-nest-teal sm:text-4xl">Your family gets a referral discount.</h2>
                 <p className="mt-3 font-medium leading-7 text-nest-ink/72">
                   This referral can be used once for an eligible NestHelper family service. Submit your request with the button below and the referral code will stay attached automatically.
                 </p>

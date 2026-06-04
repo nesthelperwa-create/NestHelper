@@ -227,6 +227,9 @@ export async function POST(request: Request) {
     const availableCustomerCreditAmount = getTotalCustomerCreditAmount(availableCustomerCredits);
     const totalRequiredCredit = expectedReferralCredit + availableCustomerCreditAmount;
     const savedDiscountCredit = cleanNumber(savedFamilyBreakdown.discountCredit);
+    const referralCreditAlreadyDeductedNote = !isCommercialReset && savedDiscountCredit > 0
+      ? `Referral/customer credit of ${formatMoney(savedDiscountCredit)} has already been deducted from this amount. The amount shown is the remaining amount due.`
+      : "";
     if (totalRequiredCredit > 0 && (!useCustomInitial || savedDiscountCredit < totalRequiredCredit)) {
       return NextResponse.json(
         {
@@ -255,6 +258,7 @@ export async function POST(request: Request) {
                 name: useCustomInitial ? customTitle : "Laundry Rescue non-refundable deposit / minimum",
                 description: [
                   customNote || "Non-refundable Laundry Rescue deposit/minimum. This amount is credited toward the final laundry total after dry weight, add-ons, bulky items, or approved changes are reviewed.",
+                  referralCreditAlreadyDeductedNote,
                   "Final balance is handled after dry weigh-in. The customer chooses auto-charge or invoice-before-delivery during checkout.",
                 ].filter(Boolean).join("\n"),
               },
@@ -272,7 +276,7 @@ export async function POST(request: Request) {
                 product_data: {
                   tax_code: isCommercialReset && commercialBreakdownHasTaxableLines(savedCommercialBreakdown) ? commercialCleaningTaxCode : nontaxableProductTaxCode,
                   name: customTitle,
-                  description: [customNote || `${serviceTitle} — ${formatMoney(customAmount)}`, servicePeriodLabel ? `Service period: ${servicePeriodLabel}` : ""].filter(Boolean).join("\n"),
+                  description: [customNote || `${serviceTitle} — ${formatMoney(customAmount)}`, referralCreditAlreadyDeductedNote, servicePeriodLabel ? `Service period: ${servicePeriodLabel}` : ""].filter(Boolean).join("\n"),
                 },
               },
               quantity: 1,
@@ -316,6 +320,7 @@ export async function POST(request: Request) {
         customerName: fullName,
         customerEmail: email,
         customerPhone: phone,
+        referralCreditDeductedAmount: referralCreditAlreadyDeductedNote ? String(Number(savedDiscountCredit.toFixed(2))) : "",
       },
     };
 
@@ -339,7 +344,9 @@ export async function POST(request: Request) {
     const servicePrice = isLaundryRescue
       ? `${formatMoney(laundryDepositAmount)} non-refundable deposit/minimum + tax, credited toward the final laundry total`
       : useCustomInitial
-        ? `${formatMoney(customAmount)} custom initial checkout`
+        ? savedDiscountCredit > 0
+          ? `${formatMoney(customAmount)} custom checkout after ${formatMoney(savedDiscountCredit)} referral/customer credit`
+          : `${formatMoney(customAmount)} custom initial checkout`
         : getServicePriceLabel(serviceId, mode);
     let emailSent = false;
     let emailError = "";
@@ -358,11 +365,14 @@ export async function POST(request: Request) {
           city: getString(data.city),
           replyToEmail,
           quoteBreakdownText: isLaundryRescue
-            ? "This deposit/minimum is non-refundable and is credited toward the final Laundry Rescue total. During Stripe checkout, the customer chooses either auto-charge for the final balance after dry weigh-in or invoice-before-delivery. Laundry is not released until the final balance is fully paid."
+            ? [
+                referralCreditAlreadyDeductedNote,
+                "This deposit/minimum is non-refundable and is credited toward the final Laundry Rescue total. During Stripe checkout, the customer chooses either auto-charge for the final balance after dry weigh-in or invoice-before-delivery. Laundry is not released until the final balance is fully paid."
+              ].filter(Boolean).join("\n\n")
             : isCommercialReset && useCustomInitial && shouldIncludeQuoteBreakdown
               ? savedCommercialBreakdownText
               : !isCommercialReset && shouldIncludeFamilyBreakdown
-                ? savedFamilyBreakdownText
+                ? [savedFamilyBreakdownText, referralCreditAlreadyDeductedNote].filter(Boolean).join("\n\n")
                 : "",
           quoteBreakdownTitle: isLaundryRescue
             ? "Laundry Rescue deposit and final-balance choice"
