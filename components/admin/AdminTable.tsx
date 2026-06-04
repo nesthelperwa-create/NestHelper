@@ -619,6 +619,160 @@ function AdminApplicationDocuments({
   );
 }
 
+
+const DETAIL_FIELD_LABELS: Record<string, string> = {
+  fullName: "Name",
+  businessName: "Business",
+  ownerName: "Contact",
+  service: "Service",
+  phone: "Phone",
+  email: "Email",
+  address: "Address",
+  city: "City",
+  state: "State",
+  zip: "ZIP",
+  zipCode: "ZIP",
+  preferredDate: "Preferred date",
+  preferredTime: "Preferred time",
+  roomsOrAreas: "Rooms / areas",
+  requestDetails: "Request details",
+  notes: "Notes",
+  specialInstructions: "Special instructions",
+  promoCode: "Promo",
+  incomingReferralCode: "Referral",
+  availability: "Availability",
+  services: "Services",
+  serviceType: "Services",
+  serviceArea: "Service area",
+  transportation: "Transportation",
+  travelRadius: "Travel radius",
+  experienceLevel: "Experience",
+  comfortLevel: "Comfort level",
+  notWillingToDo: "Limits",
+  insuranceStatus: "Insurance",
+  licenseStatus: "License",
+  businessStructure: "Business structure",
+  applicationDocumentCount: "Docs",
+};
+
+const DETAIL_FIELD_ORDER: Record<string, string[]> = {
+  serviceRequests: [
+    "fullName", "service", "phone", "email", "address", "city", "state", "zip", "zipCode", "preferredDate", "preferredTime", "roomsOrAreas", "requestDetails", "notes", "specialInstructions", "promoCode", "incomingReferralCode",
+  ],
+  helperApplications: [
+    "fullName", "phone", "email", "city", "state", "zip", "availability", "services", "transportation", "travelRadius", "experienceLevel", "comfortLevel", "notWillingToDo", "applicationDocumentCount",
+  ],
+  partnerApplications: [
+    "businessName", "ownerName", "phone", "email", "city", "state", "zip", "serviceType", "serviceArea", "businessStructure", "licenseStatus", "insuranceStatus", "availability", "applicationDocumentCount",
+  ],
+  contactMessages: ["fullName", "name", "phone", "email", "subject", "message", "preferredContactMethod"],
+};
+
+const ADVANCED_FIELD_HIDE_KEYS = new Set([
+  "id",
+  "applicationDocuments",
+  "applicationDocumentSummary",
+  "photoUploads",
+  "uploadedPhotos",
+  "photoDataUrls",
+  "imageDataUrls",
+  "commercialQuoteBreakdown",
+  "familyPaymentBreakdown",
+  "onboardingChecklist",
+]);
+
+function getRecordDisplayName(item: AdminDoc | null | undefined) {
+  return String(item?.fullName || item?.businessName || item?.ownerName || item?.name || item?.email || "Submission");
+}
+
+function getRecordContactLine(item: AdminDoc | null | undefined) {
+  const parts = [item?.phone, item?.email, item?.city].map((value) => String(value || "").trim()).filter(Boolean);
+  return parts.length ? parts.join(" · ") : "No contact details saved";
+}
+
+function getRecordDetailFields(collectionName: string, item: AdminDoc | null | undefined) {
+  if (!item) return [] as Array<{ key: string; label: string; value: unknown }>;
+  const order = DETAIL_FIELD_ORDER[collectionName] || Object.keys(item).slice(0, 12);
+  return order
+    .filter((key) => item[key] !== undefined && item[key] !== null && item[key] !== "")
+    .map((key) => ({ key, label: DETAIL_FIELD_LABELS[key] || key, value: item[key] }));
+}
+
+function AdminDetailSnapshot({ collectionName, item }: { collectionName: string; item: AdminDoc }) {
+  const fields = getRecordDetailFields(collectionName, item);
+  const visibleFields = fields.slice(0, collectionName === "serviceRequests" ? 12 : 10);
+  if (!visibleFields.length) return null;
+
+  return (
+    <div className="mb-5 rounded-3xl border border-[#eadfc8] bg-[#fbf6ea] p-4 shadow-sm sm:p-5">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <p className="text-xs font-black uppercase tracking-[0.18em] text-[#b98a2f]">Snapshot</p>
+          <h4 className="mt-1 truncate text-xl font-black text-[#075c58]">{getRecordDisplayName(item)}</h4>
+          <p className="mt-1 text-sm font-semibold text-slate-600">{getRecordContactLine(item)}</p>
+        </div>
+        <StatusBadge status={item.status} />
+      </div>
+      <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+        {visibleFields.map(({ key, label, value }) => (
+          <div key={key} className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3">
+            <p className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-500">{label}</p>
+            <p className="mt-1 whitespace-pre-wrap break-words text-sm font-bold text-slate-800">{formatValue(key, value)}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function AdminAdvancedRecordDetails({ item }: { item: AdminDoc }) {
+  const entries = Object.entries(item).filter(([key]) => !ADVANCED_FIELD_HIDE_KEYS.has(key) && !isPhotoDataField(key) && !isApplicationDocumentField(key));
+  if (!entries.length) return null;
+
+  return (
+    <details className="rounded-3xl border border-[#eadfc8] bg-white p-4 shadow-sm">
+      <summary className="cursor-pointer text-sm font-black text-[#075c58]">Advanced / full saved answers</summary>
+      <p className="mt-2 text-xs leading-5 text-slate-500">Open this only when you need the complete submitted record for troubleshooting or uncommon fields.</p>
+      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        {entries.map(([key, value]) => (
+          <div key={key} className="rounded-2xl border border-[#eadfc8] bg-[#fbf6ea] p-4">
+            <p className="text-xs font-bold uppercase tracking-widest text-[#b98a2f]">{DETAIL_FIELD_LABELS[key] || key}</p>
+            <p className="mt-1 whitespace-pre-wrap break-words text-sm text-slate-800">{formatValue(key, value)}</p>
+          </div>
+        ))}
+      </div>
+    </details>
+  );
+}
+
+function ApplicationQuickRead({ item, documentCount }: { item: AdminDoc; documentCount: number }) {
+  const serviceValue = item.services || item.serviceType || item.preferredWorkTypes;
+  const availabilityValue = item.availability || item.availabilityStyle;
+  const limitsValue = item.notWillingToDo || item.limits;
+  const statusCount = Object.values((item.onboardingChecklist || {}) as OnboardingChecklist).filter(Boolean).length;
+
+  return (
+    <div className="mb-5 grid gap-3 md:grid-cols-4">
+      <div className="rounded-3xl border border-[#eadfc8] bg-white p-4 shadow-sm md:col-span-2">
+        <p className="text-xs font-black uppercase tracking-[0.18em] text-[#b98a2f]">Best quick read</p>
+        <p className="mt-2 text-sm font-bold leading-6 text-slate-700">{formatValue("services", serviceValue) || "Review services in full answers."}</p>
+        {availabilityValue && <p className="mt-2 text-xs font-semibold leading-5 text-slate-500">Availability: {formatValue("availability", availabilityValue)}</p>}
+        {limitsValue && <p className="mt-1 text-xs font-semibold leading-5 text-slate-500">Limits: {formatValue("notWillingToDo", limitsValue)}</p>}
+      </div>
+      <div className="rounded-3xl border border-[#eadfc8] bg-white p-4 shadow-sm">
+        <p className="text-xs font-black uppercase tracking-[0.18em] text-[#b98a2f]">Docs</p>
+        <p className="mt-2 text-2xl font-black text-[#075c58]">{documentCount}</p>
+        <p className="text-xs font-semibold text-slate-500">uploaded file{documentCount === 1 ? "" : "s"}</p>
+      </div>
+      <div className="rounded-3xl border border-[#eadfc8] bg-white p-4 shadow-sm">
+        <p className="text-xs font-black uppercase tracking-[0.18em] text-[#b98a2f]">Onboarding</p>
+        <p className="mt-2 text-2xl font-black text-[#075c58]">{statusCount}/{APPLICATION_CHECKLIST_ITEMS.length}</p>
+        <p className="text-xs font-semibold text-slate-500">checklist items complete</p>
+      </div>
+    </div>
+  );
+}
+
 function ServiceLegend({ activeServiceFilter, onToggleServiceFilter, counts }: { activeServiceFilter: string; onToggleServiceFilter: (key: string) => void; counts: Record<string, number> }) {
   return (
     <div className="mt-3 flex flex-wrap gap-2" aria-label="Filter service requests by service type">
@@ -776,7 +930,6 @@ export default function AdminTable({
   const [referralBusy, setReferralBusy] = useState(false);
   const [referralMessage, setReferralMessage] = useState("");
   const [referralError, setReferralError] = useState("");
-  const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [deleteBusy, setDeleteBusy] = useState(false);
   const [deleteMessage, setDeleteMessage] = useState("");
   const [deleteError, setDeleteError] = useState("");
@@ -857,7 +1010,6 @@ export default function AdminTable({
     setCommercialQuoteError("");
     setReferralMessage("");
     setReferralError("");
-    setDeleteConfirm(false);
     setDeleteError("");
     setApplicationStatus(selected?.status ? String(selected.status) : "New");
     setOnboardingChecklist(selected?.onboardingChecklist && typeof selected.onboardingChecklist === "object" ? selected.onboardingChecklist : {});
@@ -1036,19 +1188,23 @@ export default function AdminTable({
     }
   }
 
-  async function deleteSelectedRecord() {
-    if (!selected || deleteBusy) return;
+  async function deleteTestRecord(item: AdminDoc) {
+    if (!item || deleteBusy) return;
 
-    const blockReason = getRecordDeleteBlockReason(collectionName, selected);
+    const blockReason = getRecordDeleteBlockReason(collectionName, item);
     if (blockReason) {
       setDeleteError(blockReason);
+      setDeleteMessage("");
       return;
     }
 
-    if (!deleteConfirm) {
-      setDeleteError("Check the confirmation box before deleting this test record.");
-      return;
-    }
+    const deletedName = getRecordDisplayName(item);
+    const confirmed = window.confirm(
+      `Delete this test record for ${deletedName}?
+
+Only continue for obvious fake/test submissions with no customer, payment, invoice, tax, or referral history. Real records should be marked Canceled or Archived instead.`
+    );
+    if (!confirmed) return;
 
     setDeleteBusy(true);
     setActiveAction("Deleting test record from the admin list...");
@@ -1062,7 +1218,7 @@ export default function AdminTable({
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({
           collection: collectionName,
-          id: selected.id,
+          id: item.id,
           confirmDeleteTestRecord: true,
         }),
       });
@@ -1070,11 +1226,9 @@ export default function AdminTable({
 
       if (!res.ok || !data.ok) throw new Error(data.error || "Unable to delete this record.");
 
-      const deletedName = String(selected.fullName || selected.name || selected.businessName || selected.email || "test record");
-      setItems((prev) => prev.filter((item) => item.id !== selected.id));
+      setItems((prev) => prev.filter((existing) => existing.id !== item.id));
       setDeleteMessage(`${deletedName} was deleted from ${title}.`);
-      setSelected(null);
-      setDeleteConfirm(false);
+      setSelected((prev) => (prev?.id === item.id ? null : prev));
     } catch (error) {
       setDeleteError(error instanceof Error ? error.message : "Unable to delete this record.");
     } finally {
@@ -1742,8 +1896,6 @@ export default function AdminTable({
   const selectedAvailableCustomerCredits = getAvailableCustomerCreditsForRequest(selected, customerCredits);
   const selectedAvailableCustomerCreditTotal = getAvailableCustomerCreditTotal(selectedAvailableCustomerCredits);
   const selectedOutgoingReferralHistory = getOutgoingReferralHistory(selected);
-  const selectedDeleteBlockReason = getRecordDeleteBlockReason(collectionName, selected);
-  const canDeleteSelectedRecord = Boolean(selected && !selectedDeleteBlockReason);
   const anyActionBusy = checkoutBusy || commercialInvoiceBusy || commercialQuoteEmailBusy || familyInvoiceBusy || statusBusy || laundryFinalBusy || additionalPaymentBusy || commercialQuoteBusy || referralBusy || deleteBusy || applicationOnboardingBusy || Boolean(busyDocumentPath);
 
   return (
@@ -1832,16 +1984,18 @@ export default function AdminTable({
                 {availableStatuses.map((status) => <option key={status} value={status}>{status}</option>)}
               </select>
             </label>
-            <label className="grid gap-2 text-sm font-bold text-slate-700">
-              Payment
-              <select value={paymentFilter} onChange={(e) => setPaymentFilter(e.target.value)} className="min-h-12 rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 font-bold text-[#075c58] outline-none focus:border-[#075c58]">
-                <option value="all">All payment states</option>
-                <option value="unpaid">No payment sent/paid yet</option>
-                <option value="sent">Checkout or invoice sent</option>
-                <option value="paid">Paid</option>
-                <option value="refund">Refund / credit mentioned</option>
-              </select>
-            </label>
+            {collectionName === "serviceRequests" && (
+              <label className="grid gap-2 text-sm font-bold text-slate-700">
+                Payment
+                <select value={paymentFilter} onChange={(e) => setPaymentFilter(e.target.value)} className="min-h-12 rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 font-bold text-[#075c58] outline-none focus:border-[#075c58]">
+                  <option value="all">All payment states</option>
+                  <option value="unpaid">No payment sent/paid yet</option>
+                  <option value="sent">Checkout or invoice sent</option>
+                  <option value="paid">Paid</option>
+                  <option value="refund">Refund / credit mentioned</option>
+                </select>
+              </label>
+            )}
             {collectionName === "serviceRequests" && (
               <label className="grid gap-2 text-sm font-bold text-slate-700">
                 Referrals
@@ -1948,7 +2102,70 @@ export default function AdminTable({
         </div>
       </div>
 
-      <div className="max-w-full overflow-hidden rounded-3xl border border-[#eadfc8] bg-white shadow-xl shadow-[#075c58]/5">
+      <div className="grid gap-3 md:hidden">
+        {pagedItems.map((item) => (
+          <div key={`mobile-${item.id}`} className={`rounded-3xl border border-[#eadfc8] p-4 shadow-sm ${getServiceLook(item).row}`}>
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="truncate text-base font-black text-[#075c58]">{getRecordDisplayName(item)}</p>
+                <p className="mt-1 text-xs font-bold text-slate-600">{getRecordContactLine(item)}</p>
+              </div>
+              <StatusBadge status={item.status} />
+            </div>
+            <div className="mt-3 grid gap-2 text-xs font-bold text-slate-700">
+              {columns.slice(0, 4).map((col) => (
+                <div key={`${item.id}-${col.key}`} className="rounded-2xl bg-white/80 px-3 py-2 ring-1 ring-[#eadfc8]">
+                  <span className="mr-1 uppercase tracking-wide text-slate-400">{col.label}:</span>
+                  <span>{renderAdminCell(col.key, item)}</span>
+                </div>
+              ))}
+              <div className="rounded-2xl bg-white/80 px-3 py-2 ring-1 ring-[#eadfc8]">
+                <span className="mr-1 uppercase tracking-wide text-slate-400">Created:</span>
+                <span>{formatDate(item.createdAt)}</span>
+              </div>
+            </div>
+            <div className="mt-3 grid gap-2">
+              <button onClick={() => setSelected(item)} className="w-full rounded-full bg-[#075c58] px-4 py-3 text-xs font-black text-white shadow-sm transition hover:bg-[#064b48]">Open details</button>
+              <select
+                value={item.status || "New"}
+                onChange={async (e) => {
+                  const next = e.target.value;
+                  setStatusBusy(true);
+                  setActiveAction(`Updating ${getRecordDisplayName(item)} to ${next}...`);
+                  setStatusMessage("");
+                  setStatusError("");
+                  try {
+                    await updateStatus(item, next);
+                    setItems((prev) => prev.map((existing) => existing.id === item.id ? { ...existing, status: next } : existing));
+                    setStatusMessage(`Status updated to ${next}.`);
+                  } catch (error) {
+                    setStatusError(error instanceof Error ? error.message : "Unable to update status.");
+                  } finally {
+                    setStatusBusy(false);
+                    setActiveAction("");
+                  }
+                }}
+                className="w-full rounded-full border border-[#d8c18f] bg-white px-4 py-3 text-xs font-bold text-slate-700 shadow-sm outline-none focus:border-[#075c58]"
+              >
+                {dropdownStatuses.map((status) => <option key={status}>{status}</option>)}
+              </select>
+              {!getRecordDeleteBlockReason(collectionName, item) && (
+                <button
+                  type="button"
+                  onClick={() => deleteTestRecord(item)}
+                  disabled={deleteBusy}
+                  className="w-full rounded-full border border-red-200 bg-red-50 px-4 py-3 text-xs font-black text-red-700 shadow-sm transition hover:bg-red-100 disabled:opacity-60"
+                >
+                  Delete test
+                </button>
+              )}
+            </div>
+          </div>
+        ))}
+        {!filtered.length && <div className="rounded-3xl border border-[#eadfc8] bg-white p-8 text-center text-sm font-semibold text-slate-500">No records match the current filters.</div>}
+      </div>
+
+      <div className="hidden max-w-full overflow-hidden rounded-3xl border border-[#eadfc8] bg-white shadow-xl shadow-[#075c58]/5 md:block">
         <div className="overflow-x-auto [scrollbar-gutter:stable]">
           <table className="w-full min-w-[1180px] divide-y divide-[#eadfc8] text-sm">
             <thead className="bg-[#f4ecdc] text-left text-xs uppercase tracking-wider text-[#075c58]">
@@ -1972,6 +2189,17 @@ export default function AdminTable({
                   <td className="sticky right-0 z-10 min-w-[220px] bg-white/95 px-3 py-4 align-top shadow-[-10px_0_18px_rgba(0,0,0,0.04)] backdrop-blur">
                     <div className="grid min-w-[190px] gap-2">
                       <button onClick={() => setSelected(item)} className="w-full whitespace-nowrap rounded-full bg-[#075c58] px-3 py-2 text-xs font-black text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-[#064b48] focus:outline-none focus:ring-4 focus:ring-[#075c58]/20">Open details</button>
+                      {!getRecordDeleteBlockReason(collectionName, item) && (
+                        <button
+                          type="button"
+                          onClick={() => deleteTestRecord(item)}
+                          disabled={deleteBusy}
+                          className="w-full whitespace-nowrap rounded-full border border-red-200 bg-red-50 px-3 py-2 text-xs font-black text-red-700 shadow-sm transition hover:-translate-y-0.5 hover:bg-red-100 focus:outline-none focus:ring-4 focus:ring-red-700/15 disabled:opacity-60"
+                          title="Delete obvious test/fake records only. Protected payment/invoice/referral records are hidden."
+                        >
+                          Delete test
+                        </button>
+                      )}
                       <select
                         value={item.status || "New"}
                         onChange={async (e) => {
@@ -2060,52 +2288,25 @@ export default function AdminTable({
               <button onClick={() => setSelected(null)} className={getAdminActionClass("quiet")}>Close details</button>
             </div>
 
-            <div className="mb-5 space-y-4">
-              <AdminWorkflowGuide selectedIsCommercial={selectedIsCommercial} selectedService={selected.service} />
+            <div className="mb-5 space-y-3">
+              {showPaymentActions && (
+                <details className="rounded-3xl border border-[#eadfc8] bg-white p-4 shadow-sm">
+                  <summary className="cursor-pointer text-sm font-black text-[#075c58]">Recommended flow</summary>
+                  <div className="mt-3">
+                    <AdminWorkflowGuide selectedIsCommercial={selectedIsCommercial} selectedService={selected.service} />
+                  </div>
+                </details>
+              )}
               <AdminActionFeedback
                 busy={anyActionBusy}
                 activeAction={activeAction}
-                messages={[statusMessage, checkoutMessage, commercialInvoiceMessage, commercialQuoteEmailMessage, familyInvoiceMessage, laundryFinalMessage, additionalPaymentMessage, commercialQuoteMessage, referralMessage, deleteMessage, applicationOnboardingMessage]}
-                errors={[statusError, checkoutError, commercialInvoiceError, commercialQuoteEmailError, familyInvoiceError, laundryFinalError, additionalPaymentError, commercialQuoteError, referralError, deleteError, applicationOnboardingError, documentOpenError]}
+                messages={[statusMessage, checkoutMessage, commercialInvoiceMessage, commercialQuoteEmailMessage, familyInvoiceMessage, laundryFinalMessage, additionalPaymentMessage, commercialQuoteMessage, referralMessage, applicationOnboardingMessage]}
+                errors={[statusError, checkoutError, commercialInvoiceError, commercialQuoteEmailError, familyInvoiceError, laundryFinalError, additionalPaymentError, commercialQuoteError, referralError, applicationOnboardingError, documentOpenError]}
               />
             </div>
 
-            <div className="mb-5 rounded-3xl border border-red-100 bg-red-50/55 p-5 shadow-sm">
-              <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                <div className="max-w-3xl">
-                  <p className="text-xs font-black uppercase tracking-[0.2em] text-red-700">Test cleanup</p>
-                  <h4 className="mt-1 text-xl font-black text-red-800">Delete this test record only when it has no payment, invoice, or referral history</h4>
-                  <p className="mt-2 text-sm leading-6 text-red-900/75">
-                    Use this for obvious fake/test submissions. For real customers, paid records, sent invoices, completed jobs, or referral activity, keep the record and change the status to Canceled or Archived instead.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  disabled={deleteBusy || !canDeleteSelectedRecord || !deleteConfirm}
-                  onClick={deleteSelectedRecord}
-                  className={getAdminActionClass("danger")}
-                >
-                  {deleteBusy ? <><ActionSpinner /> Deleting...</> : "Delete test record"}
-                </button>
-              </div>
-
-              {selectedDeleteBlockReason ? (
-                <p className="mt-3 rounded-2xl bg-white px-4 py-3 text-sm font-bold text-red-800">{selectedDeleteBlockReason}</p>
-              ) : (
-                <label className="mt-4 flex items-start gap-3 rounded-2xl border border-red-200 bg-white px-4 py-3 text-sm font-bold text-red-900">
-                  <input
-                    type="checkbox"
-                    checked={deleteConfirm}
-                    onChange={(e) => setDeleteConfirm(e.target.checked)}
-                    className="mt-1 h-5 w-5 rounded border-red-500 accent-red-700"
-                  />
-                  I confirm this is only a test/fake record and there is no customer, payment, invoice, tax, or referral history that must be kept.
-                </label>
-              )}
-
-              {deleteMessage && <p className="mt-3 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">{deleteMessage}</p>}
-              {deleteError && <p className="mt-3 rounded-2xl bg-red-100 px-4 py-3 text-sm font-bold text-red-800">{deleteError}</p>}
-            </div>
+            <AdminDetailSnapshot collectionName={collectionName} item={selected} />
+            {showApplicationOnboardingPanel && <ApplicationQuickRead item={selected} documentCount={selectedApplicationDocuments.length} />}
 
             {showApplicationOnboardingPanel && (
               <div className="mb-5 rounded-3xl border border-[#eadfc8] bg-gradient-to-br from-white via-white to-[#fbf6ea] p-5 shadow-sm">
@@ -2163,32 +2364,35 @@ export default function AdminTable({
                   ))}
                 </div>
 
-                <div className="mt-4 grid gap-3 md:grid-cols-2">
-                  <label className="grid gap-2 text-sm font-bold text-slate-700">
-                    Best-fit services
-                    <textarea value={bestFitServices} onChange={(e) => setBestFitServices(e.target.value)} rows={3} placeholder="Example: Laundry, organizing, family reset, backup errand helper." className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]" />
-                  </label>
-                  <label className="grid gap-2 text-sm font-bold text-slate-700">
-                    Strengths
-                    <textarea value={strengths} onChange={(e) => setStrengths(e.target.value)} rows={3} placeholder="What seems strong about this applicant?" className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]" />
-                  </label>
-                  <label className="grid gap-2 text-sm font-bold text-slate-700">
-                    Concerns / follow-up needed
-                    <textarea value={concerns} onChange={(e) => setConcerns(e.target.value)} rows={3} placeholder="Questions, gaps, schedule limits, or documents still needed." className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]" />
-                  </label>
-                  <label className="grid gap-2 text-sm font-bold text-slate-700">
-                    Do-not-assign notes
-                    <textarea value={doNotAssignNotes} onChange={(e) => setDoNotAssignNotes(e.target.value)} rows={3} placeholder="Only use for important internal restrictions." className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]" />
-                  </label>
-                  <label className="grid gap-2 text-sm font-bold text-slate-700 md:col-span-2">
-                    Internal notes
-                    <textarea value={internalNotes} onChange={(e) => setInternalNotes(e.target.value)} rows={4} placeholder="Phone screen notes, references, document review notes, assignment preferences, etc." className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]" />
-                  </label>
-                  <label className="grid gap-2 text-sm font-bold text-slate-700 md:col-span-2">
-                    Customer-facing approved bio draft
-                    <textarea value={approvedBio} onChange={(e) => setApprovedBio(e.target.value)} rows={3} placeholder="Optional bio if this helper/partner is approved later." className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]" />
-                  </label>
-                </div>
+                <details className="mt-4 rounded-3xl border border-[#eadfc8] bg-white p-4">
+                  <summary className="cursor-pointer text-sm font-black text-[#075c58]">Notes, fit, concerns, and approved bio</summary>
+                  <div className="mt-4 grid gap-3 md:grid-cols-2">
+                    <label className="grid gap-2 text-sm font-bold text-slate-700">
+                      Best-fit services
+                      <textarea value={bestFitServices} onChange={(e) => setBestFitServices(e.target.value)} rows={3} placeholder="Example: Laundry, organizing, family reset, backup errand helper." className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]" />
+                    </label>
+                    <label className="grid gap-2 text-sm font-bold text-slate-700">
+                      Strengths
+                      <textarea value={strengths} onChange={(e) => setStrengths(e.target.value)} rows={3} placeholder="What seems strong about this applicant?" className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]" />
+                    </label>
+                    <label className="grid gap-2 text-sm font-bold text-slate-700">
+                      Concerns / follow-up needed
+                      <textarea value={concerns} onChange={(e) => setConcerns(e.target.value)} rows={3} placeholder="Questions, gaps, schedule limits, or documents still needed." className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]" />
+                    </label>
+                    <label className="grid gap-2 text-sm font-bold text-slate-700">
+                      Do-not-assign notes
+                      <textarea value={doNotAssignNotes} onChange={(e) => setDoNotAssignNotes(e.target.value)} rows={3} placeholder="Only use for important internal restrictions." className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]" />
+                    </label>
+                    <label className="grid gap-2 text-sm font-bold text-slate-700 md:col-span-2">
+                      Internal notes
+                      <textarea value={internalNotes} onChange={(e) => setInternalNotes(e.target.value)} rows={4} placeholder="Phone screen notes, references, document review notes, assignment preferences, etc." className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]" />
+                    </label>
+                    <label className="grid gap-2 text-sm font-bold text-slate-700 md:col-span-2">
+                      Customer-facing approved bio draft
+                      <textarea value={approvedBio} onChange={(e) => setApprovedBio(e.target.value)} rows={3} placeholder="Optional bio if this helper/partner is approved later." className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]" />
+                    </label>
+                  </div>
+                </details>
 
                 <div className="mt-4 flex flex-wrap items-center gap-3">
                   <button type="button" disabled={applicationOnboardingBusy} onClick={saveApplicationOnboarding} className={getAdminActionClass("primary")}>
@@ -3209,16 +3413,13 @@ export default function AdminTable({
               </div>
             )}
 
-            <div className="grid gap-3 sm:grid-cols-2">
-              <AdminPhotoUploads photos={getPhotoUploads(selected)} />
-              <AdminApplicationDocuments documents={selectedApplicationDocuments} collectionName={collectionName} recordId={selected.id} onOpenDocument={openApplicationDocument} busyDocumentPath={busyDocumentPath} />
-              {documentOpenError && <div className="rounded-2xl border border-red-100 bg-red-50 p-4 text-sm font-bold text-red-700 sm:col-span-2">{documentOpenError}</div>}
-              {Object.entries(selected).filter(([key]) => !isPhotoDataField(key) && !isApplicationDocumentField(key)).map(([key, value]) => (
-                <div key={key} className="rounded-2xl border border-[#eadfc8] bg-[#fbf6ea] p-4">
-                  <p className="text-xs font-bold uppercase tracking-widest text-[#b98a2f]">{key}</p>
-                  <p className="mt-1 whitespace-pre-wrap break-words text-sm text-slate-800">{formatValue(key, value)}</p>
-                </div>
-              ))}
+            <div className="space-y-4">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <AdminPhotoUploads photos={getPhotoUploads(selected)} />
+                <AdminApplicationDocuments documents={selectedApplicationDocuments} collectionName={collectionName} recordId={selected.id} onOpenDocument={openApplicationDocument} busyDocumentPath={busyDocumentPath} />
+                {documentOpenError && <div className="rounded-2xl border border-red-100 bg-red-50 p-4 text-sm font-bold text-red-700 sm:col-span-2">{documentOpenError}</div>}
+              </div>
+              <AdminAdvancedRecordDetails item={selected} />
             </div>
           </div>
         </div>

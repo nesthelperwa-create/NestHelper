@@ -13,9 +13,7 @@ export default function AdminPartnersPage() {
           { key: "businessName", label: "Business" },
           { key: "ownerName", label: "Contact" },
           { key: "phone", label: "Phone" },
-          { key: "email", label: "Email" },
           { key: "serviceType", label: "Services" },
-          { key: "serviceArea", label: "Service Area" },
           { key: "insuranceStatus", label: "Insurance" },
           { key: "applicationDocumentCount", label: "Docs" },
         ]}
