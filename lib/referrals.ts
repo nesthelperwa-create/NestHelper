@@ -60,8 +60,12 @@ export function normalizeReferralCode(value: unknown) {
   return getString(value).toUpperCase().replace(/[^A-Z0-9-]/g, "").slice(0, 32);
 }
 
-export function buildReferralUrl(code: string) {
+export function buildReferralRedeemUrl(code: string) {
   return `${getBaseUrl()}/referrals?ref=${encodeURIComponent(normalizeReferralCode(code))}`;
+}
+
+export function buildReferralUrl(code: string) {
+  return `${getBaseUrl()}/referrals/share?ref=${encodeURIComponent(normalizeReferralCode(code))}`;
 }
 
 export function getReferralRewardLabel() {

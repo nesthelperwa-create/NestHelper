@@ -68,7 +68,7 @@ export async function sendReferralShareEmail({
             <li style="margin:0 0 8px 0;">Paste it into a text or email to one family.</li>
           </ol>
 
-          <p style="margin:0 0 18px 0;">After the referred family completes an eligible NestHelper family service, we will email you about ${escapeHtml(rewardLabel)}.</p>
+          <p style="margin:0 0 18px 0;">After the referred family completes an eligible NestHelper family service, we will email you about ${escapeHtml(rewardLabel)}. Your credit will be saved under this email address, so use the same email next time you request help and NestHelper can apply it before sending payment.</p>
           <p style="margin:0 0 18px 0;">Questions? Reply to this email or contact us at ${escapeHtml(replyTo)}.</p>
           <p style="font-size:12px;color:#667;line-height:1.5;margin-top:22px;">Referral rewards are subject to NestHelper’s Referral Program Policy. Commercial Reset, canceled visits, refunded visits, incomplete visits, self-referrals, duplicate accounts, and misuse are not eligible unless NestHelper approves an exception in writing.</p>
         </div>
@@ -89,7 +89,7 @@ What to do:
 2. Tap Copy referral link on that page.
 3. Paste it into a text or email to one family.
 
-After the referred family completes an eligible NestHelper family service, we will email you about ${rewardLabel}.
+After the referred family completes an eligible NestHelper family service, we will email you about ${rewardLabel}. Your credit will be saved under this email address, so use the same email next time you request help and NestHelper can apply it before sending payment.
 
 Questions? Reply to this email or contact us at ${replyTo}.`;
 

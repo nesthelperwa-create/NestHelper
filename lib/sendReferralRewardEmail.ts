@@ -82,7 +82,22 @@ export async function sendReferralRewardEmail({
       </div>
     </div>`;
 
-  const text = `Your family referral credit is ready\n\n${greeting}\n\n${referredText}\n\nReward / credit: ${rewardLabel}\nCredit code: ${rewardCode}\n${clean(referredServiceTitle) ? `Completed service: ${clean(referredServiceTitle)}\n` : ""}\nYour credit is saved under this email address. Use the same email the next time you request an eligible NestHelper family service, and NestHelper can apply the credit before sending your payment link or invoice.\n\nQuestions? Reply to this email or contact us at ${replyTo}.`;
+  const text = `Your family referral credit is ready
+
+${greeting}
+
+${referredText}
+
+Reward / credit: ${rewardLabel}
+Credit code: ${rewardCode}
+${clean(referredServiceTitle) ? `Completed service: ${clean(referredServiceTitle)}
+` : ""}Your credit is saved under this email address. Use the same email the next time you request an eligible NestHelper family service, and NestHelper can apply the credit before sending your payment link or invoice.
+${clean(nextReferralUrl) ? `
+Fresh one-time referral share page: ${clean(nextReferralUrl)}
+${clean(nextReferralCode) ? `Code: ${clean(nextReferralCode)}
+` : ""}Open the share page, tap Copy referral link, then paste it into a text or email to one family.
+` : ""}
+Questions? Reply to this email or contact us at ${replyTo}.`;
 
   const resend = new Resend(apiKey);
   return resend.emails.send({ from, to, subject: "Your NestHelper referral credit is ready", html, text, replyTo });
