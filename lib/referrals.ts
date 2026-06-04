@@ -459,6 +459,66 @@ export async function reserveReferralRewardForCompletedRequest({
 }
 
 
+
+export async function getOrCreateNextReferralLinkAfterReward({
+  db,
+  sourceReferralCode,
+  referrerRequestId,
+  createdBy,
+}: {
+  db: Firestore;
+  sourceReferralCode: string;
+  referrerRequestId?: string;
+  createdBy?: string | null;
+}) {
+  const sourceCode = normalizeReferralCode(sourceReferralCode);
+  const cleanReferrerRequestId = getString(referrerRequestId);
+  if (!sourceCode || !cleanReferrerRequestId) return null;
+
+  const sourceRef = db.collection("referralLinks").doc(sourceCode);
+  const sourceSnap = await sourceRef.get();
+  const sourceData = sourceSnap.data() || {};
+  const existingCode = normalizeReferralCode(sourceData.nextReferralCode || sourceData.rewardNextReferralCode);
+  const existingUrl = getString(sourceData.nextReferralUrl || sourceData.rewardNextReferralUrl);
+
+  if (existingCode && existingUrl) {
+    const existingSnap = await db.collection("referralLinks").doc(existingCode).get();
+    if (existingSnap.exists) {
+      return {
+        code: existingCode,
+        url: existingUrl,
+        reused: true,
+      };
+    }
+  }
+
+  const generated = await createFamilyReferralLinkForRequest({
+    db,
+    requestId: cleanReferrerRequestId,
+    createdBy: createdBy || "reward-followup",
+    forceNew: true,
+  });
+
+  await sourceRef.set(
+    {
+      nextReferralCode: generated.code,
+      nextReferralUrl: generated.url,
+      rewardNextReferralCode: generated.code,
+      rewardNextReferralUrl: generated.url,
+      nextReferralCreatedAt: FieldValue.serverTimestamp(),
+      nextReferralCreatedBy: createdBy || "reward-followup",
+      updatedAt: FieldValue.serverTimestamp(),
+    },
+    { merge: true }
+  );
+
+  return {
+    code: generated.code,
+    url: generated.url,
+    reused: false,
+  };
+}
+
 export async function ensureCustomerReferralCreditForCompletedRequest({
   db,
   requestId,

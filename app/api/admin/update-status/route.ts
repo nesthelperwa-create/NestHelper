@@ -7,7 +7,7 @@ import { isAllowedAdminEmail } from "@/lib/adminAuth";
 import { sendStatusUpdateEmail } from "@/lib/sendStatusUpdateEmail";
 import { sendReferralRewardEmail } from "@/lib/sendReferralRewardEmail";
 import { emailAliases } from "@/lib/emailRouting";
-import { markReferralRewardEmailFailed, markReferralRewardSent, reserveReferralRewardForCompletedRequest } from "@/lib/referrals";
+import { getOrCreateNextReferralLinkAfterReward, markReferralRewardEmailFailed, markReferralRewardSent, reserveReferralRewardForCompletedRequest } from "@/lib/referrals";
 import { services } from "@/lib/services";
 
 const allowedCollections = new Set(["serviceRequests", "helperApplications", "partnerApplications", "contactMessages"]);
@@ -123,6 +123,18 @@ export async function POST(request: Request) {
 
         if (reservedReward) {
           try {
+            let nextReferralLink: { code?: string; url?: string } | null = null;
+            try {
+              nextReferralLink = await getOrCreateNextReferralLinkAfterReward({
+                db,
+                sourceReferralCode: reservedReward.code,
+                referrerRequestId: reservedReward.referrerRequestId,
+                createdBy: decoded.email || "reward-followup",
+              });
+            } catch (followupError) {
+              console.error("Unable to create follow-up referral link", followupError);
+            }
+
             const rewardEmailResult = await sendReferralRewardEmail({
               to: reservedReward.referrerEmail,
               customerName: reservedReward.referrerName,
@@ -130,6 +142,8 @@ export async function POST(request: Request) {
               rewardLabel: reservedReward.rewardLabel,
               referredName: reservedReward.referredName,
               referredServiceTitle: reservedReward.referredServiceTitle,
+              nextReferralUrl: nextReferralLink?.url,
+              nextReferralCode: nextReferralLink?.code,
               replyToEmail: emailAliases.booking,
             }) as any;
 
