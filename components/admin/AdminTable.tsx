@@ -780,33 +780,138 @@ function ApplicationQuickRead({ item, documentCount }: { item: AdminDoc; documen
 type AdminExportEntry = { key: string; label: string; value: string };
 type AdminExportSection = { title: string; entries: AdminExportEntry[] };
 
-const EXPORT_HIDE_KEYS = new Set([
+const EXPORT_HIDE_EXACT_KEYS = new Set([
+  "id",
+  "source",
   "photoUploads",
   "uploadedPhotos",
   "photoDataUrls",
   "imageDataUrls",
   "applicationDocuments",
+  "applicationDocumentSummary",
+  "commercialQuoteBreakdown",
+  "familyPaymentBreakdown",
+  "onboardingChecklist",
 ]);
 
-const EXPORT_ADMIN_TRACKING_KEYWORDS = [
-  "status",
-  "payment",
+const EXPORT_HIDE_KEYWORDS = [
+  "adminemail",
+  "appliedcustomercreditid",
   "checkout",
-  "invoice",
-  "stripe",
-  "quote",
-  "referral",
-  "credit",
-  "refund",
-  "onboarding",
+  "confirmation",
+  "createdby",
+  "customeremailkey",
+  "deliverymethod",
+  "firebase",
+  "firestore",
+  "included",
   "internal",
-  "approvedbio",
-  "donotassign",
-  "reliability",
-  "strengths",
-  "concerns",
-  "updated",
-  "paidat",
+  "metadata",
+  "referral",
+  "sessionid",
+  "storagepath",
+  "stripe",
+  "taxmode",
+  "updatedby",
+  "webhook",
+];
+
+const EXPORT_HIDE_SUFFIXES = ["cents", "id", "ids", "key", "keys", "path", "token", "url", "urls"];
+
+const SERVICE_REQUEST_CLEAN_KEYS = [
+  "fullName",
+  "name",
+  "service",
+  "selectedServiceTitle",
+  "packageType",
+  "phone",
+  "email",
+  "serviceAddress",
+  "address",
+  "serviceAddressLine1",
+  "serviceAddressLine2",
+  "address2",
+  "city",
+  "serviceCity",
+  "state",
+  "serviceState",
+  "zip",
+  "serviceZip",
+  "zipCode",
+  "preferredDate",
+  "preferredTime",
+  "urgency",
+  "roomsOrAreas",
+  "requestDetails",
+  "notes",
+  "specialInstructions",
+  "howFoundUs",
+  "howFoundUsDetails",
+  "reusableBagAck",
+  "laundryBagEstimate",
+  "laundryPickupSpot",
+  "laundryTypes",
+  "detergent",
+  "dryPreference",
+  "laundryAddOns",
+];
+
+const HELPER_APPLICATION_CLEAN_KEYS = [
+  "fullName",
+  "name",
+  "phone",
+  "email",
+  "city",
+  "state",
+  "zip",
+  "howFoundUs",
+  "howFoundUsDetails",
+  "availability",
+  "availabilityStyle",
+  "services",
+  "preferredWorkTypes",
+  "transportation",
+  "travelRadius",
+  "experienceLevel",
+  "comfortLevel",
+  "notWillingToDo",
+  "workStyleFit",
+  "references",
+  "notes",
+];
+
+const PARTNER_APPLICATION_CLEAN_KEYS = [
+  "businessName",
+  "ownerName",
+  "phone",
+  "email",
+  "city",
+  "state",
+  "zip",
+  "howFoundUs",
+  "howFoundUsDetails",
+  "serviceType",
+  "services",
+  "serviceArea",
+  "businessStructure",
+  "licenseStatus",
+  "insuranceStatus",
+  "availability",
+  "capacity",
+  "proofDocuments",
+  "notes",
+];
+
+const CONTACT_MESSAGE_CLEAN_KEYS = [
+  "fullName",
+  "name",
+  "phone",
+  "email",
+  "howFoundUs",
+  "howFoundUsDetails",
+  "subject",
+  "message",
+  "preferredContactMethod",
 ];
 
 function getCollectionDisplayLabel(collectionName: string) {
@@ -837,46 +942,245 @@ function escapeHtml(value: string) {
     .replace(/'/g, "&#39;");
 }
 
+function humanizeKey(key: string) {
+  const known = DETAIL_FIELD_LABELS[key];
+  if (known) return known;
+  return key
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+    .replace(/[_-]+/g, " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase())
+    .replace(/\bZip\b/g, "ZIP")
+    .replace(/\bId\b/g, "ID");
+}
+
+function normalizedExportKey(key: string) {
+  return key.trim().toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
+function isSensitiveOrNoisyExportKey(key: string) {
+  const normalized = normalizedExportKey(key);
+  if (EXPORT_HIDE_EXACT_KEYS.has(key) || EXPORT_HIDE_EXACT_KEYS.has(normalized)) return true;
+  if (EXPORT_HIDE_KEYWORDS.some((keyword) => normalized.includes(keyword))) return true;
+  if (EXPORT_HIDE_SUFFIXES.some((suffix) => normalized.endsWith(suffix))) return true;
+  if (normalized.includes("amountcents") || normalized.includes("subtotalcents") || normalized.includes("totalcents")) return true;
+  if (normalized.includes("breakdown") || normalized.includes("json")) return true;
+  return false;
+}
+
+function isProbablyMoneyKey(key: string) {
+  const normalized = normalizedExportKey(key);
+  return ["amount", "balance", "credit", "deposit", "rate", "refund", "subtotal", "total"].some((part) => normalized.includes(part));
+}
+
+function formatExportMoneyValue(key: string, value: unknown) {
+  const numeric = toNumber(value);
+  if (!Number.isFinite(numeric)) return "";
+  if (normalizedExportKey(key).includes("rateperlb")) return `${formatMoney(numeric)} per lb`;
+  return formatMoney(numeric);
+}
+
 function exportValueToText(key: string, value: unknown): string {
   if (value === null || value === undefined || value === "") return "—";
   if (isPhotoDataField(key)) return Array.isArray(value) ? `${value.length} uploaded photo${value.length === 1 ? "" : "s"}` : "Uploaded photos";
   if (isApplicationDocumentField(key)) return Array.isArray(value) ? `${value.length} uploaded document${value.length === 1 ? "" : "s"}` : formatValue(key, value);
   if (Array.isArray(value)) {
     const simple = value.every((entry) => ["string", "number", "boolean"].includes(typeof entry));
-    return simple ? value.map((entry) => exportValueToText(key, entry)).join(", ") : value.map((entry) => JSON.stringify(entry, null, 2)).join("\n\n");
+    return simple ? value.map((entry) => exportValueToText(key, entry)).filter((entry) => entry !== "—").join(", ") || "—" : `${value.length} saved item${value.length === 1 ? "" : "s"}`;
   }
   if (typeof value === "object") {
     if ("toDate" in value && typeof value.toDate === "function") return formatDate(value);
-    return JSON.stringify(value, null, 2);
+    return "Saved in admin dashboard";
+  }
+  if (typeof value === "boolean") return value ? "Yes" : "No";
+  if (isProbablyMoneyKey(key) && (typeof value === "number" || /^\s*\$?\d+(\.\d{1,2})?\s*$/.test(String(value)))) {
+    return formatExportMoneyValue(key, value);
   }
   return formatValue(key, value);
 }
 
-function isAdminTrackingExportKey(key: string) {
-  const normalized = key.toLowerCase();
-  return EXPORT_ADMIN_TRACKING_KEYWORDS.some((keyword) => normalized.includes(keyword));
+function makeExportEntry(key: string, value: unknown, label?: string): AdminExportEntry | null {
+  if (value === null || value === undefined || value === "") return null;
+  if (isSensitiveOrNoisyExportKey(key)) return null;
+  const text = exportValueToText(key, value);
+  if (!text || text === "—" || text === "Saved in admin dashboard") return null;
+  return { key, label: label || humanizeKey(key), value: text };
 }
 
-function getAdminExportEntries(item: AdminDoc) {
+function getFirstPresentValue(item: AdminDoc, keys: string[]) {
+  for (const key of keys) {
+    const value = item[key];
+    if (value !== undefined && value !== null && value !== "") return value;
+  }
+  return undefined;
+}
+
+function getCleanAddress(item: AdminDoc) {
+  const full = getFirstPresentValue(item, ["serviceAddress", "address"]);
+  if (full) return String(full);
+  const line1 = String(getFirstPresentValue(item, ["serviceAddressLine1", "addressLine1"]) || "").trim();
+  const line2 = String(getFirstPresentValue(item, ["serviceAddressLine2", "address2", "unit", "apt"]) || "").trim();
+  const city = String(getFirstPresentValue(item, ["serviceCity", "city"]) || "").trim();
+  const state = String(getFirstPresentValue(item, ["serviceState", "state"]) || "").trim();
+  const zip = String(getFirstPresentValue(item, ["serviceZip", "zip", "zipCode"]) || "").trim();
+  const street = [line1, line2].filter(Boolean).join(", ");
+  const locality = [city, state, zip].filter(Boolean).join(", ");
+  return [street, locality].filter(Boolean).join("\n");
+}
+
+function getCleanPrimarySection(collectionName: string, item: AdminDoc): AdminExportSection {
+  const title = collectionName === "contactMessages" ? "Message summary" : "Submission summary";
+  const created = makeExportEntry("createdAt", item.createdAt, "Submitted");
+  const status = makeExportEntry("status", item.status, "Status");
+  const entries = [created, status].filter((entry): entry is AdminExportEntry => Boolean(entry));
+  return { title, entries };
+}
+
+function getCleanContactSection(collectionName: string, item: AdminDoc): AdminExportSection {
+  const entries: Array<AdminExportEntry | null> = [];
+  if (collectionName === "partnerApplications") {
+    entries.push(makeExportEntry("businessName", item.businessName, "Business"));
+    entries.push(makeExportEntry("ownerName", item.ownerName, "Contact person"));
+  } else {
+    entries.push(makeExportEntry("fullName", item.fullName || item.name, "Name"));
+  }
+  entries.push(makeExportEntry("phone", item.phone, "Phone"));
+  entries.push(makeExportEntry("email", item.email, "Email"));
+  const address = getCleanAddress(item);
+  if (address) entries.push({ key: "cleanAddress", label: "Address", value: address });
+  entries.push(makeExportEntry("howFoundUs", item.howFoundUs, "How they found us"));
+  entries.push(makeExportEntry("howFoundUsDetails", item.howFoundUsDetails, "Source details"));
+  return { title: "Contact", entries: entries.filter((entry): entry is AdminExportEntry => Boolean(entry)) };
+}
+
+function getCleanRequestedServiceSection(collectionName: string, item: AdminDoc): AdminExportSection {
+  const entries: Array<AdminExportEntry | null> = [];
+  if (collectionName === "contactMessages") {
+    entries.push(makeExportEntry("subject", item.subject, "Subject"));
+    entries.push(makeExportEntry("message", item.message, "Message"));
+    entries.push(makeExportEntry("preferredContactMethod", item.preferredContactMethod, "Preferred contact"));
+    return { title: "Message", entries: entries.filter((entry): entry is AdminExportEntry => Boolean(entry)) };
+  }
+
+  if (collectionName === "helperApplications") {
+    ["services", "preferredWorkTypes", "availability", "availabilityStyle", "transportation", "travelRadius", "experienceLevel", "comfortLevel", "notWillingToDo", "workStyleFit", "references", "notes"].forEach((key) => entries.push(makeExportEntry(key, item[key])));
+    return { title: "Helper fit", entries: entries.filter((entry): entry is AdminExportEntry => Boolean(entry)) };
+  }
+
+  if (collectionName === "partnerApplications") {
+    ["serviceType", "services", "serviceArea", "businessStructure", "licenseStatus", "insuranceStatus", "availability", "capacity", "proofDocuments", "notes"].forEach((key) => entries.push(makeExportEntry(key, item[key])));
+    return { title: "Business fit", entries: entries.filter((entry): entry is AdminExportEntry => Boolean(entry)) };
+  }
+
+  entries.push(makeExportEntry("service", item.selectedServiceTitle || item.packageType || item.service, "Service"));
+  entries.push(makeExportEntry("preferredDate", item.preferredDate, "Preferred date"));
+  entries.push(makeExportEntry("preferredTime", item.preferredTime, "Preferred time"));
+  entries.push(makeExportEntry("urgency", item.urgency, "Urgency"));
+  entries.push(makeExportEntry("roomsOrAreas", item.roomsOrAreas, "Rooms / areas"));
+  entries.push(makeExportEntry("requestDetails", item.requestDetails, "Request details"));
+  entries.push(makeExportEntry("notes", item.notes, "Notes"));
+  entries.push(makeExportEntry("specialInstructions", item.specialInstructions, "Special instructions"));
+  return { title: "Service details", entries: entries.filter((entry): entry is AdminExportEntry => Boolean(entry)) };
+}
+
+function getCleanLaundrySection(item: AdminDoc): AdminExportSection {
+  const entries = [
+    makeExportEntry("laundryBagEstimate", item.laundryBagEstimate, "Estimated bags / hampers"),
+    makeExportEntry("laundryPickupSpot", item.laundryPickupSpot, "Pickup spot"),
+    makeExportEntry("laundryTypes", item.laundryTypes, "Laundry types"),
+    makeExportEntry("detergent", item.detergent, "Detergent"),
+    makeExportEntry("dryPreference", item.dryPreference, "Dry preference"),
+    makeExportEntry("laundryAddOns", item.laundryAddOns, "Add-ons"),
+    makeExportEntry("reusableBagAck", item.reusableBagAck, "Reusable bag agreement"),
+    makeExportEntry("laundryDryWeightLbs", item.laundryDryWeightLbs, "Dry weight"),
+    makeExportEntry("laundryRatePerLb", item.laundryRatePerLb, "Rate"),
+  ].filter((entry): entry is AdminExportEntry => Boolean(entry));
+  return { title: "Laundry details", entries };
+}
+
+function getPaymentBreakdown(item: AdminDoc) {
+  const raw = item.familyPaymentBreakdown;
+  if (raw && typeof raw === "object" && !Array.isArray(raw)) return raw as Record<string, any>;
+  return {} as Record<string, any>;
+}
+
+function getPaymentLineItemsText(item: AdminDoc) {
+  const breakdown = getPaymentBreakdown(item);
+  const lineItems = Array.isArray(breakdown.lineItems) ? breakdown.lineItems : [];
+  if (!lineItems.length) return "";
+  return lineItems
+    .map((line, index) => {
+      const label = String(line?.label || line?.description || `Item ${index + 1}`).trim();
+      const quantity = String(line?.quantity || "1").trim();
+      const amount = toNumber(line?.amount);
+      const note = String(line?.note || "").trim();
+      return [`${label} — ${formatMoney(amount)}${quantity && quantity !== "1" ? ` x ${quantity}` : ""}`, note].filter(Boolean).join("\n  ");
+    })
+    .join("\n");
+}
+
+function getCleanPaymentSection(item: AdminDoc): AdminExportSection {
+  const breakdown = getPaymentBreakdown(item);
+  const refund = item.familyRefundTracking && typeof item.familyRefundTracking === "object" ? item.familyRefundTracking as Record<string, any> : {};
+  const entries: Array<AdminExportEntry | null> = [
+    makeExportEntry("paymentStatus", item.laundryPaymentStatus || item.paymentStatus || item.familyPaymentStatus, "Payment status"),
+    makeExportEntry("familyPaymentPlan", item.familyPaymentPlan || breakdown.paymentPlan, "Payment plan"),
+    makeExportEntry("amountDueNow", breakdown.amountDueNow ?? item.familyInitialAmount, "Amount requested"),
+    makeExportEntry("laundrySubtotal", item.laundrySubtotal ?? item.laundryBaseAmount ?? breakdown.subtotal, "Laundry subtotal"),
+    makeExportEntry("laundryDepositCredit", item.laundryDepositCredit, "Deposit credit"),
+    makeExportEntry("laundryBalanceDue", item.laundryBalanceDue, "Final balance due"),
+    makeExportEntry("laundryFinalPaymentOptions", item.laundryFinalPaymentOptions, "Final payment option"),
+    makeExportEntry("refundStatus", refund.refundStatus, "Refund status"),
+    toNumber(refund.refundAmount) > 0 ? makeExportEntry("refundAmount", refund.refundAmount, "Refund amount") : null,
+  ];
+  const lineItemsText = getPaymentLineItemsText(item);
+  if (lineItemsText) entries.push({ key: "paymentItems", label: "Payment items", value: lineItemsText });
+  const note = item.familyCustomerPaymentNote || breakdown.customerNote;
+  if (note) entries.push(makeExportEntry("paymentNote", note, "Payment note"));
+  return { title: "Payment summary", entries: entries.filter((entry): entry is AdminExportEntry => Boolean(entry)) };
+}
+
+function getCleanAdminNotesSection(item: AdminDoc): AdminExportSection {
+  const entries = [
+    makeExportEntry("applicationStatus", item.applicationStatus, "Application status"),
+    makeExportEntry("bestFitServices", item.bestFitServices, "Best-fit services"),
+    makeExportEntry("reliabilityRating", item.reliabilityRating, "Reliability / fit"),
+    makeExportEntry("strengths", item.strengths, "Strengths"),
+    makeExportEntry("concerns", item.concerns, "Concerns"),
+    makeExportEntry("adminNotes", item.adminNotes, "Admin notes"),
+    makeExportEntry("approvedBio", item.approvedBio, "Approved bio draft"),
+  ].filter((entry): entry is AdminExportEntry => Boolean(entry));
+  return { title: "Admin notes", entries };
+}
+
+function getAdditionalCleanEntries(collectionName: string, item: AdminDoc, usedKeys: Set<string>): AdminExportEntry[] {
+  const cleanKeyList = collectionName === "helperApplications"
+    ? HELPER_APPLICATION_CLEAN_KEYS
+    : collectionName === "partnerApplications"
+      ? PARTNER_APPLICATION_CLEAN_KEYS
+      : collectionName === "contactMessages"
+        ? CONTACT_MESSAGE_CLEAN_KEYS
+        : SERVICE_REQUEST_CLEAN_KEYS;
+  const allowed = new Set(cleanKeyList);
   return Object.entries(item)
-    .filter(([key]) => !EXPORT_HIDE_KEYS.has(key) && !isPhotoDataField(key) && !isApplicationDocumentField(key))
-    .map(([key, value]) => ({ key, label: DETAIL_FIELD_LABELS[key] || key, value: exportValueToText(key, value) }))
-    .filter((entry) => entry.value !== "—");
+    .filter(([key]) => !usedKeys.has(key) && allowed.has(key))
+    .map(([key, value]) => makeExportEntry(key, value))
+    .filter((entry): entry is AdminExportEntry => Boolean(entry));
 }
 
 function getAdminRecordExportSections(collectionName: string, item: AdminDoc): AdminExportSection[] {
-  const allEntries = getAdminExportEntries(item);
-  const used = new Set<string>();
-  const priorityKeys = ["id", "createdAt", "updatedAt", "status", ...(DETAIL_FIELD_ORDER[collectionName] || [])];
-  const primaryEntries = priorityKeys
-    .map((key) => allEntries.find((entry) => entry.key === key))
-    .filter((entry): entry is AdminExportEntry => Boolean(entry));
-  primaryEntries.forEach((entry) => used.add(entry.key));
+  const sections = [
+    getCleanPrimarySection(collectionName, item),
+    getCleanContactSection(collectionName, item),
+    getCleanRequestedServiceSection(collectionName, item),
+  ];
 
-  const submittedEntries = allEntries.filter((entry) => !used.has(entry.key) && !isAdminTrackingExportKey(entry.key));
-  submittedEntries.forEach((entry) => used.add(entry.key));
+  if (collectionName === "serviceRequests" && getServiceKey(item) === "laundry-rescue") sections.push(getCleanLaundrySection(item));
+  if (collectionName === "serviceRequests") sections.push(getCleanPaymentSection(item));
+  if (collectionName === "helperApplications" || collectionName === "partnerApplications") sections.push(getCleanAdminNotesSection(item));
 
-  const adminEntries = allEntries.filter((entry) => !used.has(entry.key));
+  const usedKeys = new Set(sections.flatMap((section) => section.entries.map((entry) => entry.key)));
+  const additionalEntries = getAdditionalCleanEntries(collectionName, item, usedKeys);
+  if (additionalEntries.length) sections.push({ title: "Additional submitted details", entries: additionalEntries });
 
   const photos = getPhotoUploads(item);
   const photoEntries = photos.map((photo, index) => ({
@@ -892,13 +1196,10 @@ function getAdminRecordExportSections(collectionName: string, item: AdminDoc): A
     value: [document.originalName || `Document ${index + 1}`, document.contentType || "file", formatFileSize(document.size)].filter(Boolean).join(" · "),
   }));
 
-  return [
-    { title: "Main details", entries: primaryEntries },
-    { title: "Submitted answers", entries: submittedEntries },
-    { title: "Uploaded photos", entries: photoEntries },
-    { title: "Uploaded application documents", entries: documentEntries },
-    { title: "Admin / payment / onboarding tracking", entries: adminEntries },
-  ].filter((section) => section.entries.length);
+  sections.push({ title: "Uploaded photos", entries: photoEntries });
+  sections.push({ title: "Uploaded application documents", entries: documentEntries });
+
+  return sections.filter((section) => section.entries.length);
 }
 
 function getAdminRecordExportFilename(collectionName: string, item: AdminDoc, extension: string) {
@@ -964,12 +1265,12 @@ function getAdminRecordPrintableHtml(collectionName: string, item: AdminDoc) {
 </head>
 <body>
   <div class="header">
-    <div class="eyebrow">NestHelper admin export</div>
+    <div class="eyebrow">NestHelper clean admin export</div>
     <h1>${escapeHtml(title)}</h1>
-    <div class="meta">Created: ${escapeHtml(formatDate(item.createdAt))} · Status: ${escapeHtml(formatValue("status", item.status))} · Exported: ${escapeHtml(new Date().toLocaleString())}</div>
+    <div class="meta">Submitted: ${escapeHtml(formatDate(item.createdAt))} · Status: ${escapeHtml(formatValue("status", item.status))} · Exported: ${escapeHtml(new Date().toLocaleString())}</div>
   </div>
   ${sectionsHtml}
-  <p class="note">Private admin export. Uploaded photos/documents are listed by metadata; open private files from the admin dashboard when needed.</p>
+  <p class="note">Clean admin export. Internal IDs, Stripe/payment links, tax codes, backend tracking fields, and raw JSON are intentionally hidden. Uploaded photos/documents are listed by metadata; open private files from the admin dashboard when needed.</p>
 </body>
 </html>`;
 }
@@ -1019,9 +1320,9 @@ function getAdminRecordsPrintableHtml(collectionName: string, title: string, rec
     return `
       <article class="record">
         <div class="record-header">
-          <div class="eyebrow">NestHelper admin export</div>
+          <div class="eyebrow">NestHelper clean admin export</div>
           <h1>${escapeHtml(recordTitle)}</h1>
-          <div class="meta">Created: ${escapeHtml(formatDate(record.createdAt))} · Status: ${escapeHtml(formatValue("status", record.status))} · Exported: ${escapeHtml(new Date().toLocaleString())}</div>
+          <div class="meta">Submitted: ${escapeHtml(formatDate(record.createdAt))} · Status: ${escapeHtml(formatValue("status", record.status))} · Exported: ${escapeHtml(new Date().toLocaleString())}</div>
         </div>
         ${recordSections}
       </article>
@@ -1057,7 +1358,7 @@ function getAdminRecordsPrintableHtml(collectionName: string, title: string, rec
 </head>
 <body>
   ${sectionsHtml || `<p>No records selected.</p>`}
-  <p class="note">Private admin export. Uploaded photos/documents are listed by metadata; open private files from the admin dashboard when needed.</p>
+  <p class="note">Clean admin export. Internal IDs, Stripe/payment links, tax codes, backend tracking fields, and raw JSON are intentionally hidden. Uploaded photos/documents are listed by metadata; open private files from the admin dashboard when needed.</p>
 </body>
 </html>`;
 }
@@ -1091,25 +1392,23 @@ function getFilteredCsvFilename(title: string) {
   return `nesthelper-${safeFilePart(title)}-${new Date().toISOString().slice(0, 10)}.csv`;
 }
 
-function getAdminCsvExport(collectionName: string, records: AdminDoc[]) {
-  const priorityKeys = ["id", "createdAt", "status", ...(DETAIL_FIELD_ORDER[collectionName] || [])];
-  const keys = Array.from(new Set([
-    ...priorityKeys,
-    ...records.flatMap((record) => Object.keys(record)),
-    "uploadedPhotoCount",
-    "uploadedDocumentCount",
-  ])).filter((key) => {
-    if (key === "uploadedPhotoCount" || key === "uploadedDocumentCount") return true;
-    return !EXPORT_HIDE_KEYS.has(key) && !isPhotoDataField(key) && !isApplicationDocumentField(key);
-  });
+function getFlattenedCleanExportEntries(collectionName: string, record: AdminDoc) {
+  return getAdminRecordExportSections(collectionName, record).flatMap((section) =>
+    section.entries.map((entry) => ({
+      key: `${section.title} — ${entry.label}`,
+      value: entry.value,
+    }))
+  );
+}
 
-  const csvLabels: Record<string, string> = { uploadedPhotoCount: "Uploaded photos", uploadedDocumentCount: "Uploaded docs" };
-  const header = keys.map((key) => csvEscape(csvLabels[key] || DETAIL_FIELD_LABELS[key] || key)).join(",");
-  const rows = records.map((record) => keys.map((key) => {
-    if (key === "uploadedPhotoCount") return csvEscape(String(getPhotoUploads(record).length));
-    if (key === "uploadedDocumentCount") return csvEscape(String(getApplicationDocuments(record).length || record.applicationDocumentCount || 0));
-    return csvEscape(exportValueToText(key, record[key]));
-  }).join(","));
+function getAdminCsvExport(collectionName: string, records: AdminDoc[]) {
+  const flattenedRecords = records.map((record) => getFlattenedCleanExportEntries(collectionName, record));
+  const keys = Array.from(new Set(flattenedRecords.flatMap((entries) => entries.map((entry) => entry.key))));
+  const header = keys.map((key) => csvEscape(key)).join(",");
+  const rows = flattenedRecords.map((entries) => {
+    const lookup = new Map(entries.map((entry) => [entry.key, entry.value]));
+    return keys.map((key) => csvEscape(lookup.get(key) || "")).join(",");
+  });
   return [header, ...rows].join("\n");
 }
 
