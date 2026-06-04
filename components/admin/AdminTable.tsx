@@ -219,6 +219,44 @@ function getReferralStatusText(item: AdminDoc | null | undefined) {
   return String(item?.outgoingReferralStatus || item?.incomingReferralStatus || "Not started");
 }
 
+function getAdminPaymentText(item: AdminDoc | null | undefined) {
+  return String(`${item?.paymentStatus || ""} ${item?.laundryPaymentStatus || ""} ${item?.familyInvoiceStatus || ""} ${item?.invoiceStatus || ""} ${item?.checkoutStatus || ""} ${item?.status || ""}`).toLowerCase();
+}
+
+function isClosedAdminStatus(item: AdminDoc | null | undefined) {
+  const status = String(item?.status || "").trim().toLowerCase();
+  return ["completed", "canceled", "cancelled", "declined", "not eligible", "archived"].includes(status);
+}
+
+function getAdminQueueKey(item: AdminDoc | null | undefined) {
+  const status = String(item?.status || "").trim().toLowerCase();
+  const paymentText = getAdminPaymentText(item);
+  if (status === "completed") return "completed";
+  if (["canceled", "cancelled", "declined", "not eligible", "archived"].includes(status)) return "closed";
+  if (!status || ["new", "needs info", "follow-up needed", "pending review", "reviewing", "requested"].includes(status) || status.includes("review") || status.includes("follow")) return "needs-review";
+  if (paymentText.includes("sent") || paymentText.includes("checkout") || paymentText.includes("invoice")) {
+    if (!paymentText.includes("paid")) return "payment";
+  }
+  if (paymentText.includes("paid") || status.includes("scheduled") || status.includes("assigned")) return "paid-scheduled";
+  if (status.includes("approved") || status.includes("quote")) return "needs-payment";
+  return "active";
+}
+
+function isActiveQueueItem(item: AdminDoc | null | undefined) {
+  return !isClosedAdminStatus(item);
+}
+
+const ADMIN_QUEUE_OPTIONS = [
+  { key: "active", label: "Active queue", helper: "Open work", accent: "bg-[#075c58] text-white border-[#075c58]" },
+  { key: "needs-review", label: "Needs review", helper: "New/follow-up", accent: "bg-amber-100 text-amber-900 border-amber-300" },
+  { key: "needs-payment", label: "Needs payment", helper: "Approved/quote", accent: "bg-blue-100 text-blue-900 border-blue-300" },
+  { key: "payment", label: "Payment sent", helper: "Waiting to pay", accent: "bg-violet-100 text-violet-900 border-violet-300" },
+  { key: "paid-scheduled", label: "Paid / scheduled", helper: "Ready to serve", accent: "bg-emerald-100 text-emerald-900 border-emerald-300" },
+  { key: "completed", label: "Completed", helper: "Done", accent: "bg-slate-100 text-slate-800 border-slate-300" },
+  { key: "closed", label: "Closed", helper: "Canceled/declined", accent: "bg-rose-100 text-rose-900 border-rose-300" },
+  { key: "all", label: "All records", helper: "Everything", accent: "bg-white text-[#075c58] border-[#eadfc8]" },
+] as const;
+
 function getOutgoingReferralHistory(item: AdminDoc | null | undefined) {
   const history = item?.outgoingReferralHistory;
   if (!Array.isArray(history)) return [] as Array<Record<string, any>>;
@@ -467,6 +505,7 @@ export default function AdminTable({
   const [statusFilter, setStatusFilter] = useState("all");
   const [paymentFilter, setPaymentFilter] = useState("all");
   const [dateFilter, setDateFilter] = useState("all");
+  const [queueFilter, setQueueFilter] = useState(collectionName === "serviceRequests" ? "active" : "all");
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [checkoutMode, setCheckoutMode] = useState<CheckoutMode>("standard");
   const [customInitialAmount, setCustomInitialAmount] = useState("");
@@ -603,6 +642,16 @@ export default function AdminTable({
 
   const dropdownStatuses = availableStatuses;
 
+  const queueCounts = useMemo(() => {
+    const counts: Record<string, number> = { active: 0, "needs-review": 0, "needs-payment": 0, payment: 0, "paid-scheduled": 0, completed: 0, closed: 0, all: items.length };
+    items.forEach((item) => {
+      const key = getAdminQueueKey(item);
+      counts[key] = (counts[key] || 0) + 1;
+      if (isActiveQueueItem(item)) counts.active = (counts.active || 0) + 1;
+    });
+    return counts;
+  }, [items]);
+
   const filtered = useMemo(() => {
     const term = filter.toLowerCase().trim();
     const now = new Date();
@@ -614,6 +663,13 @@ export default function AdminTable({
       if (term && !JSON.stringify(item).toLowerCase().includes(term)) return false;
       if (serviceFilter && getServiceKey(item) !== serviceFilter) return false;
       if (statusFilter !== "all" && String(item.status || "") !== statusFilter) return false;
+      if (collectionName === "serviceRequests" && queueFilter !== "all") {
+        if (queueFilter === "active") {
+          if (!isActiveQueueItem(item)) return false;
+        } else if (getAdminQueueKey(item) !== queueFilter) {
+          return false;
+        }
+      }
 
       const paymentStatus = String(item.paymentStatus || item.laundryPaymentStatus || item.additionalPaymentStatus || "").toLowerCase();
       if (paymentFilter === "paid" && !paymentStatus.includes("paid")) return false;
@@ -631,9 +687,9 @@ export default function AdminTable({
 
       return true;
     });
-  }, [items, filter, serviceFilter, statusFilter, paymentFilter, dateFilter]);
+  }, [items, filter, serviceFilter, statusFilter, paymentFilter, dateFilter, queueFilter, collectionName]);
 
-  const activeFilterCount = [filter.trim(), serviceFilter, statusFilter !== "all" ? statusFilter : "", paymentFilter !== "all" ? paymentFilter : "", dateFilter !== "all" ? dateFilter : ""].filter(Boolean).length;
+  const activeFilterCount = [filter.trim(), serviceFilter, statusFilter !== "all" ? statusFilter : "", paymentFilter !== "all" ? paymentFilter : "", dateFilter !== "all" ? dateFilter : "", collectionName === "serviceRequests" && queueFilter !== "active" ? queueFilter : ""].filter(Boolean).length;
 
   function clearAllFilters() {
     setFilter("");
@@ -641,6 +697,7 @@ export default function AdminTable({
     setStatusFilter("all");
     setPaymentFilter("all");
     setDateFilter("all");
+    setQueueFilter(collectionName === "serviceRequests" ? "active" : "all");
   }
 
   const laundrySubtotal = Math.max(0, toNumber(laundryDryWeightLbs) * toNumber(laundryRatePerLb) + toNumber(laundryAddOnsAmount));
@@ -1313,6 +1370,38 @@ export default function AdminTable({
             </div>
           </div>
         </div>
+
+        {collectionName === "serviceRequests" && (
+          <div className="mt-4 rounded-3xl border border-[#eadfc8] bg-[#fbf6ea] p-3 sm:p-4">
+            <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Work queue</p>
+                <p className="mt-1 text-sm font-semibold text-slate-600">Start with active work, then jump to the bucket you need.</p>
+              </div>
+              {queueFilter !== "active" && (
+                <button type="button" onClick={() => setQueueFilter("active")} className={getAdminActionClass("quiet")}>Back to active</button>
+              )}
+            </div>
+            <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4 xl:grid-cols-8">
+              {ADMIN_QUEUE_OPTIONS.map((option) => {
+                const active = queueFilter === option.key;
+                return (
+                  <button
+                    key={option.key}
+                    type="button"
+                    onClick={() => setQueueFilter(option.key)}
+                    className={`rounded-2xl border px-3 py-3 text-left shadow-sm transition hover:-translate-y-0.5 focus:outline-none focus:ring-4 focus:ring-[#075c58]/15 ${active ? option.accent + " ring-2 ring-[#075c58]/25" : "border-[#eadfc8] bg-white text-slate-700"}`}
+                    title={`Show ${option.label}`}
+                  >
+                    <span className="block text-lg font-black leading-none">{queueCounts[option.key] || 0}</span>
+                    <span className="mt-1 block text-[11px] font-black uppercase tracking-wide">{option.label}</span>
+                    <span className="mt-1 block text-[10px] font-semibold opacity-80">{option.helper}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {collectionName === "serviceRequests" && (
           <div className="mt-4">
