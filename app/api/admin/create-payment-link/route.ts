@@ -9,6 +9,7 @@ import { getFirebaseAdminDb } from "@/lib/firebaseAdmin";
 import { services } from "@/lib/services";
 import { getStripePriceId, normalizeStripePriceMode } from "@/lib/stripePriceMap";
 import { sendPaymentLinkEmail } from "@/lib/sendPaymentLinkEmail";
+import { getAvailableCustomerReferralCreditsForEmail, getTotalCustomerCreditAmount, reserveAppliedCustomerReferralCreditsForPayment } from "@/lib/referrals";
 
 export const runtime = "nodejs";
 
@@ -222,12 +223,15 @@ export async function POST(request: Request) {
     }
 
     const expectedReferralCredit = !isCommercialReset ? getExpectedReferralCreditAmount(data) : 0;
+    const availableCustomerCredits = !isCommercialReset ? await getAvailableCustomerReferralCreditsForEmail(db, data.email, requestId) : [];
+    const availableCustomerCreditAmount = getTotalCustomerCreditAmount(availableCustomerCredits);
+    const totalRequiredCredit = expectedReferralCredit + availableCustomerCreditAmount;
     const savedDiscountCredit = cleanNumber(savedFamilyBreakdown.discountCredit);
-    if (expectedReferralCredit > 0 && (!useCustomInitial || savedDiscountCredit < expectedReferralCredit)) {
+    if (totalRequiredCredit > 0 && (!useCustomInitial || savedDiscountCredit < totalRequiredCredit)) {
       return NextResponse.json(
         {
           ok: false,
-          error: `This request has a family referral credit. Open the Family Payment Breakdown, apply/save the $${expectedReferralCredit} referral credit, then use Fill checkout with referral price or create a family invoice.`,
+          error: `This request has a referral/customer credit. Open the Family Payment Breakdown, apply/save the $${totalRequiredCredit} credit, then use Fill checkout with credit price or create a family invoice.`,
         },
         { status: 400 }
       );
@@ -413,6 +417,18 @@ export async function POST(request: Request) {
 
     await requestRef.update(updatePayload);
 
+    let reservedCustomerCredit: Awaited<ReturnType<typeof reserveAppliedCustomerReferralCreditsForPayment>> | null = null;
+    if (!isCommercialReset && useCustomInitial) {
+      reservedCustomerCredit = await reserveAppliedCustomerReferralCreditsForPayment({
+        db,
+        requestId,
+        requestData: data,
+        paymentKind: "checkout",
+        paymentId: session.id,
+        adminEmail: decoded.email || "admin",
+      });
+    }
+
     return NextResponse.json({
       ok: true,
       url: checkoutUrl,
@@ -422,6 +438,7 @@ export async function POST(request: Request) {
       customInitial: useCustomInitial,
       includedQuoteBreakdown: Boolean(isCommercialReset && useCustomInitial && shouldIncludeQuoteBreakdown && savedCommercialBreakdownText),
       includedFamilyBreakdown: Boolean(!isCommercialReset && shouldIncludeFamilyBreakdown && savedFamilyBreakdownText),
+      reservedCustomerCredit,
     });
   } catch (error) {
     const message = error instanceof Error && error.message ? error.message : "Unable to create payment link.";

@@ -7,6 +7,7 @@ import { services } from "@/lib/services";
 import { sendAdminEmail } from "@/lib/sendAdminEmail";
 import { sendPaymentReceivedEmail } from "@/lib/sendPaymentReceivedEmail";
 import { emailAliases, getPrimaryAdminNotificationRecipients } from "@/lib/emailRouting";
+import { markReservedCustomerReferralCreditsUsedForRequest } from "@/lib/referrals";
 
 export const runtime = "nodejs";
 
@@ -288,6 +289,13 @@ export async function POST(request: Request) {
             stripeCustomerId: typeof invoice.customer === "string" ? invoice.customer : "",
             updatedAt: FieldValue.serverTimestamp(),
             updatedBy: "stripe-webhook",
+          });
+
+          await markReservedCustomerReferralCreditsUsedForRequest({
+            db,
+            requestId,
+            paymentKind: "family_invoice",
+            paymentId: invoice.id,
           });
 
           const email = getString(existingData.email);
@@ -587,6 +595,15 @@ export async function POST(request: Request) {
         }
 
         await requestRef.update(updatePayload);
+
+        if (!isAdditionalPayment && !isLaundryFinalBalance) {
+          await markReservedCustomerReferralCreditsUsedForRequest({
+            db,
+            requestId,
+            paymentKind: isLaundryDeposit ? "laundry_deposit_checkout" : "checkout",
+            paymentId: session.id,
+          });
+        }
 
         const email = getString(existingData.email) || getString(session.customer_details?.email) || getString(session.customer_email);
         const customerName = getString(existingData.fullName) || getString(session.customer_details?.name) || getString(session.metadata?.customerName);

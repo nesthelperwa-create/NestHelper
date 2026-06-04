@@ -61,14 +61,14 @@ export async function sendReferralRewardEmail({
             <div style="font-size:18px;font-weight:800;color:#233;">${escapeHtml(rewardCode)}</div>
           </div>
           ${clean(referredServiceTitle) ? `<p style="margin:0 0 18px 0;"><strong>Completed service:</strong> ${escapeHtml(referredServiceTitle)}</p>` : ""}
-          <p style="margin:0 0 18px 0;">Reply to this email before your next eligible family reset and NestHelper will review/apply your referral credit.</p>
+          <p style="margin:0 0 18px 0;">Your credit is saved under this email address. Use the same email the next time you request an eligible NestHelper family service, and NestHelper can apply the credit before sending your payment link or invoice.</p>
           <p style="margin:0 0 18px 0;">Questions? Reply to this email or contact us at ${escapeHtml(replyTo)}.</p>
           <p style="font-size:12px;color:#667;line-height:1.5;margin-top:22px;">Referral credits are not cash, are not transferable unless NestHelper approves it, and are subject to NestHelper’s Referral Program Policy.</p>
         </div>
       </div>
     </div>`;
 
-  const text = `Your family referral credit is ready\n\n${greeting}\n\n${referredText}\n\nReward / credit: ${rewardLabel}\nCredit code: ${rewardCode}\n${clean(referredServiceTitle) ? `Completed service: ${clean(referredServiceTitle)}\n` : ""}\nReply to this email before your next eligible family reset and NestHelper will review/apply your referral credit.\n\nQuestions? Reply to this email or contact us at ${replyTo}.`;
+  const text = `Your family referral credit is ready\n\n${greeting}\n\n${referredText}\n\nReward / credit: ${rewardLabel}\nCredit code: ${rewardCode}\n${clean(referredServiceTitle) ? `Completed service: ${clean(referredServiceTitle)}\n` : ""}\nYour credit is saved under this email address. Use the same email the next time you request an eligible NestHelper family service, and NestHelper can apply the credit before sending your payment link or invoice.\n\nQuestions? Reply to this email or contact us at ${replyTo}.`;
 
   const resend = new Resend(apiKey);
   return resend.emails.send({ from, to, subject: "Your NestHelper referral credit is ready", html, text, replyTo });

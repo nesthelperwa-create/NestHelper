@@ -8,6 +8,7 @@ import CommercialQuoteBreakdownBuilder from "./CommercialQuoteBreakdownBuilder";
 import FamilyPaymentBreakdownBuilder from "./FamilyPaymentBreakdownBuilder";
 
 type AdminDoc = { id: string; status?: string; createdAt?: unknown; checkoutUrl?: string; promoCode?: string; [key: string]: any };
+type CustomerCredit = { id: string; status?: string; amount?: number; remainingAmount?: number; customerEmail?: string; customerEmailKey?: string; creditCode?: string; [key: string]: any };
 type CheckoutMode = "standard" | "founding" | "custom";
 
 const COMMERCIAL_QUOTE_STATUSES = [
@@ -71,6 +72,33 @@ function toNumber(value: unknown) {
 function centsToDollars(value: unknown) {
   const cents = toNumber(value);
   return cents > 0 ? cents / 100 : 0;
+}
+
+function cleanEmailKey(value: unknown) {
+  return typeof value === "string" ? value.trim().toLowerCase() : "";
+}
+
+function getCustomerCreditAmount(credit: CustomerCredit) {
+  const amount = toNumber(credit.remainingAmount || credit.amount);
+  return amount > 0 ? amount : 0;
+}
+
+function getAvailableCustomerCreditsForRequest(item: AdminDoc | null | undefined, credits: CustomerCredit[]) {
+  const emailKey = cleanEmailKey(item?.email);
+  if (!emailKey || isCommercialRequest(item)) return [];
+  return credits.filter((credit) => {
+    const status = String(credit.status || "").trim().toLowerCase();
+    const creditEmail = cleanEmailKey(credit.customerEmailKey || credit.customerEmail);
+    const selectedId = String(item?.id || "");
+    const sourceReferrerId = String(credit.sourceReferrerRequestId || "");
+    const sourceReferredId = String(credit.sourceReferredRequestId || "");
+    if (selectedId && (sourceReferrerId === selectedId || sourceReferredId === selectedId)) return false;
+    return status === "available" && creditEmail === emailKey && getCustomerCreditAmount(credit) > 0;
+  });
+}
+
+function getAvailableCustomerCreditTotal(credits: CustomerCredit[]) {
+  return credits.reduce((sum, credit) => sum + getCustomerCreditAmount(credit), 0);
 }
 
 function guessCheckoutMode(item: AdminDoc | null): CheckoutMode {
@@ -426,6 +454,7 @@ export default function AdminTable({
   enablePaymentActions?: boolean;
 }) {
   const [items, setItems] = useState<AdminDoc[]>([]);
+  const [customerCredits, setCustomerCredits] = useState<CustomerCredit[]>([]);
   const [selected, setSelected] = useState<AdminDoc | null>(null);
   const [filter, setFilter] = useState("");
   const [serviceFilter, setServiceFilter] = useState("");
@@ -490,6 +519,17 @@ export default function AdminTable({
     const unsub = onSnapshot(q, (snap) => setItems(snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }))));
     return () => unsub();
   }, [collectionName]);
+
+
+  useEffect(() => {
+    if (!enablePaymentActions || collectionName !== "serviceRequests") {
+      setCustomerCredits([]);
+      return;
+    }
+    const q = query(collection(firestoreDb, "customerCredits"));
+    const unsub = onSnapshot(q, (snap) => setCustomerCredits(snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }))));
+    return () => unsub();
+  }, [collectionName, enablePaymentActions]);
 
   useEffect(() => {
     const nextStatus = selected?.status || "New";
@@ -1170,6 +1210,8 @@ export default function AdminTable({
   const showFamilyReferralPanel = showPaymentActions && !selectedIsCommercial;
   const selectedIsFamilyReferralEligible = isFamilyReferralEligibleRequest(selected);
   const selectedCanGenerateReferral = Boolean(selectedIsFamilyReferralEligible && isCompletedRequest(selected));
+  const selectedAvailableCustomerCredits = getAvailableCustomerCreditsForRequest(selected, customerCredits);
+  const selectedAvailableCustomerCreditTotal = getAvailableCustomerCreditTotal(selectedAvailableCustomerCredits);
   const anyActionBusy = checkoutBusy || commercialInvoiceBusy || commercialQuoteEmailBusy || familyInvoiceBusy || statusBusy || laundryFinalBusy || additionalPaymentBusy || commercialQuoteBusy || referralBusy;
 
   return (
@@ -1473,6 +1515,12 @@ export default function AdminTable({
                   </div>
                 </div>
 
+                {selectedAvailableCustomerCreditTotal > 0 && (
+                  <div className="mt-3 rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-bold leading-6 text-emerald-900">
+                    Available saved credit for this customer email: {formatMoney(selectedAvailableCustomerCreditTotal)}. Open the Family Payment Breakdown to apply it before sending checkout or invoice.
+                  </div>
+                )}
+
                 {referralMessage && <p className="mt-3 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">{referralMessage}</p>}
                 {referralError && <p className="mt-3 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{referralError}</p>}
               </div>
@@ -1727,6 +1775,7 @@ export default function AdminTable({
             {showFamilyPaymentBreakdownPanel && (
               <FamilyPaymentBreakdownBuilder
                 item={selected}
+                availableCustomerCredits={selectedAvailableCustomerCredits}
                 formatMoney={formatMoney}
                 onSaved={(updates) => {
                   const savedBreakdown = updates.familyPaymentBreakdown as { customerBreakdownText?: string } | undefined;

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { firebaseAuth } from "@/lib/firebaseClient";
 
 type AdminDoc = { id: string; [key: string]: any };
+type CustomerCredit = { id: string; status?: string; amount?: number; remainingAmount?: number; creditCode?: string; customerEmail?: string; sourceReferredName?: string; [key: string]: any };
 
 type FamilyLineItem = {
   id: string;
@@ -19,6 +20,7 @@ type FamilyLineItem = {
 
 type FamilyBreakdownBuilderProps = {
   item: AdminDoc;
+  availableCustomerCredits?: CustomerCredit[];
   formatMoney: (value: number) => string;
   onSaved: (updates: Record<string, unknown>) => void;
   onApplyCheckout: (payload: { amount: number; title: string; note: string }) => void;
@@ -254,17 +256,40 @@ function getReferralCreditLabel(item: AdminDoc, amount: number) {
     : `$${amount} family referral credit`;
 }
 
-function getInitialDiscountCredit(item: AdminDoc, saved: Record<string, any>) {
+function getAvailableCustomerCreditAmount(credits: CustomerCredit[] = []) {
+  return credits.reduce((sum, credit) => {
+    const amount = cleanNumber(credit.remainingAmount || credit.amount);
+    const status = getString(credit.status).toLowerCase();
+    return status === "available" && amount > 0 ? sum + amount : sum;
+  }, 0);
+}
+
+function getAvailableCustomerCreditIds(credits: CustomerCredit[] = []) {
+  return credits
+    .filter((credit) => getString(credit.status).toLowerCase() === "available" && cleanNumber(credit.remainingAmount || credit.amount) > 0)
+    .map((credit) => getString(credit.id || credit.creditCode))
+    .filter(Boolean);
+}
+
+function getAvailableCustomerCreditLabel(amount: number) {
+  return amount > 0 ? `$${amount} saved referral credit from this customer’s account` : "";
+}
+
+function getInitialDiscountCredit(item: AdminDoc, saved: Record<string, any>, availableCustomerCredits: CustomerCredit[] = []) {
   const savedDiscount = getString(saved.discountCredit);
   if (savedDiscount) return savedDiscount;
   const referralCredit = getReferralCreditAmount(item);
-  return referralCredit > 0 ? String(referralCredit) : "0";
+  const availableCustomerCredit = getAvailableCustomerCreditAmount(availableCustomerCredits);
+  const suggestedCredit = referralCredit + availableCustomerCredit;
+  return suggestedCredit > 0 ? String(suggestedCredit) : "0";
 }
 
-function buildDefaultCustomerNote(item: AdminDoc) {
+function buildDefaultCustomerNote(item: AdminDoc, availableCustomerCredits: CustomerCredit[] = []) {
   const referralCredit = getReferralCreditAmount(item);
-  const referralText = referralCredit > 0
-    ? ` A ${getReferralCreditLabel(item, referralCredit)} has been included in this payment breakdown.`
+  const availableCustomerCredit = getAvailableCustomerCreditAmount(availableCustomerCredits);
+  const totalCredit = referralCredit + availableCustomerCredit;
+  const referralText = totalCredit > 0
+    ? ` A referral/customer credit of $${totalCredit} has been included in this payment breakdown.`
     : "";
   return String(item.service || "").includes("laundry")
     ? `Laundry deposit/minimum is credited toward the final balance. A final balance invoice or payment link may be sent after dry weight, add-ons, bulky items, or approved changes are reviewed.${referralText}`
@@ -423,6 +448,7 @@ function safeHtml(value: string) {
 
 export default function FamilyPaymentBreakdownBuilder({
   item,
+  availableCustomerCredits = [],
   formatMoney,
   onSaved,
   onApplyCheckout,
@@ -442,9 +468,14 @@ export default function FamilyPaymentBreakdownBuilder({
   );
   const referralCreditAmount = getReferralCreditAmount(item);
   const referralCreditLabel = getReferralCreditLabel(item, referralCreditAmount);
-  const [discountCredit, setDiscountCredit] = useState(getInitialDiscountCredit(item, saved));
+  const availableCustomerCreditAmount = getAvailableCustomerCreditAmount(availableCustomerCredits);
+  const availableCustomerCreditIds = getAvailableCustomerCreditIds(availableCustomerCredits);
+  const availableCustomerCreditLabel = getAvailableCustomerCreditLabel(availableCustomerCreditAmount);
+  const totalSuggestedCreditAmount = referralCreditAmount + availableCustomerCreditAmount;
+  const totalSuggestedCreditLabel = [referralCreditLabel, availableCustomerCreditLabel].filter(Boolean).join(" + ");
+  const [discountCredit, setDiscountCredit] = useState(getInitialDiscountCredit(item, saved, availableCustomerCredits));
   const [laterAmount, setLaterAmount] = useState(getString(saved.laterAmount) || "0");
-  const [customerNote, setCustomerNote] = useState(getString(saved.customerNote) || buildDefaultCustomerNote(item));
+  const [customerNote, setCustomerNote] = useState(getString(saved.customerNote) || buildDefaultCustomerNote(item, availableCustomerCredits));
   const [internalNotes, setInternalNotes] = useState(getString(saved.internalNotes));
   const [refundStatus, setRefundStatus] = useState(getString(item.familyRefundTracking?.refundStatus) || "No refund due");
   const [refundAmount, setRefundAmount] = useState(getString(item.familyRefundTracking?.refundAmount) || "0");
@@ -463,9 +494,9 @@ export default function FamilyPaymentBreakdownBuilder({
     setServicePeriodEnd(getString(nextSaved.servicePeriodEnd));
     setSelectedPreset(getSuggestedPresetId(item));
     setLineItems(Array.isArray(nextSaved.lineItems) && nextSaved.lineItems.length ? nextSaved.lineItems.map(lineFromSaved) : createDefaultLinesFromRequest(item));
-    setDiscountCredit(getInitialDiscountCredit(item, nextSaved));
+    setDiscountCredit(getInitialDiscountCredit(item, nextSaved, availableCustomerCredits));
     setLaterAmount(getString(nextSaved.laterAmount) || "0");
-    setCustomerNote(getString(nextSaved.customerNote) || buildDefaultCustomerNote(item));
+    setCustomerNote(getString(nextSaved.customerNote) || buildDefaultCustomerNote(item, availableCustomerCredits));
     setInternalNotes(getString(nextSaved.internalNotes));
     setRefundStatus(getString(item.familyRefundTracking?.refundStatus) || "No refund due");
     setRefundAmount(getString(item.familyRefundTracking?.refundAmount) || "0");
@@ -474,13 +505,13 @@ export default function FamilyPaymentBreakdownBuilder({
     setMessage("");
     setError("");
     setDirty(false);
-  }, [item.id]);
+  }, [item.id, availableCustomerCredits.map((credit) => `${credit.id}:${credit.status}:${credit.remainingAmount || credit.amount}`).join("|")]);
 
   const subtotal = useMemo(() => lineItems.reduce((sum, line) => sum + calculateLineAmount(line), 0), [lineItems]);
   const discount = Math.max(0, cleanNumber(discountCredit));
   const amountDueNow = Math.max(0, subtotal - discount);
-  const referralCreditApplied = referralCreditAmount > 0 && discount >= referralCreditAmount;
-  const referralCreditNeedsAttention = referralCreditAmount > 0 && discount < referralCreditAmount;
+  const referralCreditApplied = totalSuggestedCreditAmount > 0 && discount >= totalSuggestedCreditAmount;
+  const referralCreditNeedsAttention = totalSuggestedCreditAmount > 0 && discount < totalSuggestedCreditAmount;
   const possibleLaterAmount = Math.max(0, cleanNumber(laterAmount));
   const servicePeriodLabel = useMemo(() => formatServicePeriodLabel(servicePeriodStart, servicePeriodEnd), [servicePeriodStart, servicePeriodEnd]);
   const customerBreakdownText = useMemo(
@@ -520,17 +551,17 @@ export default function FamilyPaymentBreakdownBuilder({
   }
 
   function applyReferralCredit() {
-    if (!referralCreditAmount) return;
+    if (!totalSuggestedCreditAmount) return;
     markDirty();
-    setDiscountCredit(String(referralCreditAmount));
+    setDiscountCredit(String(Number(totalSuggestedCreditAmount.toFixed(2))));
     setInternalNotes((prev) => {
-      const note = `${referralCreditLabel} applied before sending payment.`;
+      const note = `${totalSuggestedCreditLabel || "Referral/customer credit"} applied before sending payment.`;
       return prev && prev.includes(note) ? prev : [prev, note].filter(Boolean).join("\n");
     });
-    if (!customerNote.toLowerCase().includes("referral credit")) {
-      setCustomerNote((prev) => `${prev}${prev.endsWith(" ") ? "" : " "}${referralCreditLabel} has been included in this payment breakdown.`);
+    if (!customerNote.toLowerCase().includes("referral credit") && !customerNote.toLowerCase().includes("customer credit")) {
+      setCustomerNote((prev) => `${prev}${prev.endsWith(" ") ? "" : " "}${totalSuggestedCreditLabel || "Referral/customer credit"} has been included in this payment breakdown.`);
     }
-    setMessage(`${referralCreditLabel} applied. Save the family breakdown before creating the invoice or filling checkout.`);
+    setMessage(`${totalSuggestedCreditLabel || "Referral/customer credit"} applied. Save the family breakdown before creating the invoice or filling checkout.`);
   }
 
   function addLineFromPreset() {
@@ -546,6 +577,8 @@ export default function FamilyPaymentBreakdownBuilder({
     setPaymentPlan(getDefaultPaymentPlan(item));
     setServicePeriodStart("");
     setServicePeriodEnd("");
+    setDiscountCredit(getInitialDiscountCredit(item, {}, availableCustomerCredits));
+    setCustomerNote(buildDefaultCustomerNote(item, availableCustomerCredits));
   }
 
   function removeLine(id: string) {
@@ -612,6 +645,10 @@ export default function FamilyPaymentBreakdownBuilder({
             lineItems,
             subtotal: Number(subtotal.toFixed(2)),
             discountCredit: Number(discount.toFixed(2)),
+            incomingReferralCreditAmount: Number(referralCreditAmount.toFixed(2)),
+            appliedCustomerCreditIds: availableCustomerCreditIds,
+            appliedCustomerCreditAmount: Number(availableCustomerCreditAmount.toFixed(2)),
+            totalSuggestedCreditAmount: Number(totalSuggestedCreditAmount.toFixed(2)),
             amountDueNow: Number(amountDueNow.toFixed(2)),
             laterAmount: Number(possibleLaterAmount.toFixed(2)),
             customerNote,
@@ -639,6 +676,10 @@ export default function FamilyPaymentBreakdownBuilder({
           lineItems,
           subtotal: Number(subtotal.toFixed(2)),
           discountCredit: Number(discount.toFixed(2)),
+          incomingReferralCreditAmount: Number(referralCreditAmount.toFixed(2)),
+          appliedCustomerCreditIds: availableCustomerCreditIds,
+          appliedCustomerCreditAmount: Number(availableCustomerCreditAmount.toFixed(2)),
+          totalSuggestedCreditAmount: Number(totalSuggestedCreditAmount.toFixed(2)),
           amountDueNow: Number(amountDueNow.toFixed(2)),
           laterAmount: Number(possibleLaterAmount.toFixed(2)),
           customerNote,
@@ -683,15 +724,16 @@ export default function FamilyPaymentBreakdownBuilder({
         <div className="flex flex-col gap-2 sm:flex-row lg:flex-col">
           <div className="rounded-2xl bg-white px-4 py-3 text-sm font-black text-[#075c58] shadow-sm">
             Amount due now: {formatMoney(amountDueNow)}
-            {referralCreditApplied && <span className="mt-1 block text-xs text-emerald-700">Referral credit included: -{formatMoney(referralCreditAmount)}</span>}{referralCreditNeedsAttention && <span className="mt-1 block text-xs text-amber-700">Referral credit needs review: -{formatMoney(referralCreditAmount)}</span>}
+            {referralCreditApplied && <span className="mt-1 block text-xs text-emerald-700">Referral/customer credit included: -{formatMoney(totalSuggestedCreditAmount)}</span>}{referralCreditNeedsAttention && <span className="mt-1 block text-xs text-amber-700">Referral/customer credit needs review: -{formatMoney(totalSuggestedCreditAmount)}</span>}
           </div>
           <button type="button" onClick={() => setOpen(true)} className={getButtonClass("primary")}>Open family builder</button>
         </div>
       </div>
-      {referralCreditAmount > 0 && (
+      {totalSuggestedCreditAmount > 0 && (
         <div className={`mt-4 rounded-3xl border px-4 py-3 text-sm leading-6 ${referralCreditApplied ? "border-emerald-100 bg-emerald-50 text-emerald-900" : "border-amber-200 bg-amber-50 text-amber-900"}`}>
-          <p className="font-black">Family referral credit detected: -{formatMoney(referralCreditAmount)}</p>
+          <p className="font-black">Referral/customer credit detected: -{formatMoney(totalSuggestedCreditAmount)}</p>
           <p className="mt-1 font-semibold">
+            {availableCustomerCreditAmount > 0 ? `Available saved credit on this customer email: -${formatMoney(availableCustomerCreditAmount)}. ` : ""}
             {referralCreditApplied
               ? "This credit is already included in the builder total. Save the breakdown, then create the invoice or fill checkout from the builder amount."
               : "Open the builder and apply/save this credit before sending a payment link or invoice."}
@@ -749,23 +791,30 @@ export default function FamilyPaymentBreakdownBuilder({
                   </div>
                 </div>
 
-                {referralCreditAmount > 0 && (
+                {totalSuggestedCreditAmount > 0 && (
                   <div className={`rounded-3xl border p-4 ${referralCreditApplied ? "border-emerald-100 bg-emerald-50" : "border-amber-200 bg-amber-50"}`}>
                     <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                       <div>
-                        <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Referral credit</p>
-                        <h5 className="mt-1 text-base font-black text-[#075c58]">Apply {formatMoney(referralCreditAmount)} before payment</h5>
+                        <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Referral/customer credit</p>
+                        <h5 className="mt-1 text-base font-black text-[#075c58]">Apply {formatMoney(totalSuggestedCreditAmount)} before payment</h5>
                         <p className="mt-1 text-sm font-semibold leading-6 text-slate-700">
-                          This request came through a one-time family referral link. The customer should receive this credit before you send the invoice or checkout link.
+                          {referralCreditAmount > 0 ? `This request came through a referral link: -${formatMoney(referralCreditAmount)}. ` : ""}
+                          {availableCustomerCreditAmount > 0 ? `This customer also has saved referral credit: -${formatMoney(availableCustomerCreditAmount)}. ` : ""}
+                          Save the breakdown before sending the invoice or checkout link.
                         </p>
                       </div>
                       <button type="button" onClick={applyReferralCredit} className={getButtonClass(referralCreditApplied ? "secondary" : "primary")}>
-                        {referralCreditApplied ? "Referral credit applied" : `Apply ${formatMoney(referralCreditAmount)} credit`}
+                        {referralCreditApplied ? "Credit applied" : `Apply ${formatMoney(totalSuggestedCreditAmount)} credit`}
                       </button>
                     </div>
+                    {availableCustomerCredits.length > 0 && (
+                      <p className="mt-3 rounded-2xl bg-white px-4 py-3 text-xs font-bold leading-5 text-slate-700">
+                        Credit record{availableCustomerCredits.length === 1 ? "" : "s"}: {availableCustomerCredits.map((credit) => getString(credit.creditCode || credit.id)).filter(Boolean).join(", ")}
+                      </p>
+                    )}
                     {referralCreditNeedsAttention && (
                       <p className="mt-3 rounded-2xl bg-white px-4 py-3 text-xs font-black leading-5 text-amber-900">
-                        The discount box is lower than the referral credit. Click Apply credit, then Save family breakdown before sending payment.
+                        The discount box is lower than the available referral/customer credit. Click Apply credit, then Save family breakdown before sending payment.
                       </p>
                     )}
                   </div>
@@ -845,9 +894,9 @@ export default function FamilyPaymentBreakdownBuilder({
                   <label className={`grid gap-2 rounded-3xl border p-4 text-sm font-bold text-slate-700 ${referralCreditNeedsAttention ? "border-amber-300 bg-amber-50" : "border-[#eadfc8] bg-white"}`}>
                     Discount / credit
                     <input value={discountCredit} onChange={(e) => { markDirty(); setDiscountCredit(e.target.value); }} inputMode="decimal" className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]" />
-                    {referralCreditAmount > 0 && (
+                    {totalSuggestedCreditAmount > 0 && (
                       <span className={`text-xs font-black leading-5 ${referralCreditApplied ? "text-emerald-700" : "text-amber-800"}`}>
-                        Referral credit expected: -{formatMoney(referralCreditAmount)}. {referralCreditApplied ? "Included." : "Apply before sending payment."}
+                        Referral/customer credit expected: -{formatMoney(totalSuggestedCreditAmount)}. {referralCreditApplied ? "Included." : "Apply before sending payment."}
                       </span>
                     )}
                   </label>
@@ -915,7 +964,7 @@ export default function FamilyPaymentBreakdownBuilder({
                     <button type="button" onClick={copyBreakdown} className={getButtonClass("secondary")}>Copy</button>
                     <button type="button" onClick={downloadBreakdown} className={getButtonClass("quiet")}>Download</button>
                     <button type="button" onClick={printBreakdown} className={getButtonClass("quiet")}>Print</button>
-                    <button type="button" onClick={() => onApplyCheckout({ amount: amountDueNow, title: quoteTitle, note: customerNote })} className={getButtonClass("primary")}>{referralCreditAmount > 0 ? "Fill checkout with referral price" : "Fill checkout amount"}</button>
+                    <button type="button" onClick={() => onApplyCheckout({ amount: amountDueNow, title: quoteTitle, note: customerNote })} className={getButtonClass("primary")}>{totalSuggestedCreditAmount > 0 ? "Fill checkout with credit price" : "Fill checkout amount"}</button>
                     <button type="button" onClick={() => onApplyAdditionalPayment({ amount: possibleLaterAmount, reason: "Family approved add-on / balance", note: customerNote })} className={getButtonClass("quiet")}>Fill add-on amount</button>
                   </div>
                 </div>

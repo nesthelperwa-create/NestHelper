@@ -15,6 +15,8 @@ export const REFERRAL_PROGRAM = {
     "Reward email failed",
     "Credit approved",
     "Credit sent",
+    "Credit available",
+    "Credit reserved",
     "Credit used",
     "Not eligible"
   ] as string[],
@@ -38,6 +40,16 @@ function getString(value: unknown) {
 
 function cleanEmail(value: unknown) {
   return getString(value).toLowerCase();
+}
+
+export function getCustomerEmailKey(value: unknown) {
+  return cleanEmail(value);
+}
+
+function getSafeCreditAmount(value: unknown, fallback = 0) {
+  const amount = typeof value === "string" ? Number(value.replace(/[^0-9.-]/g, "")) : Number(value);
+  if (!Number.isFinite(amount) || amount <= 0 || amount > 500) return fallback;
+  return Math.round(amount * 100) / 100;
 }
 
 function getBaseUrl() {
@@ -338,6 +350,7 @@ export async function reserveReferralRewardForCompletedRequest({
   const rewardCode = normalizeReferralCode(`NHF-THANKS-${code.replace(/-/g, "").slice(-6)}`);
   const linkRef = db.collection("referralLinks").doc(code);
   const referredRequestRef = db.collection("serviceRequests").doc(requestId);
+  const creditRef = db.collection("customerCredits").doc(rewardCode);
 
   return db.runTransaction(async (transaction) => {
     const linkSnap = await transaction.get(linkRef);
@@ -350,11 +363,43 @@ export async function reserveReferralRewardForCompletedRequest({
 
     const referrerEmail = cleanEmail(linkData.referrerEmail);
     if (!referrerEmail) return null;
+    const referrerRequestId = getString(linkData.referrerRequestId);
+    const creditAmount = getSafeCreditAmount(
+      requestData.incomingReferralReferrerCreditAmount,
+      getFamilyReferralNewCustomerCreditAmount(requestData.service, requestData.selectedServiceTitle || requestData.packageType || requestData.requestType)
+    );
+    const referrerName = getString(linkData.referrerName);
+    const referredName = getString(requestData.fullName) || getString(requestData.name);
+    const referredServiceTitle = getReferralServiceTitle(requestData.service, requestData.selectedServiceTitle);
+
+    transaction.set(creditRef, {
+      creditId: rewardCode,
+      creditCode: rewardCode,
+      program: "family-to-family",
+      type: "family_referral",
+      status: "Available",
+      amount: creditAmount,
+      remainingAmount: creditAmount,
+      customerEmail: referrerEmail,
+      customerEmailKey: referrerEmail,
+      customerName: referrerName,
+      sourceReferralCode: code,
+      sourceReferralLinkId: code,
+      sourceReferrerRequestId: referrerRequestId,
+      sourceReferredRequestId: requestId,
+      sourceReferredName: referredName,
+      sourceReferredServiceTitle: referredServiceTitle,
+      earnedAt: FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
+    }, { merge: true });
 
     transaction.update(linkRef, {
       status: "Reward Email Pending",
       rewardEmailPendingAt: FieldValue.serverTimestamp(),
       rewardCode,
+      rewardCreditId: rewardCode,
+      rewardCreditAmount: creditAmount,
       completedByRequestId: requestId,
       completedAt: FieldValue.serverTimestamp(),
       updatedAt: FieldValue.serverTimestamp(),
@@ -367,11 +412,13 @@ export async function reserveReferralRewardForCompletedRequest({
       updatedAt: FieldValue.serverTimestamp(),
     });
 
-    const referrerRequestId = getString(linkData.referrerRequestId);
     if (referrerRequestId) {
       transaction.update(db.collection("serviceRequests").doc(referrerRequestId), {
-        outgoingReferralStatus: "Reward email pending",
+        outgoingReferralStatus: "Credit available",
         outgoingReferralRewardCode: rewardCode,
+        outgoingReferralCreditId: rewardCode,
+        outgoingReferralCreditAmount: creditAmount,
+        outgoingReferralCreditStatus: "Available",
         outgoingReferralCompletedByRequestId: requestId,
         outgoingReferralCompletedAt: FieldValue.serverTimestamp(),
         updatedAt: FieldValue.serverTimestamp(),
@@ -381,12 +428,13 @@ export async function reserveReferralRewardForCompletedRequest({
     return {
       code,
       rewardCode,
-      rewardLabel: getReferralRewardLabel(),
+      rewardLabel: `$${creditAmount} NestHelper family referral credit`,
+      rewardAmount: creditAmount,
       referrerEmail,
-      referrerName: getString(linkData.referrerName),
-      referrerRequestId: getString(linkData.referrerRequestId),
-      referredName: getString(requestData.fullName) || getString(requestData.name),
-      referredServiceTitle: getReferralServiceTitle(requestData.service, requestData.selectedServiceTitle),
+      referrerName,
+      referrerRequestId,
+      referredName,
+      referredServiceTitle,
     };
   });
 }
@@ -416,6 +464,14 @@ export async function markReferralRewardSent({
     updatedAt: FieldValue.serverTimestamp(),
   });
 
+  batch.update(db.collection("customerCredits").doc(normalizeReferralCode(rewardCode)), {
+    status: "Available",
+    rewardEmailSent: true,
+    rewardEmailSentAt: FieldValue.serverTimestamp(),
+    rewardEmailError: "",
+    updatedAt: FieldValue.serverTimestamp(),
+  });
+
   batch.update(referredRequestRef, {
     incomingReferralStatus: "Reward sent",
     incomingReferralRewardEmailSent: true,
@@ -426,7 +482,8 @@ export async function markReferralRewardSent({
 
   if (referrerRequestId) {
     batch.update(db.collection("serviceRequests").doc(referrerRequestId), {
-      outgoingReferralStatus: "Reward sent",
+      outgoingReferralStatus: "Credit available",
+      outgoingReferralCreditStatus: "Available",
       outgoingReferralRewardEmailSent: true,
       outgoingReferralRewardEmailSentAt: FieldValue.serverTimestamp(),
       outgoingReferralRewardCode: rewardCode,
@@ -471,4 +528,188 @@ export async function markReferralRewardEmailFailed({
     });
   }
   await batch.commit();
+}
+
+
+export async function getAvailableCustomerReferralCreditsForEmail(db: Firestore, email: unknown, excludeRequestId?: unknown) {
+  const emailKey = getCustomerEmailKey(email);
+  if (!emailKey) return [] as Array<Record<string, unknown> & { id: string }>;
+
+  const snap = await db
+    .collection("customerCredits")
+    .where("customerEmailKey", "==", emailKey)
+    .where("status", "==", "Available")
+    .get();
+
+  const excluded = getString(excludeRequestId);
+  return snap.docs
+    .map((doc) => ({ id: doc.id, ...(doc.data() || {}) }))
+    .filter((credit) => {
+      if (excluded && (getString(credit.sourceReferrerRequestId) === excluded || getString(credit.sourceReferredRequestId) === excluded)) return false;
+      return getSafeCreditAmount(credit.remainingAmount || credit.amount) > 0;
+    });
+}
+
+export function getTotalCustomerCreditAmount(credits: Array<Record<string, unknown>>) {
+  return credits.reduce((sum, credit) => sum + getSafeCreditAmount(credit.remainingAmount || credit.amount), 0);
+}
+
+function getAppliedCustomerCreditIdsFromBreakdown(breakdown: Record<string, unknown>) {
+  const raw = breakdown.appliedCustomerCreditIds;
+  if (!Array.isArray(raw)) return [] as string[];
+  return raw.map((value) => normalizeReferralCode(value)).filter(Boolean).slice(0, 10);
+}
+
+export async function reserveAppliedCustomerReferralCreditsForPayment({
+  db,
+  requestId,
+  requestData,
+  paymentKind,
+  paymentId,
+  adminEmail,
+}: {
+  db: Firestore;
+  requestId: string;
+  requestData: Record<string, unknown>;
+  paymentKind: string;
+  paymentId: string;
+  adminEmail?: string | null;
+}) {
+  const breakdown = (requestData.familyPaymentBreakdown || {}) as Record<string, unknown>;
+  const requestedIds = getAppliedCustomerCreditIdsFromBreakdown(breakdown);
+  const desiredAmount = getSafeCreditAmount(breakdown.appliedCustomerCreditAmount);
+  const requestEmail = getCustomerEmailKey(requestData.email);
+
+  let credits = [] as Array<Record<string, unknown> & { id: string }>;
+  if (requestedIds.length) {
+    const snaps = await Promise.all(requestedIds.map((id) => db.collection("customerCredits").doc(id).get()));
+    credits = snaps.filter((snap) => snap.exists).map((snap) => ({ id: snap.id, ...(snap.data() || {}) }));
+  } else if (desiredAmount > 0) {
+    credits = await getAvailableCustomerReferralCreditsForEmail(db, requestEmail, requestId);
+  }
+
+  if (!credits.length) return { reserved: false, reservedAmount: 0, creditIds: [] as string[] };
+
+  return db.runTransaction(async (transaction) => {
+    let remainingToReserve = desiredAmount || getTotalCustomerCreditAmount(credits);
+    let reservedAmount = 0;
+    const reservedIds: string[] = [];
+
+    for (const credit of credits) {
+      if (remainingToReserve <= 0) break;
+      const creditId = normalizeReferralCode(credit.id || credit.creditCode || credit.creditId);
+      if (!creditId) continue;
+      const creditRef = db.collection("customerCredits").doc(creditId);
+      const creditSnap = await transaction.get(creditRef);
+      if (!creditSnap.exists) continue;
+      const current = creditSnap.data() || {};
+      const currentStatus = getString(current.status);
+      const currentEmail = getCustomerEmailKey(current.customerEmailKey || current.customerEmail);
+      if (currentStatus === "Used") continue;
+      if (currentStatus === "Reserved" && getString(current.reservedByRequestId) !== requestId) continue;
+      if (currentEmail && requestEmail && currentEmail !== requestEmail) continue;
+
+      const amount = Math.min(getSafeCreditAmount(current.remainingAmount || current.amount), remainingToReserve);
+      if (amount <= 0) continue;
+
+      transaction.update(creditRef, {
+        status: "Reserved",
+        remainingAmount: amount,
+        reservedAmount: amount,
+        reservedByRequestId: requestId,
+        reservedByPaymentKind: paymentKind,
+        reservedByPaymentId: paymentId,
+        reservedAt: FieldValue.serverTimestamp(),
+        reservedBy: adminEmail || "admin",
+        updatedAt: FieldValue.serverTimestamp(),
+      });
+      reservedAmount += amount;
+      remainingToReserve -= amount;
+      reservedIds.push(creditId);
+    }
+
+    if (reservedIds.length) {
+      transaction.update(db.collection("serviceRequests").doc(requestId), {
+        appliedCustomerCreditIds: reservedIds,
+        appliedCustomerCreditAmount: Number(reservedAmount.toFixed(2)),
+        appliedCustomerCreditStatus: "Reserved",
+        appliedCustomerCreditPaymentKind: paymentKind,
+        appliedCustomerCreditPaymentId: paymentId,
+        appliedCustomerCreditReservedAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
+      });
+    }
+
+    return { reserved: reservedIds.length > 0, reservedAmount: Number(reservedAmount.toFixed(2)), creditIds: reservedIds };
+  });
+}
+
+export async function markReservedCustomerReferralCreditsUsedForRequest({
+  db,
+  requestId,
+  paymentKind,
+  paymentId,
+}: {
+  db: Firestore;
+  requestId: string;
+  paymentKind: string;
+  paymentId: string;
+}) {
+  const requestRef = db.collection("serviceRequests").doc(requestId);
+  const requestSnap = await requestRef.get();
+  if (!requestSnap.exists) return { used: false, usedAmount: 0, creditIds: [] as string[] };
+  const requestData = requestSnap.data() || {};
+  const creditIds = Array.isArray(requestData.appliedCustomerCreditIds)
+    ? requestData.appliedCustomerCreditIds.map((value: unknown) => normalizeReferralCode(value)).filter(Boolean)
+    : getAppliedCustomerCreditIdsFromBreakdown((requestData.familyPaymentBreakdown || {}) as Record<string, unknown>);
+
+  if (!creditIds.length) return { used: false, usedAmount: 0, creditIds: [] as string[] };
+
+  return db.runTransaction(async (transaction) => {
+    let usedAmount = 0;
+    const usedIds: string[] = [];
+
+    for (const creditId of creditIds) {
+      const creditRef = db.collection("customerCredits").doc(creditId);
+      const creditSnap = await transaction.get(creditRef);
+      if (!creditSnap.exists) continue;
+      const credit = creditSnap.data() || {};
+      const status = getString(credit.status);
+      if (status === "Used" && getString(credit.usedByRequestId) === requestId) {
+        usedIds.push(creditId);
+        usedAmount += getSafeCreditAmount(credit.usedAmount || credit.amount);
+        continue;
+      }
+      if (status !== "Reserved" && status !== "Available") continue;
+      if (getString(credit.reservedByRequestId) && getString(credit.reservedByRequestId) !== requestId) continue;
+
+      const amount = getSafeCreditAmount(credit.reservedAmount || credit.remainingAmount || credit.amount);
+      if (amount <= 0) continue;
+
+      transaction.update(creditRef, {
+        status: "Used",
+        remainingAmount: 0,
+        usedAmount: amount,
+        usedByRequestId: requestId,
+        usedByPaymentKind: paymentKind,
+        usedByPaymentId: paymentId,
+        usedAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
+      });
+      usedIds.push(creditId);
+      usedAmount += amount;
+    }
+
+    if (usedIds.length) {
+      transaction.update(requestRef, {
+        appliedCustomerCreditIds: usedIds,
+        appliedCustomerCreditAmount: Number(usedAmount.toFixed(2)),
+        appliedCustomerCreditStatus: "Used",
+        appliedCustomerCreditUsedAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
+      });
+    }
+
+    return { used: usedIds.length > 0, usedAmount: Number(usedAmount.toFixed(2)), creditIds: usedIds };
+  });
 }

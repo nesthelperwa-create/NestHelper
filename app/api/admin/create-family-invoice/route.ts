@@ -8,6 +8,7 @@ import { getFirebaseAdminDb } from "@/lib/firebaseAdmin";
 import { services } from "@/lib/services";
 import { emailAliases } from "@/lib/emailRouting";
 import { sendFamilyInvoiceEmail } from "@/lib/sendFamilyInvoiceEmail";
+import { getAvailableCustomerReferralCreditsForEmail, getTotalCustomerCreditAmount, reserveAppliedCustomerReferralCreditsForPayment } from "@/lib/referrals";
 
 export const runtime = "nodejs";
 
@@ -282,6 +283,15 @@ async function createLaundryDepositCheckoutFromBreakdown(params: {
     updatedBy: adminEmail || "admin",
   });
 
+  const reservedCustomerCredit = await reserveAppliedCustomerReferralCreditsForPayment({
+    db: getFirebaseAdminDb(),
+    requestId,
+    requestData: data,
+    paymentKind: "laundry_deposit_checkout",
+    paymentId: session.id,
+    adminEmail,
+  });
+
   return {
     ok: true,
     invoiceId: session.id,
@@ -296,6 +306,7 @@ async function createLaundryDepositCheckoutFromBreakdown(params: {
     servicePeriodLabel,
     deliveryMethod: shouldSendEmail ? "nesthelper_email" : "manual",
     isLaundryDepositCheckout: true,
+    reservedCustomerCredit,
   };
 }
 
@@ -343,13 +354,16 @@ export async function POST(request: Request) {
     const amountDueNowCents = moneyToCents(breakdown.amountDueNow);
     const servicePeriodLabel = getString(breakdown.servicePeriodLabel) || formatServicePeriodLabel(breakdown.servicePeriodStart, breakdown.servicePeriodEnd);
     const expectedReferralCredit = getExpectedReferralCreditAmount(data);
+    const availableCustomerCredits = await getAvailableCustomerReferralCreditsForEmail(db, data.email, requestId);
+    const availableCustomerCreditAmount = getTotalCustomerCreditAmount(availableCustomerCredits);
+    const totalRequiredCredit = expectedReferralCredit + availableCustomerCreditAmount;
     const savedDiscountCredit = cleanNumber(breakdown.discountCredit);
 
-    if (expectedReferralCredit > 0 && savedDiscountCredit < expectedReferralCredit) {
+    if (totalRequiredCredit > 0 && savedDiscountCredit < totalRequiredCredit) {
       return NextResponse.json(
         {
           ok: false,
-          error: `This request has a family referral credit. Open the Family Payment Breakdown, apply/save the $${expectedReferralCredit} referral credit, then create the invoice.`,
+          error: `This request has a referral/customer credit. Open the Family Payment Breakdown, apply/save the $${totalRequiredCredit} credit, then create the invoice.`,
         },
         { status: 400 }
       );
@@ -534,6 +548,15 @@ export async function POST(request: Request) {
       updatedBy: decoded.email || "admin",
     });
 
+    const reservedCustomerCredit = await reserveAppliedCustomerReferralCreditsForPayment({
+      db,
+      requestId,
+      requestData: data,
+      paymentKind: getString(data.service) === "laundry-rescue" ? "laundry_deposit_checkout" : "family_invoice",
+      paymentId: finalized.id,
+      adminEmail: decoded.email || "admin",
+    });
+
     return NextResponse.json({
       ok: true,
       invoiceId: finalized.id,
@@ -547,6 +570,7 @@ export async function POST(request: Request) {
       paymentStatus: nextStatus,
       servicePeriodLabel,
       deliveryMethod: shouldSendEmail ? "nesthelper_email" : "manual",
+      reservedCustomerCredit,
     });
   } catch (error: any) {
     console.error("Unable to create family invoice", error);

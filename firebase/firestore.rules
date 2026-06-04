@@ -46,6 +46,11 @@ service cloud.firestore {
       allow read, update, delete: if isAdmin();
     }
 
+    match /customerCredits/{docId} {
+      allow create: if false;
+      allow read, update, delete: if isAdmin();
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }
