@@ -257,6 +257,78 @@ const ADMIN_QUEUE_OPTIONS = [
   { key: "all", label: "All records", helper: "Everything", accent: "bg-white text-[#075c58] border-[#eadfc8]" },
 ] as const;
 
+function hasOutgoingReferralData(item: AdminDoc | null | undefined) {
+  return Boolean(item?.outgoingReferralCode || item?.outgoingReferralLink || item?.outgoingReferralStatus || getOutgoingReferralHistory(item).length);
+}
+
+function hasIncomingReferralData(item: AdminDoc | null | undefined) {
+  return Boolean(item?.incomingReferralCode || item?.incomingReferralLinkId || item?.incomingReferralStatus || item?.incomingReferralReferrerEmail);
+}
+
+function hasReferralData(item: AdminDoc | null | undefined) {
+  return hasOutgoingReferralData(item) || hasIncomingReferralData(item) || Boolean(item?.outgoingReferralCreditId || item?.incomingReferralRewardCode);
+}
+
+function hasReferralCreditData(item: AdminDoc | null | undefined) {
+  const combined = String(`${item?.outgoingReferralCreditStatus || ""} ${item?.incomingReferralStatus || ""} ${item?.incomingReferralRewardCode || ""} ${item?.outgoingReferralRewardCode || ""}`).toLowerCase();
+  return combined.includes("credit") || combined.includes("reward") || Boolean(item?.outgoingReferralCreditId || item?.incomingReferralRewardCode);
+}
+
+function matchesReferralFilter(item: AdminDoc | null | undefined, referralFilter: string) {
+  if (referralFilter === "all") return true;
+  if (referralFilter === "any") return hasReferralData(item);
+  if (referralFilter === "outgoing") return hasOutgoingReferralData(item);
+  if (referralFilter === "incoming") return hasIncomingReferralData(item);
+  if (referralFilter === "credit") return hasReferralCreditData(item);
+  if (referralFilter === "available-credit") {
+    const combined = String(`${item?.outgoingReferralCreditStatus || ""} ${item?.customerCreditStatus || ""} ${item?.availableCustomerCreditTotal || ""}`).toLowerCase();
+    return combined.includes("available") || combined.includes("credit available");
+  }
+  return true;
+}
+
+function hasDiscountOrPromoData(item: AdminDoc | null | undefined) {
+  const raw = JSON.stringify(item || {}).toLowerCase();
+  return raw.includes("promo") || raw.includes("discount") || raw.includes("credit") || raw.includes("founding") || raw.includes("beta");
+}
+
+function matchesPromoFilter(item: AdminDoc | null | undefined, promoFilter: string) {
+  if (promoFilter === "all") return true;
+  const raw = JSON.stringify(item || {}).toLowerCase();
+  const promo = String(item?.promoCode || "").toLowerCase();
+  const mode = String(item?.paymentMode || "").toLowerCase();
+  if (promoFilter === "any") return hasDiscountOrPromoData(item);
+  if (promoFilter === "promo-code") return Boolean(promo);
+  if (promoFilter === "founding-beta") return promo.includes("founding") || promo.includes("beta") || mode === "founding" || raw.includes("founding") || raw.includes("beta");
+  if (promoFilter === "referral-credit") return raw.includes("referral") && raw.includes("credit");
+  if (promoFilter === "customer-credit") return raw.includes("customercredit") || raw.includes("customer credit") || raw.includes("saved credit");
+  if (promoFilter === "discount") return raw.includes("discount");
+  return true;
+}
+
+function getPageNumberItems(currentPage: number, totalPages: number) {
+  if (totalPages <= 7) return Array.from({ length: totalPages }, (_, index) => index + 1) as Array<number | string>;
+  const pages = new Set<number>([1, totalPages, currentPage, currentPage - 1, currentPage + 1]);
+  if (currentPage <= 3) {
+    pages.add(2);
+    pages.add(3);
+    pages.add(4);
+  }
+  if (currentPage >= totalPages - 2) {
+    pages.add(totalPages - 1);
+    pages.add(totalPages - 2);
+    pages.add(totalPages - 3);
+  }
+  const sorted = Array.from(pages).filter((page) => page >= 1 && page <= totalPages).sort((a, b) => a - b);
+  const result: Array<number | string> = [];
+  sorted.forEach((page, index) => {
+    const previous = sorted[index - 1];
+    if (index > 0 && previous && page - previous > 1) result.push(`ellipsis-${previous}-${page}`);
+    result.push(page);
+  });
+  return result;
+}
+
 function getOutgoingReferralHistory(item: AdminDoc | null | undefined) {
   const history = item?.outgoingReferralHistory;
   if (!Array.isArray(history)) return [] as Array<Record<string, any>>;
@@ -504,6 +576,8 @@ export default function AdminTable({
   const [serviceFilter, setServiceFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [paymentFilter, setPaymentFilter] = useState("all");
+  const [referralFilter, setReferralFilter] = useState("all");
+  const [promoFilter, setPromoFilter] = useState("all");
   const [dateFilter, setDateFilter] = useState("all");
   const [queueFilter, setQueueFilter] = useState(collectionName === "serviceRequests" ? "active" : "all");
   const [currentPage, setCurrentPage] = useState(1);
@@ -678,6 +752,16 @@ export default function AdminTable({
       if (paymentFilter === "sent" && !(paymentStatus.includes("sent") || paymentStatus.includes("checkout") || paymentStatus.includes("invoice"))) return false;
       if (paymentFilter === "unpaid" && (paymentStatus.includes("paid") || paymentStatus.includes("sent") || paymentStatus.includes("checkout") || paymentStatus.includes("invoice"))) return false;
       if (paymentFilter === "refund" && !JSON.stringify(item).toLowerCase().includes("refund")) return false;
+      if (referralFilter === "available-credit") {
+        if (!matchesReferralFilter(item, referralFilter) && !getAvailableCustomerCreditsForRequest(item, customerCredits).length) return false;
+      } else if (!matchesReferralFilter(item, referralFilter)) {
+        return false;
+      }
+      if (promoFilter === "customer-credit") {
+        if (!matchesPromoFilter(item, promoFilter) && !getAvailableCustomerCreditsForRequest(item, customerCredits).length) return false;
+      } else if (!matchesPromoFilter(item, promoFilter)) {
+        return false;
+      }
 
       if (dateFilter !== "all") {
         const created = getDateObject(item.createdAt)?.getTime();
@@ -689,7 +773,7 @@ export default function AdminTable({
 
       return true;
     });
-  }, [items, filter, serviceFilter, statusFilter, paymentFilter, dateFilter, queueFilter, collectionName]);
+  }, [items, customerCredits, filter, serviceFilter, statusFilter, paymentFilter, referralFilter, promoFilter, dateFilter, queueFilter, collectionName]);
 
   const pageLimit = pageSize === "all" ? filtered.length || 1 : 25;
   const totalPages = pageSize === "all" ? 1 : Math.max(1, Math.ceil(filtered.length / pageLimit));
@@ -701,19 +785,22 @@ export default function AdminTable({
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [filter, serviceFilter, statusFilter, paymentFilter, dateFilter, queueFilter, collectionName, pageSize]);
+  }, [filter, serviceFilter, statusFilter, paymentFilter, referralFilter, promoFilter, dateFilter, queueFilter, collectionName, pageSize]);
 
   useEffect(() => {
     if (currentPage > totalPages) setCurrentPage(totalPages);
   }, [currentPage, totalPages]);
 
-  const activeFilterCount = [filter.trim(), serviceFilter, statusFilter !== "all" ? statusFilter : "", paymentFilter !== "all" ? paymentFilter : "", dateFilter !== "all" ? dateFilter : "", collectionName === "serviceRequests" && queueFilter !== "active" ? queueFilter : ""].filter(Boolean).length;
+  const activeFilterCount = [filter.trim(), serviceFilter, statusFilter !== "all" ? statusFilter : "", paymentFilter !== "all" ? paymentFilter : "", referralFilter !== "all" ? referralFilter : "", promoFilter !== "all" ? promoFilter : "", dateFilter !== "all" ? dateFilter : "", collectionName === "serviceRequests" && queueFilter !== "active" ? queueFilter : ""].filter(Boolean).length;
+  const pageNumberItems = useMemo(() => getPageNumberItems(safeCurrentPage, totalPages), [safeCurrentPage, totalPages]);
 
   function clearAllFilters() {
     setFilter("");
     setServiceFilter("");
     setStatusFilter("all");
     setPaymentFilter("all");
+    setReferralFilter("all");
+    setPromoFilter("all");
     setDateFilter("all");
     setQueueFilter(collectionName === "serviceRequests" ? "active" : "all");
   }
@@ -1433,7 +1520,7 @@ export default function AdminTable({
         )}
 
         {filtersOpen && (
-          <div className="mt-4 grid gap-3 rounded-3xl border border-[#eadfc8] bg-[#fbf6ea] p-4 md:grid-cols-3">
+          <div className="mt-4 grid gap-3 rounded-3xl border border-[#eadfc8] bg-[#fbf6ea] p-4 md:grid-cols-2 xl:grid-cols-5">
             <label className="grid gap-2 text-sm font-bold text-slate-700">
               Status
               <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="min-h-12 rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 font-bold text-[#075c58] outline-none focus:border-[#075c58]">
@@ -1451,6 +1538,33 @@ export default function AdminTable({
                 <option value="refund">Refund / credit mentioned</option>
               </select>
             </label>
+            {collectionName === "serviceRequests" && (
+              <label className="grid gap-2 text-sm font-bold text-slate-700">
+                Referrals
+                <select value={referralFilter} onChange={(e) => setReferralFilter(e.target.value)} className="min-h-12 rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 font-bold text-[#075c58] outline-none focus:border-[#075c58]">
+                  <option value="all">All referral states</option>
+                  <option value="any">Has referral activity</option>
+                  <option value="outgoing">Outgoing share links</option>
+                  <option value="incoming">Referred-family requests</option>
+                  <option value="credit">Reward / credit activity</option>
+                  <option value="available-credit">Available credit noted</option>
+                </select>
+              </label>
+            )}
+            {collectionName === "serviceRequests" && (
+              <label className="grid gap-2 text-sm font-bold text-slate-700">
+                Promo / credits
+                <select value={promoFilter} onChange={(e) => setPromoFilter(e.target.value)} className="min-h-12 rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 font-bold text-[#075c58] outline-none focus:border-[#075c58]">
+                  <option value="all">All promo states</option>
+                  <option value="any">Any promo / discount / credit</option>
+                  <option value="promo-code">Has promo code</option>
+                  <option value="founding-beta">Founding / beta</option>
+                  <option value="referral-credit">Referral credit</option>
+                  <option value="customer-credit">Saved customer credit</option>
+                  <option value="discount">Discount line</option>
+                </select>
+              </label>
+            )}
             <label className="grid gap-2 text-sm font-bold text-slate-700">
               Date created
               <select value={dateFilter} onChange={(e) => setDateFilter(e.target.value)} className="min-h-12 rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 font-bold text-[#075c58] outline-none focus:border-[#075c58]">
@@ -1500,9 +1614,23 @@ export default function AdminTable({
               >
                 Previous
               </button>
-              <span className="rounded-full bg-[#fbf6ea] px-3 py-2 text-xs font-black text-[#075c58] ring-1 ring-[#eadfc8]">
-                Page {safeCurrentPage} of {totalPages}
-              </span>
+              <div className="flex max-w-full flex-wrap items-center justify-center gap-1">
+                {pageNumberItems.map((page) =>
+                  typeof page === "number" ? (
+                    <button
+                      key={`page-${page}`}
+                      type="button"
+                      onClick={() => setCurrentPage(page)}
+                      aria-current={page === safeCurrentPage ? "page" : undefined}
+                      className={`min-h-10 min-w-10 rounded-full px-3 text-xs font-black transition focus:outline-none focus:ring-4 focus:ring-[#075c58]/15 ${page === safeCurrentPage ? "bg-[#075c58] text-white" : "bg-[#fbf6ea] text-[#075c58] ring-1 ring-[#eadfc8] hover:bg-[#f4ecdc]"}`}
+                    >
+                      {page}
+                    </button>
+                  ) : (
+                    <span key={page} className="px-1 text-xs font-black text-slate-400">…</span>
+                  )
+                )}
+              </div>
               <button
                 type="button"
                 onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
@@ -1588,7 +1716,23 @@ export default function AdminTable({
             >
               Previous
             </button>
-            <span className="rounded-full bg-[#fbf6ea] px-3 py-2 text-xs font-black text-[#075c58] ring-1 ring-[#eadfc8]">Page {safeCurrentPage} of {totalPages}</span>
+              <div className="flex max-w-full flex-wrap items-center justify-center gap-1">
+                {pageNumberItems.map((page) =>
+                  typeof page === "number" ? (
+                    <button
+                      key={`page-${page}`}
+                      type="button"
+                      onClick={() => setCurrentPage(page)}
+                      aria-current={page === safeCurrentPage ? "page" : undefined}
+                      className={`min-h-10 min-w-10 rounded-full px-3 text-xs font-black transition focus:outline-none focus:ring-4 focus:ring-[#075c58]/15 ${page === safeCurrentPage ? "bg-[#075c58] text-white" : "bg-[#fbf6ea] text-[#075c58] ring-1 ring-[#eadfc8] hover:bg-[#f4ecdc]"}`}
+                    >
+                      {page}
+                    </button>
+                  ) : (
+                    <span key={page} className="px-1 text-xs font-black text-slate-400">…</span>
+                  )
+                )}
+              </div>
             <button
               type="button"
               onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
