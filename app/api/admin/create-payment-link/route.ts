@@ -376,6 +376,7 @@ export async function POST(request: Request) {
       const customerWithServiceAddress = await createStripeCustomerFromRequestAddress({ data, requestId, serviceId, serviceTitle });
       if (customerWithServiceAddress) {
         checkoutParams.customer = customerWithServiceAddress.id;
+        delete checkoutParams.customer_email;
         checkoutParams.customer_update = { address: "auto", name: "auto", shipping: "auto" };
         checkoutParams.metadata.serviceAddressProvidedToStripe = "true";
       } else {
