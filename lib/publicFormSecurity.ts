@@ -47,6 +47,8 @@ const commonAllowedFields = [
   "serviceState",
   "serviceZip",
   "requestedAt",
+  "howFoundUs",
+  "howFoundUsDetails",
   "consent",
   "photoUploadCount",
   "photoUploadSummary",
@@ -143,6 +145,8 @@ const helperAllowedFields = [
   "email",
   "phone",
   "city",
+  "howFoundUs",
+  "howFoundUsDetails",
   "availability",
   "weeklyCapacity",
   "services",
@@ -167,6 +171,8 @@ const partnerAllowedFields = [
   "phone",
   "serviceType",
   "website",
+  "howFoundUs",
+  "howFoundUsDetails",
   "businessStructure",
   "serviceArea",
   "serviceAreaDetails",
@@ -183,7 +189,7 @@ const partnerAllowedFields = [
   "consent",
 ];
 
-const contactAllowedFields = ["name", "email", "phone", "topic", "subject", "message"];
+const contactAllowedFields = ["name", "email", "phone", "topic", "howFoundUs", "howFoundUsDetails", "subject", "message"];
 
 const allowedFieldsByCollection: Record<SubmissionCollection, string[]> = {
   serviceRequests: serviceRequestAllowedFields,
@@ -224,6 +230,8 @@ const textLimits: Record<string, number> = {
   insuranceInfo: 1200,
   capacity: 1000,
   uploadedDocumentSummary: 900,
+  howFoundUs: 180,
+  howFoundUsDetails: 500,
 };
 
 const honeypotFields = [

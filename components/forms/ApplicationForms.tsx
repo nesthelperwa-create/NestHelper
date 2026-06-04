@@ -36,6 +36,22 @@ const applicationOptions: Array<{
   },
 ];
 
+const howFoundUsOptions = [
+  "Google search",
+  "Instagram",
+  "Facebook",
+  "Friend or family referral",
+  "NestHelper customer referral",
+  "Community group",
+  "Job board / hiring post",
+  "Flyer / QR code",
+  "Other / not listed",
+];
+
+function shouldShowHowFoundUsDetails(value: string) {
+  return ["Friend or family referral", "NestHelper customer referral", "Community group", "Job board / hiring post", "Flyer / QR code", "Other / not listed"].includes(value);
+}
+
 const helperServiceOptions = [
   "Parent Reset / home reset support",
   "Family Reset / deeper reset visits",
@@ -147,6 +163,8 @@ const helperDefaultState = {
   email: "",
   phone: "",
   city: "",
+  howFoundUs: "",
+  howFoundUsDetails: "",
   availability: [] as string[],
   weeklyCapacity: "",
   services: [] as string[],
@@ -171,6 +189,8 @@ const partnerDefaultState = {
   phone: "",
   serviceType: [] as string[],
   website: "",
+  howFoundUs: "",
+  howFoundUsDetails: "",
   businessStructure: "",
   serviceArea: [] as string[],
   serviceAreaDetails: "",
@@ -365,6 +385,7 @@ export function HelperApplicationForm() {
   const [message, setMessage] = useState("");
   const [form, setForm] = useState<HelperFormState>(helperDefaultState);
   const [documents, setDocuments] = useState<ApplicationDocumentDraft[]>([emptyDocumentDraft()]);
+  const showHowFoundUsDetails = shouldShowHowFoundUsDetails(form.howFoundUs);
   const update = (name: keyof HelperFormState, value: unknown) => setForm((prev) => ({ ...prev, [name]: value }));
   const toggle = (name: "availability" | "services" | "workStyle" | "comfortLevel" | "notWillingToDo", value: string, checked: boolean) => {
     setForm((prev) => ({
@@ -409,6 +430,12 @@ export function HelperApplicationForm() {
         <Input label="Phone" value={form.phone} onChange={(v) => update("phone", formatPhoneNumber(v))} required inputMode="tel" autoComplete="tel" placeholder="555-555-5555" />
         <Input label="Email" type="email" value={form.email} onChange={(v) => update("email", v)} required />
         <Input label="City" value={form.city} onChange={(v) => update("city", v)} required />
+        <Select label="How did you hear about NestHelper?" value={form.howFoundUs} onChange={(v) => update("howFoundUs", v)} placeholder="Choose one">
+          {howFoundUsOptions.map((option) => <option key={option}>{option}</option>)}
+        </Select>
+        {showHowFoundUsDetails && (
+          <Input label="Referral/source details (optional)" value={form.howFoundUsDetails} onChange={(v) => update("howFoundUsDetails", v)} placeholder="Name, group, post, flyer location, or other details" />
+        )}
       </Grid>
 
       <CheckboxGroup
@@ -502,6 +529,7 @@ export function PartnerApplicationForm() {
   const [message, setMessage] = useState("");
   const [form, setForm] = useState<PartnerFormState>(partnerDefaultState);
   const [documents, setDocuments] = useState<ApplicationDocumentDraft[]>([emptyDocumentDraft()]);
+  const showHowFoundUsDetails = shouldShowHowFoundUsDetails(form.howFoundUs);
   const update = (name: keyof PartnerFormState, value: unknown) => setForm((prev) => ({ ...prev, [name]: value }));
   const toggle = (name: "serviceType" | "serviceArea" | "availability" | "documentsAvailable", value: string, checked: boolean) => {
     setForm((prev) => ({
@@ -546,6 +574,12 @@ export function PartnerApplicationForm() {
         <Input label="Owner/contact name" value={form.ownerName} onChange={(v) => update("ownerName", v)} required />
         <Input label="Phone" value={form.phone} onChange={(v) => update("phone", formatPhoneNumber(v))} required inputMode="tel" autoComplete="tel" placeholder="555-555-5555" />
         <Input label="Email" type="email" value={form.email} onChange={(v) => update("email", v)} required />
+        <Select label="How did you hear about NestHelper?" value={form.howFoundUs} onChange={(v) => update("howFoundUs", v)} placeholder="Choose one">
+          {howFoundUsOptions.map((option) => <option key={option}>{option}</option>)}
+        </Select>
+        {showHowFoundUsDetails && (
+          <Input label="Referral/source details (optional)" value={form.howFoundUsDetails} onChange={(v) => update("howFoundUsDetails", v)} placeholder="Name, business, group, post, flyer location, or other details" />
+        )}
       </Grid>
 
       <CheckboxGroup

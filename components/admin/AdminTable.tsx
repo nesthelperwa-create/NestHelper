@@ -640,6 +640,8 @@ const DETAIL_FIELD_LABELS: Record<string, string> = {
   specialInstructions: "Special instructions",
   promoCode: "Promo",
   incomingReferralCode: "Referral",
+  howFoundUs: "Found us",
+  howFoundUsDetails: "Source details",
   availability: "Availability",
   services: "Services",
   serviceType: "Services",
@@ -657,15 +659,15 @@ const DETAIL_FIELD_LABELS: Record<string, string> = {
 
 const DETAIL_FIELD_ORDER: Record<string, string[]> = {
   serviceRequests: [
-    "fullName", "service", "phone", "email", "address", "city", "state", "zip", "zipCode", "preferredDate", "preferredTime", "roomsOrAreas", "requestDetails", "notes", "specialInstructions", "promoCode", "incomingReferralCode",
+    "fullName", "service", "phone", "email", "howFoundUs", "howFoundUsDetails", "address", "city", "state", "zip", "zipCode", "preferredDate", "preferredTime", "roomsOrAreas", "requestDetails", "notes", "specialInstructions", "promoCode", "incomingReferralCode",
   ],
   helperApplications: [
-    "fullName", "phone", "email", "city", "state", "zip", "availability", "services", "transportation", "travelRadius", "experienceLevel", "comfortLevel", "notWillingToDo", "applicationDocumentCount",
+    "fullName", "phone", "email", "city", "howFoundUs", "howFoundUsDetails", "state", "zip", "availability", "services", "transportation", "travelRadius", "experienceLevel", "comfortLevel", "notWillingToDo", "applicationDocumentCount",
   ],
   partnerApplications: [
-    "businessName", "ownerName", "phone", "email", "city", "state", "zip", "serviceType", "serviceArea", "businessStructure", "licenseStatus", "insuranceStatus", "availability", "applicationDocumentCount",
+    "businessName", "ownerName", "phone", "email", "howFoundUs", "howFoundUsDetails", "city", "state", "zip", "serviceType", "serviceArea", "businessStructure", "licenseStatus", "insuranceStatus", "availability", "applicationDocumentCount",
   ],
-  contactMessages: ["fullName", "name", "phone", "email", "subject", "message", "preferredContactMethod"],
+  contactMessages: ["fullName", "name", "phone", "email", "howFoundUs", "howFoundUsDetails", "subject", "message", "preferredContactMethod"],
 };
 
 const ADVANCED_FIELD_HIDE_KEYS = new Set([

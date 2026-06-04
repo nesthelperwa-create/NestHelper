@@ -20,6 +20,8 @@ const defaultState = {
   state: "WA",
   zip: "",
   serviceRegion: "Not sure yet",
+  howFoundUs: "",
+  howFoundUsDetails: "",
   businessType: "",
   squareFootage: "",
   bathrooms: "",
@@ -86,6 +88,22 @@ function getAddressValidationMessage(form: Pick<CommercialResetFormState, "addre
   if (form.state !== "WA") return "Commercial Reset currently accepts Washington service addresses only.";
   if (!hasValidZip(form.zip)) return "Please enter a valid 5-digit ZIP code, or ZIP+4.";
   return "";
+}
+
+const howFoundUsOptions = [
+  "Google search",
+  "Instagram",
+  "Facebook",
+  "Local business referral",
+  "Property manager / host group",
+  "Community or networking group",
+  "Flyer / QR code",
+  "Existing customer",
+  "Other / not listed",
+];
+
+function shouldShowHowFoundUsDetails(value: string) {
+  return ["Local business referral", "Property manager / host group", "Community or networking group", "Flyer / QR code", "Existing customer", "Other / not listed"].includes(value);
 }
 
 const businessTypes = [
@@ -683,6 +701,8 @@ function buildPayload(form: CommercialResetFormState) {
     contactName: form.contactName,
     roleTitle: form.roleTitle,
     serviceRegion: form.serviceRegion,
+    howFoundUs: form.howFoundUs,
+    howFoundUsDetails: form.howFoundUsDetails,
     businessType: form.businessType,
     squareFootage: form.squareFootage,
     bathrooms: form.bathrooms,
@@ -754,6 +774,7 @@ export function CommercialResetForm() {
   const needsUpholsteryDetails = hasAddOn(form, "Upholstery quote");
   const needsGlassDetails = hasAddOn(form, "Interior glass quote");
   const hasSpecialtyAddOnDetails = needsCarpetDetails || needsSpotDetails || needsHardFloorDetails || needsUpholsteryDetails || needsGlassDetails;
+  const showHowFoundUsDetails = shouldShowHowFoundUsDetails(form.howFoundUs);
 
   function update(name: keyof CommercialResetFormState, value: unknown) {
     setForm((prev) => ({ ...prev, [name]: value }) as CommercialResetFormState);
@@ -878,6 +899,15 @@ export function CommercialResetForm() {
           </Field>
           <Field label="Email" required><input type="email" className="input" required autoComplete="email" value={form.email} onChange={(e) => update("email", e.target.value)} /></Field>
           <Field label="Phone" required><input className="input" required autoComplete="tel" inputMode="tel" value={form.phone} onChange={(e) => update("phone", formatPhoneNumber(e.target.value))} /></Field>
+          <Field label="How did you hear about NestHelper?">
+            <select className="input" value={form.howFoundUs} onChange={(e) => update("howFoundUs", e.target.value)}>
+              <option value="">Choose one</option>
+              {howFoundUsOptions.map((option) => <option key={option}>{option}</option>)}
+            </select>
+          </Field>
+          {showHowFoundUsDetails && (
+            <Field label="Referral/source details (optional)"><input className="input" placeholder="Business, group, host network, flyer location, or other details" value={form.howFoundUsDetails} onChange={(e) => update("howFoundUsDetails", e.target.value)} /></Field>
+          )}
         </div>
       </Section>
 

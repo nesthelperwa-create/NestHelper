@@ -24,6 +24,8 @@ const defaultState = {
   alternateDate: "",
   urgency: "Flexible — anytime this week is okay",
   promoCode: "",
+  howFoundUs: "",
+  howFoundUsDetails: "",
   incomingReferralCode: "",
   incomingReferralProgram: "",
   incomingReferralLandingPage: "",
@@ -77,6 +79,22 @@ const homeAreaOptions = [
   "Entryway / mudroom",
   WHOLE_HOME_OPTION,
 ];
+
+const howFoundUsOptions = [
+  "Google search",
+  "Instagram",
+  "Facebook",
+  "Friend or family referral",
+  "NestHelper referral link",
+  "Local community group",
+  "Flyer / QR code",
+  "Existing customer",
+  "Other / not listed",
+];
+
+function shouldShowHowFoundUsDetails(value: string) {
+  return ["Friend or family referral", "Local community group", "Flyer / QR code", "Existing customer", "Other / not listed"].includes(value);
+}
 
 const laundryTypeOptions = [
   "Adult clothes",
@@ -185,6 +203,8 @@ function cleanForSelectedService(form: RequestFormState) {
     } : {}),
     selectedServiceTitle: services.find((service) => service.id === form.service)?.title || "",
     parkingAccess: form.parkingAccess,
+    howFoundUs: form.howFoundUs,
+    howFoundUsDetails: form.howFoundUsDetails,
     consent: form.consent,
     ...(form.photoUploads.length ? {
       photoUploadCount: form.photoUploads.length,
@@ -262,6 +282,7 @@ export function RequestForm() {
   const petDetailsRequired = isHomeReset && form.pets !== "No pets";
   const referralApplies = Boolean(form.incomingReferralCode && isReferralEligibleService(form.service));
   const referralNeedsEligiblePackage = Boolean(form.incomingReferralCode && form.service && !isReferralEligibleService(form.service));
+  const showHowFoundUsDetails = shouldShowHowFoundUsDetails(form.howFoundUs);
 
   function update(name: keyof RequestFormState, value: unknown) {
     setForm((prev) => ({ ...prev, [name]: value }) as RequestFormState);
@@ -400,6 +421,15 @@ export function RequestForm() {
           <Field label="Phone" required><input className="input" required autoComplete="tel" inputMode="tel" value={form.phone} onChange={(e) => update("phone", formatPhoneNumber(e.target.value))} /></Field>
           <Field label="Email" required><input type="email" className="input" required autoComplete="email" value={form.email} onChange={(e) => update("email", e.target.value)} /></Field>
           <Field label="Promo/referral code (optional)"><input className="input" placeholder="Optional code" value={form.promoCode} onChange={(e) => update("promoCode", e.target.value.toUpperCase())} /></Field>
+          <Field label="How did you hear about NestHelper?">
+            <select className="input" value={form.howFoundUs} onChange={(e) => update("howFoundUs", e.target.value)}>
+              <option value="">Choose one</option>
+              {howFoundUsOptions.map((option) => <option key={option}>{option}</option>)}
+            </select>
+          </Field>
+          {showHowFoundUsDetails && (
+            <Field label="Referral/source details (optional)"><input className="input" placeholder="Name, group, flyer location, or other details" value={form.howFoundUsDetails} onChange={(e) => update("howFoundUsDetails", e.target.value)} /></Field>
+          )}
         </div>
       </Section>
 

@@ -8,6 +8,22 @@ import { focusFirstInvalidField } from "@/lib/formInvalidFocus";
 
 type Status = "idle" | "loading" | "success" | "error";
 
+const howFoundUsOptions = [
+  "Google search",
+  "Instagram",
+  "Facebook",
+  "Friend or family referral",
+  "NestHelper referral link",
+  "Local community group",
+  "Flyer / QR code",
+  "Existing customer",
+  "Other / not listed",
+];
+
+function shouldShowHowFoundUsDetails(value: string) {
+  return ["Friend or family referral", "Local community group", "Flyer / QR code", "Existing customer", "Other / not listed"].includes(value);
+}
+
 const topicOptions = [
   "General question",
   "Parent Reset / family services question",
@@ -25,6 +41,8 @@ const defaultForm = {
   email: "",
   phone: "",
   topic: topicOptions[0],
+  howFoundUs: "",
+  howFoundUsDetails: "",
   subject: "",
   message: "",
 };
@@ -33,6 +51,7 @@ export function ContactForm() {
   const [form, setForm] = useState(defaultForm);
   const [status, setStatus] = useState<Status>("idle");
   const [message, setMessage] = useState("");
+  const showHowFoundUsDetails = shouldShowHowFoundUsDetails(form.howFoundUs);
 
   const update = (name: keyof typeof defaultForm, value: string) => setForm((prev) => ({ ...prev, [name]: value }));
 
@@ -85,6 +104,18 @@ export function ContactForm() {
               ))}
             </select>
           </label>
+          <label className="grid gap-2">
+            <span className="label">How did you hear about NestHelper?</span>
+            <select className="input" value={form.howFoundUs} onChange={(event) => update("howFoundUs", event.target.value)}>
+              <option value="">Choose one</option>
+              {howFoundUsOptions.map((option) => (
+                <option key={option} value={option}>{option}</option>
+              ))}
+            </select>
+          </label>
+          {showHowFoundUsDetails && (
+            <Input label="Referral/source details (optional)" value={form.howFoundUsDetails} onChange={(value) => update("howFoundUsDetails", value)} placeholder="Name, group, flyer location, or other details" />
+          )}
         </div>
         <Input label="Subject" required value={form.subject} onChange={(value) => update("subject", value)} />
         <label className="grid gap-2">
