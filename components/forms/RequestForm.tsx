@@ -18,7 +18,6 @@ const defaultState = {
   city: "",
   state: "WA",
   zip: "",
-  serviceAddressConfirmed: false,
   service: "",
   preferredDate: "",
   preferredWindow: "",
@@ -121,12 +120,11 @@ function buildServiceAddress(form: Pick<RequestFormState, "address" | "address2"
   return [form.address, form.address2, form.city, form.state, form.zip].map((part) => part.trim()).filter(Boolean).join(", ");
 }
 
-function getAddressValidationMessage(form: Pick<RequestFormState, "address" | "city" | "state" | "zip" | "serviceAddressConfirmed">) {
+function getAddressValidationMessage(form: Pick<RequestFormState, "address" | "city" | "state" | "zip">) {
   if (!hasLikelyStreetAddress(form.address)) return "Please enter the full service street address, including a street number and street name.";
   if (form.city.trim().length < 2) return "Please enter the service city.";
   if (form.state !== "WA") return "NestHelper currently accepts Washington service addresses only.";
   if (!hasValidZip(form.zip)) return "Please enter a valid 5-digit ZIP code, or ZIP+4.";
-  if (!form.serviceAddressConfirmed) return "Please confirm the service address is complete and correct.";
   return "";
 }
 
@@ -174,7 +172,6 @@ function cleanForSelectedService(form: RequestFormState) {
     serviceCity: form.city,
     serviceState: form.state,
     serviceZip: form.zip,
-    serviceAddressConfirmed: form.serviceAddressConfirmed,
     service: form.service,
     preferredDate: form.preferredDate,
     preferredWindow: form.preferredWindow,
@@ -418,12 +415,8 @@ export function RequestForm() {
           </Field>
           <Field label="ZIP" required><input className="input" required autoComplete="postal-code" inputMode="numeric" pattern="\d{5}(-\d{4})?" placeholder="98072" value={form.zip} onChange={(e) => update("zip", normalizeZipInput(e.target.value))} /></Field>
         </div>
-        <label className="flex items-start gap-3 rounded-2xl border border-nest-teal/15 bg-nest-mint/25 p-4 text-sm font-semibold leading-6 text-nest-ink/75">
-          <input type="checkbox" required className="mt-1 h-4 w-4 shrink-0 accent-nest-teal" checked={form.serviceAddressConfirmed} onChange={(e) => update("serviceAddressConfirmed", e.target.checked)} />
-          <span><span className="text-red-600">*</span> I confirm this is the correct service address where NestHelper should review availability, service area, access, and any required sales tax.</span>
-        </label>
         <p className="rounded-2xl border border-nest-gold/15 bg-nest-cream/70 px-4 py-3 text-xs font-bold leading-5 text-nest-ink/65">
-          Please use the full street address, city, and ZIP. If an address cannot be confirmed or appears outside our service area, NestHelper will follow up before accepting payment.
+          Use the service address so we can confirm area, access, availability, and any required taxes. If an address cannot be confirmed or appears outside our service area, NestHelper will follow up before accepting payment.
         </p>
       </Section>
 

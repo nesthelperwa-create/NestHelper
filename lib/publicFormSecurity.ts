@@ -26,7 +26,6 @@ const commonAllowedFields = [
   "serviceCity",
   "serviceState",
   "serviceZip",
-  "serviceAddressConfirmed",
   "requestedAt",
   "consent",
   "photoUploadCount",
@@ -324,7 +323,6 @@ function validateRequired(collection: SubmissionCollection, payload: Record<stri
 
     requireStreetAddress();
     requireZip();
-    requireTrue("serviceAddressConfirmed", "service address confirmation");
 
     if (trimText(payload.service) === "commercial-reset") {
       requireText("businessName", "business name");

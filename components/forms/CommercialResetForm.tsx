@@ -19,7 +19,6 @@ const defaultState = {
   city: "",
   state: "WA",
   zip: "",
-  serviceAddressConfirmed: false,
   serviceRegion: "Not sure yet",
   businessType: "",
   squareFootage: "",
@@ -81,12 +80,11 @@ function buildServiceAddress(form: Pick<CommercialResetFormState, "address" | "a
   return [form.address, form.address2, form.city, form.state, form.zip].map((part) => part.trim()).filter(Boolean).join(", ");
 }
 
-function getAddressValidationMessage(form: Pick<CommercialResetFormState, "address" | "city" | "state" | "zip" | "serviceAddressConfirmed">) {
+function getAddressValidationMessage(form: Pick<CommercialResetFormState, "address" | "city" | "state" | "zip">) {
   if (!hasLikelyStreetAddress(form.address)) return "Please enter the full cleaning street address, including a street number and street name.";
   if (form.city.trim().length < 2) return "Please enter the cleaning city or community.";
   if (form.state !== "WA") return "Commercial Reset currently accepts Washington service addresses only.";
   if (!hasValidZip(form.zip)) return "Please enter a valid 5-digit ZIP code, or ZIP+4.";
-  if (!form.serviceAddressConfirmed) return "Please confirm the cleaning address is complete and correct.";
   return "";
 }
 
@@ -677,7 +675,6 @@ function buildPayload(form: CommercialResetFormState) {
     serviceCity: form.city,
     serviceState: form.state,
     serviceZip: form.zip,
-    serviceAddressConfirmed: form.serviceAddressConfirmed,
     service: "commercial-reset",
     selectedServiceTitle: "Commercial Reset Quote",
     packageType: "Commercial Reset",
@@ -904,12 +901,8 @@ export function CommercialResetForm() {
             </select>
           </Field>
         </div>
-        <label className="flex items-start gap-3 rounded-2xl border border-nest-teal/15 bg-nest-mint/25 p-4 text-sm font-semibold leading-6 text-nest-ink/75">
-          <input type="checkbox" required className="mt-1 h-4 w-4 shrink-0 accent-nest-teal" checked={form.serviceAddressConfirmed} onChange={(e) => update("serviceAddressConfirmed", e.target.checked)} />
-          <span><span className="text-red-600">*</span> I confirm this is the correct cleaning/service address for NestHelper to review service area, access, and any required sales tax.</span>
-        </label>
         <p className="rounded-2xl border border-nest-gold/15 bg-nest-cream/70 px-4 py-3 text-xs font-bold leading-5 text-nest-ink/65">
-          Please enter the full physical service address, including city and ZIP. If the address appears incomplete or outside our reviewed service area, NestHelper will follow up before sending a quote or payment link.
+          Use the service address so we can confirm area, access, availability, and any required taxes. If the address appears incomplete or outside our reviewed service area, NestHelper will follow up before sending a quote or payment link.
         </p>
       </Section>
 
