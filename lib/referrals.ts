@@ -543,7 +543,7 @@ export async function getAvailableCustomerReferralCreditsForEmail(db: Firestore,
 
   const excluded = getString(excludeRequestId);
   return snap.docs
-    .map((doc) => ({ id: doc.id, ...(doc.data() || {}) }))
+    .map((doc) => ({ id: doc.id, ...(doc.data() || {}) } as Record<string, unknown> & { id: string }))
     .filter((credit) => {
       if (excluded && (getString(credit.sourceReferrerRequestId) === excluded || getString(credit.sourceReferredRequestId) === excluded)) return false;
       return getSafeCreditAmount(credit.remainingAmount || credit.amount) > 0;
