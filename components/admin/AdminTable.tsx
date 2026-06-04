@@ -247,14 +247,14 @@ function isActiveQueueItem(item: AdminDoc | null | undefined) {
 }
 
 const ADMIN_QUEUE_OPTIONS = [
-  { key: "active", label: "Active queue", helper: "Open work", accent: "bg-[#075c58] text-white border-[#075c58]" },
+  { key: "all", label: "All records", helper: "Everything", accent: "bg-[#075c58] text-white border-[#075c58]" },
+  { key: "active", label: "Active queue", helper: "Open work", accent: "bg-white text-[#075c58] border-[#eadfc8]" },
   { key: "needs-review", label: "Needs review", helper: "New/follow-up", accent: "bg-amber-100 text-amber-900 border-amber-300" },
   { key: "needs-payment", label: "Needs payment", helper: "Approved/quote", accent: "bg-blue-100 text-blue-900 border-blue-300" },
   { key: "payment", label: "Payment sent", helper: "Waiting to pay", accent: "bg-violet-100 text-violet-900 border-violet-300" },
   { key: "paid-scheduled", label: "Paid / scheduled", helper: "Ready to serve", accent: "bg-emerald-100 text-emerald-900 border-emerald-300" },
   { key: "completed", label: "Completed", helper: "Done", accent: "bg-slate-100 text-slate-800 border-slate-300" },
   { key: "closed", label: "Closed", helper: "Canceled/declined", accent: "bg-rose-100 text-rose-900 border-rose-300" },
-  { key: "all", label: "All records", helper: "Everything", accent: "bg-white text-[#075c58] border-[#eadfc8]" },
 ] as const;
 
 function hasOutgoingReferralData(item: AdminDoc | null | undefined) {
@@ -579,7 +579,7 @@ export default function AdminTable({
   const [referralFilter, setReferralFilter] = useState("all");
   const [promoFilter, setPromoFilter] = useState("all");
   const [dateFilter, setDateFilter] = useState("all");
-  const [queueFilter, setQueueFilter] = useState(collectionName === "serviceRequests" ? "active" : "all");
+  const [queueFilter, setQueueFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState<"25" | "all">("25");
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -791,7 +791,7 @@ export default function AdminTable({
     if (currentPage > totalPages) setCurrentPage(totalPages);
   }, [currentPage, totalPages]);
 
-  const activeFilterCount = [filter.trim(), serviceFilter, statusFilter !== "all" ? statusFilter : "", paymentFilter !== "all" ? paymentFilter : "", referralFilter !== "all" ? referralFilter : "", promoFilter !== "all" ? promoFilter : "", dateFilter !== "all" ? dateFilter : "", collectionName === "serviceRequests" && queueFilter !== "active" ? queueFilter : ""].filter(Boolean).length;
+  const activeFilterCount = [filter.trim(), serviceFilter, statusFilter !== "all" ? statusFilter : "", paymentFilter !== "all" ? paymentFilter : "", referralFilter !== "all" ? referralFilter : "", promoFilter !== "all" ? promoFilter : "", dateFilter !== "all" ? dateFilter : "", collectionName === "serviceRequests" && queueFilter !== "all" ? queueFilter : ""].filter(Boolean).length;
   const pageNumberItems = useMemo(() => getPageNumberItems(safeCurrentPage, totalPages), [safeCurrentPage, totalPages]);
 
   function clearAllFilters() {
@@ -802,7 +802,7 @@ export default function AdminTable({
     setReferralFilter("all");
     setPromoFilter("all");
     setDateFilter("all");
-    setQueueFilter(collectionName === "serviceRequests" ? "active" : "all");
+    setQueueFilter("all");
   }
 
   const laundrySubtotal = Math.max(0, toNumber(laundryDryWeightLbs) * toNumber(laundryRatePerLb) + toNumber(laundryAddOnsAmount));
@@ -1481,10 +1481,10 @@ export default function AdminTable({
             <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
               <div>
                 <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Work queue</p>
-                <p className="mt-1 text-sm font-semibold text-slate-600">Start with active work, then jump to the bucket you need.</p>
+                <p className="mt-1 text-sm font-semibold text-slate-600">Showing all records by default. Use the buckets to narrow the list when needed.</p>
               </div>
-              {queueFilter !== "active" && (
-                <button type="button" onClick={() => setQueueFilter("active")} className={getAdminActionClass("quiet")}>Back to active</button>
+              {queueFilter !== "all" && (
+                <button type="button" onClick={() => setQueueFilter("all")} className={getAdminActionClass("quiet")}>Show all records</button>
               )}
             </div>
             <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4 xl:grid-cols-8">
