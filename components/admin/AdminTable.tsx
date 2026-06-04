@@ -59,6 +59,9 @@ const COMMERCIAL_QUOTE_TYPES = [
   "Short-term rental turnover",
 ];
 
+const BULK_DELETE_PHRASE = "DELETE REQUESTS";
+const MAX_BULK_DELETE = 500;
+
 function getDateObject(value: unknown) {
   if (!value) return null;
   if (typeof value === "object" && value && "toDate" in value && typeof value.toDate === "function") {
@@ -1572,6 +1575,9 @@ export default function AdminTable({
   const [deleteBusy, setDeleteBusy] = useState(false);
   const [deleteMessage, setDeleteMessage] = useState("");
   const [deleteError, setDeleteError] = useState("");
+  const [cleanupModeOpen, setCleanupModeOpen] = useState(false);
+  const [selectedRequestIds, setSelectedRequestIds] = useState<Set<string>>(() => new Set());
+  const [cleanupPhrase, setCleanupPhrase] = useState("");
   const [applicationStatus, setApplicationStatus] = useState("New");
   const [onboardingChecklist, setOnboardingChecklist] = useState<OnboardingChecklist>({});
   const [internalNotes, setInternalNotes] = useState("");
@@ -1604,6 +1610,31 @@ export default function AdminTable({
     const unsub = onSnapshot(q, (snap) => setCustomerCredits(snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }))));
     return () => unsub();
   }, [collectionName, enablePaymentActions]);
+  useEffect(() => {
+    if (collectionName !== "serviceRequests") {
+      setCleanupModeOpen(false);
+      setCleanupPhrase("");
+      setSelectedRequestIds(new Set());
+    }
+  }, [collectionName]);
+
+  useEffect(() => {
+    setSelectedRequestIds((prev) => {
+      if (!prev.size) return prev;
+      const liveIds = new Set(items.map((item) => item.id));
+      let changed = false;
+      const next = new Set<string>();
+      prev.forEach((id) => {
+        if (liveIds.has(id)) {
+          next.add(id);
+        } else {
+          changed = true;
+        }
+      });
+      return changed ? next : prev;
+    });
+  }, [items]);
+
 
   useEffect(() => {
     const nextStatus = selected?.status || "New";
@@ -1760,6 +1791,52 @@ export default function AdminTable({
 
   const activeFilterCount = [filter.trim(), serviceFilter, statusFilter !== "all" ? statusFilter : "", paymentFilter !== "all" ? paymentFilter : "", referralFilter !== "all" ? referralFilter : "", promoFilter !== "all" ? promoFilter : "", dateFilter !== "all" ? dateFilter : "", collectionName === "serviceRequests" && queueFilter !== "all" ? queueFilter : ""].filter(Boolean).length;
   const pageNumberItems = useMemo(() => getPageNumberItems(safeCurrentPage, totalPages), [safeCurrentPage, totalPages]);
+  const requestCleanupEnabled = collectionName === "serviceRequests";
+  const selectedRequestCount = selectedRequestIds.size;
+  const selectedPageCount = pagedItems.filter((item) => selectedRequestIds.has(item.id)).length;
+  const allPagedRequestsSelected = requestCleanupEnabled && pagedItems.length > 0 && selectedPageCount === pagedItems.length;
+  const selectedFilteredCount = filtered.filter((item) => selectedRequestIds.has(item.id)).length;
+
+  function toggleRequestSelection(id: string, checked: boolean) {
+    setSelectedRequestIds((prev) => {
+      const next = new Set(prev);
+      if (checked) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  }
+
+  function selectPagedRequests() {
+    setSelectedRequestIds((prev) => {
+      const next = new Set(prev);
+      pagedItems.forEach((item) => next.add(item.id));
+      return next;
+    });
+  }
+
+  function togglePagedRequests(checked: boolean) {
+    setSelectedRequestIds((prev) => {
+      const next = new Set(prev);
+      pagedItems.forEach((item) => {
+        if (checked) next.add(item.id);
+        else next.delete(item.id);
+      });
+      return next;
+    });
+  }
+
+  function selectFilteredRequests() {
+    setSelectedRequestIds((prev) => {
+      const next = new Set(prev);
+      filtered.slice(0, MAX_BULK_DELETE).forEach((item) => next.add(item.id));
+      return next;
+    });
+  }
+
+  function clearSelectedRequests() {
+    setSelectedRequestIds(new Set());
+    setCleanupPhrase("");
+  }
 
   function clearAllFilters() {
     setFilter("");
@@ -1866,10 +1943,76 @@ Only continue for obvious fake/test submissions with no customer, payment, invoi
       if (!res.ok || !data.ok) throw new Error(data.error || "Unable to delete this record.");
 
       setItems((prev) => prev.filter((existing) => existing.id !== item.id));
+      setSelectedRequestIds((prev) => {
+        const next = new Set(prev);
+        next.delete(item.id);
+        return next;
+      });
       setDeleteMessage(`${deletedName} was deleted from ${title}.`);
       setSelected((prev) => (prev?.id === item.id ? null : prev));
     } catch (error) {
       setDeleteError(error instanceof Error ? error.message : "Unable to delete this record.");
+    } finally {
+      setDeleteBusy(false);
+      setActiveAction("");
+    }
+  }
+
+  async function bulkDeleteSelectedRequests() {
+    if (collectionName !== "serviceRequests" || deleteBusy) return;
+    const ids = Array.from(selectedRequestIds);
+    if (!ids.length) {
+      setDeleteError("Select at least one request to delete.");
+      setDeleteMessage("");
+      return;
+    }
+    if (ids.length > MAX_BULK_DELETE) {
+      setDeleteError(`Select ${MAX_BULK_DELETE} or fewer requests at a time.`);
+      setDeleteMessage("");
+      return;
+    }
+    if (cleanupPhrase.trim() !== BULK_DELETE_PHRASE) {
+      setDeleteError(`Type ${BULK_DELETE_PHRASE} to confirm pre-launch request cleanup.`);
+      setDeleteMessage("");
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Delete ${ids.length} selected service request${ids.length === 1 ? "" : "s"} from the admin list?
+
+This removes the selected Firestore request records from NestHelper admin. It does not delete Stripe payments, invoices, emails, or customer receipts. Only use this before live customers.`
+    );
+    if (!confirmed) return;
+
+    setDeleteBusy(true);
+    setActiveAction(`Deleting ${ids.length} selected request${ids.length === 1 ? "" : "s"}...`);
+    setDeleteMessage("");
+    setDeleteError("");
+
+    try {
+      const token = await firebaseAuth.currentUser?.getIdToken();
+      const res = await fetch("/api/admin/delete-record", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          collection: "serviceRequests",
+          ids,
+          confirmBulkDeleteRequests: true,
+          cleanupPhrase: cleanupPhrase.trim(),
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.ok) throw new Error(data.error || "Unable to delete selected requests.");
+
+      const deletedIds = new Set<string>(Array.isArray(data.deletedIds) ? data.deletedIds : ids);
+      setItems((prev) => prev.filter((existing) => !deletedIds.has(existing.id)));
+      setSelectedRequestIds(new Set());
+      setCleanupPhrase("");
+      setSelected((prev) => (prev && deletedIds.has(prev.id) ? null : prev));
+      const missingNote = data.missingCount ? ` ${data.missingCount} already-missing record${data.missingCount === 1 ? " was" : "s were"} skipped.` : "";
+      setDeleteMessage(`${data.deletedCount || deletedIds.size} request${(data.deletedCount || deletedIds.size) === 1 ? "" : "s"} deleted from the admin list.${missingNote}`);
+    } catch (error) {
+      setDeleteError(error instanceof Error ? error.message : "Unable to delete selected requests.");
     } finally {
       setDeleteBusy(false);
       setActiveAction("");
@@ -2690,24 +2833,39 @@ Only continue for obvious fake/test submissions with no customer, payment, invoi
           </p>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
-          <button
-            type="button"
-            onClick={() => printAdminRecords(collectionName, title, filtered)}
-            disabled={!filtered.length}
-            className={getAdminActionClass("quiet")}
-            title="Print the full details for every record currently matching your filters."
-          >
-            Print filtered
-          </button>
-          <button
-            type="button"
-            onClick={() => downloadTextFile(getFilteredCsvFilename(title), getAdminCsvExport(collectionName, filtered), "text/csv;charset=utf-8")}
-            disabled={!filtered.length}
-            className={getAdminActionClass("quiet")}
-            title="Download the currently filtered list as a spreadsheet-friendly CSV."
-          >
-            Download filtered CSV
-          </button>
+          {requestCleanupEnabled && (
+            <button
+              type="button"
+              onClick={() => setCleanupModeOpen((prev) => !prev)}
+              className={cleanupModeOpen ? getAdminActionClass("danger") : getAdminActionClass("quiet")}
+              title="Show pre-launch request cleanup tools."
+            >
+              {cleanupModeOpen ? "Hide cleanup" : selectedRequestCount ? `Cleanup (${selectedRequestCount})` : "Pre-launch cleanup"}
+            </button>
+          )}
+          <details className="rounded-2xl border border-[#eadfc8] bg-white px-3 py-2 text-sm font-bold text-slate-700 shadow-sm">
+            <summary className="cursor-pointer list-none text-[#075c58]">Export list</summary>
+            <div className="mt-3 grid gap-2 sm:min-w-[220px]">
+              <button
+                type="button"
+                onClick={() => printAdminRecords(collectionName, title, filtered)}
+                disabled={!filtered.length}
+                className={getAdminActionClass("quiet")}
+                title="Print the full details for every record currently matching your filters."
+              >
+                Print filtered
+              </button>
+              <button
+                type="button"
+                onClick={() => downloadTextFile(getFilteredCsvFilename(title), getAdminCsvExport(collectionName, filtered), "text/csv;charset=utf-8")}
+                disabled={!filtered.length}
+                className={getAdminActionClass("quiet")}
+                title="Download the currently filtered list as a spreadsheet-friendly CSV."
+              >
+                Download filtered CSV
+              </button>
+            </div>
+          </details>
           <label className="flex items-center gap-2 text-sm font-bold text-slate-700">
             Per page
             <select
@@ -2759,13 +2917,73 @@ Only continue for obvious fake/test submissions with no customer, payment, invoi
         </div>
       </div>
 
+      {requestCleanupEnabled && cleanupModeOpen && (
+        <div className="rounded-3xl border-2 border-red-200 bg-red-50 p-4 shadow-sm">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.16em] text-red-700">Pre-launch cleanup</p>
+              <h3 className="mt-1 text-lg font-black text-red-900">Delete selected service requests</h3>
+              <p className="mt-1 max-w-3xl text-sm font-semibold leading-6 text-red-900/80">
+                Use this only before live customers. It removes selected request records from the NestHelper admin list. Stripe payments, invoices, emails, and receipts stay in their original systems.
+              </p>
+            </div>
+            <div className="rounded-2xl bg-white px-4 py-3 text-sm font-black text-red-800 ring-1 ring-red-200">
+              {selectedRequestCount} selected
+            </div>
+          </div>
+          <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+            <button type="button" onClick={() => togglePagedRequests(!allPagedRequestsSelected)} disabled={!pagedItems.length || deleteBusy} className={getAdminActionClass("quiet")}>
+              {allPagedRequestsSelected ? "Unselect page" : "Select page"}
+            </button>
+            <button type="button" onClick={selectFilteredRequests} disabled={!filtered.length || deleteBusy} className={getAdminActionClass("quiet")}>
+              Select filtered{filtered.length > MAX_BULK_DELETE ? ` (${MAX_BULK_DELETE} max)` : ""}
+            </button>
+            <button type="button" onClick={clearSelectedRequests} disabled={!selectedRequestCount || deleteBusy} className={getAdminActionClass("quiet")}>Clear selected</button>
+            <button type="button" onClick={() => setCleanupModeOpen(false)} className={getAdminActionClass("quiet")}>Done</button>
+          </div>
+          <div className="mt-4 grid gap-3 lg:grid-cols-[1fr_auto] lg:items-end">
+            <label className="grid gap-2 text-sm font-bold text-red-900">
+              Type {BULK_DELETE_PHRASE} to enable bulk delete
+              <input
+                value={cleanupPhrase}
+                onChange={(e) => setCleanupPhrase(e.target.value)}
+                placeholder={BULK_DELETE_PHRASE}
+                className="min-h-12 rounded-2xl border border-red-200 bg-white px-4 py-3 text-sm font-bold text-red-900 outline-none focus:border-red-700 focus:ring-4 focus:ring-red-700/15"
+              />
+            </label>
+            <button
+              type="button"
+              onClick={bulkDeleteSelectedRequests}
+              disabled={!selectedRequestCount || cleanupPhrase.trim() !== BULK_DELETE_PHRASE || deleteBusy}
+              className={getAdminActionClass("danger")}
+            >
+              {deleteBusy ? <><ActionSpinner /> Deleting...</> : `Delete ${selectedRequestCount || "selected"}`}
+            </button>
+          </div>
+          <p className="mt-3 text-xs font-bold text-red-800/80">
+            Tip: filter/search first, choose Select filtered, type the confirmation phrase, then delete. For normal live records later, mark them Canceled or Archived instead of deleting.
+          </p>
+        </div>
+      )}
+
       <div className="grid gap-3 md:hidden">
         {pagedItems.map((item) => (
           <div key={`mobile-${item.id}`} className={`rounded-3xl border border-[#eadfc8] p-4 shadow-sm ${getServiceLook(item).row}`}>
             <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <p className="truncate text-base font-black text-[#075c58]">{getRecordDisplayName(item)}</p>
-                <p className="mt-1 text-xs font-bold text-slate-600">{getRecordContactLine(item)}</p>
+              <div className="flex min-w-0 items-start gap-3">
+                {requestCleanupEnabled && cleanupModeOpen && (
+                  <input
+                    type="checkbox"
+                    checked={selectedRequestIds.has(item.id)}
+                    onChange={(e) => toggleRequestSelection(item.id, e.target.checked)}
+                    aria-label={`Select ${getRecordDisplayName(item)} for cleanup`}
+                    className="mt-1 h-5 w-5 rounded border-red-300 accent-red-700"
+                  />
+                )}
+                <div className="min-w-0">
+                  <p className="truncate text-base font-black text-[#075c58]">{getRecordDisplayName(item)}</p>
+                  <p className="mt-1 text-xs font-bold text-slate-600">{getRecordContactLine(item)}</p>
+                </div>
               </div>
               <StatusBadge status={item.status} />
             </div>
@@ -2783,22 +3001,6 @@ Only continue for obvious fake/test submissions with no customer, payment, invoi
             </div>
             <div className="mt-3 grid gap-2">
               <button onClick={() => setSelected(item)} className="w-full rounded-full bg-[#075c58] px-4 py-3 text-xs font-black text-white shadow-sm transition hover:bg-[#064b48]">Open details</button>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => printAdminRecord(collectionName, item)}
-                  className="w-full rounded-full border border-[#d8c18f] bg-white px-4 py-3 text-xs font-black text-[#075c58] shadow-sm transition hover:bg-[#f4ecdc]"
-                >
-                  Print
-                </button>
-                <button
-                  type="button"
-                  onClick={() => downloadAdminRecord(collectionName, item)}
-                  className="w-full rounded-full border border-[#d8c18f] bg-white px-4 py-3 text-xs font-black text-[#075c58] shadow-sm transition hover:bg-[#f4ecdc]"
-                >
-                  Download
-                </button>
-              </div>
               <select
                 value={item.status || "New"}
                 onChange={async (e) => {
@@ -2822,14 +3024,14 @@ Only continue for obvious fake/test submissions with no customer, payment, invoi
               >
                 {dropdownStatuses.map((status) => <option key={status}>{status}</option>)}
               </select>
-              {!getRecordDeleteBlockReason(collectionName, item) && (
+              {cleanupModeOpen && !getRecordDeleteBlockReason(collectionName, item) && (
                 <button
                   type="button"
                   onClick={() => deleteTestRecord(item)}
                   disabled={deleteBusy}
                   className="w-full rounded-full border border-red-200 bg-red-50 px-4 py-3 text-xs font-black text-red-700 shadow-sm transition hover:bg-red-100 disabled:opacity-60"
                 >
-                  Delete test
+                  Delete single test
                 </button>
               )}
             </div>
@@ -2843,42 +3045,48 @@ Only continue for obvious fake/test submissions with no customer, payment, invoi
           <table className="w-full min-w-[1240px] divide-y divide-[#eadfc8] text-sm">
             <thead className="bg-[#f4ecdc] text-left text-xs uppercase tracking-wider text-[#075c58]">
               <tr>
+                {requestCleanupEnabled && cleanupModeOpen && (
+                  <th className="w-12 px-4 py-4">
+                    <input
+                      type="checkbox"
+                      checked={allPagedRequestsSelected}
+                      onChange={(e) => togglePagedRequests(e.target.checked)}
+                      aria-label="Select visible requests for cleanup"
+                      className="h-5 w-5 rounded border-red-300 accent-red-700"
+                    />
+                  </th>
+                )}
                 <th className="px-4 py-4">Status</th>
                 {columns.map((col) => (
                   <th key={col.key} className="px-4 py-4">{col.label}</th>
                 ))}
                 <th className="px-4 py-4">Created</th>
-                <th className="sticky right-0 z-20 min-w-[260px] bg-[#f4ecdc] px-4 py-4 shadow-[-10px_0_18px_rgba(0,0,0,0.04)]">Actions</th>
+                <th className="sticky right-0 z-20 min-w-[190px] bg-[#f4ecdc] px-4 py-4 shadow-[-10px_0_18px_rgba(0,0,0,0.04)]">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#f0e7d7]">
               {pagedItems.map((item) => (
                 <tr key={item.id} className={`transition-colors ${getServiceLook(item).row}`}>
+                  {requestCleanupEnabled && cleanupModeOpen && (
+                    <td className="px-4 py-4 align-top">
+                      <input
+                        type="checkbox"
+                        checked={selectedRequestIds.has(item.id)}
+                        onChange={(e) => toggleRequestSelection(item.id, e.target.checked)}
+                        aria-label={`Select ${getRecordDisplayName(item)} for cleanup`}
+                        className="h-5 w-5 rounded border-red-300 accent-red-700"
+                      />
+                    </td>
+                  )}
                   <td className="px-4 py-4"><StatusBadge status={item.status} /></td>
                   {columns.map((col) => (
                     <td key={col.key} className="max-w-[220px] truncate px-4 py-4 text-slate-700">{renderAdminCell(col.key, item)}</td>
                   ))}
                   <td className="px-4 py-4 text-slate-500">{formatDate(item.createdAt)}</td>
-                  <td className="sticky right-0 z-10 min-w-[260px] bg-white/95 px-3 py-4 align-top shadow-[-10px_0_18px_rgba(0,0,0,0.04)] backdrop-blur">
-                    <div className="grid min-w-[230px] gap-2">
+                  <td className="sticky right-0 z-10 min-w-[190px] bg-white/95 px-3 py-4 align-top shadow-[-10px_0_18px_rgba(0,0,0,0.04)] backdrop-blur">
+                    <div className="grid min-w-[170px] gap-2">
                       <button onClick={() => setSelected(item)} className="w-full whitespace-nowrap rounded-full bg-[#075c58] px-3 py-2 text-xs font-black text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-[#064b48] focus:outline-none focus:ring-4 focus:ring-[#075c58]/20">Open details</button>
-                      <div className="grid grid-cols-2 gap-2">
-                        <button
-                          type="button"
-                          onClick={() => printAdminRecord(collectionName, item)}
-                          className="w-full whitespace-nowrap rounded-full border border-[#d8c18f] bg-white px-3 py-2 text-xs font-black text-[#075c58] shadow-sm transition hover:-translate-y-0.5 hover:bg-[#f4ecdc] focus:outline-none focus:ring-4 focus:ring-[#075c58]/15"
-                        >
-                          Print
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => downloadAdminRecord(collectionName, item)}
-                          className="w-full whitespace-nowrap rounded-full border border-[#d8c18f] bg-white px-3 py-2 text-xs font-black text-[#075c58] shadow-sm transition hover:-translate-y-0.5 hover:bg-[#f4ecdc] focus:outline-none focus:ring-4 focus:ring-[#075c58]/15"
-                        >
-                          Download
-                        </button>
-                      </div>
-                      {!getRecordDeleteBlockReason(collectionName, item) && (
+                      {cleanupModeOpen && !getRecordDeleteBlockReason(collectionName, item) && (
                         <button
                           type="button"
                           onClick={() => deleteTestRecord(item)}
@@ -2886,7 +3094,7 @@ Only continue for obvious fake/test submissions with no customer, payment, invoi
                           className="w-full whitespace-nowrap rounded-full border border-red-200 bg-red-50 px-3 py-2 text-xs font-black text-red-700 shadow-sm transition hover:-translate-y-0.5 hover:bg-red-100 focus:outline-none focus:ring-4 focus:ring-red-700/15 disabled:opacity-60"
                           title="Delete obvious test/fake records only. Protected payment/invoice/referral records are hidden."
                         >
-                          Delete test
+                          Delete single test
                         </button>
                       )}
                       <select
@@ -2918,7 +3126,7 @@ Only continue for obvious fake/test submissions with no customer, payment, invoi
                 </tr>
               ))}
               {!filtered.length && (
-                <tr><td colSpan={columns.length + 3} className="px-4 py-12 text-center text-slate-500">No records match the current filters.</td></tr>
+                <tr><td colSpan={columns.length + 3 + (requestCleanupEnabled && cleanupModeOpen ? 1 : 0)} className="px-4 py-12 text-center text-slate-500">No records match the current filters.</td></tr>
               )}
             </tbody>
           </table>
@@ -2975,8 +3183,6 @@ Only continue for obvious fake/test submissions with no customer, payment, invoi
                 <h3 className="text-2xl font-bold text-[#075c58]">Submission Details</h3>
               </div>
               <div className="flex flex-wrap items-center justify-end gap-2">
-                <button type="button" onClick={() => printAdminRecord(collectionName, selected)} className={getAdminActionClass("quiet")}>Print</button>
-                <button type="button" onClick={() => downloadAdminRecord(collectionName, selected)} className={getAdminActionClass("quiet")}>Download</button>
                 <button onClick={() => setSelected(null)} className={getAdminActionClass("quiet")}>Close details</button>
               </div>
             </div>
@@ -2996,6 +3202,13 @@ Only continue for obvious fake/test submissions with no customer, payment, invoi
                 messages={[statusMessage, checkoutMessage, commercialInvoiceMessage, commercialQuoteEmailMessage, familyInvoiceMessage, laundryFinalMessage, additionalPaymentMessage, commercialQuoteMessage, referralMessage, applicationOnboardingMessage]}
                 errors={[statusError, checkoutError, commercialInvoiceError, commercialQuoteEmailError, familyInvoiceError, laundryFinalError, additionalPaymentError, commercialQuoteError, referralError, applicationOnboardingError, documentOpenError]}
               />
+              <details className="rounded-3xl border border-[#eadfc8] bg-white p-4 shadow-sm">
+                <summary className="cursor-pointer text-sm font-black text-[#075c58]">Print / download this record</summary>
+                <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                  <button type="button" onClick={() => printAdminRecord(collectionName, selected)} className={getAdminActionClass("quiet")}>Print clean summary</button>
+                  <button type="button" onClick={() => downloadAdminRecord(collectionName, selected)} className={getAdminActionClass("quiet")}>Download clean summary</button>
+                </div>
+              </details>
             </div>
 
             <AdminDetailSnapshot collectionName={collectionName} item={selected} />
