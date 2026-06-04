@@ -13,6 +13,7 @@ export const runtime = "nodejs";
 type CreateReferralLinkBody = {
   requestId?: string;
   sendEmail?: boolean;
+  forceNew?: boolean;
 };
 
 function getString(value: unknown) {
@@ -42,13 +43,14 @@ export async function POST(request: Request) {
     const body = (await request.json().catch(() => null)) as CreateReferralLinkBody | null;
     const requestId = getString(body?.requestId);
     const sendEmail = body?.sendEmail !== false;
+    const forceNew = body?.forceNew === true;
 
     if (!requestId) {
       return NextResponse.json({ ok: false, error: "Missing service request ID." }, { status: 400 });
     }
 
     const db = getFirebaseAdminDb();
-    const referral = await createFamilyReferralLinkForRequest({ db, requestId, createdBy: decoded.email });
+    const referral = await createFamilyReferralLinkForRequest({ db, requestId, createdBy: decoded.email, forceNew });
     const requestRef = db.collection("serviceRequests").doc(requestId);
     const linkRef = db.collection("referralLinks").doc(referral.code);
 
@@ -101,6 +103,8 @@ export async function POST(request: Request) {
       code: referral.code,
       url: referral.url,
       reused: referral.reused,
+      forceNew: referral.forceNew,
+      historyEntry: referral.historyEntry || null,
       emailSent,
       emailWarning,
       status: referral.reused ? (getString(referral.linkData.status) || "Active") : "Active",

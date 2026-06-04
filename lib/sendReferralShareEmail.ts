@@ -51,7 +51,7 @@ export async function sendReferralShareEmail({
         </div>
         <div style="padding:22px 18px;color:#233;line-height:1.6;box-sizing:border-box;overflow-wrap:anywhere;word-break:break-word;">
           <p style="margin:0 0 16px 0;">${escapeHtml(greeting)}</p>
-          <p style="margin:0 0 18px 0;">Thank you for trusting NestHelper. You can share the link below with one family who may need help resetting the home.</p>
+          <p style="margin:0 0 18px 0;">Thank you for trusting NestHelper. You can share the link below with one family who may need help resetting the home. Each link is one-time use, so ask NestHelper for another link if you want to refer another family later.</p>
 
           <div style="margin:0 0 20px 0;padding:14px;border-radius:14px;background:#fbf6ea;border:1px solid #eadfc8;box-sizing:border-box;">
             <div style="font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#b98a2f;font-weight:700;margin-bottom:6px;">Your share code</div>
@@ -74,7 +74,7 @@ export async function sendReferralShareEmail({
       </div>
     </div>`;
 
-  const text = `Your NestHelper referral share page is ready\n\n${greeting}\n\nThank you for trusting NestHelper. You can share the link below with one family who may need help resetting the home.\n\nReferral code: ${referralCode}\nReferral share page: ${safeUrl}\n\nWhat to do:\n1. Open the referral share page above.\n2. Copy that page link or forward this email to one family.\n3. They tap “Request help with this referral” and submit their request.\n\nAfter the referred family completes an eligible NestHelper family service, we will email you about ${rewardLabel}.\n\nQuestions? Reply to this email or contact us at ${replyTo}.`;
+  const text = `Your NestHelper referral share page is ready\n\n${greeting}\n\nThank you for trusting NestHelper. You can share the link below with one family who may need help resetting the home. Each link is one-time use, so ask NestHelper for another link if you want to refer another family later.\n\nReferral code: ${referralCode}\nReferral share page: ${safeUrl}\n\nWhat to do:\n1. Open the referral share page above.\n2. Copy that page link or forward this email to one family.\n3. They tap “Request help with this referral” and submit their request.\n\nAfter the referred family completes an eligible NestHelper family service, we will email you about ${rewardLabel}.\n\nQuestions? Reply to this email or contact us at ${replyTo}.`;
 
   const resend = new Resend(apiKey);
   return resend.emails.send({ from, to, subject: "Your NestHelper referral share page", html, text, replyTo });

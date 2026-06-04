@@ -44,11 +44,11 @@ export const policies: Policy[] = [
       },
       {
         heading: "One-time referral links",
-        body: "Each generated referral share link is intended for one referred family request only. Once a referral link is claimed by a referred family request, the same link cannot be redeemed by another customer."
+        body: "Each generated referral share link is intended for one referred family request only. Once a referral link is claimed by a referred family request, the same link cannot be redeemed by another customer. NestHelper may generate additional one-time referral links for the same original family at its discretion, and each link is tracked separately."
       },
       {
         heading: "Separate referral records",
-        body: "NestHelper tracks the original referring family’s generated share link and code separately from the referred family’s incoming referral code. This helps NestHelper review the referral, prevent duplicate use, and keep reward status clear in the admin dashboard."
+        body: "NestHelper tracks each original referring family share link and code separately from the referred family’s incoming referral code. This helps NestHelper review each referral, prevent duplicate use, and keep reward status clear in the admin dashboard."
       },
       {
         heading: "Reward or credit timing",

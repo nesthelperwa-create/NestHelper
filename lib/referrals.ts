@@ -123,10 +123,12 @@ export async function createFamilyReferralLinkForRequest({
   db,
   requestId,
   createdBy,
+  forceNew = false,
 }: {
   db: Firestore;
   requestId: string;
   createdBy?: string | null;
+  forceNew?: boolean;
 }) {
   const requestRef = db.collection("serviceRequests").doc(requestId);
   const requestSnap = await requestRef.get();
@@ -158,7 +160,7 @@ export async function createFamilyReferralLinkForRequest({
   }
 
   const existingCode = normalizeReferralCode(requestData.outgoingReferralCode);
-  if (existingCode) {
+  if (existingCode && !forceNew) {
     const existingUrl = buildReferralUrl(existingCode);
     const linkSnap = await db.collection("referralLinks").doc(existingCode).get();
     if (linkSnap.exists) {
@@ -171,6 +173,8 @@ export async function createFamilyReferralLinkForRequest({
         referrerName,
         serviceTitle: getReferralServiceTitle(serviceId, requestData.selectedServiceTitle),
         linkData: linkSnap.data() || {},
+        historyEntry: null,
+        forceNew: false,
       };
     }
   }
@@ -208,12 +212,23 @@ export async function createFamilyReferralLinkForRequest({
     createdBy: createdBy || "admin",
   };
 
+  const generatedAtIso = new Date().toISOString();
+  const historyEntry = {
+    code,
+    url,
+    status: "Active",
+    program: "family-to-family",
+    createdAtIso: generatedAtIso,
+    generatedAtIso,
+    generatedBy: createdBy || "admin",
+  };
+
   await db.runTransaction(async (transaction) => {
     const currentRequest = await transaction.get(requestRef);
     if (!currentRequest.exists) throw new Error("Service request not found.");
     const current = currentRequest.data() || {};
-    if (normalizeReferralCode(current.outgoingReferralCode)) {
-      throw new Error("This customer already has a referral link. Reopen the details to view or resend it.");
+    if (!forceNew && normalizeReferralCode(current.outgoingReferralCode)) {
+      throw new Error("This customer already has a referral link. Reopen the details to view or resend it, or choose Generate another one-time link.");
     }
 
     transaction.set(linkRef, linkPayload);
@@ -224,6 +239,8 @@ export async function createFamilyReferralLinkForRequest({
       outgoingReferralProgram: "family-to-family",
       outgoingReferralGeneratedAt: FieldValue.serverTimestamp(),
       outgoingReferralGeneratedBy: createdBy || "admin",
+      outgoingReferralLinkCount: FieldValue.increment(1),
+      outgoingReferralHistory: FieldValue.arrayUnion(historyEntry),
       updatedAt: FieldValue.serverTimestamp(),
     });
   });
@@ -237,6 +254,8 @@ export async function createFamilyReferralLinkForRequest({
     referrerName,
     serviceTitle,
     linkData: linkPayload,
+    historyEntry,
+    forceNew,
   };
 }
 

@@ -219,6 +219,12 @@ function getReferralStatusText(item: AdminDoc | null | undefined) {
   return String(item?.outgoingReferralStatus || item?.incomingReferralStatus || "Not started");
 }
 
+function getOutgoingReferralHistory(item: AdminDoc | null | undefined) {
+  const history = item?.outgoingReferralHistory;
+  if (!Array.isArray(history)) return [] as Array<Record<string, any>>;
+  return history.filter((entry) => entry && typeof entry === "object") as Array<Record<string, any>>;
+}
+
 function getDefaultCommercialQuoteType(item: AdminDoc | null | undefined) {
   const combined = String(`${item?.businessType || ""} ${item?.frequency || ""}`).toLowerCase();
   if (combined.includes("rental") || combined.includes("vacation") || combined.includes("turnover")) return "Short-term rental turnover";
@@ -712,10 +718,10 @@ export default function AdminTable({
     setReferralMessage("Referral link copied.");
   }
 
-  async function createReferralLink(sendEmail = true) {
+  async function createReferralLink(sendEmail = true, forceNew = false) {
     if (!selected) return;
     setReferralBusy(true);
-    setActiveAction(sendEmail ? "Creating and emailing family referral link..." : "Creating family referral link...");
+    setActiveAction(forceNew ? "Creating another one-time family referral link..." : sendEmail ? "Creating and emailing family referral link..." : "Creating family referral link...");
     setReferralMessage("");
     setReferralError("");
 
@@ -724,7 +730,7 @@ export default function AdminTable({
       const res = await fetch("/api/admin/create-referral-link", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ requestId: selected.id, sendEmail }),
+        body: JSON.stringify({ requestId: selected.id, sendEmail, forceNew }),
       });
       const data = await res.json().catch(() => ({}));
 
@@ -732,22 +738,40 @@ export default function AdminTable({
         throw new Error(data.error || "Unable to create referral link.");
       }
 
-      setSelected((prev) => prev ? {
-        ...prev,
-        outgoingReferralCode: data.code,
-        outgoingReferralLink: data.url,
-        outgoingReferralStatus: data.status || prev.outgoingReferralStatus || "Active",
-        outgoingReferralEmailSent: data.emailSent || prev.outgoingReferralEmailSent,
-        outgoingReferralEmailError: data.emailWarning || "",
-      } : prev);
+      setSelected((prev) => {
+        if (!prev) return prev;
+        const currentHistory = getOutgoingReferralHistory(prev);
+        const nextHistoryEntry = data.historyEntry || {
+          code: data.code,
+          url: data.url,
+          status: data.status || "Active",
+          generatedAtIso: new Date().toISOString(),
+        };
+        const hasHistoryEntry = currentHistory.some((entry) => String(entry.code || "") === String(data.code || ""));
+        const nextHistory = hasHistoryEntry ? currentHistory : [...currentHistory, nextHistoryEntry];
+        return {
+          ...prev,
+          outgoingReferralCode: data.code,
+          outgoingReferralLink: data.url,
+          outgoingReferralStatus: data.status || prev.outgoingReferralStatus || "Active",
+          outgoingReferralEmailSent: data.emailSent || prev.outgoingReferralEmailSent,
+          outgoingReferralEmailError: data.emailWarning || "",
+          outgoingReferralHistory: nextHistory,
+          outgoingReferralLinkCount: nextHistory.length,
+        };
+      });
 
       setReferralMessage(data.emailWarning
         ? `Referral link ready, but email warning: ${data.emailWarning}`
         : data.emailSent
-          ? "Family referral link created and emailed to the customer."
+          ? forceNew
+            ? "Another one-time family referral link was created and emailed to the customer."
+            : "Family referral link created and emailed to the customer."
           : data.reused
             ? "Existing family referral link loaded. Copy or resend it as needed."
-            : "Family referral link created. Copy it or email it when ready.");
+            : forceNew
+              ? "Another one-time family referral link was created. Copy it or email it when ready."
+              : "Family referral link created. Copy it or email it when ready.");
     } catch (error) {
       setReferralError(error instanceof Error ? error.message : "Unable to create referral link.");
     } finally {
@@ -1253,6 +1277,7 @@ export default function AdminTable({
   const selectedCanGenerateReferral = Boolean(selectedIsFamilyReferralEligible && isCompletedRequest(selected));
   const selectedAvailableCustomerCredits = getAvailableCustomerCreditsForRequest(selected, customerCredits);
   const selectedAvailableCustomerCreditTotal = getAvailableCustomerCreditTotal(selectedAvailableCustomerCredits);
+  const selectedOutgoingReferralHistory = getOutgoingReferralHistory(selected);
   const anyActionBusy = checkoutBusy || commercialInvoiceBusy || commercialQuoteEmailBusy || familyInvoiceBusy || statusBusy || laundryFinalBusy || additionalPaymentBusy || commercialQuoteBusy || referralBusy;
 
   return (
@@ -1497,7 +1522,7 @@ export default function AdminTable({
                     <p className="text-xs font-black uppercase tracking-[0.2em] text-[#b98a2f]">Family referrals</p>
                     <h4 className="mt-1 text-xl font-black text-[#075c58]">Generate and track one-time family referral links</h4>
                     <p className="mt-2 text-sm leading-6 text-slate-700">
-                      Family referral links are only for completed eligible family-service customers. They are one-time use. Commercial Reset is intentionally excluded.
+                      Family referral links are only for completed eligible family-service customers. Each link is one-time use, and you can generate another one-time link for the same happy family when needed. Commercial Reset is intentionally excluded.
                     </p>
                   </div>
                   <StatusBadge status={getReferralStatusText(selected)} />
@@ -1508,7 +1533,7 @@ export default function AdminTable({
                     <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Outgoing share link for this customer</p>
                     <p className="mt-2 text-sm font-bold leading-6 text-slate-700">
                       {selected.outgoingReferralCode
-                        ? `Code: ${selected.outgoingReferralCode}`
+                        ? `Latest one-time code: ${selected.outgoingReferralCode}`
                         : selectedIsFamilyReferralEligible
                           ? selectedCanGenerateReferral
                             ? "Ready to generate after you choose this completed customer."
@@ -1522,6 +1547,11 @@ export default function AdminTable({
                         {selected.outgoingReferralEmailError && <p className="mt-2 text-xs font-bold text-amber-800">Email note: {selected.outgoingReferralEmailError}</p>}
                       </div>
                     )}
+                    {selectedOutgoingReferralHistory.length > 0 && (
+                      <div className="mt-3 rounded-2xl border border-[#eadfc8] bg-white px-3 py-2 text-xs font-bold leading-5 text-slate-600">
+                        {selectedOutgoingReferralHistory.length} one-time referral link{selectedOutgoingReferralHistory.length === 1 ? "" : "s"} generated for this family. The latest link is shown above; each link can be used by one referred family only.
+                      </div>
+                    )}
                     <div className="mt-4 flex flex-wrap gap-2">
                       <button
                         type="button"
@@ -1529,10 +1559,21 @@ export default function AdminTable({
                         onClick={() => createReferralLink(true)}
                         className={getAdminActionClass("primary")}
                       >
-                        {referralBusy ? <><ActionSpinner /> Working...</> : selected.outgoingReferralLink ? "Resend referral link email" : "Create + email referral link"}
+                        {referralBusy ? <><ActionSpinner /> Working...</> : selected.outgoingReferralLink ? "Resend latest link email" : "Create + email referral link"}
                       </button>
+                      {selected.outgoingReferralLink && selectedCanGenerateReferral && (
+                        <button
+                          type="button"
+                          disabled={referralBusy}
+                          onClick={() => createReferralLink(true, true)}
+                          className={getAdminActionClass("secondary")}
+                          title="Creates a brand-new one-time link for this same family to share with another family."
+                        >
+                          Create + email another one-time link
+                        </button>
+                      )}
                       {selected.outgoingReferralLink && (
-                        <button type="button" onClick={() => copyReferralLink(selected.outgoingReferralLink || "")} className={getAdminActionClass("secondary")}>Copy referral link</button>
+                        <button type="button" onClick={() => copyReferralLink(selected.outgoingReferralLink || "")} className={getAdminActionClass("secondary")}>Copy latest link</button>
                       )}
                       <button
                         type="button"

@@ -87,7 +87,7 @@ export default async function ReferralsPage({ searchParams }: ReferralsPageProps
               <p className="pill-label w-fit"><HeartHandshake size={15} /> Family Referrals</p>
               <h2 className="mt-4 text-3xl font-black text-nest-teal sm:text-4xl">Simple family-to-family rewards.</h2>
               <p className="mt-4 font-medium leading-7 text-nest-ink/72">
-                After your completed eligible family service, NestHelper may send you a one-time referral link to share with one family.
+                After your completed eligible family service, NestHelper may send you a one-time referral link to share with one family. Happy customers can receive another one-time link for another family when NestHelper approves it.
               </p>
 
               <div className="mt-6 grid gap-4 sm:grid-cols-2">
@@ -134,7 +134,7 @@ export default async function ReferralsPage({ searchParams }: ReferralsPageProps
           <InfoCard
             icon={<LockKeyhole className="h-6 w-6" />}
             title="One-time link"
-            text="Each referral link can only be claimed by one referred family request."
+            text="Each referral link can only be claimed by one referred family request. NestHelper can send another one-time link when approved."
           />
           <InfoCard
             icon={<Sparkles className="h-6 w-6" />}
