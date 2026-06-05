@@ -23,6 +23,14 @@ type Body = {
   hourlyRate?: unknown;
   mileageRate?: unknown;
   estimatedMiles?: unknown;
+  estimatedDurationMinutes?: unknown;
+  mileageFromRequestId?: string;
+  mileageFromLabel?: string;
+  mileageFromAddress?: string;
+  mileageToRequestId?: string;
+  mileageToLabel?: string;
+  mileageToAddress?: string;
+  mileageEstimateSource?: string;
   assignmentNotes?: string;
   approvedHours?: unknown;
   approvedMiles?: unknown;
@@ -89,7 +97,8 @@ export async function POST(request: Request) {
     const assignedHelperId = cleanText(body.assignedHelperId, 160);
     const payrollStatus = PAYROLL_STATUSES.has(cleanText(body.payrollStatus, 80)) ? cleanText(body.payrollStatus, 80) : assignedHelperId ? "Helper assigned" : "Not ready";
     const approvedHours = cleanNumber(body.approvedHours, 24);
-    const approvedMiles = cleanNumber(body.approvedMiles, 1000);
+    const estimatedMiles = cleanNumber(body.estimatedMiles, 1000);
+    const approvedMiles = cleanNumber(body.approvedMiles, 1000) || estimatedMiles;
     const mileageRate = cleanNumber(body.mileageRate, 10) || 0.725;
     const approvedExpenseReimbursement = cleanNumber(body.approvedExpenseReimbursement, 10000);
 
@@ -109,7 +118,16 @@ export async function POST(request: Request) {
       helperOpsExpectedHours: cleanNumber(body.expectedHours, 24),
       helperOpsHourlyRate: cleanNumber(body.hourlyRate, 500),
       helperOpsMileageRate: mileageRate,
-      helperOpsEstimatedMiles: cleanNumber(body.estimatedMiles, 1000),
+      helperOpsMileagePolicy: "Admin site-to-site estimate only",
+      helperOpsMileageFromRequestId: cleanText(body.mileageFromRequestId, 160),
+      helperOpsMileageFromLabel: cleanText(body.mileageFromLabel, 300),
+      helperOpsMileageFromAddress: cleanText(body.mileageFromAddress, 500),
+      helperOpsMileageToRequestId: cleanText(body.mileageToRequestId, 160),
+      helperOpsMileageToLabel: cleanText(body.mileageToLabel, 300),
+      helperOpsMileageToAddress: cleanText(body.mileageToAddress, 500),
+      helperOpsEstimatedMiles: estimatedMiles,
+      helperOpsEstimatedDurationMinutes: cleanNumber(body.estimatedDurationMinutes, 10000),
+      helperOpsMileageEstimateSource: cleanText(body.mileageEstimateSource, 120) || (estimatedMiles ? "Admin estimate" : "No reimbursable mileage"),
       helperOpsAssignmentNotes: cleanText(body.assignmentNotes, 1200),
       helperOpsApprovedHours: approvedHours,
       helperOpsApprovedMiles: approvedMiles,

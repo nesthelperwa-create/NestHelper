@@ -13,15 +13,16 @@ type HelperJob = {
   scheduledEndTime?: string;
   expectedHours?: number;
   estimatedMiles?: number;
+  mileagePolicy?: string;
+  mileageFromLabel?: string;
+  mileageToLabel?: string;
   assignmentNotes?: string;
   assignedHelperName?: string;
   submittedAt?: unknown;
   actualStartTime?: string;
   actualEndTime?: string;
   breakMinutes?: number;
-  reportedMiles?: number;
   reportedExpenses?: number;
-  mileagePurpose?: string;
   notes?: string;
 };
 
@@ -52,9 +53,7 @@ export default function HelperJobLogPage() {
     actualEndTime: "",
     breakMinutes: "0",
     reportedHours: "",
-    reportedMiles: "",
     reportedExpenses: "0",
-    mileagePurpose: "",
     notes: "",
   });
 
@@ -75,9 +74,7 @@ export default function HelperJobLogPage() {
           actualEndTime: nextJob.actualEndTime || nextJob.scheduledEndTime || "",
           breakMinutes: String(nextJob.breakMinutes ?? 0),
           reportedHours: nextJob.actualStartTime && nextJob.actualEndTime ? calculateHours(nextJob.actualStartTime, nextJob.actualEndTime, String(nextJob.breakMinutes ?? 0)) : "",
-          reportedMiles: nextJob.reportedMiles ? String(nextJob.reportedMiles) : "",
           reportedExpenses: nextJob.reportedExpenses ? String(nextJob.reportedExpenses) : "0",
-          mileagePurpose: nextJob.mileagePurpose || "",
           notes: nextJob.notes || "",
         });
       } catch (loadError) {
@@ -93,15 +90,6 @@ export default function HelperJobLogPage() {
   }, [token]);
 
   const calculatedHours = useMemo(() => calculateHours(form.actualStartTime, form.actualEndTime, form.breakMinutes), [form.actualStartTime, form.actualEndTime, form.breakMinutes]);
-  const mileageReviewText = useMemo(() => {
-    const estimated = toNumber(job?.estimatedMiles);
-    const reported = toNumber(form.reportedMiles);
-    if (!estimated || !reported) return "NestHelper will review mileage after submission.";
-    const variance = reported - estimated;
-    const percent = estimated ? (variance / estimated) * 100 : 0;
-    if (variance > 2 && percent > 20) return `Mileage is ${variance.toFixed(1)} miles over the admin estimate, so NestHelper will review it before reimbursement.`;
-    return "Mileage looks close to the admin estimate.";
-  }, [job?.estimatedMiles, form.reportedMiles]);
 
   function updateField(field: keyof typeof form, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -149,7 +137,7 @@ export default function HelperJobLogPage() {
         <div className="mx-auto max-w-xl rounded-[2rem] border border-[#eadfc8] bg-white p-6 text-center shadow-xl">
           <p className="text-sm font-bold uppercase tracking-[0.2em] text-[#b98a2f]">Submitted</p>
           <h1 className="mt-2 text-3xl font-bold text-[#075c58]">Thanks — your job log was sent.</h1>
-          <p className="mt-3 text-slate-600">NestHelper will review hours, mileage, and reimbursements before payroll.</p>
+          <p className="mt-3 text-slate-600">NestHelper will review hours and approved expenses before payroll. Mileage is handled by NestHelper using the admin site-to-site estimate.</p>
         </div>
       </main>
     );
@@ -160,8 +148,8 @@ export default function HelperJobLogPage() {
       <div className="mx-auto max-w-2xl space-y-5">
         <section className="rounded-[2rem] bg-gradient-to-br from-[#075c58] to-[#0b7b73] p-6 text-white shadow-xl">
           <p className="text-xs font-bold uppercase tracking-[0.25em] text-[#f1c96b]">NestHelper helper log</p>
-          <h1 className="mt-2 text-3xl font-bold">Submit hours and mileage</h1>
-          <p className="mt-3 text-sm text-white/85">Enter only actual work time, approved reimbursable mileage, and approved expenses. NestHelper reviews before payroll.</p>
+          <h1 className="mt-2 text-3xl font-bold">Submit job hours</h1>
+          <p className="mt-3 text-sm text-white/85">Enter actual work time, breaks, approved expenses, and job notes. NestHelper calculates reimbursable site-to-site mileage in admin before payroll.</p>
         </section>
 
         {job && (
@@ -174,7 +162,9 @@ export default function HelperJobLogPage() {
               <p><strong>Date/time:</strong> {job.scheduledDate || "—"} {job.scheduledStartTime ? `• ${job.scheduledStartTime}` : ""}{job.scheduledEndTime ? `–${job.scheduledEndTime}` : ""}</p>
               <p><strong>Address:</strong> {job.address || job.cityZip || "See admin instructions"}</p>
               <p><strong>Expected hours:</strong> {job.expectedHours ? job.expectedHours.toFixed(2) : "—"}</p>
-              <p><strong>Estimated reimbursable miles:</strong> {job.estimatedMiles ? job.estimatedMiles.toFixed(2) : "Admin will review"}</p>
+              <p><strong>Reimbursable mileage:</strong> {job.estimatedMiles ? `${job.estimatedMiles.toFixed(2)} miles estimated by NestHelper` : "None / admin will review"}</p>
+              {job.mileageFromLabel && job.mileageToLabel && <p><strong>Mileage route:</strong> {job.mileageFromLabel} → {job.mileageToLabel}</p>}
+              <p className="rounded-2xl bg-[#fbf6ea] p-3 text-xs leading-relaxed text-slate-600"><strong>Mileage policy:</strong> Normal home-to-first-job and last-job-to-home commuting is not reimbursable unless NestHelper approves an exception. NestHelper calculates approved site-to-site mileage in admin.</p>
               {job.assignmentNotes && <p><strong>Notes:</strong> {job.assignmentNotes}</p>}
             </div>
           </section>
@@ -199,22 +189,12 @@ export default function HelperJobLogPage() {
               <input inputMode="decimal" value={form.reportedHours || calculatedHours} onChange={(event) => updateField("reportedHours", event.target.value)} className="mt-1 w-full rounded-2xl border border-[#eadfc8] px-4 py-3 outline-none focus:border-[#075c58]" />
               <span className="mt-1 block text-xs text-slate-500">Auto-calculated from start/end unless you adjust it.</span>
             </label>
-            <label className="block">
-              <span className="text-sm font-bold text-slate-700">Reimbursable miles</span>
-              <input inputMode="decimal" value={form.reportedMiles} onChange={(event) => updateField("reportedMiles", event.target.value)} className="mt-1 w-full rounded-2xl border border-[#eadfc8] px-4 py-3 outline-none focus:border-[#075c58]" />
-              <span className="mt-1 block text-xs text-slate-500">Do not include normal home-to-first-job or last-job-to-home commuting unless NestHelper approved it.</span>
-            </label>
-            <label className="block">
+            <label className="block sm:col-span-2">
               <span className="text-sm font-bold text-slate-700">Approved expenses</span>
               <input inputMode="decimal" value={form.reportedExpenses} onChange={(event) => updateField("reportedExpenses", event.target.value)} className="mt-1 w-full rounded-2xl border border-[#eadfc8] px-4 py-3 outline-none focus:border-[#075c58]" />
-              <span className="mt-1 block text-xs text-slate-500">Parking, tolls, or pre-approved supplies only.</span>
+              <span className="mt-1 block text-xs text-slate-500">Parking, tolls, or pre-approved supplies only. Mileage is calculated separately by NestHelper.</span>
             </label>
           </div>
-
-          <label className="mt-4 block">
-            <span className="text-sm font-bold text-slate-700">Mileage purpose / route</span>
-            <input value={form.mileagePurpose} onChange={(event) => updateField("mileagePurpose", event.target.value)} placeholder="Example: Job to supply pickup, supply pickup to customer, customer to second job" className="mt-1 w-full rounded-2xl border border-[#eadfc8] px-4 py-3 outline-none focus:border-[#075c58]" />
-          </label>
 
           <label className="mt-4 block">
             <span className="text-sm font-bold text-slate-700">Job notes</span>
@@ -222,8 +202,8 @@ export default function HelperJobLogPage() {
           </label>
 
           <div className="mt-4 rounded-2xl bg-[#fbf6ea] p-4 text-sm text-slate-700">
-            <p className="font-bold text-[#075c58]">Mileage check</p>
-            <p className="mt-1">{mileageReviewText}</p>
+            <p className="font-bold text-[#075c58]">Mileage handled by NestHelper</p>
+            <p className="mt-1">You do not need to enter miles here. NestHelper pays approved reimbursable mileage from the admin site-to-site estimate, usually only when traveling between assigned job locations or other approved work stops.</p>
           </div>
 
           {error && <p className="mt-4 rounded-2xl bg-rose-50 p-3 text-sm text-rose-700">{error}</p>}

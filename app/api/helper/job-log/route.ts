@@ -46,14 +46,6 @@ function getServiceLabel(data: Record<string, unknown>) {
   return getString(data.selectedServiceTitle) || getString(data.packageType) || getString(data.serviceLabel) || getString(data.service) || "NestHelper service";
 }
 
-function getMileageVariance(estimated: number, reported: number) {
-  if (!estimated || !reported) return { varianceMiles: 0, variancePercent: 0, flag: "Not checked" };
-  const varianceMiles = reported - estimated;
-  const variancePercent = estimated ? (varianceMiles / estimated) * 100 : 0;
-  const flag = varianceMiles > 2 && variancePercent > 20 ? "Review" : "OK";
-  return { varianceMiles, variancePercent, flag };
-}
-
 export async function GET(request: Request) {
   try {
     const url = new URL(request.url);
@@ -75,16 +67,17 @@ export async function GET(request: Request) {
         scheduledStartTime: getString(data.helperOpsScheduledStartTime),
         scheduledEndTime: getString(data.helperOpsScheduledEndTime),
         expectedHours: toNumber(data.helperOpsExpectedHours),
-        estimatedMiles: toNumber(data.helperOpsEstimatedMiles),
+        estimatedMiles: toNumber(data.helperOpsApprovedMiles || data.helperOpsEstimatedMiles),
+        mileagePolicy: getString(data.helperOpsMileagePolicy) || "Admin site-to-site estimate only",
+        mileageFromLabel: getString(data.helperOpsMileageFromLabel),
+        mileageToLabel: getString(data.helperOpsMileageToLabel),
         assignmentNotes: getString(data.helperOpsAssignmentNotes),
         assignedHelperName: getString(data.assignedHelperName),
         submittedAt: data.helperWorkLogSubmittedAt || null,
         actualStartTime: getString(data.helperActualStartTime),
         actualEndTime: getString(data.helperActualEndTime),
         breakMinutes: toNumber(data.helperBreakMinutes),
-        reportedMiles: toNumber(data.helperReportedMiles),
         reportedExpenses: toNumber(data.helperReportedExpenses),
-        mileagePurpose: getString(data.helperMileagePurpose),
         notes: getString(data.helperWorkLogNotes),
       },
     });
@@ -103,13 +96,10 @@ export async function POST(request: Request) {
     const result = await findRequestByToken(token);
     if (!result) return NextResponse.json({ ok: false, error: "This helper entry link was not found or is no longer active." }, { status: 404 });
 
-    const data = result.data;
     const start = cleanTime(body.actualStartTime);
     const end = cleanTime(body.actualEndTime);
     const breakMinutes = cleanNumber(body.breakMinutes, 720);
-    const reportedMiles = cleanNumber(body.reportedMiles, 1000);
     const reportedExpenses = cleanNumber(body.reportedExpenses, 10000);
-    const estimatedMiles = toNumber(data.helperOpsEstimatedMiles);
 
     let reportedHours = cleanNumber(body.reportedHours, 24);
     if (!reportedHours && start && end) {
@@ -120,26 +110,24 @@ export async function POST(request: Request) {
       reportedHours = Math.max(0, minutes / 60);
     }
 
-    const variance = getMileageVariance(estimatedMiles, reportedMiles);
-
     await result.ref.update({
       helperActualStartTime: start,
       helperActualEndTime: end,
       helperBreakMinutes: breakMinutes,
       helperReportedHours: reportedHours,
-      helperReportedMiles: reportedMiles,
+      helperReportedMiles: FieldValue.delete(),
       helperReportedExpenses: reportedExpenses,
-      helperMileagePurpose: cleanText(body.mileagePurpose, 500),
+      helperMileagePurpose: FieldValue.delete(),
+      helperMileageVarianceMiles: FieldValue.delete(),
+      helperMileageVariancePercent: FieldValue.delete(),
+      helperMileageFlag: "Admin estimate only",
       helperWorkLogNotes: cleanText(body.notes, 2000),
-      helperMileageVarianceMiles: variance.varianceMiles,
-      helperMileageVariancePercent: variance.variancePercent,
-      helperMileageFlag: variance.flag,
       helperWorkLogSubmittedAt: FieldValue.serverTimestamp(),
       helperOpsPayrollStatus: "Submitted by helper",
       updatedAt: FieldValue.serverTimestamp(),
     });
 
-    return NextResponse.json({ ok: true, reportedHours, mileageFlag: variance.flag });
+    return NextResponse.json({ ok: true, reportedHours });
   } catch (error) {
     console.error("Unable to submit helper job log", error);
     return NextResponse.json({ ok: false, error: "Unable to submit helper job log." }, { status: 500 });
