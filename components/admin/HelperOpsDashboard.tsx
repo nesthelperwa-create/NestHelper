@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { firebaseAuth, firestoreDb } from "@/lib/firebaseClient";
 
 type AdminRecord = { id: string; [key: string]: any };
-type HelperRecord = { id: string; [key: string]: any };
+type HelperRecord = { id: string; sourceCollection?: "helperApplications" | "partnerApplications"; sourceDocId?: string; helperType?: "Individual" | "Business/Partner"; [key: string]: any };
 type SaveState = Record<string, "idle" | "saving" | "saved" | "error">;
 type EstimateState = Record<string, "idle" | "calculating" | "done" | "error">;
 
@@ -95,12 +95,23 @@ function getRequestDate(item: AdminRecord) {
 }
 
 function getHelperName(helper: HelperRecord) {
-  return getString(helper.fullName) || getString(helper.name) || getString(helper.businessName) || "Unnamed helper";
+  const business = getString(helper.businessName);
+  const person = getString(helper.fullName) || getString(helper.name) || getString(helper.ownerName);
+  if (business && person) return `${business} (${person})`;
+  return person || business || "Unnamed helper";
 }
 
 function getHelperServices(helper: HelperRecord) {
   const raw = helper.services || helper.bestFitServices || helper.serviceType || helper.preferredWork;
   return Array.isArray(raw) ? raw.filter(Boolean).join(", ") : getString(raw) || "—";
+}
+
+function getHelperStatus(helper: HelperRecord) {
+  return getString(helper.status || helper.applicationStatus || helper.onboardingStatus) || "New";
+}
+
+function getHelperRosterType(helper: HelperRecord) {
+  return getString(helper.helperType) || (helper.sourceCollection === "partnerApplications" ? "Business/Partner" : "Individual");
 }
 
 function getArrayValues(value: unknown) {
@@ -147,8 +158,8 @@ function helperMatchScore(item: AdminRecord, helper: HelperRecord) {
   }
 
   const requestCity = (getString(item.serviceCity) || getString(item.city)).toLowerCase();
-  const helperCity = getString(helper.city).toLowerCase();
-  const helperAreas = lowerBag([helper.serviceArea, helper.serviceAreaDetails, helper.travelRadius, helper.notes]);
+  const helperCity = (getString(helper.city) || getString(helper.businessCity)).toLowerCase();
+  const helperAreas = lowerBag([helper.serviceArea, helper.serviceAreas, helper.serviceAreaDetails, helper.travelRadius, helper.notes, helper.capacity]);
   if (requestCity && helperCity && requestCity === helperCity) {
     score += 3;
     reasons.push("same city");
@@ -179,7 +190,7 @@ function helperMatchScore(item: AdminRecord, helper: HelperRecord) {
 function helperOptionLabel(item: AdminRecord, helper: HelperRecord) {
   const match = helperMatchScore(item, helper);
   const reasonText = match.reasons.length ? ` • ${match.reasons.slice(0, 3).join(", ")}` : "";
-  return `${getHelperName(helper)} — match ${match.score}${reasonText} — ${getHelperServices(helper)}`;
+  return `${getHelperName(helper)} — ${getHelperRosterType(helper)} — ${getHelperStatus(helper)} — match ${match.score}${reasonText} — ${getHelperServices(helper)}`;
 }
 
 function sortedHelpersForRequest(item: AdminRecord, helperList: HelperRecord[]) {
@@ -196,8 +207,21 @@ function isActiveRequest(item: AdminRecord) {
 }
 
 function isApprovedHelper(item: HelperRecord) {
-  const status = getString(item.status).toLowerCase();
-  return status.includes("approved") || status.includes("backup");
+  const status = getHelperStatus(item).toLowerCase().replace(/[\s_-]+/g, " ").trim();
+  if (!status) return false;
+  if (["rejected", "declined", "inactive", "archived", "not approved", "on hold", "new", "reviewing", "needs documents", "need documents", "background check needed"].some((blocked) => status === blocked || status.includes(blocked))) {
+    return false;
+  }
+  return [
+    "approved",
+    "approved helper",
+    "approved partner",
+    "backup",
+    "backup list",
+    "backup partner",
+    "trial job approved",
+    "trial approved",
+  ].some((allowed) => status === allowed || status.includes(allowed));
 }
 
 function draftFromRecord(item: AdminRecord): HelperOpsDraft {
@@ -318,12 +342,32 @@ export default function HelperOpsDashboard() {
         return updated;
       });
     });
+    const helperCache: Record<string, HelperRecord[]> = { helperApplications: [], partnerApplications: [] };
+    const publishHelpers = () => setHelpers([...helperCache.helperApplications, ...helperCache.partnerApplications]);
     const unsubHelpers = onSnapshot(query(collection(firestoreDb, "helperApplications"), orderBy("createdAt", "desc")), (snap) => {
-      setHelpers(snap.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
+      helperCache.helperApplications = snap.docs.map((doc) => ({
+        id: `helperApplications:${doc.id}`,
+        sourceDocId: doc.id,
+        sourceCollection: "helperApplications",
+        helperType: "Individual",
+        ...doc.data(),
+      }));
+      publishHelpers();
+    });
+    const unsubPartners = onSnapshot(query(collection(firestoreDb, "partnerApplications"), orderBy("createdAt", "desc")), (snap) => {
+      helperCache.partnerApplications = snap.docs.map((doc) => ({
+        id: `partnerApplications:${doc.id}`,
+        sourceDocId: doc.id,
+        sourceCollection: "partnerApplications",
+        helperType: "Business/Partner",
+        ...doc.data(),
+      }));
+      publishHelpers();
     });
     return () => {
       unsubRequests();
       unsubHelpers();
+      unsubPartners();
     };
   }, []);
 
@@ -419,6 +463,9 @@ export default function HelperOpsDashboard() {
         assignedHelperName: helper ? getHelperName(helper) : getString(item.assignedHelperName),
         assignedHelperEmail: helper ? getString(helper.email) : getString(item.assignedHelperEmail),
         assignedHelperPhone: helper ? getString(helper.phone) : getString(item.assignedHelperPhone),
+        assignedHelperSource: helper ? getString(helper.sourceCollection) : getString(item.assignedHelperSource),
+        assignedHelperApplicationId: helper ? getString(helper.sourceDocId) : getString(item.assignedHelperApplicationId),
+        assignedHelperType: helper ? getHelperRosterType(helper) : getString(item.assignedHelperType),
         scheduledDate: draft.scheduledDate,
         scheduledStartTime: draft.scheduledStartTime,
         scheduledEndTime: draft.scheduledEndTime,
@@ -467,6 +514,7 @@ export default function HelperOpsDashboard() {
       return {
         Employee: getString(item.assignedHelperName),
         "Employee email": getString(item.assignedHelperEmail),
+        "Helper type": getString(item.assignedHelperType),
         "Work date": getString(item.helperOpsScheduledDate || item.scheduledDate || item.preferredDate),
         Customer: getName(item),
         Service: getServiceLabel(item),
@@ -530,7 +578,7 @@ export default function HelperOpsDashboard() {
         <p className="text-xs font-bold uppercase tracking-[0.25em] text-[#f1c96b]">Helper Operations</p>
         <h2 className="mt-2 text-3xl font-bold sm:text-4xl">Hours, site-to-site mileage, payroll prep</h2>
         <p className="mt-3 max-w-3xl text-sm text-white/85 sm:text-base">
-          Assign helpers, send a simple self-entry link, calculate estimated job-to-job mileage from saved request addresses, approve records, then export clean QuickBooks-friendly CSVs.
+          Assign only approved helpers/partners, send a simple self-entry link, calculate estimated job-to-job mileage from saved request addresses, approve records, then export clean QuickBooks-friendly CSVs.
         </p>
       </div>
 
@@ -576,6 +624,11 @@ export default function HelperOpsDashboard() {
         <p className="mt-1">Normal home-to-first-job and last-job-to-home commuting is excluded. Reimbursable mileage is based on admin-approved site-to-site business travel between customer jobs, supply pickups, errands, or other required work stops.</p>
       </div>
 
+      <div className="rounded-[1.5rem] border border-[#d7ebe7] bg-[#f5fbf9] p-4 text-sm leading-relaxed text-slate-700">
+        <p className="font-bold text-[#075c58]">Approved roster rule</p>
+        <p className="mt-1">Helper Ops only lists applications marked as Approved Helper, Approved Partner, Trial Job Approved, Backup List, or Backup Partner. New, reviewing, rejected, inactive, and archived applicants stay out of assignment dropdowns.</p>
+      </div>
+
       <div className="grid gap-3 rounded-[1.5rem] border border-[#eadfc8] bg-white p-4 shadow-sm md:grid-cols-[1fr_180px_220px]">
         <input
           value={queryText}
@@ -594,7 +647,7 @@ export default function HelperOpsDashboard() {
 
       {approvedHelpers.length === 0 && (
         <div className="rounded-[1.5rem] border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-          No approved helpers yet. Approve a helper application first, then return here to assign them to requests.
+          No approved helpers or partners yet. Mark an application as Approved Helper, Approved Partner, Trial Job Approved, Backup List, or Backup Partner first, then return here to assign them to requests.
         </div>
       )}
 
@@ -648,9 +701,12 @@ export default function HelperOpsDashboard() {
                   <span className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">Assigned helper</span>
                   <select value={draft.assignedHelperId} onChange={(event) => updateDraft(item.id, "assignedHelperId", event.target.value)} className="mt-1 w-full rounded-2xl border border-[#eadfc8] px-4 py-3 text-sm outline-none focus:border-[#075c58]">
                     <option value="">Unassigned</option>
+                    {draft.assignedHelperId && !helperMatches.some((helper) => helper.id === draft.assignedHelperId) && (
+                      <option value={draft.assignedHelperId}>{getString(item.assignedHelperName) || "Previously assigned helper"} — not in approved roster</option>
+                    )}
                     {helperMatches.map((helper) => <option key={helper.id} value={helper.id}>{helperOptionLabel(item, helper)}</option>)}
                   </select>
-                  <span className="mt-1 block text-xs text-slate-500">Best matches are sorted from helper application profile: services, city/service area, availability, and transportation.</span>
+                  <span className="mt-1 block text-xs text-slate-500">Only approved/back-up helpers and partners appear here. Best matches are sorted from application profile: services, city/service area, availability, and transportation.</span>
                 </label>
                 <label className="block">
                   <span className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">Work date</span>

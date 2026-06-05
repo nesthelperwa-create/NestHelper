@@ -16,6 +16,9 @@ type Body = {
   assignedHelperName?: string;
   assignedHelperEmail?: string;
   assignedHelperPhone?: string;
+  assignedHelperSource?: string;
+  assignedHelperApplicationId?: string;
+  assignedHelperType?: string;
   scheduledDate?: string;
   scheduledStartTime?: string;
   scheduledEndTime?: string;
@@ -112,6 +115,9 @@ export async function POST(request: Request) {
       assignedHelperName: cleanText(body.assignedHelperName, 160),
       assignedHelperEmail: cleanText(body.assignedHelperEmail, 200),
       assignedHelperPhone: cleanText(body.assignedHelperPhone, 80),
+      assignedHelperSource: cleanText(body.assignedHelperSource, 80),
+      assignedHelperApplicationId: cleanText(body.assignedHelperApplicationId, 160),
+      assignedHelperType: cleanText(body.assignedHelperType, 80),
       helperOpsScheduledDate: cleanDate(body.scheduledDate),
       helperOpsScheduledStartTime: cleanTime(body.scheduledStartTime),
       helperOpsScheduledEndTime: cleanTime(body.scheduledEndTime),

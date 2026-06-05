@@ -11,13 +11,27 @@ export default function AdminHelpersPage() {
         title="Helper Applications"
         columns={[
           { key: "fullName", label: "Name" },
+          { key: "status", label: "Roster Status" },
           { key: "phone", label: "Phone" },
           { key: "email", label: "Email" },
-          { key: "services", label: "Services" },
+          { key: "city", label: "City" },
           { key: "availability", label: "Availability" },
-          { key: "applicationDocumentCount", label: "Docs" },
+          { key: "transportation", label: "Transport" },
+          { key: "services", label: "Services" },
         ]}
-        statuses={["New", "Reviewing", "Needs Documents", "Phone Screen", "References", "Background Check", "Approved", "Backup List", "Rejected", "Archived", "On Hold"]}
+        statuses={[
+          "New",
+          "Reviewing",
+          "Phone Screen",
+          "Needs Documents",
+          "Background Check Needed",
+          "Trial Job Approved",
+          "Approved Helper",
+          "Backup List",
+          "Inactive",
+          "Rejected",
+          "Archived",
+        ]}
       />
     </AdminShell>
   );

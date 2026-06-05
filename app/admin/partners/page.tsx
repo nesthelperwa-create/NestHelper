@@ -8,16 +8,28 @@ export default function AdminPartnersPage() {
     <AdminShell>
       <AdminTable
         collectionName="partnerApplications"
-        title="Partner / Contractor Applications"
+        title="Partner / Business Applications"
         columns={[
           { key: "businessName", label: "Business" },
+          { key: "status", label: "Roster Status" },
           { key: "ownerName", label: "Contact" },
           { key: "phone", label: "Phone" },
+          { key: "email", label: "Email" },
           { key: "serviceType", label: "Services" },
-          { key: "insuranceStatus", label: "Insurance" },
-          { key: "applicationDocumentCount", label: "Docs" },
+          { key: "serviceArea", label: "Service Area" },
+          { key: "insuranceInfo", label: "Insurance" },
         ]}
-        statuses={["New", "Reviewing", "Needs Documents", "Phone Screen", "References", "Background Check", "Approved", "Approved Partner", "Backup List", "Rejected", "Archived", "On Hold"]}
+        statuses={[
+          "New",
+          "Reviewing",
+          "Needs Documents",
+          "Trial Job Approved",
+          "Approved Partner",
+          "Backup Partner",
+          "Inactive",
+          "Rejected",
+          "Archived",
+        ]}
       />
     </AdminShell>
   );
