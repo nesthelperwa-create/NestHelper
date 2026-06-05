@@ -18,8 +18,12 @@ type HelperOpsDraft = {
   expectedHours: string;
   helperHourlyRate: string;
   mileageRate: string;
+  mileageFromMode: string;
   mileageFromRequestId: string;
+  customMileageFromAddress: string;
+  mileageToMode: string;
   mileageToRequestId: string;
+  customMileageToAddress: string;
   estimatedMiles: string;
   estimatedDurationMinutes: string;
   mileageEstimateSource: string;
@@ -92,6 +96,27 @@ function getCityZip(item: AdminRecord) {
 
 function getRequestDate(item: AdminRecord) {
   return getString(item.helperOpsScheduledDate || item.scheduledDate || item.preferredDate);
+}
+
+function getMileageAddressFromDraft(draft: HelperOpsDraft, item: AdminRecord, requests: AdminRecord[], side: "from" | "to") {
+  const mode = side === "from" ? draft.mileageFromMode : draft.mileageToMode;
+  if (mode === "custom") {
+    return side === "from" ? getString(draft.customMileageFromAddress) : getString(draft.customMileageToAddress);
+  }
+  const requestId = side === "from" ? draft.mileageFromRequestId : draft.mileageToRequestId || item.id;
+  const request = requests.find((entry) => entry.id === requestId) || (side === "to" ? item : undefined);
+  return request ? getAddress(request) : "";
+}
+
+function getMileageLabelFromDraft(draft: HelperOpsDraft, item: AdminRecord, requests: AdminRecord[], side: "from" | "to") {
+  const mode = side === "from" ? draft.mileageFromMode : draft.mileageToMode;
+  if (mode === "custom") {
+    const address = side === "from" ? getString(draft.customMileageFromAddress) : getString(draft.customMileageToAddress);
+    return address ? `Custom address - ${address}` : "Custom address";
+  }
+  const requestId = side === "from" ? draft.mileageFromRequestId : draft.mileageToRequestId || item.id;
+  const request = requests.find((entry) => entry.id === requestId) || (side === "to" ? item : undefined);
+  return request ? requestOptionLabel(request) : "";
 }
 
 function getHelperName(helper: HelperRecord) {
@@ -226,6 +251,10 @@ function isApprovedHelper(item: HelperRecord) {
 
 function draftFromRecord(item: AdminRecord): HelperOpsDraft {
   const estimatedMiles = String(item.helperOpsEstimatedMiles ?? "");
+  const savedFromRequestId = getString(item.helperOpsMileageFromRequestId);
+  const savedToRequestId = getString(item.helperOpsMileageToRequestId);
+  const savedFromAddress = getString(item.helperOpsMileageFromAddress);
+  const savedToAddress = getString(item.helperOpsMileageToAddress);
   return {
     assignedHelperId: getString(item.assignedHelperId),
     scheduledDate: getRequestDate(item),
@@ -234,8 +263,12 @@ function draftFromRecord(item: AdminRecord): HelperOpsDraft {
     expectedHours: String(item.helperOpsExpectedHours ?? ""),
     helperHourlyRate: String(item.helperOpsHourlyRate ?? ""),
     mileageRate: String(item.helperOpsMileageRate ?? DEFAULT_MILEAGE_RATE),
-    mileageFromRequestId: getString(item.helperOpsMileageFromRequestId),
-    mileageToRequestId: getString(item.helperOpsMileageToRequestId || item.id),
+    mileageFromMode: !savedFromRequestId && savedFromAddress ? "custom" : "request",
+    mileageFromRequestId: savedFromRequestId,
+    customMileageFromAddress: !savedFromRequestId ? savedFromAddress : "",
+    mileageToMode: !savedToRequestId && savedToAddress ? "custom" : "request",
+    mileageToRequestId: savedToRequestId || item.id,
+    customMileageToAddress: !savedToRequestId ? savedToAddress : "",
     estimatedMiles,
     estimatedDurationMinutes: String(item.helperOpsEstimatedDurationMinutes ?? ""),
     mileageEstimateSource: getString(item.helperOpsMileageEstimateSource) || "Admin estimate",
@@ -401,13 +434,11 @@ export default function HelperOpsDashboard() {
 
   async function calculateEstimatedMiles(item: AdminRecord) {
     const draft = drafts[item.id] || draftFromRecord(item);
-    const origin = getRequest(draft.mileageFromRequestId);
-    const destination = getRequest(draft.mileageToRequestId || item.id) || item;
-    const originAddress = origin ? getAddress(origin) : "";
-    const destinationAddress = getAddress(destination);
+    const originAddress = getMileageAddressFromDraft(draft, item, requests, "from");
+    const destinationAddress = getMileageAddressFromDraft(draft, item, requests, "to");
 
     if (!originAddress || !destinationAddress) {
-      alert("Choose a from-request and a to-request with saved addresses first.");
+      alert("Choose a saved request/site or enter a custom address for both From and To before calculating mileage.");
       return;
     }
 
@@ -446,8 +477,10 @@ export default function HelperOpsDashboard() {
   async function saveHelperOps(item: AdminRecord, options: { createHelperLink?: boolean; approveForPayroll?: boolean } = {}) {
     const draft = drafts[item.id] || draftFromRecord(item);
     const helper = approvedHelpers.find((entry) => entry.id === draft.assignedHelperId);
-    const mileageFromRequest = getRequest(draft.mileageFromRequestId);
-    const mileageToRequest = getRequest(draft.mileageToRequestId || item.id) || item;
+    const mileageFromRequest = draft.mileageFromMode === "request" ? getRequest(draft.mileageFromRequestId) : undefined;
+    const mileageToRequest = draft.mileageToMode === "request" ? getRequest(draft.mileageToRequestId || item.id) || item : undefined;
+    const mileageFromAddress = getMileageAddressFromDraft(draft, item, requests, "from");
+    const mileageToAddress = getMileageAddressFromDraft(draft, item, requests, "to");
     const estimatedMiles = draft.estimatedMiles;
     const approvedMiles = draft.approvedMiles || estimatedMiles;
 
@@ -472,12 +505,12 @@ export default function HelperOpsDashboard() {
         expectedHours: draft.expectedHours,
         hourlyRate: draft.helperHourlyRate,
         mileageRate: draft.mileageRate,
-        mileageFromRequestId: draft.mileageFromRequestId,
-        mileageFromLabel: mileageFromRequest ? requestOptionLabel(mileageFromRequest) : "",
-        mileageFromAddress: mileageFromRequest ? getAddress(mileageFromRequest) : "",
-        mileageToRequestId: draft.mileageToRequestId || item.id,
-        mileageToLabel: requestOptionLabel(mileageToRequest),
-        mileageToAddress: getAddress(mileageToRequest),
+        mileageFromRequestId: draft.mileageFromMode === "request" ? draft.mileageFromRequestId : "",
+        mileageFromLabel: getMileageLabelFromDraft(draft, item, requests, "from"),
+        mileageFromAddress,
+        mileageToRequestId: draft.mileageToMode === "request" ? draft.mileageToRequestId || item.id : "",
+        mileageToLabel: getMileageLabelFromDraft(draft, item, requests, "to"),
+        mileageToAddress,
         estimatedMiles,
         estimatedDurationMinutes: draft.estimatedDurationMinutes,
         mileageEstimateSource: draft.mileageEstimateSource,
@@ -659,9 +692,11 @@ export default function HelperOpsDashboard() {
           const cost = payrollCost(item);
           const helperEntryUrl = getString(item.helperOpsEntryUrl);
           const reportedAt = item.helperWorkLogSubmittedAt;
-          const fromRequest = getRequest(draft.mileageFromRequestId);
-          const toRequest = getRequest(draft.mileageToRequestId || item.id) || item;
-          const routeMapsUrl = googleMapsDirectionsUrl(fromRequest ? getAddress(fromRequest) : "", getAddress(toRequest));
+          const fromRequest = draft.mileageFromMode === "request" ? getRequest(draft.mileageFromRequestId) : undefined;
+          const toRequest = draft.mileageToMode === "request" ? getRequest(draft.mileageToRequestId || item.id) || item : undefined;
+          const routeOriginAddress = getMileageAddressFromDraft(draft, item, requests, "from");
+          const routeDestinationAddress = getMileageAddressFromDraft(draft, item, requests, "to");
+          const routeMapsUrl = googleMapsDirectionsUrl(routeOriginAddress, routeDestinationAddress);
           const helperMatches = sortedHelpersForRequest(item, approvedHelpers);
           const suggestions = requests
             .filter((candidate) => candidate.id !== item.id && isActiveRequest(candidate) && getAddress(candidate) && locationScore(item, candidate) > 0)
@@ -729,8 +764,14 @@ export default function HelperOpsDashboard() {
                         <p className="font-bold text-[#075c58]">{requestOptionLabel(candidate)}</p>
                         <p className="mt-1 text-xs text-slate-500">Match: {getString(candidate.serviceZip || candidate.zip) === getString(item.serviceZip || item.zip) ? "same ZIP" : getString(candidate.serviceCity || candidate.city).toLowerCase() === getString(item.serviceCity || item.city).toLowerCase() ? "same city" : "same date/helper area"}</p>
                         <div className="mt-2 flex flex-wrap gap-2">
-                          <button type="button" onClick={() => updateDraft(item.id, "mileageFromRequestId", candidate.id)} className="rounded-full border border-[#075c58]/25 px-3 py-2 text-xs font-bold text-[#075c58]">Use as mileage from</button>
-                          <button type="button" onClick={() => updateDraft(item.id, "mileageToRequestId", candidate.id)} className="rounded-full border border-[#075c58]/25 px-3 py-2 text-xs font-bold text-[#075c58]">Use as mileage to</button>
+                          <button type="button" onClick={() => {
+                            updateDraft(item.id, "mileageFromMode", "request");
+                            updateDraft(item.id, "mileageFromRequestId", candidate.id);
+                          }} className="rounded-full border border-[#075c58]/25 px-3 py-2 text-xs font-bold text-[#075c58]">Use as mileage from</button>
+                          <button type="button" onClick={() => {
+                            updateDraft(item.id, "mileageToMode", "request");
+                            updateDraft(item.id, "mileageToRequestId", candidate.id);
+                          }} className="rounded-full border border-[#075c58]/25 px-3 py-2 text-xs font-bold text-[#075c58]">Use as mileage to</button>
                         </div>
                       </div>
                     ))}
@@ -760,22 +801,58 @@ export default function HelperOpsDashboard() {
                 </div>
 
                 <div className="mt-4 rounded-[1.25rem] bg-white p-4">
-                  <p className="font-bold text-[#075c58]">Mileage estimate from saved request addresses</p>
-                  <p className="mt-1 text-xs leading-relaxed text-slate-500">Use this when a helper goes from one assigned NestHelper job/site to another. Do not include normal commuting.</p>
+                  <p className="font-bold text-[#075c58]">Mileage estimate</p>
+                  <p className="mt-1 text-xs leading-relaxed text-slate-500">Use saved request addresses when possible. Use custom addresses for supply stops, meeting points, or one-off manual mileage checks. Do not include normal commuting.</p>
                   <div className="mt-3 grid gap-3 lg:grid-cols-2">
-                    <label className="block">
-                      <span className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">From request/site</span>
-                      <select value={draft.mileageFromRequestId} onChange={(event) => updateDraft(item.id, "mileageFromRequestId", event.target.value)} className="mt-1 w-full rounded-2xl border border-[#eadfc8] px-4 py-3 text-sm outline-none focus:border-[#075c58]">
-                        <option value="">No reimbursable mileage / commute only</option>
-                        {requestChoices.map((choice) => <option key={choice.id} value={choice.id}>{requestOptionLabel(choice)}</option>)}
-                      </select>
-                    </label>
-                    <label className="block">
-                      <span className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">To request/site</span>
-                      <select value={draft.mileageToRequestId || item.id} onChange={(event) => updateDraft(item.id, "mileageToRequestId", event.target.value)} className="mt-1 w-full rounded-2xl border border-[#eadfc8] px-4 py-3 text-sm outline-none focus:border-[#075c58]">
-                        {requestChoices.map((choice) => <option key={choice.id} value={choice.id}>{requestOptionLabel(choice)}</option>)}
-                      </select>
-                    </label>
+                    <div className="rounded-2xl border border-[#eadfc8] bg-[#fffdf8] p-3">
+                      <div className="grid gap-2 sm:grid-cols-[150px_1fr]">
+                        <label className="block">
+                          <span className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">From source</span>
+                          <select value={draft.mileageFromMode} onChange={(event) => updateDraft(item.id, "mileageFromMode", event.target.value)} className="mt-1 w-full rounded-2xl border border-[#eadfc8] px-3 py-3 text-sm outline-none focus:border-[#075c58]">
+                            <option value="request">Saved request/site</option>
+                            <option value="custom">Custom address</option>
+                          </select>
+                        </label>
+                        {draft.mileageFromMode === "custom" ? (
+                          <label className="block">
+                            <span className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">Custom from address</span>
+                            <input value={draft.customMileageFromAddress} onChange={(event) => updateDraft(item.id, "customMileageFromAddress", event.target.value)} placeholder="Street, city, state, ZIP" className="mt-1 w-full rounded-2xl border border-[#eadfc8] px-4 py-3 text-sm outline-none focus:border-[#075c58]" />
+                          </label>
+                        ) : (
+                          <label className="block">
+                            <span className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">From request/site</span>
+                            <select value={draft.mileageFromRequestId} onChange={(event) => updateDraft(item.id, "mileageFromRequestId", event.target.value)} className="mt-1 w-full rounded-2xl border border-[#eadfc8] px-4 py-3 text-sm outline-none focus:border-[#075c58]">
+                              <option value="">No reimbursable mileage / commute only</option>
+                              {requestChoices.map((choice) => <option key={choice.id} value={choice.id}>{requestOptionLabel(choice)}</option>)}
+                            </select>
+                          </label>
+                        )}
+                      </div>
+                    </div>
+                    <div className="rounded-2xl border border-[#eadfc8] bg-[#fffdf8] p-3">
+                      <div className="grid gap-2 sm:grid-cols-[150px_1fr]">
+                        <label className="block">
+                          <span className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">To source</span>
+                          <select value={draft.mileageToMode} onChange={(event) => updateDraft(item.id, "mileageToMode", event.target.value)} className="mt-1 w-full rounded-2xl border border-[#eadfc8] px-3 py-3 text-sm outline-none focus:border-[#075c58]">
+                            <option value="request">Saved request/site</option>
+                            <option value="custom">Custom address</option>
+                          </select>
+                        </label>
+                        {draft.mileageToMode === "custom" ? (
+                          <label className="block">
+                            <span className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">Custom to address</span>
+                            <input value={draft.customMileageToAddress} onChange={(event) => updateDraft(item.id, "customMileageToAddress", event.target.value)} placeholder="Street, city, state, ZIP" className="mt-1 w-full rounded-2xl border border-[#eadfc8] px-4 py-3 text-sm outline-none focus:border-[#075c58]" />
+                          </label>
+                        ) : (
+                          <label className="block">
+                            <span className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">To request/site</span>
+                            <select value={draft.mileageToRequestId || item.id} onChange={(event) => updateDraft(item.id, "mileageToRequestId", event.target.value)} className="mt-1 w-full rounded-2xl border border-[#eadfc8] px-4 py-3 text-sm outline-none focus:border-[#075c58]">
+                              {requestChoices.map((choice) => <option key={choice.id} value={choice.id}>{requestOptionLabel(choice)}</option>)}
+                            </select>
+                          </label>
+                        )}
+                      </div>
+                    </div>
                   </div>
                   <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                     <label className="block">
@@ -804,7 +881,10 @@ export default function HelperOpsDashboard() {
                       {estimate === "calculating" ? "Calculating..." : estimate === "done" ? "Calculated" : "Calculate site-to-site miles"}
                     </button>
                     <button type="button" onClick={() => {
+                      updateDraft(item.id, "mileageFromMode", "request");
                       updateDraft(item.id, "mileageFromRequestId", "");
+                      updateDraft(item.id, "customMileageFromAddress", "");
+                      updateDraft(item.id, "customMileageToAddress", "");
                       updateDraft(item.id, "estimatedMiles", "0");
                       updateDraft(item.id, "approvedMiles", "0");
                       updateDraft(item.id, "mileageEstimateSource", "No reimbursable mileage");
