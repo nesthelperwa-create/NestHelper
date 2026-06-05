@@ -8,6 +8,7 @@ import { firestoreDb } from "@/lib/firebaseClient";
 const cards = [
   { collection: "serviceRequests", label: "New Service Requests", href: "/admin/requests" },
   { collection: "helperApplications", label: "New Helper Applications", href: "/admin/helpers" },
+  { collection: "serviceRequests", label: "Helper Ops Review", href: "/admin/helper-ops", status: "Submitted by helper" },
   { collection: "partnerApplications", label: "New Partner Applications", href: "/admin/partners" },
   { collection: "contactMessages", label: "New Contact Messages", href: "/admin/contact" },
 ];
@@ -17,7 +18,7 @@ export default function AdminOverviewPage() {
 
   useEffect(() => {
     const unsubs = cards.map((card) =>
-      onSnapshot(query(collection(firestoreDb, card.collection), where("status", "==", "New")), (snap) => {
+      onSnapshot(query(collection(firestoreDb, card.collection), where(card.status ? "helperOpsPayrollStatus" : "status", "==", card.status || "New")), (snap) => {
         setCounts((prev) => ({ ...prev, [card.collection]: snap.size }));
       })
     );
