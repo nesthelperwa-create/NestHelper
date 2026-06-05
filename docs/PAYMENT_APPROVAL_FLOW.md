@@ -2,9 +2,20 @@
 
 ## Goal
 
-Keep NestHelper as a concierge beta instead of an instant-booking site.
+Keep NestHelper as a request-first service instead of an instant-booking site.
 
 Customers submit a request first. Admin reviews it. Admin sends payment only after the job looks safe, serviceable, and available.
+
+## Current helper-based launch prices
+
+```text
+2-Hour Parent Reset: $129
+3-Hour Family Reset: $199
+4-Hour Helper Block: $279
+Errand Helper: $119
+Laundry Rescue: $59 minimum + $2.99/lb
+Extra approved time in the family builder: $35/half-hour or $70/hour
+```
 
 ## Admin steps
 
@@ -20,7 +31,7 @@ Customers submit a request first. Admin reviews it. Admin sends payment only aft
    - laundry or errand-specific notes
 4. In the Approval + Payment section, choose:
    - `Standard price`
-   - `Founding / beta price`
+   - `Internal discount price` only if you intentionally approved a discount
 5. Click:
    - `Create + email checkout link`, or
    - `Create link only`
@@ -89,13 +100,12 @@ Final taxable balance = final laundry subtotal before tax - pre-tax deposit cred
 10. If the customer chose invoice-before-delivery, admin sends the final Stripe invoice. Laundry is held until the final invoice is fully paid.
 11. When the final invoice is paid, the webhook marks the request as `Fully Paid` and `Final Balance Paid`.
 
-Use standard Laundry Rescue values unless you intentionally honor a beta/founding rate:
+Use standard Laundry Rescue values:
 
 ```text
 Standard rate: $2.99/lb
 Standard deposit/minimum credit before tax: $59
-Founding/Beta rate: $2.49/lb
-Founding/Beta deposit/minimum credit before tax: $49
+Internal discount mode now uses the same Laundry Rescue deposit/rate unless you manually enter a custom amount.
 ```
 
 

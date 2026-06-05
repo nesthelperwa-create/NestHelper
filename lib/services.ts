@@ -10,8 +10,6 @@ export type Service = {
   travelInfo?: string;
   image: string;
   stripeStandardEnv?: string;
-  foundingPrice?: string;
-  stripeFoundingEnv?: string;
   note?: string;
 };
 
@@ -33,9 +31,7 @@ export const services: Service[] = [
     serviceTime: "2 hours of in-home help",
     travelInfo: "Core Eastside service area",
     image: "/assets/services/service-parent-reset.png",
-    stripeStandardEnv: "STRIPE_PRICE_PARENT_RESET_STANDARD",
-    foundingPrice: "$99",
-    stripeFoundingEnv: "STRIPE_PRICE_PARENT_RESET_FOUNDING"
+    stripeStandardEnv: "STRIPE_PRICE_PARENT_RESET_STANDARD"
   },
   {
     id: "family-reset-3hr",
@@ -49,14 +45,12 @@ export const services: Service[] = [
       "Light household support",
       "Priority checklist help"
     ],
-    standardPrice: "$179",
+    standardPrice: "$199",
     priceNote: "Flat 3-hour visit",
     serviceTime: "3 hours of in-home help",
     travelInfo: "Core Eastside service area",
     image: "/assets/services/service-family-reset.png",
-    stripeStandardEnv: "STRIPE_PRICE_FAMILY_RESET_STANDARD",
-    foundingPrice: "$149",
-    stripeFoundingEnv: "STRIPE_PRICE_FAMILY_RESET_FOUNDING"
+    stripeStandardEnv: "STRIPE_PRICE_FAMILY_RESET_STANDARD"
   },
   {
     id: "helper-block-4hr",
@@ -70,14 +64,12 @@ export const services: Service[] = [
       "Approved errands or pickup help",
       "Custom checklist for the visit"
     ],
-    standardPrice: "$239",
+    standardPrice: "$279",
     priceNote: "Flat 4-hour visit",
     serviceTime: "4 hours of helper time",
     travelInfo: "Core Eastside service area",
     image: "/assets/services/service-helper-block.png",
-    stripeStandardEnv: "STRIPE_PRICE_HELPER_BLOCK_STANDARD",
-    foundingPrice: "$199",
-    stripeFoundingEnv: "STRIPE_PRICE_HELPER_BLOCK_FOUNDING"
+    stripeStandardEnv: "STRIPE_PRICE_HELPER_BLOCK_STANDARD"
   },
   {
     id: "errand-helper",
@@ -91,14 +83,12 @@ export const services: Service[] = [
       "Extra distance or complex stops quoted before checkout",
       "No alcohol, weapons, controlled substances, or unsafe requests"
     ],
-    standardPrice: "$109",
+    standardPrice: "$119",
     priceNote: "Up to 2 hours + 15 miles",
     serviceTime: "Up to 2 hours",
     travelInfo: "Up to 15 driving miles included",
     image: "/assets/services/service-errand-helper.png",
     stripeStandardEnv: "STRIPE_PRICE_ERRAND_STANDARD",
-    foundingPrice: "$89",
-    stripeFoundingEnv: "STRIPE_PRICE_ERRAND_FOUNDING",
     note: "Best for nearby errands in and around Woodinville, Bothell, Kirkland, Redmond, and nearby Eastside communities. Longer routes can be reviewed before checkout."
   },
   {
@@ -119,8 +109,6 @@ export const services: Service[] = [
     travelInfo: "Dry weight confirmed at pickup",
     image: "/assets/services/service-laundry-rescue.png",
     stripeStandardEnv: "STRIPE_PRICE_LAUNDRY_DEPOSIT_STANDARD",
-    foundingPrice: "$49 minimum + $2.49/lb",
-    stripeFoundingEnv: "STRIPE_PRICE_LAUNDRY_DEPOSIT_FOUNDING",
     note: "Laundry is billed by dry weight. The non-refundable deposit is credited before tax toward the final total, and any remaining balance is handled by the checkout option selected: auto-charge after review or invoice before delivery."
   }
 ];

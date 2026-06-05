@@ -2,7 +2,7 @@
 
 ## Recommended launch flow
 
-NestHelper should stay request-first during beta:
+NestHelper should stay request-first during launch:
 
 1. Customer submits a request.
 2. NestHelper reviews service area, availability, safety, scope, pets, access, promo code, and price.
@@ -26,13 +26,13 @@ The site includes an admin-only payment flow:
 
 - `/api/admin/create-payment-link` creates a Stripe Checkout Session for a reviewed request.
 - The admin dashboard shows payment actions on `/admin/requests`.
-- Admin can choose Standard price or Founding/Beta price.
+- Admin can choose Standard price, an internal discount price, or a reviewed custom amount. Public service cards show standard helper-based launch pricing only.
 - Admin can create and email the checkout link, or create the link only and copy it manually.
 - The request status changes to `Checkout Sent`, or `Deposit Checkout Sent` for Laundry Rescue.
 - `/api/stripe/webhook` can mark the request `Paid` after successful checkout when the Stripe webhook is configured.
 - Laundry deposit checkout marks the request `Deposit Paid - Final Pending`, not fully paid.
 
-Public checkout remains disabled unless `ENABLE_PUBLIC_CHECKOUT=true`. Keep it disabled for the concierge beta.
+Public checkout remains disabled unless `ENABLE_PUBLIC_CHECKOUT=true`. Keep it disabled for the request-first launch.
 
 ## Stripe Tax
 
@@ -44,7 +44,7 @@ Use this display language:
 
 ## Products/prices to create
 
-Create standard and Founding Family/Beta prices for:
+Create or update standard helper-based prices for:
 
 - 2-Hour Parent Reset
 - 3-Hour Family Reset
@@ -53,19 +53,29 @@ Create standard and Founding Family/Beta prices for:
 
 Laundry Rescue deposit/minimum now uses dynamic Stripe `price_data` so it can stay tax-exclusive and support custom deposit amounts. You no longer need separate Laundry Rescue Deposit price IDs unless you want to keep them for your own Stripe reporting.
 
-Recommended env vars:
+Updated public standard pricing:
+
+```text
+2-Hour Parent Reset: $129
+3-Hour Family Reset: $199
+4-Hour Helper Block: $279
+Errand Helper: $119
+Laundry Rescue: $59 minimum + $2.99/lb
+```
+
+Recommended env vars for the updated helper-based pricing:
 
 ```env
 STRIPE_SECRET_KEY=sk_test_or_live_key_here
 STRIPE_WEBHOOK_SECRET=whsec_from_stripe_webhook_here
-STRIPE_PRICE_PARENT_RESET_STANDARD=price_...
-STRIPE_PRICE_PARENT_RESET_FOUNDING=price_...
-STRIPE_PRICE_FAMILY_RESET_STANDARD=price_...
-STRIPE_PRICE_FAMILY_RESET_FOUNDING=price_...
-STRIPE_PRICE_HELPER_BLOCK_STANDARD=price_...
-STRIPE_PRICE_HELPER_BLOCK_FOUNDING=price_...
-STRIPE_PRICE_ERRAND_STANDARD=price_...
-STRIPE_PRICE_ERRAND_FOUNDING=price_...
+STRIPE_PRICE_PARENT_RESET_STANDARD=price_... # $129
+STRIPE_PRICE_PARENT_RESET_FOUNDING=price_... # optional internal discount, suggested $119
+STRIPE_PRICE_FAMILY_RESET_STANDARD=price_... # $199
+STRIPE_PRICE_FAMILY_RESET_FOUNDING=price_... # optional internal discount, suggested $179
+STRIPE_PRICE_HELPER_BLOCK_STANDARD=price_... # $279
+STRIPE_PRICE_HELPER_BLOCK_FOUNDING=price_... # optional internal discount, suggested $249
+STRIPE_PRICE_ERRAND_STANDARD=price_... # $119
+STRIPE_PRICE_ERRAND_FOUNDING=price_... # optional internal discount, suggested $109
 ENABLE_PUBLIC_CHECKOUT=false
 ENABLE_STRIPE_AUTOMATIC_TAX=true
 ```
@@ -103,9 +113,9 @@ STRIPE_WEBHOOK_SECRET=whsec_...
 
 After the webhook is connected, successful Stripe checkout should update the matching Firestore `serviceRequests` document to `Paid`.
 
-## Promo code
+## Promo / internal discount code
 
-Use `FOUNDINGFAMILY` or a similar code during beta. Because discounts differ by service, the cleanest setup is separate Founding/Beta prices instead of one universal coupon.
+Use promo/internal discount prices sparingly. Because discounts differ by service, the cleanest setup is separate optional internal discount Stripe prices instead of one universal coupon. Do not advertise the old low beta pricing on the public site when using helpers from the start.
 
 ## Important notes
 

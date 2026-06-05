@@ -9,7 +9,7 @@ import FamilyPaymentBreakdownBuilder from "./FamilyPaymentBreakdownBuilder";
 
 type AdminDoc = { id: string; status?: string; createdAt?: unknown; checkoutUrl?: string; promoCode?: string; [key: string]: any };
 type CustomerCredit = { id: string; status?: string; amount?: number; remainingAmount?: number; customerEmail?: string; customerEmailKey?: string; creditCode?: string; [key: string]: any };
-type CheckoutMode = "standard" | "founding" | "custom";
+type CheckoutMode = "standard" | "custom";
 type ApplicationDocument = { id?: string; label?: string; originalName?: string; contentType?: string; size?: number; storagePath?: string; uploadedAtIso?: string };
 type OnboardingChecklist = Record<string, boolean>;
 
@@ -131,12 +131,11 @@ function getAvailableCustomerCreditTotal(credits: CustomerCredit[]) {
 }
 
 function guessCheckoutMode(item: AdminDoc | null): CheckoutMode {
-  const promo = String(item?.promoCode || "").toUpperCase();
   const paymentMode = String(item?.paymentMode || "").toLowerCase();
   const rawService = String(item?.service || item?.selectedServiceTitle || item?.packageType || item?.requestType || "").toLowerCase();
   if (rawService.includes("commercial")) return "custom";
   if (paymentMode === "custom" || paymentMode === "custom_initial" || item?.customInitialPayment) return "custom";
-  return promo.includes("FOUNDING") || promo.includes("BETA") || paymentMode === "founding" ? "founding" : "standard";
+  return "standard";
 }
 
 function getLaundryDefaultDepositCredit(item: AdminDoc | null, mode: CheckoutMode) {
@@ -153,7 +152,7 @@ function getLaundryDefaultDepositCredit(item: AdminDoc | null, mode: CheckoutMod
   const paymentStatus = String(item.paymentStatus || item.laundryPaymentStatus || item.status || "");
   if (toNumber(item.amountSubtotal) > 0 && ["Deposit Paid", "Deposit Paid - Final Pending", "Paid"].includes(paymentStatus)) return centsToDollars(item.amountSubtotal);
   if (toNumber(item.amountTotal) > 0 && ["Deposit Paid", "Deposit Paid - Final Pending", "Paid"].includes(paymentStatus)) return centsToDollars(item.amountTotal);
-  return mode === "founding" ? 49 : 59;
+  return 59;
 }
 
 function shouldNotifyByDefault(status: string) {
@@ -1966,7 +1965,7 @@ export default function AdminTable({
     setStatusMessage("");
     setStatusError("");
     setLaundryDryWeightLbs(selected?.laundryDryWeightLbs ? String(selected.laundryDryWeightLbs) : "");
-    setLaundryRatePerLb(selected?.laundryRatePerLb ? String(selected.laundryRatePerLb) : nextMode === "founding" ? "2.49" : "2.99");
+    setLaundryRatePerLb(selected?.laundryRatePerLb ? String(selected.laundryRatePerLb) : "2.99");
     setLaundryAddOnsAmount(selected?.laundryAddOnsAmount ? String(selected.laundryAddOnsAmount) : "0");
     setLaundryDepositCredit(String(getLaundryDefaultDepositCredit(selected, nextMode) || 0));
     setLaundryFinalNote("");
@@ -2324,42 +2323,6 @@ export default function AdminTable({
 
 
 
-  async function syncCustomerCreditsForSelected() {
-    if (!selected) return;
-    setReferralBusy(true);
-    setActiveAction("Syncing saved customer referral credits...");
-    setReferralMessage("");
-    setReferralError("");
-
-    try {
-      const token = await firebaseAuth.currentUser?.getIdToken();
-      const res = await fetch("/api/admin/sync-customer-credits", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ requestId: selected.id }),
-      });
-      const data = await res.json().catch(() => ({}));
-
-      if (!res.ok || !data.ok) {
-        throw new Error(data.error || "Unable to sync customer credits.");
-      }
-
-      const created = Number(data.created || 0);
-      const existing = Number(data.existing || 0);
-      setReferralMessage(
-        created > 0
-          ? `Saved customer credit created. Refresh or reopen this request if it does not appear right away.`
-          : existing > 0
-            ? "Saved customer credit already exists for this email."
-            : data.message || "No completed referral credit was found for this customer email yet."
-      );
-    } catch (error) {
-      setReferralError(error instanceof Error ? error.message : "Unable to sync customer credits.");
-    } finally {
-      setReferralBusy(false);
-      setActiveAction("");
-    }
-  }
 
   async function emailCommercialQuoteOnly() {
     if (!selected) return;
@@ -2942,7 +2905,7 @@ export default function AdminTable({
                   <option value="all">All promo states</option>
                   <option value="any">Any promo / discount / credit</option>
                   <option value="promo-code">Has promo code</option>
-                  <option value="founding-beta">Founding / beta</option>
+                  <option value="founding-beta">Internal discount / promo</option>
                   <option value="referral-credit">Referral credit</option>
                   <option value="customer-credit">Saved customer credit</option>
                   <option value="discount">Discount line</option>
@@ -3547,19 +3510,7 @@ export default function AdminTable({
                       {selected.outgoingReferralLink && (
                         <button type="button" onClick={() => copyReferralLink(selected.outgoingReferralLink || "")} className={getAdminActionClass("secondary")}>Copy latest link</button>
                       )}
-                      <button
-                        type="button"
-                        disabled={referralBusy || !selected.email}
-                        onClick={syncCustomerCreditsForSelected}
-                        className={getAdminActionClass("quiet")}
-                        title="Use this if an older referral reward email was sent before saved credits were added."
-                      >
-                        Sync saved credits
-                      </button>
                     </div>
-                    <p className="mt-2 text-xs font-semibold leading-5 text-slate-500">
-                      Sync saved credits checks this customer email for completed referrals and creates any missing available credit record.
-                    </p>
                   </div>
 
                   <div className="rounded-2xl border border-[#eadfc8] bg-white p-4">
@@ -3756,7 +3707,7 @@ export default function AdminTable({
                         value={commercialInitialAmount}
                         onChange={(e) => setCommercialInitialAmount(e.target.value)}
                         inputMode="decimal"
-                        placeholder="149"
+                        placeholder="199"
                         className="rounded-2xl border border-cyan-200 bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]"
                       />
                       <span className="text-xs font-semibold leading-5 text-slate-500">Use this for the first approved visit, first turnover, deposit, or first recurring-plan payment.</span>
@@ -3978,21 +3929,20 @@ export default function AdminTable({
                     <div className="rounded-2xl bg-[#fbf6ea] px-4 py-3 text-xs font-bold leading-5 text-slate-700 lg:max-w-sm">
                       {selectedIsCommercial
                         ? "Commercial quick checkout uses the custom first-payment amount below. Use the invoice option for formal itemized records."
-                        : "Price mode applies only to these quick checkout buttons. Invoices use the saved Family Payment Breakdown instead."}
+                        : "Quick checkout uses the standard package price unless you choose a custom reviewed amount. Invoices use the saved Family Payment Breakdown instead."}
                     </div>
                   </div>
 
                   {!selectedIsCommercial && (
                     <div className="mt-4 grid gap-2 sm:max-w-sm">
-                      <label className="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Quick checkout price mode</label>
+                      <label className="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Quick checkout amount</label>
                       <select
                         value={checkoutMode}
                         onChange={(e) => setCheckoutMode(e.target.value as CheckoutMode)}
                         className="rounded-2xl border border-[#d8c18f] bg-white px-4 py-3 text-sm font-bold text-[#075c58] outline-none focus:border-[#075c58]"
                       >
-                        <option value="standard">Standard price</option>
-                        <option value="founding">Founding / beta price</option>
-                        <option value="custom">Custom quick checkout amount</option>
+                        <option value="standard">Standard package price</option>
+                        <option value="custom">Custom reviewed amount</option>
                       </select>
                     </div>
                   )}
@@ -4019,7 +3969,7 @@ export default function AdminTable({
                             value={customInitialAmount}
                             onChange={(e) => setCustomInitialAmount(e.target.value)}
                             inputMode="decimal"
-                            placeholder="149"
+                            placeholder="199"
                             className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]"
                           />
                         </label>

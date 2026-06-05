@@ -249,11 +249,9 @@ export function ServiceCard({ service, equalCollapsedHeight = false }: { service
                   service.standardPrice
                 )}
               </div>
-              {service.foundingPrice && (
-                <div className={`mt-2 font-bold text-nest-ink/60 ${isLaundry ? "text-[0.72rem] leading-4 sm:text-xs" : "text-sm"}`}>
-                  Founding/Beta: <span className="text-nest-teal">{isLaundry ? "$49 min + $2.49/lb" : service.foundingPrice}</span>
-                </div>
-              )}
+              <div className={`mt-2 font-bold text-nest-ink/60 ${isLaundry ? "text-[0.72rem] leading-4 sm:text-xs" : "text-sm"}`}>
+                Helper-based launch pricing
+              </div>
             </div>
             <div className={`flex min-h-[3.5rem] items-center justify-center px-3 py-3 text-center text-[0.58rem] font-black uppercase leading-5 tracking-[0.075em] sm:text-[0.62rem] ${theme.price}`}>
               {service.priceNote}

@@ -77,7 +77,7 @@ function getDepositCreditFromRecord(data: Record<string, unknown>, providedDepos
   const paymentStatus = getString(data.paymentStatus || data.laundryPaymentStatus || data.status);
   if (amountTotal > 0 && ["Paid", "Deposit Paid", "Deposit Paid - Final Pending"].includes(paymentStatus)) return amountTotal / 100;
 
-  return getString(data.paymentMode) === "founding" ? 49 : 59;
+  return 59;
 }
 
 function shouldAutoChargeFinalBalance(data: Record<string, unknown>) {

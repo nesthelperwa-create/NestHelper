@@ -7,7 +7,7 @@ import { isAllowedAdminEmail } from "@/lib/adminAuth";
 import { emailAliases } from "@/lib/emailRouting";
 import { getFirebaseAdminDb } from "@/lib/firebaseAdmin";
 import { services } from "@/lib/services";
-import { getStripePriceId, normalizeStripePriceMode } from "@/lib/stripePriceMap";
+import { getStripePriceId } from "@/lib/stripePriceMap";
 import { sendPaymentLinkEmail } from "@/lib/sendPaymentLinkEmail";
 import { getAvailableCustomerReferralCreditsForEmail, getTotalCustomerCreditAmount, reserveAppliedCustomerReferralCreditsForPayment } from "@/lib/referrals";
 
@@ -21,7 +21,7 @@ const commercialCleaningTaxCode = (process.env.STRIPE_COMMERCIAL_CLEANING_TAX_CO
 
 type CreatePaymentLinkBody = {
   requestId?: string;
-  mode?: "standard" | "founding";
+  mode?: "standard" | "founding"; // legacy values are accepted but always treated as standard
   sendEmail?: boolean;
   customInitial?: boolean;
   customAmount?: number | string;
@@ -114,9 +114,9 @@ function getExpectedReferralCreditAmount(data: Record<string, unknown>) {
   return raw.includes("laundry") ? 15 : 25;
 }
 
-function getLaundryDepositAmount(mode: "standard" | "founding", customAmount: number, useCustomInitial: boolean) {
+function getLaundryDepositAmount(customAmount: number, useCustomInitial: boolean) {
   if (useCustomInitial && customAmount > 0) return customAmount;
-  return mode === "founding" ? 49 : 59;
+  return 59;
 }
 
 type LaundryFinalPaymentCustomField = {
@@ -153,10 +153,10 @@ function formatServicePeriodLabel(start: unknown, end: unknown) {
   return "";
 }
 
-function getServicePriceLabel(serviceId: string, mode: "standard" | "founding") {
+function getServicePriceLabel(serviceId: string) {
   const service = services.find((item) => item.id === serviceId);
   if (!service) return "";
-  return mode === "founding" ? service.foundingPrice || service.standardPrice : service.standardPrice;
+  return service.standardPrice;
 }
 
 function getDefaultCustomTitle(serviceTitle: string, isLaundryRescue: boolean) {
@@ -218,7 +218,7 @@ export async function POST(request: Request) {
 
     const body = (await request.json().catch(() => null)) as CreatePaymentLinkBody | null;
     const requestId = getString(body?.requestId);
-    const mode = normalizeStripePriceMode(body?.mode);
+    const mode = "standard" as const;
     const shouldSendEmail = body?.sendEmail !== false;
     const useCustomInitial = Boolean(body?.customInitial);
     const shouldIncludeQuoteBreakdown = body?.includeQuoteBreakdown !== false;
@@ -292,7 +292,7 @@ export async function POST(request: Request) {
     const fullName = getString(data.fullName);
     const phone = getString(data.phone);
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-    const laundryDepositAmount = getLaundryDepositAmount(mode, customAmount, useCustomInitial);
+    const laundryDepositAmount = getLaundryDepositAmount(customAmount, useCustomInitial);
     const laundryDepositAmountCents = moneyToCents(laundryDepositAmount);
     const lineItems = isLaundryRescue
       ? [
@@ -403,7 +403,7 @@ export async function POST(request: Request) {
         ? savedDiscountCredit > 0
           ? `${formatMoney(customAmount)} custom checkout after ${formatMoney(savedDiscountCredit)} referral/customer credit`
           : `${formatMoney(customAmount)} custom initial checkout`
-        : getServicePriceLabel(serviceId, mode);
+        : getServicePriceLabel(serviceId);
     let emailSent = false;
     let emailError = "";
 
