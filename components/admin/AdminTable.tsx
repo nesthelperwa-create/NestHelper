@@ -1414,6 +1414,346 @@ function getAdminCsvExport(collectionName: string, records: AdminDoc[]) {
   return [header, ...rows].join("\n");
 }
 
+
+function csvFromRows(headers: string[], rows: string[][]) {
+  return [headers.map((header) => csvEscape(header)).join(","), ...rows.map((row) => headers.map((_, index) => csvEscape(row[index] || "")).join(","))].join("\n");
+}
+
+function getBookkeepingExportFilename(title: string, reportName: string) {
+  return `nesthelper-${safeFilePart(title)}-${safeFilePart(reportName)}-${new Date().toISOString().slice(0, 10)}.csv`;
+}
+
+function getCleanServiceLabel(item: AdminDoc) {
+  return String(item.selectedServiceTitle || item.packageType || item.service || getServiceLook(item).label || "Service");
+}
+
+function getCleanCity(item: AdminDoc) {
+  return String(getFirstPresentValue(item, ["serviceCity", "city"]) || "").trim();
+}
+
+function getCleanState(item: AdminDoc) {
+  return String(getFirstPresentValue(item, ["serviceState", "state"]) || "").trim();
+}
+
+function getCleanZip(item: AdminDoc) {
+  return String(getFirstPresentValue(item, ["serviceZip", "zip", "zipCode"]) || "").trim();
+}
+
+function getBookkeepingValue(item: AdminDoc, keys: string[]) {
+  for (const key of keys) {
+    const value = item[key];
+    if (value !== undefined && value !== null && value !== "") return value;
+  }
+  return undefined;
+}
+
+function getDollarsFromAny(value: unknown) {
+  const next = toNumber(value);
+  return Number.isFinite(next) ? next : 0;
+}
+
+function getDollarsFromCents(value: unknown) {
+  const next = toNumber(value);
+  return next > 0 ? next / 100 : 0;
+}
+
+function getBookkeepingDollarAmount(item: AdminDoc, dollarKeys: string[], centKeys: string[] = []) {
+  const direct = getBookkeepingValue(item, dollarKeys);
+  const directAmount = getDollarsFromAny(direct);
+  if (directAmount) return directAmount;
+  const cents = getBookkeepingValue(item, centKeys);
+  return getDollarsFromCents(cents);
+}
+
+function getBookkeepingBreakdownAmount(item: AdminDoc, key: string) {
+  const breakdown = getPaymentBreakdown(item);
+  return getDollarsFromAny(breakdown[key]);
+}
+
+function getGrossCustomerCharge(item: AdminDoc) {
+  return getBookkeepingDollarAmount(
+    item,
+    ["amountTotal", "totalPaid", "totalAmount", "familyInitialAmount", "customInitialAmount", "commercialInitialAmount", "amountDueNow"],
+    ["amountTotalCents", "totalPaidCents", "totalAmountCents", "familyInitialAmountCents", "customInitialAmountCents", "commercialInitialAmountCents"]
+  ) || getBookkeepingBreakdownAmount(item, "amountDueNow") || getBookkeepingBreakdownAmount(item, "subtotal");
+}
+
+function getSubtotalBeforeTax(item: AdminDoc) {
+  return getBookkeepingDollarAmount(
+    item,
+    ["amountSubtotal", "subtotal", "familyInitialSubtotal", "laundrySubtotal", "laundryBaseAmount", "customInitialAmount", "commercialInitialAmount"],
+    ["amountSubtotalCents", "subtotalCents", "familyInitialSubtotalCents", "laundrySubtotalCents", "laundryBaseAmountCents"]
+  ) || getBookkeepingBreakdownAmount(item, "subtotal") || getGrossCustomerCharge(item);
+}
+
+function getSalesTaxCollected(item: AdminDoc) {
+  return getBookkeepingDollarAmount(
+    item,
+    ["amountTax", "salesTax", "taxCollected", "taxAmount", "stripeTaxAmount"],
+    ["amountTaxCents", "salesTaxCents", "taxCollectedCents", "taxAmountCents", "stripeTaxAmountCents"]
+  );
+}
+
+function getDiscountOrCreditAmount(item: AdminDoc) {
+  const breakdown = getPaymentBreakdown(item);
+  return getBookkeepingDollarAmount(
+    item,
+    ["discountCredit", "appliedCustomerCreditAmount", "laundryDepositCredit", "incomingReferralCreditAmount", "totalSuggestedCreditAmount"],
+    ["discountCreditCents", "appliedCustomerCreditAmountCents", "laundryDepositCreditCents", "incomingReferralCreditAmountCents", "totalSuggestedCreditAmountCents"]
+  ) || getDollarsFromAny(breakdown.discountCredit) || getDollarsFromAny(breakdown.appliedCustomerCreditAmount) || getDollarsFromAny(breakdown.incomingReferralCreditAmount);
+}
+
+function getRefundAmount(item: AdminDoc) {
+  const refund = item.familyRefundTracking && typeof item.familyRefundTracking === "object" ? item.familyRefundTracking as Record<string, any> : {};
+  return getBookkeepingDollarAmount(item, ["refundAmount", "refundedAmount"], ["refundAmountCents", "refundedAmountCents"]) || getDollarsFromAny(refund.refundAmount);
+}
+
+function getNetCustomerCharge(item: AdminDoc) {
+  const gross = getGrossCustomerCharge(item);
+  const refund = getRefundAmount(item);
+  return Math.max(0, gross - refund);
+}
+
+function getPaymentShortReference(item: AdminDoc) {
+  const candidates = [item.paymentIntentId, item.invoiceId, item.checkoutSessionId, item.laundryDepositCheckoutSessionId, item.familyInvoiceId]
+    .map((value) => String(value || "").trim())
+    .filter(Boolean);
+  if (!candidates.length) return "";
+  const value = candidates[0];
+  return value.length > 12 ? `${value.slice(0, 8)}…${value.slice(-4)}` : value;
+}
+
+function getPaymentStatusForBookkeeping(item: AdminDoc) {
+  return String(item.laundryPaymentStatus || item.paymentStatus || item.familyPaymentStatus || item.status || "").trim();
+}
+
+function isPaidForBookkeeping(item: AdminDoc) {
+  const text = getPaymentStatusForBookkeeping(item).toLowerCase();
+  return text.includes("paid") || text.includes("completed") || Boolean(item.paidAt || item.paymentReceivedAt || item.laundryFinalBalancePaidAt);
+}
+
+function getPaidDateForBookkeeping(item: AdminDoc) {
+  return formatDate(getBookkeepingValue(item, ["paidAt", "paymentReceivedAt", "laundryFinalBalancePaidAt", "laundryFinalBalanceCreatedAt", "checkoutPaidAt", "updatedAt", "createdAt"]));
+}
+
+function getTaxableLabel(item: AdminDoc) {
+  const serviceKey = getServiceKey(item);
+  if (serviceKey === "laundry-rescue" || serviceKey === "commercial-reset") return "Taxable / verify in Stripe + WA DOR";
+  if (getSalesTaxCollected(item) > 0) return "Tax collected";
+  return "Likely non-taxable / verify";
+}
+
+function getBoCategoryNote(item: AdminDoc) {
+  const serviceKey = getServiceKey(item);
+  if (serviceKey === "commercial-reset") return "Commercial cleaning / verify WA B&O classification";
+  if (serviceKey === "laundry-rescue") return "Laundry service / verify WA B&O classification";
+  return "Household/family service / verify WA B&O classification";
+}
+
+function getRevenueSummaryCsv(records: AdminDoc[]) {
+  const paidRecords = records.filter(isPaidForBookkeeping);
+  const headers = [
+    "Date paid",
+    "Customer name",
+    "Service type",
+    "Customer city",
+    "Customer state",
+    "Customer ZIP",
+    "Invoice/payment title",
+    "Subtotal before tax",
+    "Sales tax collected",
+    "Discount/credit",
+    "Refund amount",
+    "Net customer charge",
+    "Payment status",
+    "Payment reference",
+  ];
+  const rows = paidRecords.map((item) => {
+    const breakdown = getPaymentBreakdown(item);
+    return [
+      getPaidDateForBookkeeping(item),
+      getRecordDisplayName(item),
+      getCleanServiceLabel(item),
+      getCleanCity(item),
+      getCleanState(item),
+      getCleanZip(item),
+      String(item.familyPaymentTitle || item.quoteTitle || breakdown.quoteTitle || breakdown.paymentPlan || getCleanServiceLabel(item)),
+      formatMoney(getSubtotalBeforeTax(item)),
+      formatMoney(getSalesTaxCollected(item)),
+      formatMoney(getDiscountOrCreditAmount(item)),
+      formatMoney(getRefundAmount(item)),
+      formatMoney(getNetCustomerCharge(item)),
+      getPaymentStatusForBookkeeping(item),
+      getPaymentShortReference(item),
+    ];
+  });
+  return csvFromRows(headers, rows);
+}
+
+function getWashingtonTaxSummaryCsv(records: AdminDoc[]) {
+  const paidRecords = records.filter(isPaidForBookkeeping);
+  const headers = [
+    "Payment date",
+    "Service category",
+    "Taxable / non-taxable note",
+    "Gross amount",
+    "Sales tax collected",
+    "Customer city",
+    "Customer ZIP",
+    "Refunds",
+    "Net after refunds",
+    "B&O category note",
+  ];
+  const rows = paidRecords.map((item) => [
+    getPaidDateForBookkeeping(item),
+    getCleanServiceLabel(item),
+    getTaxableLabel(item),
+    formatMoney(getGrossCustomerCharge(item)),
+    formatMoney(getSalesTaxCollected(item)),
+    getCleanCity(item),
+    getCleanZip(item),
+    formatMoney(getRefundAmount(item)),
+    formatMoney(getNetCustomerCharge(item)),
+    getBoCategoryNote(item),
+  ]);
+  return csvFromRows(headers, rows);
+}
+
+function getRefundCreditsCsv(records: AdminDoc[]) {
+  const refundRecords = records.filter((item) => getRefundAmount(item) > 0 || String(item.familyRefundTracking?.refundStatus || item.refundStatus || "").trim());
+  const headers = [
+    "Date",
+    "Customer",
+    "Service",
+    "Original amount",
+    "Refund amount",
+    "Reason",
+    "Customer notified",
+    "Final net amount",
+    "Refund status",
+  ];
+  const rows = refundRecords.map((item) => {
+    const refund = item.familyRefundTracking && typeof item.familyRefundTracking === "object" ? item.familyRefundTracking as Record<string, any> : {};
+    return [
+      formatDate(getBookkeepingValue(item, ["refundCreatedAt", "updatedAt", "createdAt"])),
+      getRecordDisplayName(item),
+      getCleanServiceLabel(item),
+      formatMoney(getGrossCustomerCharge(item)),
+      formatMoney(getRefundAmount(item)),
+      String(refund.refundReason || item.refundReason || ""),
+      typeof refund.customerNotified === "boolean" ? (refund.customerNotified ? "Yes" : "No") : formatValue("customerNotified", item.customerNotified),
+      formatMoney(getNetCustomerCharge(item)),
+      String(refund.refundStatus || item.refundStatus || ""),
+    ];
+  });
+  return csvFromRows(headers, rows);
+}
+
+function getLaundryPaymentsCsv(records: AdminDoc[]) {
+  const laundryRecords = records.filter((item) => getServiceKey(item) === "laundry-rescue");
+  const headers = [
+    "Customer",
+    "Pickup date",
+    "Deposit paid/credited",
+    "Dry weight lbs",
+    "Rate per lb",
+    "Add-ons amount",
+    "Laundry subtotal",
+    "Final balance",
+    "Total paid / net charge",
+    "Refund/credit",
+    "Payment status",
+  ];
+  const rows = laundryRecords.map((item) => [
+    getRecordDisplayName(item),
+    String(item.preferredDate || item.pickupDate || ""),
+    formatMoney(getBookkeepingDollarAmount(item, ["laundryDepositCredit", "laundryDepositExpectedAmount", "familyInitialAmount"], ["laundryDepositCreditCents", "laundryDepositExpectedAmountCents", "familyInitialAmountCents"])),
+    String(item.laundryDryWeightLbs || ""),
+    item.laundryRatePerLb ? `${formatMoney(toNumber(item.laundryRatePerLb))}/lb` : "",
+    formatMoney(getBookkeepingDollarAmount(item, ["laundryAddOnsAmount"], ["laundryAddOnsAmountCents"])),
+    formatMoney(getBookkeepingDollarAmount(item, ["laundrySubtotal", "laundryBaseAmount"], ["laundrySubtotalCents", "laundryBaseAmountCents"])),
+    formatMoney(getBookkeepingDollarAmount(item, ["laundryBalanceDue"], ["laundryBalanceDueCents"])),
+    formatMoney(getNetCustomerCharge(item)),
+    formatMoney(getDiscountOrCreditAmount(item) + getRefundAmount(item)),
+    getPaymentStatusForBookkeeping(item),
+  ]);
+  return csvFromRows(headers, rows);
+}
+
+function getOnboardingCsv(collectionName: string, records: AdminDoc[]) {
+  const headers = [
+    "Applicant / business",
+    "Applicant type",
+    "Email",
+    "Phone",
+    "City",
+    "State",
+    "ZIP",
+    "Services offered",
+    "Application status",
+    "Onboarding completed",
+    "Approved date",
+    "Insurance reviewed",
+    "Business license reviewed",
+    "W-9 requested",
+    "W-9 received",
+    "1099 eligible",
+    "Docs uploaded",
+    "Internal notes",
+  ];
+  const rows = records.map((item) => {
+    const checklist = item.onboardingChecklist && typeof item.onboardingChecklist === "object" ? item.onboardingChecklist as OnboardingChecklist : {};
+    const completed = APPLICATION_CHECKLIST_ITEMS.filter((entry) => checklist[entry.key]).length;
+    return [
+      getRecordDisplayName(item),
+      collectionName === "partnerApplications" ? "Business / partner" : "Individual helper",
+      String(item.email || ""),
+      String(item.phone || ""),
+      String(item.city || ""),
+      String(item.state || ""),
+      String(item.zip || ""),
+      exportValueToText("services", item.services || item.serviceType || item.preferredWorkTypes),
+      String(item.applicationStatus || item.status || ""),
+      `${completed}/${APPLICATION_CHECKLIST_ITEMS.length}`,
+      formatDate(getBookkeepingValue(item, ["approvedAt", "updatedAt"])),
+      checklist.licenseInsuranceReviewed || String(item.insuranceStatus || "").toLowerCase().includes("yes") ? "Yes" : "No / not marked",
+      checklist.licenseInsuranceReviewed || String(item.licenseStatus || "").toLowerCase().includes("yes") ? "Yes" : "No / not marked",
+      formatValue("w9Requested", item.w9Requested),
+      formatValue("w9Received", item.w9Received),
+      formatValue("is1099Eligible", item.is1099Eligible),
+      String(getApplicationDocuments(item).length),
+      String(item.adminNotes || item.internalNotes || ""),
+    ];
+  });
+  return csvFromRows(headers, rows);
+}
+
+function getMarketingSourceCsv(collectionName: string, records: AdminDoc[]) {
+  const headers = [
+    "Date",
+    "Form type",
+    "Name / business",
+    "Service requested / offered",
+    "How they found us",
+    "Source details",
+    "Converted to paid customer",
+    "Amount paid",
+    "Status",
+  ];
+  const rows = records.map((item) => [
+    formatDate(item.createdAt),
+    getCollectionDisplayLabel(collectionName),
+    getRecordDisplayName(item),
+    collectionName === "serviceRequests" ? getCleanServiceLabel(item) : exportValueToText("services", item.services || item.serviceType || item.subject),
+    String(item.howFoundUs || ""),
+    String(item.howFoundUsDetails || ""),
+    collectionName === "serviceRequests" && isPaidForBookkeeping(item) ? "Yes" : "No",
+    collectionName === "serviceRequests" ? formatMoney(getNetCustomerCharge(item)) : "",
+    String(item.status || item.applicationStatus || ""),
+  ]);
+  return csvFromRows(headers, rows);
+}
+
 function ServiceLegend({ activeServiceFilter, onToggleServiceFilter, counts }: { activeServiceFilter: string; onToggleServiceFilter: (key: string) => void; counts: Record<string, number> }) {
   return (
     <div className="mt-3 flex flex-wrap gap-2" aria-label="Filter service requests by service type">
@@ -2658,6 +2998,76 @@ export default function AdminTable({
               >
                 Download filtered CSV
               </button>
+
+              {collectionName === "serviceRequests" && (
+                <div className="mt-2 grid gap-2 border-t border-[#eadfc8] pt-3">
+                  <p className="text-[11px] font-black uppercase tracking-[0.16em] text-slate-500">Tax / bookkeeping</p>
+                  <button
+                    type="button"
+                    onClick={() => downloadTextFile(getBookkeepingExportFilename(title, "paid-revenue-summary"), getRevenueSummaryCsv(filtered), "text/csv;charset=utf-8")}
+                    disabled={!filtered.some(isPaidForBookkeeping)}
+                    className={getAdminActionClass("quiet")}
+                    title="Paid records only. Clean revenue report for bookkeeping and tax prep."
+                  >
+                    Paid revenue CSV
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => downloadTextFile(getBookkeepingExportFilename(title, "washington-tax-summary"), getWashingtonTaxSummaryCsv(filtered), "text/csv;charset=utf-8")}
+                    disabled={!filtered.some(isPaidForBookkeeping)}
+                    className={getAdminActionClass("quiet")}
+                    title="Paid records only. Includes gross amounts, sales tax collected, location, refunds, and WA B&O notes."
+                  >
+                    WA tax summary CSV
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => downloadTextFile(getBookkeepingExportFilename(title, "refunds-credits"), getRefundCreditsCsv(filtered), "text/csv;charset=utf-8")}
+                    disabled={!filtered.some((item) => getRefundAmount(item) > 0 || String(item.familyRefundTracking?.refundStatus || item.refundStatus || "").trim())}
+                    className={getAdminActionClass("quiet")}
+                    title="Refunds and credit notes for matching requests."
+                  >
+                    Refunds / credits CSV
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => downloadTextFile(getBookkeepingExportFilename(title, "laundry-payments"), getLaundryPaymentsCsv(filtered), "text/csv;charset=utf-8")}
+                    disabled={!filtered.some((item) => getServiceKey(item) === "laundry-rescue")}
+                    className={getAdminActionClass("quiet")}
+                    title="Laundry-specific deposit, dry-weight, add-on, balance, and payment summary."
+                  >
+                    Laundry payments CSV
+                  </button>
+                </div>
+              )}
+
+              {(collectionName === "helperApplications" || collectionName === "partnerApplications") && (
+                <div className="mt-2 grid gap-2 border-t border-[#eadfc8] pt-3">
+                  <p className="text-[11px] font-black uppercase tracking-[0.16em] text-slate-500">Onboarding / contractor records</p>
+                  <button
+                    type="button"
+                    onClick={() => downloadTextFile(getBookkeepingExportFilename(title, "onboarding-records"), getOnboardingCsv(collectionName, filtered), "text/csv;charset=utf-8")}
+                    disabled={!filtered.length}
+                    className={getAdminActionClass("quiet")}
+                    title="Applicant/vendor onboarding tracking. Useful for contractor paperwork follow-up."
+                  >
+                    Onboarding CSV
+                  </button>
+                </div>
+              )}
+
+              <div className="mt-2 grid gap-2 border-t border-[#eadfc8] pt-3">
+                <p className="text-[11px] font-black uppercase tracking-[0.16em] text-slate-500">Marketing</p>
+                <button
+                  type="button"
+                  onClick={() => downloadTextFile(getBookkeepingExportFilename(title, "marketing-source-report"), getMarketingSourceCsv(collectionName, filtered), "text/csv;charset=utf-8")}
+                  disabled={!filtered.length}
+                  className={getAdminActionClass("quiet")}
+                  title="How people found NestHelper, source details, and paid conversion where applicable."
+                >
+                  Marketing source CSV
+                </button>
+              </div>
             </div>
           </details>
           <label className="flex items-center gap-2 text-sm font-bold text-slate-700">
