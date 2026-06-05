@@ -22,6 +22,13 @@ function parseGoogleDurationMinutes(value: unknown) {
   return Number(match[1]) / 60;
 }
 
+function normalizeAddressForRoutes(value: string) {
+  const trimmed = cleanText(value, 500).replace(/\s+/g, " ");
+  if (!trimmed) return "";
+  const hasCountry = /\b(usa|united states)\b/i.test(trimmed);
+  return hasCountry ? trimmed : `${trimmed}, USA`;
+}
+
 export async function POST(request: Request) {
   try {
     getFirebaseAdminDb();
@@ -35,15 +42,26 @@ export async function POST(request: Request) {
     if (!mapsKey) {
       return NextResponse.json({
         ok: false,
-        error: "Add GOOGLE_MAPS_API_KEY in Vercel to auto-calculate mileage. You can still enter the estimate manually or open the route in Google Maps.",
+        error: "Add GOOGLE_MAPS_SERVER_API_KEY in Vercel to auto-calculate mileage. You can still enter the estimate manually or open the route in Google Maps.",
       }, { status: 400 });
     }
 
     const body = (await request.json().catch(() => ({}))) as Body;
-    const originAddress = cleanText(body.originAddress, 500);
-    const destinationAddress = cleanText(body.destinationAddress, 500);
+    const rawOriginAddress = cleanText(body.originAddress, 500);
+    const rawDestinationAddress = cleanText(body.destinationAddress, 500);
+    const originAddress = normalizeAddressForRoutes(rawOriginAddress);
+    const destinationAddress = normalizeAddressForRoutes(rawDestinationAddress);
     if (!originAddress || !destinationAddress) {
       return NextResponse.json({ ok: false, error: "Choose both a from-address and to-address." }, { status: 400 });
+    }
+
+    if (rawOriginAddress.toLowerCase() === rawDestinationAddress.toLowerCase()) {
+      return NextResponse.json({
+        ok: true,
+        miles: 0,
+        durationMinutes: 0,
+        source: "Same address - no reimbursable site-to-site mileage",
+      });
     }
 
     const response = await fetch("https://routes.googleapis.com/directions/v2:computeRoutes", {
@@ -69,9 +87,11 @@ export async function POST(request: Request) {
     }
 
     const route = result?.routes?.[0];
-    const distanceMeters = Number(route?.distanceMeters || 0);
-    if (!Number.isFinite(distanceMeters) || distanceMeters <= 0) {
-      return NextResponse.json({ ok: false, error: "Google did not return a route distance for those addresses." }, { status: 422 });
+    const hasDistance = route && Object.prototype.hasOwnProperty.call(route, "distanceMeters");
+    const distanceMeters = Number(route?.distanceMeters ?? 0);
+    if (!route || !hasDistance || !Number.isFinite(distanceMeters) || distanceMeters < 0) {
+      console.error("Google Routes returned no usable distance", { originAddress, destinationAddress, result });
+      return NextResponse.json({ ok: false, error: "Google did not return a usable route distance. Check that both addresses include a street, city, state, and ZIP, or use Open route in Maps and enter miles manually." }, { status: 422 });
     }
 
     const miles = distanceMeters / 1609.344;

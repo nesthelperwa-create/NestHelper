@@ -459,9 +459,9 @@ export default function HelperOpsDashboard() {
         ...prev,
         [item.id]: {
           ...(prev[item.id] || draft),
-          estimatedMiles: miles ? miles.toFixed(1) : "",
-          approvedMiles: miles ? miles.toFixed(1) : "",
-          estimatedDurationMinutes: minutes ? Math.round(minutes).toString() : "",
+          estimatedMiles: Number.isFinite(miles) ? miles.toFixed(1) : "",
+          approvedMiles: Number.isFinite(miles) ? miles.toFixed(1) : "",
+          estimatedDurationMinutes: Number.isFinite(minutes) ? Math.round(minutes).toString() : "",
           mileageEstimateSource: result.source || "Google Routes API",
         },
       }));
@@ -802,7 +802,7 @@ export default function HelperOpsDashboard() {
 
                 <div className="mt-4 rounded-[1.25rem] bg-white p-4">
                   <p className="font-bold text-[#075c58]">Mileage estimate</p>
-                  <p className="mt-1 text-xs leading-relaxed text-slate-500">Use saved request addresses when possible. Use custom addresses for supply stops, meeting points, or one-off manual mileage checks. Do not include normal commuting.</p>
+                  <p className="mt-1 text-xs leading-relaxed text-slate-500">Use saved request addresses when possible. Use custom addresses for supply stops, meeting points, or one-off manual mileage checks. Enter full street, city, state, and ZIP for custom addresses. Do not include normal commuting.</p>
                   <div className="mt-3 grid gap-3 lg:grid-cols-2">
                     <div className="rounded-2xl border border-[#eadfc8] bg-[#fffdf8] p-3">
                       <div className="grid gap-2 sm:grid-cols-[150px_1fr]">
