@@ -16,8 +16,8 @@ type RateLimitEntry = {
 const rateLimitStore = new Map<string, RateLimitEntry>();
 const WINDOW_MS = 15 * 60 * 1000;
 const MAX_APPLICATION_DOCUMENTS = 5;
-const MAX_APPLICATION_DOCUMENT_BYTES = 5_000_000;
-const MAX_APPLICATION_DOCUMENT_TOTAL_BYTES = 18_000_000;
+const MAX_APPLICATION_DOCUMENT_BYTES = 3 * 1024 * 1024;
+const MAX_APPLICATION_DOCUMENT_TOTAL_BYTES = 3_600_000;
 
 const allowedApplicationDocumentTypes = new Set([
   "application/pdf",
@@ -418,6 +418,12 @@ function isAllowedApplicationDocument(file: File) {
   return /\.(pdf|doc|docx|jpg|jpeg|png|webp|heic|heif)$/.test(name);
 }
 
+function isFormDataFile(value: FormDataEntryValue): value is File {
+  if (!value || typeof value !== "object") return false;
+  const maybeFile = value as File;
+  return typeof maybeFile.name === "string" && typeof maybeFile.size === "number" && typeof maybeFile.arrayBuffer === "function";
+}
+
 function cleanUploadLabel(value: unknown) {
   const label = trimText(value, 80);
   return label || "Other";
@@ -444,14 +450,14 @@ function parseApplicationDocuments(formData: FormData) {
 
   for (const [fieldName, value] of formData.entries()) {
     if (!fieldName.startsWith("documentFile_")) continue;
-    if (!(value instanceof File) || !value.name || value.size <= 0) continue;
+    if (!isFormDataFile(value) || !value.name || value.size <= 0) continue;
 
     if (files.length >= MAX_APPLICATION_DOCUMENTS) {
       throw new PublicFormError(`Please upload no more than ${MAX_APPLICATION_DOCUMENTS} documents.`, 413);
     }
 
     if (value.size > MAX_APPLICATION_DOCUMENT_BYTES) {
-      throw new PublicFormError(`Each document must be under ${Math.round(MAX_APPLICATION_DOCUMENT_BYTES / 1_000_000)} MB.`, 413);
+      throw new PublicFormError(`Each document must be under ${Math.floor(MAX_APPLICATION_DOCUMENT_BYTES / (1024 * 1024))} MB.`, 413);
     }
 
     if (!isAllowedApplicationDocument(value)) {
@@ -460,7 +466,7 @@ function parseApplicationDocuments(formData: FormData) {
 
     totalBytes += value.size;
     if (totalBytes > MAX_APPLICATION_DOCUMENT_TOTAL_BYTES) {
-      throw new PublicFormError("Uploaded documents are too large together. Please upload fewer files.", 413);
+      throw new PublicFormError("Uploaded documents are too large together. Please keep optional documents under 3.6 MB total.", 413);
     }
 
     const index = fieldName.replace("documentFile_", "");

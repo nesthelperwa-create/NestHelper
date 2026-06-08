@@ -107,6 +107,53 @@ export async function uploadApplicationDocuments({
   return updatePayload;
 }
 
+function summarizeAttemptedUploads(files: PublicSubmissionFile[]) {
+  if (!files.length) return "No optional documents uploaded.";
+  return files
+    .map((item) => `${item.label || "Other"}: ${item.file.name || "uploaded file"} (${item.file.size || 0} bytes)`)
+    .join("\n");
+}
+
+function getSafeUploadErrorMessage(error: unknown) {
+  if (error instanceof Error && error.message) return error.message.slice(0, 240);
+  return "Unknown upload error";
+}
+
+export async function uploadApplicationDocumentsSafely(input: {
+  collection: ApplicationCollection;
+  docId: string;
+  docRef: DocumentReference;
+  files: PublicSubmissionFile[];
+}) {
+  if (!input.files.length) return uploadApplicationDocuments(input);
+
+  try {
+    return await uploadApplicationDocuments(input);
+  } catch (error) {
+    console.error("Application document upload failed", {
+      collection: input.collection,
+      docId: input.docId,
+      error,
+    });
+
+    const attemptedSummary = summarizeAttemptedUploads(input.files);
+    const updatePayload = {
+      applicationDocuments: [],
+      applicationDocumentCount: 0,
+      applicationDocumentSummary: `Application submitted, but optional document upload failed. Attempted uploads:\n${attemptedSummary}`,
+      applicationDocumentAttemptedUploadSummary: attemptedSummary,
+      applicationDocumentUploadStatus: "error",
+      applicationDocumentUploadError: "Optional document upload failed. Follow up with the applicant for documents if needed.",
+      applicationDocumentTechnicalError: getSafeUploadErrorMessage(error),
+      applicationDocumentsUploadedAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
+    };
+
+    await input.docRef.update(updatePayload);
+    return updatePayload;
+  }
+}
+
 export async function createApplicationDocumentSignedUrl(storagePath: string) {
   const bucket = getFirebaseAdminStorageBucket();
   const [exists] = await bucket.file(storagePath).exists();

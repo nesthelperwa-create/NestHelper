@@ -213,6 +213,51 @@ type ApplicationDocumentDraft = {
   file: File | null;
 };
 
+const MAX_APPLICATION_DOCUMENTS = 5;
+const MAX_APPLICATION_DOCUMENT_BYTES = 3 * 1024 * 1024;
+const MAX_APPLICATION_DOCUMENT_TOTAL_BYTES = 3_600_000;
+const allowedApplicationDocumentExtensions = /\.(pdf|doc|docx|jpg|jpeg|png|webp|heic|heif)$/i;
+const allowedApplicationDocumentTypes = new Set([
+  "application/pdf",
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/heic",
+  "image/heif",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+]);
+
+function formatDocumentSize(bytes: number) {
+  if (!Number.isFinite(bytes) || bytes <= 0) return "0 MB";
+  return `${(bytes / (1024 * 1024)).toFixed(bytes >= 1024 * 1024 ? 1 : 2)} MB`;
+}
+
+function isAllowedApplicationDocument(file: File) {
+  const type = (file.type || "").toLowerCase();
+  return allowedApplicationDocumentTypes.has(type) || allowedApplicationDocumentExtensions.test(file.name);
+}
+
+function validateApplicationDocuments(documents: ApplicationDocumentDraft[]) {
+  const selectedDocuments = documents.filter((document) => document.file);
+  if (selectedDocuments.length > MAX_APPLICATION_DOCUMENTS) return `Please upload no more than ${MAX_APPLICATION_DOCUMENTS} optional documents.`;
+
+  let totalBytes = 0;
+  for (const document of selectedDocuments) {
+    const file = document.file;
+    if (!file) continue;
+    if (!isAllowedApplicationDocument(file)) return `${file.name} is not an accepted file type. Use PDF, Word, JPG, PNG, WEBP, HEIC, or HEIF.`;
+    if (file.size > MAX_APPLICATION_DOCUMENT_BYTES) return `${file.name} is too large. Each optional document must be under ${formatDocumentSize(MAX_APPLICATION_DOCUMENT_BYTES)}.`;
+    totalBytes += file.size;
+  }
+
+  if (totalBytes > MAX_APPLICATION_DOCUMENT_TOTAL_BYTES) {
+    return `The selected optional documents are ${formatDocumentSize(totalBytes)} total. Please keep document uploads under ${formatDocumentSize(MAX_APPLICATION_DOCUMENT_TOTAL_BYTES)} total, or submit the application without documents and NestHelper can request them later.`;
+  }
+
+  return "";
+}
+
 const emptyDocumentDraft = (): ApplicationDocumentDraft => ({
   id: Math.random().toString(36).slice(2),
   label: "",
@@ -398,6 +443,14 @@ export function HelperApplicationForm() {
     e.preventDefault();
     setStatus("loading");
     setMessage("");
+
+    const documentError = validateApplicationDocuments(documents);
+    if (documentError) {
+      setStatus("error");
+      setMessage(documentError);
+      return;
+    }
+
     try {
       const response = await fetch("/api/submit-helper-application", {
         method: "POST",
@@ -406,14 +459,15 @@ export function HelperApplicationForm() {
       const result = await response.json().catch(() => null);
       if (!response.ok || !result?.ok) throw new Error(result?.error || "Helper application failed");
 
+      const warning = typeof result?.warning === "string" ? result.warning : "";
       setStatus("success");
-      setMessage("Application received. We’ll review it and follow up about next steps. Sensitive ID/background-check steps happen through secure providers, not this form.");
+      setMessage(warning || "Application received. We’ll review it and follow up about next steps. Sensitive ID/background-check steps happen through secure providers, not this form.");
       setForm(helperDefaultState);
       setDocuments([emptyDocumentDraft()]);
     } catch (err) {
       console.error(err);
       setStatus("error");
-      setMessage("Something went wrong. Please try again.");
+      setMessage(err instanceof Error && err.message ? err.message : "Something went wrong. Please try again.");
     }
   }
 
@@ -542,6 +596,14 @@ export function PartnerApplicationForm() {
     e.preventDefault();
     setStatus("loading");
     setMessage("");
+
+    const documentError = validateApplicationDocuments(documents);
+    if (documentError) {
+      setStatus("error");
+      setMessage(documentError);
+      return;
+    }
+
     try {
       const response = await fetch("/api/submit-partner-application", {
         method: "POST",
@@ -550,14 +612,15 @@ export function PartnerApplicationForm() {
       const result = await response.json().catch(() => null);
       if (!response.ok || !result?.ok) throw new Error(result?.error || "Partner application failed");
 
+      const warning = typeof result?.warning === "string" ? result.warning : "";
       setStatus("success");
-      setMessage("Partner application received. We’ll review service fit, standards, insurance/business information, and availability before next steps.");
+      setMessage(warning || "Partner application received. We’ll review service fit, standards, insurance/business information, and availability before next steps.");
       setForm(partnerDefaultState);
       setDocuments([emptyDocumentDraft()]);
     } catch (err) {
       console.error(err);
       setStatus("error");
-      setMessage("Something went wrong. Please try again.");
+      setMessage(err instanceof Error && err.message ? err.message : "Something went wrong. Please try again.");
     }
   }
 
@@ -691,7 +754,7 @@ function ApplicationDocumentUploadSection({
           <p className="text-xs font-black uppercase tracking-[0.22em] text-nest-gold">Optional documents</p>
           <h3 className="mt-1 text-xl font-black text-nest-teal">Upload and label files you already have</h3>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-nest-ink/70">
-            {description} Accepted files: PDF, Word, JPG, PNG, WEBP, HEIC/HEIF. Max 5 files, 5 MB each.
+            {description} Accepted files: PDF, Word, JPG, PNG, WEBP, HEIC/HEIF. Max 5 files, 3 MB each, 3.6 MB total. Larger/sensitive documents can be requested later through secure onboarding.
           </p>
         </div>
         <button
@@ -715,7 +778,22 @@ function ApplicationDocumentUploadSection({
               <input
                 type="file"
                 accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp,.heic,.heif,application/pdf,image/*,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                onChange={(e) => updateDocument(document.id, { file: e.target.files?.[0] || null })}
+                onChange={(e) => {
+                  const file = e.target.files?.[0] || null;
+                  if (file && !isAllowedApplicationDocument(file)) {
+                    e.target.value = "";
+                    window.alert("Please upload a PDF, Word, JPG, PNG, WEBP, HEIC, or HEIF file.");
+                    updateDocument(document.id, { file: null });
+                    return;
+                  }
+                  if (file && file.size > MAX_APPLICATION_DOCUMENT_BYTES) {
+                    e.target.value = "";
+                    window.alert(`Please keep each optional document under ${formatDocumentSize(MAX_APPLICATION_DOCUMENT_BYTES)}.`);
+                    updateDocument(document.id, { file: null });
+                    return;
+                  }
+                  updateDocument(document.id, { file });
+                }}
                 className="input file:mr-3 file:rounded-full file:border-0 file:bg-nest-teal file:px-4 file:py-2 file:text-sm file:font-black file:text-white"
               />
               {document.file && <span className="text-xs font-semibold text-nest-ink/60">Selected: {document.file.name}</span>}
