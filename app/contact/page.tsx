@@ -2,6 +2,7 @@ import { Building2, MapPin, Phone, Sparkles } from "lucide-react";
 import { PageHero } from "@/components/PageHero";
 import { ContactForm } from "@/components/forms/ContactForm";
 import { siteConfig } from "@/lib/siteConfig";
+import { SocialLinks } from "@/components/SocialLinks";
 
 export default function ContactPage() {
   return (
@@ -36,6 +37,10 @@ export default function ContactPage() {
 
             <Info icon={<Building2 />} label="Commercial Reset area">
               <div className="font-bold text-nest-ink/78">Select Pierce County, Eastside, and Northshore areas.</div>
+            </Info>
+
+            <Info icon={<Sparkles />} label="Social media">
+              <SocialLinks />
             </Info>
           </div>
         </div>

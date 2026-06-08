@@ -12,6 +12,8 @@ export const metadata: Metadata = {
   openGraph: {
     title: "NestHelper | Reset the home. Reclaim the day.",
     description: "Vetted, insured, parent-focused help for busy families.",
+    url: siteConfig.url,
+    siteName: siteConfig.name,
     images: [siteConfig.assets.og]
   },
   icons: {
@@ -20,10 +22,25 @@ export const metadata: Metadata = {
   }
 };
 
+const organizationJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "LocalBusiness",
+  "@id": `${siteConfig.url}/#organization`,
+  name: siteConfig.name,
+  url: siteConfig.url,
+  telephone: siteConfig.phone,
+  email: siteConfig.emails.support,
+  sameAs: siteConfig.socialLinks.map((link) => link.href),
+};
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <body className="min-h-screen overflow-x-hidden antialiased">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
+        />
         <HashScrollManager />
         <Header />
         <main>{children}</main>

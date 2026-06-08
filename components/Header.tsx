@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
 import { siteConfig } from "@/lib/siteConfig";
+import { SocialLinks } from "@/components/SocialLinks";
 
 const nav = [
   { href: "/", label: "Home" },
@@ -57,6 +58,7 @@ export function Header() {
         </nav>
 
         <div className="hidden items-center gap-3 lg:flex">
+          <SocialLinks />
           <Link
             href="/request"
             className="focus-ring rounded-full bg-nest-teal px-5 py-3 text-sm font-black text-white shadow-soft transition hover:-translate-y-0.5 hover:bg-nest-teal2 hover:shadow-lift"
@@ -85,6 +87,9 @@ export function Header() {
             <Link onClick={() => setOpen(false)} href="/request" className="mt-2 rounded-2xl bg-nest-teal px-5 py-4 text-center font-black text-white shadow-soft">
               Request Help
             </Link>
+            <div className="mt-2 rounded-2xl border border-nest-gold/14 bg-white/75 p-4">
+              <SocialLinks showLabel />
+            </div>
           </nav>
         </div>
       )}

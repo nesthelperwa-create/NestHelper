@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, BookOpen, Mail, MapPin, Phone } from "lucide-react";
 import { siteConfig } from "@/lib/siteConfig";
+import { SocialLinks } from "@/components/SocialLinks";
 import { policies } from "@/lib/policies";
 
 export function Footer() {
@@ -41,6 +42,9 @@ export function Footer() {
             <a href={`mailto:${siteConfig.emails.support}`} className="flex items-center gap-3 transition hover:text-white"><Mail size={17} /> Support: {siteConfig.emails.support}</a>
             <a href={siteConfig.phoneHref} className="flex items-center gap-3 transition hover:text-white"><Phone size={17} /> {siteConfig.phone}</a>
             <div className="flex items-center gap-3"><MapPin size={17} /> Parent Reset: {siteConfig.serviceArea}</div>
+          </div>
+          <div className="mt-6 rounded-3xl border border-white/12 bg-white/8 p-4 shadow-sm backdrop-blur">
+            <SocialLinks variant="dark" showLabel />
           </div>
         </div>
 

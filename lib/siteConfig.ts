@@ -4,6 +4,7 @@ export const siteConfig = {
   subheading: "Parent Reset",
   slogan: "Reset the home. Reclaim the day.",
   domain: "NestHelperWA.com",
+  url: "https://www.nesthelperwa.com",
   email: process.env.NEXT_PUBLIC_CONTACT_EMAIL || "hello@nesthelperwa.com",
   emails: {
     support: process.env.NEXT_PUBLIC_SUPPORT_EMAIL || process.env.NEXT_PUBLIC_CONTACT_EMAIL || "hello@nesthelperwa.com",
@@ -25,6 +26,22 @@ export const siteConfig = {
   phoneHref: "tel:+14257901330",
   serviceArea: "Woodinville, Bothell, Kirkland, Redmond & nearby Eastside communities",
   foundingCode: "FOUNDINGFAMILY",
+  social: {
+    facebook: "https://www.facebook.com/NestHelperLLC",
+    instagram: "https://www.instagram.com/nesthelper",
+  },
+  socialLinks: [
+    {
+      name: "Facebook",
+      href: "https://www.facebook.com/NestHelperLLC",
+      label: "Follow NestHelper on Facebook",
+    },
+    {
+      name: "Instagram",
+      href: "https://www.instagram.com/nesthelper",
+      label: "Follow NestHelper on Instagram",
+    },
+  ],
   assets: {
     logo: "/assets/brand/nesthelper-logo.png",
     icon: "/assets/brand/nesthelper-icon.png",
