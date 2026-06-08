@@ -67,7 +67,7 @@ export default function HomePage() {
                   width={1792}
                   height={768}
                   priority
-                  className="h-auto w-full rounded-[1.45rem] object-contain sm:aspect-[16/9] sm:rounded-[2rem] sm:object-cover"
+                  className="h-auto w-full rounded-[1.45rem] object-contain sm:rounded-[2rem]"
                 />
               </div>
             </div>
