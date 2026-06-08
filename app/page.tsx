@@ -29,7 +29,7 @@ export default function HomePage() {
         <div className="absolute -left-24 top-20 -z-10 h-80 w-80 rounded-full bg-nest-mint/70 blur-3xl" />
         <div className="absolute -right-20 bottom-10 -z-10 h-80 w-80 rounded-full bg-nest-gold/20 blur-3xl" />
 
-        <div className="relative mx-auto grid max-w-7xl items-center gap-8 lg:grid-cols-[0.92fr_1.08fr] lg:gap-10">
+        <div className="relative mx-auto grid max-w-[90rem] items-center gap-8 lg:grid-cols-[0.82fr_1.18fr] lg:gap-12">
           <AnimatedSection className="order-1 min-w-0 text-center lg:text-left">
             <div className="pill-label mx-auto max-w-full lg:mx-0">
               <Sparkles size={16} /> Parent Reset Concierge
@@ -57,15 +57,15 @@ export default function HomePage() {
             </div>
           </AnimatedSection>
 
-          <AnimatedSection className="order-2 min-w-0 lg:order-2">
+          <AnimatedSection className="order-2 min-w-0 lg:order-2 lg:-mr-4 xl:-mr-8">
             <div className="relative mx-auto w-full max-w-[24rem] sm:max-w-2xl lg:max-w-none">
               <div className="absolute -inset-3 rounded-[2rem] bg-nest-gold/16 blur-2xl sm:-inset-5 sm:rounded-[2.8rem]" />
               <div className="relative overflow-hidden rounded-[1.9rem] border border-white/80 bg-white/60 p-2 shadow-glow backdrop-blur sm:rounded-[2.5rem] sm:p-3">
                 <Image
                   src={siteConfig.assets.hero}
                   alt="NestHelper Parent Reset banner"
-                  width={1792}
-                  height={768}
+                  width={1893}
+                  height={831}
                   priority
                   className="h-auto w-full rounded-[1.45rem] object-contain sm:rounded-[2rem]"
                 />
