@@ -12,6 +12,21 @@ const socialIconMap = {
   Instagram: InstagramIcon,
 } as const;
 
+const socialButtonStyles = {
+  Facebook: {
+    light:
+      "border-[#1877F2]/20 bg-white text-[#1877F2] shadow-sm hover:border-[#1877F2]/40 hover:bg-[#1877F2] hover:text-white hover:shadow-lift",
+    dark:
+      "border-white/16 bg-white text-[#1877F2] shadow-sm hover:border-[#1877F2]/60 hover:bg-[#1877F2] hover:text-white hover:shadow-lift",
+  },
+  Instagram: {
+    light:
+      "border-white/70 bg-[linear-gradient(135deg,#833AB4_0%,#C13584_35%,#E1306C_62%,#FCAF45_100%)] text-white shadow-sm hover:brightness-110 hover:shadow-lift",
+    dark:
+      "border-white/16 bg-[linear-gradient(135deg,#833AB4_0%,#C13584_35%,#E1306C_62%,#FCAF45_100%)] text-white shadow-sm hover:brightness-110 hover:shadow-lift",
+  },
+} as const;
+
 export function SocialLinks({ variant = "light", showLabel = false, className = "" }: SocialLinksProps) {
   const isDark = variant === "dark";
 
@@ -25,6 +40,8 @@ export function SocialLinks({ variant = "light", showLabel = false, className = 
 
       {siteConfig.socialLinks.map((link) => {
         const Icon = socialIconMap[link.name as keyof typeof socialIconMap];
+        const platformStyle = socialButtonStyles[link.name as keyof typeof socialButtonStyles];
+        const colorClass = platformStyle?.[variant] ?? (isDark ? "border-white/14 bg-white/10 text-white hover:bg-white hover:text-nest-teal" : "border-nest-gold/18 bg-white/80 text-nest-teal hover:bg-nest-teal hover:text-white");
 
         return (
           <a
@@ -34,11 +51,7 @@ export function SocialLinks({ variant = "light", showLabel = false, className = 
             rel="noopener noreferrer"
             aria-label={link.label}
             title={link.name}
-            className={
-              isDark
-                ? "focus-ring inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/14 bg-white/10 text-white shadow-sm transition hover:-translate-y-0.5 hover:border-nest-gold2/50 hover:bg-white hover:text-nest-teal"
-                : "focus-ring inline-flex h-10 w-10 items-center justify-center rounded-full border border-nest-gold/18 bg-white/80 text-nest-teal shadow-sm transition hover:-translate-y-0.5 hover:border-nest-gold/40 hover:bg-nest-teal hover:text-white"
-            }
+            className={`focus-ring inline-flex h-10 w-10 items-center justify-center rounded-full border transition hover:-translate-y-0.5 ${colorClass}`}
           >
             <Icon className="h-5 w-5" aria-hidden="true" />
           </a>
