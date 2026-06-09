@@ -436,7 +436,7 @@ Please reply with any missing details, updated availability, and any questions y
 Please do not email SSNs, ID photos, or sensitive documents unless NestHelper sends you a secure approved method.
 
 Thank you,
-Leo
+Leo & Gen
 NestHelper
 hello@nesthelperwa.com
 (425) 790-1330`,
@@ -453,7 +453,7 @@ Thank you for applying with NestHelper and for your interest in supporting local
 After reviewing the application, we are not moving forward with next steps at this time. We appreciate the time you took to apply and wish you the best.
 
 Thank you,
-Leo
+Leo & Gen
 NestHelper`,
     };
   }
@@ -471,7 +471,7 @@ Please reply with a few times you’re available over the next few days, and we�
 The call should take about 10–15 minutes.
 
 Thank you,
-Leo
+Leo & Gen
 NestHelper
 hello@nesthelperwa.com
 (425) 790-1330`,
