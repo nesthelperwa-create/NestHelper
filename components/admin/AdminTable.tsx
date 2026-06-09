@@ -143,7 +143,7 @@ function getLaundryDefaultDepositCredit(item: AdminDoc | null, mode: CheckoutMod
   if (toNumber(item.laundryDepositCredit) > 0) return toNumber(item.laundryDepositCredit);
   if (toNumber(item.laundryDepositCreditCents) > 0) return centsToDollars(item.laundryDepositCreditCents);
   // Credit only the pre-tax non-refundable deposit/minimum toward the final invoice.
-  // Manual sales tax is added only when the admin sales-tax box is checked before sending the payment.
+  // Tax is charged separately by Stripe on the deposit and then only on the final taxable balance.
   if (toNumber(item.laundryDepositAmountSubtotal) > 0) return centsToDollars(item.laundryDepositAmountSubtotal);
   if (toNumber(item.depositPaidAmountSubtotal) > 0) return centsToDollars(item.depositPaidAmountSubtotal);
   if (toNumber(item.laundryDepositExpectedAmountCents) > 0) return centsToDollars(item.laundryDepositExpectedAmountCents);
@@ -207,57 +207,6 @@ const SERVICE_LOOKS: Record<string, { label: string; badge: string; row: string;
     dot: "bg-white ring-2 ring-cyan-100",
   },
 };
-
-
-function ManualSalesTaxControls({
-  enabled,
-  rate,
-  onEnabledChange,
-  onRateChange,
-  context,
-}: {
-  enabled: boolean;
-  rate: string;
-  onEnabledChange: (enabled: boolean) => void;
-  onRateChange: (rate: string) => void;
-  context: string;
-}) {
-  return (
-    <div className="mt-4 rounded-3xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-950">
-      <label className="flex gap-3 font-bold">
-        <input
-          type="checkbox"
-          checked={enabled}
-          onChange={(e) => onEnabledChange(e.target.checked)}
-          className="mt-1 h-4 w-4 rounded border-amber-300 accent-[#075c58]"
-        />
-        <span>
-          <span className="block font-black text-amber-950">Add manual Washington sales tax to this {context}</span>
-          <span className="mt-1 block text-xs font-semibold leading-5 text-amber-900">
-            Stripe automatic tax stays off. Only check this when you intentionally want sales tax added and you have verified the customer/location rate.
-          </span>
-        </span>
-      </label>
-      {enabled && (
-        <div className="mt-3 grid gap-2 sm:max-w-xs">
-          <label className="grid gap-2 text-xs font-black uppercase tracking-[0.12em] text-amber-900">
-            Sales tax rate %
-            <input
-              value={rate}
-              onChange={(e) => onRateChange(e.target.value)}
-              inputMode="decimal"
-              placeholder="Example: 10.2"
-              className="rounded-2xl border border-amber-200 bg-white px-4 py-3 text-sm font-bold normal-case tracking-normal text-[#075c58] outline-none focus:border-[#075c58]"
-            />
-          </label>
-          <p className="text-xs font-semibold leading-5 text-amber-900">
-            The rate is manual. Do not use this as tax advice; verify the rate and whether the service is taxable before sending.
-          </p>
-        </div>
-      )}
-    </div>
-  );
-}
 
 const DEFAULT_SERVICE_LOOK = {
   label: "Unselected",
@@ -423,6 +372,84 @@ function getDefaultCommercialQuoteType(item: AdminDoc | null | undefined) {
 
 function getCommercialQuoteStatus(item: AdminDoc | null | undefined) {
   return String(item?.commercialQuoteStatus || "Not quoted");
+}
+
+function getApplicantDisplayName(item: AdminDoc | null | undefined) {
+  const raw = String(item?.fullName || item?.ownerName || item?.businessName || item?.name || "").trim();
+  return raw || "there";
+}
+
+function getApplicantFirstName(item: AdminDoc | null | undefined) {
+  const name = getApplicantDisplayName(item);
+  if (name.toLowerCase() === "there") return "there";
+  return name.split(/\s+/).filter(Boolean)[0] || "there";
+}
+
+function getApplicantEmailAddress(item: AdminDoc | null | undefined) {
+  const email = String(item?.email || "").trim();
+  return email.includes("@") ? email : "";
+}
+
+type ApplicantEmailTemplateKey = "phone-interview" | "needs-documents" | "not-selected" | "custom";
+
+function getApplicantEmailTemplate(collectionName: string, item: AdminDoc | null | undefined, template: ApplicantEmailTemplateKey) {
+  const firstName = getApplicantFirstName(item);
+  const isPartner = collectionName === "partnerApplications";
+  const roleLabel = isPartner ? "Partner / Contractor" : "Helper";
+  const roleText = isPartner ? "Partner / Contractor" : "Helper";
+
+  if (template === "needs-documents") {
+    return {
+      subject: `NestHelper ${roleLabel} Application – More Information Needed`,
+      body: `Hi ${firstName},
+
+Thank you for applying with NestHelper. We reviewed your application and would like a little more information before moving to the next step.
+
+Please reply with any missing details, updated availability, and any questions you have about the role.
+
+Please do not email SSNs, ID photos, or sensitive documents unless NestHelper sends you a secure approved method.
+
+Thank you,
+Leo
+NestHelper
+hello@nesthelperwa.com
+(425) 790-1330`,
+    };
+  }
+
+  if (template === "not-selected") {
+    return {
+      subject: `Update on your NestHelper ${roleLabel} Application`,
+      body: `Hi ${firstName},
+
+Thank you for applying with NestHelper and for your interest in supporting local families.
+
+After reviewing the application, we are not moving forward with next steps at this time. We appreciate the time you took to apply and wish you the best.
+
+Thank you,
+Leo
+NestHelper`,
+    };
+  }
+
+  return {
+    subject: `NestHelper ${roleLabel} Position – Phone Interview`,
+    body: `Hi ${firstName},
+
+Thank you for applying for the ${roleText} position with NestHelper. We appreciate your interest in joining our team and helping support local families.
+
+We’d like to schedule a short phone interview to learn more about your experience, availability, and whether the role would be a good fit.
+
+Please reply with a few times you’re available over the next few days, and we’ll confirm a time that works.
+
+The call should take about 10–15 minutes.
+
+Thank you,
+Leo
+NestHelper
+hello@nesthelperwa.com
+(425) 790-1330`,
+  };
 }
 
 function ServicePill({ item }: { item: AdminDoc }) {
@@ -1920,8 +1947,6 @@ export default function AdminTable({
   const [checkoutError, setCheckoutError] = useState("");
   const [includeCommercialQuoteBreakdown, setIncludeCommercialQuoteBreakdown] = useState(true);
   const [includeFamilyPaymentBreakdown, setIncludeFamilyPaymentBreakdown] = useState(true);
-  const [manualSalesTaxEnabled, setManualSalesTaxEnabled] = useState(false);
-  const [manualSalesTaxRate, setManualSalesTaxRate] = useState("");
   const [commercialInvoiceBusy, setCommercialInvoiceBusy] = useState(false);
   const [commercialInvoiceMessage, setCommercialInvoiceMessage] = useState("");
   const [commercialInvoiceError, setCommercialInvoiceError] = useState("");
@@ -1975,6 +2000,12 @@ export default function AdminTable({
   const [applicationOnboardingBusy, setApplicationOnboardingBusy] = useState(false);
   const [applicationOnboardingMessage, setApplicationOnboardingMessage] = useState("");
   const [applicationOnboardingError, setApplicationOnboardingError] = useState("");
+  const [applicantEmailTemplate, setApplicantEmailTemplate] = useState<ApplicantEmailTemplateKey>("phone-interview");
+  const [applicantEmailSubject, setApplicantEmailSubject] = useState("");
+  const [applicantEmailBody, setApplicantEmailBody] = useState("");
+  const [applicantEmailBusy, setApplicantEmailBusy] = useState(false);
+  const [applicantEmailMessage, setApplicantEmailMessage] = useState("");
+  const [applicantEmailError, setApplicantEmailError] = useState("");
   const [busyDocumentPath, setBusyDocumentPath] = useState("");
   const [documentOpenError, setDocumentOpenError] = useState("");
   const [activeAction, setActiveAction] = useState("");
@@ -2012,8 +2043,6 @@ export default function AdminTable({
     setCustomInitialNote(selected?.customInitialNote ? String(selected.customInitialNote) : "");
     setIncludeCommercialQuoteBreakdown(Boolean(selected?.commercialQuoteBreakdown?.customerBreakdownText));
     setIncludeFamilyPaymentBreakdown(Boolean(selected?.familyPaymentBreakdown?.customerBreakdownText));
-    setManualSalesTaxEnabled(false);
-    setManualSalesTaxRate(selected?.manualSalesTaxRate ? String(selected.manualSalesTaxRate) : "");
     setStatusValue(nextStatus);
     setStatusNote("");
     setNotifyCustomer(shouldNotifyByDefault(nextStatus));
@@ -2053,6 +2082,12 @@ export default function AdminTable({
     setApplicationOnboardingMessage("");
     setApplicationOnboardingError("");
     setBusyDocumentPath("");
+    const defaultApplicantTemplate = getApplicantEmailTemplate(collectionName, selected, "phone-interview");
+    setApplicantEmailTemplate("phone-interview");
+    setApplicantEmailSubject(["helperApplications", "partnerApplications"].includes(collectionName) ? defaultApplicantTemplate.subject : "");
+    setApplicantEmailBody(["helperApplications", "partnerApplications"].includes(collectionName) ? defaultApplicantTemplate.body : "");
+    setApplicantEmailMessage("");
+    setApplicantEmailError("");
     setDocumentOpenError("");
     setActiveAction("");
   }, [selected?.id]);
@@ -2272,6 +2307,53 @@ export default function AdminTable({
     }
   }
 
+  function applyApplicantEmailTemplate(template: ApplicantEmailTemplateKey) {
+    setApplicantEmailTemplate(template);
+    if (template === "custom") return;
+    const next = getApplicantEmailTemplate(collectionName, selected, template);
+    setApplicantEmailSubject(next.subject);
+    setApplicantEmailBody(next.body);
+  }
+
+  async function sendApplicantEmail() {
+    if (!selected || !["helperApplications", "partnerApplications"].includes(collectionName)) return;
+    setApplicantEmailBusy(true);
+    setActiveAction("Sending applicant email...");
+    setApplicantEmailMessage("");
+    setApplicantEmailError("");
+
+    try {
+      const token = await firebaseAuth.currentUser?.getIdToken();
+      const res = await fetch("/api/admin/send-applicant-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          collection: collectionName,
+          id: selected.id,
+          subject: applicantEmailSubject,
+          message: applicantEmailBody,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.ok) throw new Error(data.error || "Unable to send applicant email.");
+
+      const updates = {
+        applicantEmailLastSentAt: data.sentAtIso || new Date().toISOString(),
+        applicantEmailLastSubject: applicantEmailSubject.trim(),
+        applicantEmailLastBodyPreview: applicantEmailBody.trim().slice(0, 300),
+        applicantEmailCount: toNumber(selected.applicantEmailCount) + 1,
+      };
+      setSelected((prev) => (prev ? { ...prev, ...updates } : prev));
+      setItems((prev) => prev.map((item) => item.id === selected.id ? { ...item, ...updates } : item));
+      setApplicantEmailMessage(`Email sent to ${data.to || getApplicantEmailAddress(selected)}.`);
+    } catch (error) {
+      setApplicantEmailError(error instanceof Error ? error.message : "Unable to send applicant email.");
+    } finally {
+      setApplicantEmailBusy(false);
+      setActiveAction("");
+    }
+  }
+
   async function openApplicationDocument(document: ApplicationDocument) {
     if (!selected || !document.storagePath) return;
     setBusyDocumentPath(document.storagePath);
@@ -2377,12 +2459,6 @@ export default function AdminTable({
   }
 
 
-  function getManualSalesTaxPayload() {
-    return {
-      manualSalesTax: manualSalesTaxEnabled,
-      manualSalesTaxRate: manualSalesTaxEnabled ? toNumber(manualSalesTaxRate) : 0,
-    };
-  }
 
 
   async function emailCommercialQuoteOnly() {
@@ -2438,7 +2514,7 @@ export default function AdminTable({
       const res = await fetch("/api/admin/create-commercial-invoice", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ requestId: selected.id, sendEmail, ...getManualSalesTaxPayload() }),
+        body: JSON.stringify({ requestId: selected.id, sendEmail }),
       });
       const data = await res.json().catch(() => ({}));
 
@@ -2494,7 +2570,7 @@ export default function AdminTable({
       const res = await fetch("/api/admin/create-family-invoice", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ requestId: selected.id, sendEmail, ...getManualSalesTaxPayload() }),
+        body: JSON.stringify({ requestId: selected.id, sendEmail }),
       });
       const data = await res.json().catch(() => ({}));
 
@@ -2570,7 +2646,6 @@ export default function AdminTable({
           customNote: useCustomInitial ? customInitialNote : undefined,
           includeQuoteBreakdown: selected.service === "commercial-reset" && useCustomInitial ? includeCommercialQuoteBreakdown : undefined,
           includeFamilyBreakdown: selected.service !== "commercial-reset" ? includeFamilyPaymentBreakdown : undefined,
-          ...getManualSalesTaxPayload(),
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -2604,7 +2679,7 @@ export default function AdminTable({
             : " Family payment breakdown was not included because the checkbox was off."
         : "";
       const laundryDepositNotice = selected.service === "laundry-rescue"
-        ? " Stripe checkout will collect the non-refundable deposit and ask the customer to choose auto-charge or invoice-before-delivery. Manual sales tax is added only if the sales-tax box is checked."
+        ? " Stripe checkout will collect the non-refundable taxable deposit and ask the customer to choose auto-charge or invoice-before-delivery for the final laundry balance."
         : "";
       setCheckoutMessage(data.emailError || (data.emailSent ? `Quick checkout link created and emailed to the customer.${commercialBreakdownNotice}${familyBreakdownNotice}${laundryDepositNotice}` : `Quick checkout link created. Copy it and send it manually.${commercialBreakdownNotice}${familyBreakdownNotice}${laundryDepositNotice}`));
     } catch (error) {
@@ -2636,7 +2711,6 @@ export default function AdminTable({
           depositCredit: toNumber(laundryDepositCredit),
           finalBalanceNote: laundryFinalNote,
           sendEmail,
-          ...getManualSalesTaxPayload(),
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -2704,7 +2778,6 @@ export default function AdminTable({
           reason: additionalPaymentReason,
           note: additionalPaymentNote,
           sendEmail,
-          ...getManualSalesTaxPayload(),
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -2849,7 +2922,7 @@ export default function AdminTable({
   const selectedAvailableCustomerCredits = getAvailableCustomerCreditsForRequest(selected, customerCredits);
   const selectedAvailableCustomerCreditTotal = getAvailableCustomerCreditTotal(selectedAvailableCustomerCredits);
   const selectedOutgoingReferralHistory = getOutgoingReferralHistory(selected);
-  const anyActionBusy = checkoutBusy || commercialInvoiceBusy || commercialQuoteEmailBusy || familyInvoiceBusy || statusBusy || laundryFinalBusy || additionalPaymentBusy || commercialQuoteBusy || referralBusy || applicationOnboardingBusy || Boolean(busyDocumentPath);
+  const anyActionBusy = checkoutBusy || commercialInvoiceBusy || commercialQuoteEmailBusy || familyInvoiceBusy || statusBusy || laundryFinalBusy || additionalPaymentBusy || commercialQuoteBusy || referralBusy || applicationOnboardingBusy || applicantEmailBusy || Boolean(busyDocumentPath);
 
   return (
     <section className="space-y-5">
@@ -2992,8 +3065,8 @@ export default function AdminTable({
       <AdminActionFeedback
         busy={anyActionBusy}
         activeAction={activeAction}
-        messages={[statusMessage, checkoutMessage, commercialInvoiceMessage, commercialQuoteEmailMessage, familyInvoiceMessage, laundryFinalMessage, additionalPaymentMessage, commercialQuoteMessage, referralMessage]}
-        errors={[statusError, checkoutError, commercialInvoiceError, commercialQuoteEmailError, familyInvoiceError, laundryFinalError, additionalPaymentError, commercialQuoteError, referralError]}
+        messages={[statusMessage, checkoutMessage, commercialInvoiceMessage, commercialQuoteEmailMessage, familyInvoiceMessage, laundryFinalMessage, additionalPaymentMessage, commercialQuoteMessage, referralMessage, applicantEmailMessage]}
+        errors={[statusError, checkoutError, commercialInvoiceError, commercialQuoteEmailError, familyInvoiceError, laundryFinalError, additionalPaymentError, commercialQuoteError, referralError, applicantEmailError]}
       />
 
       <div className="flex flex-col gap-3 rounded-3xl border border-[#eadfc8] bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
@@ -3331,8 +3404,8 @@ export default function AdminTable({
               <AdminActionFeedback
                 busy={anyActionBusy}
                 activeAction={activeAction}
-                messages={[statusMessage, checkoutMessage, commercialInvoiceMessage, commercialQuoteEmailMessage, familyInvoiceMessage, laundryFinalMessage, additionalPaymentMessage, commercialQuoteMessage, referralMessage, applicationOnboardingMessage]}
-                errors={[statusError, checkoutError, commercialInvoiceError, commercialQuoteEmailError, familyInvoiceError, laundryFinalError, additionalPaymentError, commercialQuoteError, referralError, applicationOnboardingError, documentOpenError]}
+                messages={[statusMessage, checkoutMessage, commercialInvoiceMessage, commercialQuoteEmailMessage, familyInvoiceMessage, laundryFinalMessage, additionalPaymentMessage, commercialQuoteMessage, referralMessage, applicationOnboardingMessage, applicantEmailMessage]}
+                errors={[statusError, checkoutError, commercialInvoiceError, commercialQuoteEmailError, familyInvoiceError, laundryFinalError, additionalPaymentError, commercialQuoteError, referralError, applicationOnboardingError, applicantEmailError, documentOpenError]}
               />
               <details className="rounded-3xl border border-[#eadfc8] bg-white p-4 shadow-sm">
                 <summary className="cursor-pointer text-sm font-black text-[#075c58]">Print / download this record</summary>
@@ -3345,6 +3418,81 @@ export default function AdminTable({
 
             <AdminDetailSnapshot collectionName={collectionName} item={selected} />
             {showApplicationOnboardingPanel && <ApplicationQuickRead item={selected} documentCount={selectedApplicationDocuments.length} />}
+
+            {showApplicationOnboardingPanel && (
+              <div className="mb-5 rounded-3xl border border-[#eadfc8] bg-white p-5 shadow-sm">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="max-w-3xl">
+                    <p className="text-xs font-black uppercase tracking-[0.2em] text-[#b98a2f]">Applicant email</p>
+                    <h4 className="mt-1 text-xl font-black text-[#075c58]">Write and send an email from the dashboard</h4>
+                    <p className="mt-2 text-sm leading-6 text-slate-700">
+                      Sends to <span className="font-black text-[#075c58]">{getApplicantEmailAddress(selected) || "no email on file"}</span>. Use the template, edit the message, then send. Replies should go back to the NestHelper inbox.
+                    </p>
+                  </div>
+                  {selected.applicantEmailLastSentAt && (
+                    <div className="rounded-2xl bg-[#fbf6ea] px-4 py-3 text-xs font-bold text-slate-700">
+                      Last sent: {formatDate(selected.applicantEmailLastSentAt)}
+                      {selected.applicantEmailLastSubject && <span className="mt-1 block text-[#075c58]">{String(selected.applicantEmailLastSubject)}</span>}
+                    </div>
+                  )}
+                </div>
+
+                <div className="mt-4 grid gap-3 md:grid-cols-[240px_1fr]">
+                  <label className="grid gap-2 text-sm font-bold text-slate-700">
+                    Template
+                    <select
+                      value={applicantEmailTemplate}
+                      onChange={(e) => applyApplicantEmailTemplate(e.target.value as ApplicantEmailTemplateKey)}
+                      className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-bold text-[#075c58] outline-none focus:border-[#075c58]"
+                    >
+                      <option value="phone-interview">Phone interview request</option>
+                      <option value="needs-documents">Request more info/docs</option>
+                      <option value="not-selected">Not moving forward</option>
+                      <option value="custom">Custom / keep my edits</option>
+                    </select>
+                  </label>
+                  <label className="grid gap-2 text-sm font-bold text-slate-700">
+                    Subject
+                    <input
+                      value={applicantEmailSubject}
+                      onChange={(e) => {
+                        setApplicantEmailTemplate("custom");
+                        setApplicantEmailSubject(e.target.value);
+                      }}
+                      placeholder="Email subject"
+                      className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
+                    />
+                  </label>
+                </div>
+
+                <label className="mt-3 grid gap-2 text-sm font-bold text-slate-700">
+                  Message
+                  <textarea
+                    value={applicantEmailBody}
+                    onChange={(e) => {
+                      setApplicantEmailTemplate("custom");
+                      setApplicantEmailBody(e.target.value);
+                    }}
+                    rows={11}
+                    placeholder="Write the email message here."
+                    className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal leading-6 text-slate-800 outline-none focus:border-[#075c58]"
+                  />
+                </label>
+
+                <div className="mt-4 flex flex-wrap items-center gap-3">
+                  <button type="button" disabled={applicantEmailBusy || !getApplicantEmailAddress(selected) || !applicantEmailSubject.trim() || !applicantEmailBody.trim()} onClick={sendApplicantEmail} className={getAdminActionClass("primary")}>
+                    {applicantEmailBusy ? <><ActionSpinner /> Sending...</> : "Send applicant email"}
+                  </button>
+                  <button type="button" disabled={applicantEmailBusy} onClick={() => applyApplicantEmailTemplate("phone-interview")} className={getAdminActionClass("quiet")}>
+                    Reset phone interview template
+                  </button>
+                  <p className="text-xs font-semibold text-slate-500">Review before sending. This sends a real email through Resend.</p>
+                </div>
+
+                {applicantEmailMessage && <p className="mt-3 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">{applicantEmailMessage}</p>}
+                {applicantEmailError && <p className="mt-3 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{applicantEmailError}</p>}
+              </div>
+            )}
 
             {showApplicationOnboardingPanel && (
               <div className="mb-5 rounded-3xl border border-[#eadfc8] bg-gradient-to-br from-white via-white to-[#fbf6ea] p-5 shadow-sm">
@@ -3436,7 +3584,7 @@ export default function AdminTable({
                   <button type="button" disabled={applicationOnboardingBusy} onClick={saveApplicationOnboarding} className={getAdminActionClass("primary")}>
                     {applicationOnboardingBusy ? <><ActionSpinner /> Saving...</> : "Save onboarding details"}
                   </button>
-                  <p className="text-xs font-semibold text-slate-500">This does not email the applicant. It only updates the admin record.</p>
+                  <p className="text-xs font-semibold text-slate-500">This only updates the admin record. Use the applicant email box above to send a real email.</p>
                 </div>
 
                 {applicationOnboardingMessage && <p className="mt-3 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">{applicationOnboardingMessage}</p>}
@@ -3899,14 +4047,6 @@ export default function AdminTable({
                   </div>
                 </div>
 
-                <ManualSalesTaxControls
-                  enabled={manualSalesTaxEnabled}
-                  rate={manualSalesTaxRate}
-                  onEnabledChange={setManualSalesTaxEnabled}
-                  onRateChange={setManualSalesTaxRate}
-                  context={selected.service === "laundry-rescue" ? "deposit checkout" : selectedIsCommercial ? "commercial payment" : "family payment"}
-                />
-
                 {selectedIsCommercial && (
                   <div className="mt-4 rounded-3xl border border-cyan-200 bg-white p-4">
                     <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
@@ -3955,7 +4095,7 @@ export default function AdminTable({
                         <h5 className="mt-1 text-base font-black text-[#075c58]">{selected.service === "laundry-rescue" ? "Create a deposit checkout from the saved laundry breakdown" : "Create a Stripe invoice from the saved family breakdown"}</h5>
                         <p className="mt-1 text-sm leading-6 text-slate-700">
                           {selected.service === "laundry-rescue"
-                            ? "This uses the saved breakdown amount to create a non-refundable Laundry Rescue deposit checkout with manual sales tax only if checked. Stripe asks the customer to choose auto-charge for the final balance or invoice-before-delivery."
+                            ? "This uses the saved breakdown amount to create a taxable, non-refundable Laundry Rescue deposit checkout. Stripe asks the customer to choose auto-charge for the final balance or invoice-before-delivery."
                             : "Use this when you want a formal invoice/PDF instead of only a checkout receipt: Errand Helper, custom family quotes, recurring family help, approved add-ons, or refund/credit documentation."}
                         </p>
                       </div>
@@ -4122,7 +4262,7 @@ export default function AdminTable({
                     <div className="mt-4 rounded-3xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm leading-6 text-rose-900">
                       <p className="font-black text-rose-950">Laundry deposit checkout note</p>
                       <p className="mt-1 font-semibold">
-                        This creates the non-refundable deposit/minimum checkout with manual sales tax only if checked. Stripe will ask the customer to choose either auto-charge for the final dry-weight balance or invoice-before-delivery. Deposit paid does not mean fully paid.
+                        This creates the non-refundable, taxable deposit/minimum checkout. Stripe will ask the customer to choose either auto-charge for the final dry-weight balance or invoice-before-delivery. Deposit paid does not mean fully paid.
                       </p>
                     </div>
                   )}
@@ -4186,7 +4326,7 @@ export default function AdminTable({
                     <p className="mt-2 text-sm leading-6 text-slate-700">
                       {laundryAutoChargeAuthorized
                         ? "The customer chose auto-charge during deposit checkout. Enter the dry weight, rate, add-ons, and deposit credit; NestHelper creates an itemized Stripe invoice and charges the saved payment method instead of showing a manual sender section."
-                        : "The customer chose invoice-before-delivery, or no auto-charge authorization is saved. Enter the dry weight, rate, add-ons, and deposit credit; NestHelper creates a Stripe invoice with line-item details for the remaining balance only, with manual sales tax only if checked."}
+                        : "The customer chose invoice-before-delivery, or no auto-charge authorization is saved. Enter the dry weight, rate, add-ons, and deposit credit; NestHelper creates a Stripe invoice with line-item details for the remaining taxable balance only."}
                     </p>
                   </div>
                   <StatusBadge status={String(selected.laundryPaymentStatus || selected.paymentStatus || selected.status || "New")} />
@@ -4197,7 +4337,7 @@ export default function AdminTable({
                     <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Customer final-payment choice</p>
                     <p className="mt-1 font-black text-[#075c58]">{selected.laundryFinalPaymentPreferenceLabel || "Not captured yet"}</p>
                     <p className="mt-1 text-xs font-semibold text-slate-600">
-                      The deposit/minimum is non-refundable. The final invoice applies the pre-tax deposit as a credit; add manual sales tax only if this final balance should be taxed.
+                      The deposit/minimum is non-refundable and taxable. The final invoice applies the pre-tax deposit as a credit so Stripe only taxes the remaining final balance.
                     </p>
                   </div>
                   {laundryAutoChargeAuthorized ? (
@@ -4276,7 +4416,7 @@ export default function AdminTable({
                     <p className="mt-1 text-xl font-black text-[#075c58]">-{formatMoney(toNumber(laundryDepositCredit))}</p>
                   </div>
                   <div>
-                    <p className="font-black uppercase tracking-[0.14em] text-[#b98a2f]">Final balance before any manual tax</p>
+                    <p className="font-black uppercase tracking-[0.14em] text-[#b98a2f]">Final taxable balance</p>
                     <p className="mt-1 text-xl font-black text-[#075c58]">{formatMoney(laundryBalanceDue)}</p>
                   </div>
                 </div>
@@ -4291,14 +4431,6 @@ export default function AdminTable({
                     className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
                   />
                 </label>
-
-                <ManualSalesTaxControls
-                  enabled={manualSalesTaxEnabled}
-                  rate={manualSalesTaxRate}
-                  onEnabledChange={setManualSalesTaxEnabled}
-                  onRateChange={setManualSalesTaxRate}
-                  context="final laundry balance"
-                />
 
                 {laundryAutoChargeAuthorized ? (
                   <div className="mt-4">
@@ -4418,14 +4550,6 @@ export default function AdminTable({
                     className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
                   />
                 </label>
-
-                <ManualSalesTaxControls
-                  enabled={manualSalesTaxEnabled}
-                  rate={manualSalesTaxRate}
-                  onEnabledChange={setManualSalesTaxEnabled}
-                  onRateChange={setManualSalesTaxRate}
-                  context="additional payment"
-                />
 
                 <div className="mt-4 grid gap-3 md:grid-cols-2">
                   <button
