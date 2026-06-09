@@ -6,7 +6,7 @@ import Stripe from "stripe";
 import { isAllowedAdminEmail } from "@/lib/adminAuth";
 import { getFirebaseAdminDb } from "@/lib/firebaseAdmin";
 import { sendCommercialInvoiceEmail } from "@/lib/sendCommercialInvoiceEmail";
-import { getManualSalesTaxFirestoreFields, getManualSalesTaxMetadata, getOrCreateManualSalesTaxRate, manualTaxRatesParam, resolveManualSalesTaxConfig } from "@/lib/stripeManualTax";
+import { createManualDiscountCoupon, getManualSalesTaxFirestoreFields, getManualSalesTaxMetadata, getOrCreateManualSalesTaxRate, manualTaxRatesParam, resolveManualSalesTaxConfig } from "@/lib/stripeManualTax";
 
 export const runtime = "nodejs";
 
@@ -378,12 +378,26 @@ export async function POST(request: Request) {
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
     const servicePeriodLabel = formatServicePeriodLabel(breakdown.servicePeriodStart, breakdown.servicePeriodEnd);
     const manualSalesTaxRateId = await getOrCreateManualSalesTaxRate(stripe, manualSalesTax, { requestId, serviceId: "commercial-reset", paymentType: "commercial_invoice" });
+    const discountCreditCents = moneyToCents(breakdown.discountCredit);
+    const positiveLineSubtotalCents = lineItems.reduce((sum, line) => sum + moneyToCents(line.amount), 0);
+    const preTaxDiscountCents = Math.min(discountCreditCents, positiveLineSubtotalCents);
+    const preTaxDiscountCouponId = await createManualDiscountCoupon(stripe, {
+      amountCents: preTaxDiscountCents,
+      name: `Discount / credit ${formatRateForInvoice(String(preTaxDiscountCents / 100), "flat")}`,
+      metadata: {
+        requestId,
+        serviceId: "commercial-reset",
+        paymentType: "commercial_invoice",
+        creditType: "quote_discount_credit",
+      },
+    });
 
     const invoice = await stripe.invoices.create({
       customer: customer.id,
       collection_method: "send_invoice",
       days_until_due: 7,
       automatic_tax: { enabled: false },
+      discounts: preTaxDiscountCouponId ? [{ coupon: preTaxDiscountCouponId }] : undefined,
       auto_advance: false,
       description: getString(breakdown.quoteTitle) || "NestHelper Commercial Reset invoice",
       footer:
@@ -396,7 +410,10 @@ export async function POST(request: Request) {
         servicePeriodStart: getString(breakdown.servicePeriodStart),
         servicePeriodEnd: getString(breakdown.servicePeriodEnd),
         servicePeriodLabel,
-        taxHandling: manualSalesTax.enabled ? "manual_sales_tax_on_taxable_lines" : "no_sales_tax",
+        taxHandling: manualSalesTax.enabled ? "manual_sales_tax_on_taxable_lines_after_discount" : "no_sales_tax",
+        discountMethod: preTaxDiscountCents > 0 ? "stripe_coupon_before_manual_tax" : "none",
+        discountCouponId: preTaxDiscountCouponId,
+        discountAmount: preTaxDiscountCents > 0 ? String(Number((preTaxDiscountCents / 100).toFixed(2))) : "0",
         ...getManualSalesTaxMetadata(manualSalesTax, manualSalesTaxRateId),
         serviceAddress: commercialAddress.sourceText,
         siteUrl,
@@ -419,34 +436,17 @@ export async function POST(request: Request) {
         tax_behavior: "exclusive",
         tax_code: taxMode === "taxable" ? commercialCleaningTaxCode : nontaxableProductTaxCode,
         description: buildLineDescription(line, servicePeriodLabel),
+        discountable: true,
         metadata: {
           requestId,
           serviceId: "commercial-reset",
           preset: getString(line.preset),
           lineLabel: getString(line.label) || "Commercial Reset line item",
-          taxMode,
+          taxMode: manualSalesTax.enabled && taxMode === "taxable" ? "taxable_after_discount" : taxMode,
           manualSalesTaxApplied: manualSalesTax.enabled && taxMode === "taxable" ? "true" : "false",
         },
         ...manualTaxRatesParam(manualSalesTaxRateId, manualSalesTax.enabled && taxMode === "taxable"),
       } as any);
-
-      attachedLineCount += 1;
-    }
-
-    const discountCredit = moneyToCents(breakdown.discountCredit);
-    if (discountCredit > 0) {
-      await stripe.invoiceItems.create({
-        customer: customer.id,
-        invoice: invoice.id,
-        currency: "usd",
-        amount: -discountCredit,
-        description: "Discount / credit\nApplied from the approved NestHelper Commercial Reset quote breakdown.",
-        metadata: {
-          requestId,
-          serviceId: "commercial-reset",
-          taxMode: "credit",
-        },
-      });
 
       attachedLineCount += 1;
     }
@@ -555,7 +555,11 @@ export async function POST(request: Request) {
         : "No sales tax applied by NestHelper; Stripe automatic tax disabled",
       commercialInvoiceTaxStatus: taxStatus,
       commercialInvoiceServiceAddress: commercialAddress.sourceText,
-      commercialInvoiceTaxMode: manualSalesTax.enabled ? "Manual sales tax" : "No sales tax",
+      commercialInvoiceTaxMode: manualSalesTax.enabled ? "Manual sales tax after discount" : "No sales tax",
+      commercialInvoiceDiscountMethod: preTaxDiscountCents > 0 ? "Stripe coupon before manual tax" : "none",
+      commercialInvoiceDiscountCouponId: preTaxDiscountCouponId,
+      commercialInvoiceDiscountCents: preTaxDiscountCents,
+      commercialInvoiceDiscountAmount: Number((preTaxDiscountCents / 100).toFixed(2)),
       ...getManualSalesTaxFirestoreFields(manualSalesTax, manualSalesTaxRateId),
       commercialInvoiceTaxableLineCount: commercialTaxCounts.taxable,
       commercialInvoiceNontaxableLineCount: commercialTaxCounts.nontaxable,
@@ -587,6 +591,8 @@ export async function POST(request: Request) {
       serviceAddress: commercialAddress.sourceText,
       manualSalesTaxEnabled: manualSalesTax.enabled,
       manualSalesTaxRate: manualSalesTax.rate,
+      preTaxDiscountAmount: preTaxDiscountCents / 100,
+      preTaxDiscountCouponId,
     });
   } catch (error: any) {
     console.error("Unable to create commercial invoice", error);

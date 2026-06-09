@@ -123,3 +123,31 @@ export function getManualSalesTaxFirestoreFields(config: ManualSalesTaxConfig, t
 export function manualTaxRatesParam(taxRateId: string, taxable = true) {
   return taxRateId && taxable ? { tax_rates: [taxRateId] } : {};
 }
+
+
+export async function createManualDiscountCoupon(
+  stripe: Stripe,
+  params: {
+    amountCents: number;
+    currency?: string;
+    name: string;
+    metadata?: Record<string, string>;
+  }
+) {
+  const amountCents = Math.max(0, Math.round(params.amountCents));
+  if (amountCents <= 0) return "";
+
+  const coupon = await stripe.coupons.create({
+    amount_off: amountCents,
+    currency: params.currency || "usd",
+    duration: "once",
+    name: params.name.slice(0, 40),
+    metadata: {
+      source: "nesthelper_manual_discount",
+      discountAppliedBeforeManualTax: "true",
+      ...(params.metadata || {}),
+    },
+  });
+
+  return coupon.id;
+}

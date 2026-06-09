@@ -9,7 +9,7 @@ import { services } from "@/lib/services";
 import { emailAliases } from "@/lib/emailRouting";
 import { sendFamilyInvoiceEmail } from "@/lib/sendFamilyInvoiceEmail";
 import { getAvailableCustomerReferralCreditsForEmail, getTotalCustomerCreditAmount, reserveAppliedCustomerReferralCreditsForPayment } from "@/lib/referrals";
-import { getManualSalesTaxFirestoreFields, getManualSalesTaxMetadata, getOrCreateManualSalesTaxRate, manualTaxRatesParam, resolveManualSalesTaxConfig, type ManualSalesTaxConfig } from "@/lib/stripeManualTax";
+import { createManualDiscountCoupon, getManualSalesTaxFirestoreFields, getManualSalesTaxMetadata, getOrCreateManualSalesTaxRate, manualTaxRatesParam, resolveManualSalesTaxConfig, type ManualSalesTaxConfig } from "@/lib/stripeManualTax";
 
 export const runtime = "nodejs";
 
@@ -445,11 +445,26 @@ export async function POST(request: Request) {
     });
 
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+    const discountCreditCents = moneyToCents(breakdown.discountCredit);
+    const positiveLineSubtotalCents = lineItems.reduce((sum, line) => sum + moneyToCents(line.amount), 0);
+    const preTaxDiscountCents = Math.min(discountCreditCents, positiveLineSubtotalCents);
+    const preTaxDiscountCouponId = await createManualDiscountCoupon(stripe, {
+      amountCents: preTaxDiscountCents,
+      name: `Referral/customer credit ${formatMoney(preTaxDiscountCents / 100)}`,
+      metadata: {
+        requestId,
+        serviceId: getString(data.service) || "family-service",
+        paymentType: "family_invoice",
+        creditType: "referral_customer_credit",
+      },
+    });
+
     const invoice = await stripe.invoices.create({
       customer: customer.id,
       collection_method: "send_invoice",
       days_until_due: 7,
       automatic_tax: { enabled: false },
+      discounts: preTaxDiscountCouponId ? [{ coupon: preTaxDiscountCouponId }] : undefined,
       auto_advance: false,
       description: getString(breakdown.quoteTitle) || `${serviceTitle} invoice`,
       footer:
@@ -463,8 +478,10 @@ export async function POST(request: Request) {
         servicePeriodEnd: getString(breakdown.servicePeriodEnd),
         servicePeriodLabel,
         siteUrl,
-        referralCreditDeductedAmount: referralCreditAlreadyDeductedNote ? String(Number(savedDiscountCredit.toFixed(2))) : "",
-        taxHandling: manualSalesTax.enabled ? "manual_sales_tax" : "no_sales_tax",
+        referralCreditDeductedAmount: preTaxDiscountCents > 0 ? String(Number((preTaxDiscountCents / 100).toFixed(2))) : "",
+        referralCreditDiscountMethod: preTaxDiscountCents > 0 ? "stripe_coupon_before_manual_tax" : "none",
+        referralCreditDiscountCouponId: preTaxDiscountCouponId,
+        taxHandling: manualSalesTax.enabled ? "manual_sales_tax_after_discount" : "no_sales_tax",
         ...getManualSalesTaxMetadata(manualSalesTax, manualSalesTaxRateId),
       },
     });
@@ -480,28 +497,16 @@ export async function POST(request: Request) {
         currency: "usd",
         amount,
         description: buildLineDescription(line, servicePeriodLabel),
+        discountable: true,
         metadata: {
           requestId,
           serviceId: getString(data.service) || "family-service",
           preset: getString(line.preset),
           lineLabel: getString(line.label) || "NestHelper family line item",
-          taxMode: manualSalesTax.enabled ? "manual_sales_tax" : "no_sales_tax",
+          taxMode: manualSalesTax.enabled ? "manual_sales_tax_after_discount" : "no_sales_tax",
         },
         ...manualTaxRatesParam(manualSalesTaxRateId),
       } as any);
-      attachedLineCount += 1;
-    }
-
-    const discountCredit = moneyToCents(breakdown.discountCredit);
-    if (discountCredit > 0) {
-      await stripe.invoiceItems.create({
-        customer: customer.id,
-        invoice: invoice.id,
-        currency: "usd",
-        amount: -discountCredit,
-        description: ["Referral/customer credit", "Deducted from this final amount due.", "Applied from the approved NestHelper family payment breakdown."].join("\n"),
-        metadata: { requestId, serviceId: getString(data.service) || "family-service" },
-      });
       attachedLineCount += 1;
     }
 
@@ -592,7 +597,11 @@ export async function POST(request: Request) {
       familyInvoiceCreatedAt: FieldValue.serverTimestamp(),
       familyInvoiceSentAt: shouldSendEmail && emailSent ? FieldValue.serverTimestamp() : null,
       familyInvoiceCreatedBy: decoded.email || "admin",
-      familyInvoiceTaxMode: manualSalesTax.enabled ? "Manual sales tax" : "No sales tax",
+      familyInvoiceTaxMode: manualSalesTax.enabled ? "Manual sales tax after discount" : "No sales tax",
+      familyInvoiceDiscountMethod: preTaxDiscountCents > 0 ? "Stripe coupon before manual tax" : "none",
+      familyInvoiceDiscountCouponId: preTaxDiscountCouponId,
+      familyInvoiceDiscountCents: preTaxDiscountCents,
+      familyInvoiceDiscountAmount: Number((preTaxDiscountCents / 100).toFixed(2)),
       ...getManualSalesTaxFirestoreFields(manualSalesTax, manualSalesTaxRateId),
       updatedAt: FieldValue.serverTimestamp(),
       updatedBy: decoded.email || "admin",
@@ -623,6 +632,8 @@ export async function POST(request: Request) {
       reservedCustomerCredit,
       manualSalesTaxEnabled: manualSalesTax.enabled,
       manualSalesTaxRate: manualSalesTax.rate,
+      preTaxDiscountAmount: preTaxDiscountCents / 100,
+      preTaxDiscountCouponId,
     });
   } catch (error: any) {
     console.error("Unable to create family invoice", error);
