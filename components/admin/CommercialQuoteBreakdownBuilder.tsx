@@ -256,7 +256,7 @@ function getCommercialLineTaxMode(line: Pick<QuoteLineItem, "preset" | "label" |
     .join(" ");
 
   if (TAXABLE_COMMERCIAL_PRESETS.has(line.preset)) return "taxable";
-  if (/(carpet|deep clean|deep-clean|first[-\s]?time|floor scrub|buff|shine|wax|strip|turnover|linen|restock|specialty|specialized|non[-\s]?repetitive|construction cleanup|move[-\s]?out)/.test(searchable)) return "taxable";
+  if (/\b(carpet|deep clean|deep-clean|first[-\s]?time|floor scrub|buff|shine|wax|strip|turnover|linen|restock|specialty|specialized|non[-\s]?repetitive|construction cleanup|move[-\s]?out)\b/.test(searchable)) return "taxable";
   return "nontaxable";
 }
 
@@ -704,7 +704,7 @@ export default function CommercialQuoteBreakdownBuilder({ item, formatMoney, onS
         customerNote,
         internalNotes,
         customerBreakdownText,
-        taxNote: "Commercial invoice tax is automatic by line item: routine janitorial defaults to no sales tax; specialty, deep-cleaning, floor/carpet, turnover, linen/restock, and manually taxable lines are sent to Stripe as taxable.",
+        taxNote: "Commercial tax mode is saved by line item: routine janitorial defaults to no sales tax; specialty, deep-cleaning, floor/carpet, turnover, linen/restock, and manually taxable lines are marked taxable. Sales tax is only added later when you check the manual sales-tax box before creating the invoice.",
       };
       const refundTracking = {
         status: refundStatus,
@@ -759,7 +759,7 @@ export default function CommercialQuoteBreakdownBuilder({ item, formatMoney, onS
         <div>
           <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Professional quote builder</p>
           <h5 className="mt-1 text-base font-black text-[#075c58]">Build a customer-ready breakdown</h5>
-          <p className="mt-1 text-sm leading-6 text-slate-700">Use sq-ft calculators for routine commercial service, plus dropdown line items for recurring plans, add-ons, credits, and refund notes. Tax mode is automatic by line item: routine janitorial defaults to no sales tax, while specialty/floor/carpet/turnover/linen lines default to taxable.</p>
+          <p className="mt-1 text-sm leading-6 text-slate-700">Use sq-ft calculators for routine commercial service, plus dropdown line items for recurring plans, add-ons, credits, and refund notes. Tax mode is saved by line item: routine janitorial defaults to no sales tax, while specialty/floor/carpet/turnover/linen lines default to taxable. Manual sales tax is only added later when checked before invoice creation.</p>
         </div>
         <button
           type="button"
@@ -884,7 +884,7 @@ export default function CommercialQuoteBreakdownBuilder({ item, formatMoney, onS
                     {laterAmount > 0 && <div className="flex justify-between gap-3"><span>Possible later/add-on</span><strong>{formatMoney(laterAmount)}</strong></div>}
                     <div className="flex justify-between gap-3"><span>Total tracked</span><strong>{formatMoney(totalQuoted)}</strong></div>
                   </div>
-                  <p className="mt-3 text-xs font-semibold leading-5 text-slate-600">Stripe invoice tax is automatic by line item. Taxable lines in this draft: <strong>{taxableLineCount}</strong>. Routine recurring janitorial defaults to no sales tax; specialty/deep/floor/carpet/turnover/linen lines default to taxable. Use the Tax mode dropdown only when you need to override the automatic choice.</p>
+                  <p className="mt-3 text-xs font-semibold leading-5 text-slate-600">Taxable line tracking is saved by line item. Taxable lines in this draft: <strong>{taxableLineCount}</strong>. Routine recurring janitorial defaults to no sales tax; specialty/deep/floor/carpet/turnover/linen lines default to taxable. Use the Tax mode dropdown only when you need to override the saved line choice. Manual sales tax is added only if the admin sales-tax box is checked before creating the invoice.</p>
                   <div className="mt-4 grid gap-2">
                     <button type="button" onClick={() => onApplyFirstPayment?.(amountDueNow, quoteTitle, customerNote)} className={getBuilderButtonClass("primary")}>Use amount due now for first payment</button>
                     <button type="button" onClick={() => onApplyAdditionalPayment?.(laterAmount, customerNote)} className={getBuilderButtonClass("secondary")}>Use later amount for add-on link</button>

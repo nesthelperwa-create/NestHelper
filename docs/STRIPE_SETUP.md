@@ -13,7 +13,7 @@ NestHelper should stay request-first during launch:
 Laundry:
 
 1. Customer submits Laundry Rescue request.
-2. NestHelper approves pickup and sends a non-refundable taxable deposit link.
+2. NestHelper approves pickup and sends a non-refundable deposit link. Manual sales tax is added only when intentionally checked by admin.
 3. Stripe checkout asks the customer to choose auto-charge for the final balance or invoice-before-delivery.
 4. Laundry is dry-weighed at pickup.
 5. Add-ons are confirmed.
@@ -36,7 +36,7 @@ Public checkout remains disabled unless `ENABLE_PUBLIC_CHECKOUT=true`. Keep it d
 
 ## Stripe Tax
 
-Turn on Stripe Tax and make prices tax-exclusive so WA tax is added on top of the service price.
+Keep Stripe automatic tax off for now. Use the admin manual sales-tax checkbox only when a specific invoice/payment should include sales tax.
 
 Use this display language:
 
@@ -77,7 +77,7 @@ STRIPE_PRICE_HELPER_BLOCK_FOUNDING=price_... # optional internal discount, sugge
 STRIPE_PRICE_ERRAND_STANDARD=price_... # $119
 STRIPE_PRICE_ERRAND_FOUNDING=price_... # optional internal discount, suggested $109
 ENABLE_PUBLIC_CHECKOUT=false
-ENABLE_STRIPE_AUTOMATIC_TAX=true
+ENABLE_STRIPE_AUTOMATIC_TAX=false
 ```
 
 ## Vercel env vars
@@ -122,29 +122,29 @@ Use promo/internal discount prices sparingly. Because discounts differ by servic
 - Do not turn on public checkout yet.
 - Do not send a payment link until you approve service area, scope, safety, pets/access, and availability.
 - For Laundry Rescue, the first checkout should be a non-refundable deposit/minimum. The final balance should be a Stripe Invoice after dry weigh-in and add-ons.
-- For live tax, complete Stripe Tax setup and set `ENABLE_STRIPE_AUTOMATIC_TAX=true`; otherwise tax will not be added in checkout/invoices.
+- For live tax, keep `ENABLE_STRIPE_AUTOMATIC_TAX=false` and use the admin manual sales-tax checkbox only when needed. Do not re-enable automatic tax unless you intentionally want Stripe Tax calculations on new payments.
 
 
-## Sandbox tax note
+## Manual tax note
 
-For sandbox testing, `ENABLE_STRIPE_AUTOMATIC_TAX=false` lets checkout links work before the Stripe head office/tax profile is fully completed. Before real customer payments, complete Stripe business/tax setup and set `ENABLE_STRIPE_AUTOMATIC_TAX=true` if you want Stripe Checkout to calculate tax automatically.
+For testing and live use, keep `ENABLE_STRIPE_AUTOMATIC_TAX=false`. Add sales tax only from the admin manual sales-tax control when you have verified the service is taxable and confirmed the correct rate. Do not turn automatic Stripe Tax back on unless you intentionally want Stripe Tax calculations and fees on new payments.
 
 
 ## Laundry Rescue tax and final-balance choice note
 
 Laundry Rescue deposits created from either Quick Checkout or the saved Family Payment Breakdown are Checkout Sessions, not normal Stripe invoices, so Stripe can collect the customer’s required final-balance choice: auto-charge saved card after weigh-in, or email final invoice before delivery. The final balance after dry weight remains a Stripe invoice with line-item details.
 
-Laundry Rescue tax is forced on in code for deposit Checkout and final balance invoices with Stripe automatic tax enabled. The default Laundry Rescue product tax code is `txcd_20090012` (Linen Services - Laundry only) unless `STRIPE_LAUNDRY_TAX_CODE`, `STRIPE_PRODUCT_TAX_CODE`, or `STRIPE_TAX_CODE` is set in Vercel. Stripe Tax must be active in the Stripe account and the customer location must be collected/valid for tax to appear.
+Laundry Rescue tax is no longer forced on through Stripe automatic tax. Admin can add manual Washington sales tax to deposit Checkout and final balance invoices only when needed and after verifying the correct rate.
 
 
 ## NestHelper tax handling by service
 
-The site now uses Stripe Tax selectively instead of taxing every package.
+The site now uses manual sales-tax controls selectively instead of automatic Stripe Tax.
 
 Required Vercel setting:
 
 ```text
-ENABLE_STRIPE_AUTOMATIC_TAX=true
+ENABLE_STRIPE_AUTOMATIC_TAX=false
 ```
 
 Recommended optional tax-code settings:
@@ -157,11 +157,11 @@ STRIPE_NONTAXABLE_TAX_CODE=txcd_00000000
 
 Current behavior:
 
-- Laundry Rescue deposit and final balance: taxable through Stripe Tax.
+- Laundry Rescue deposit and final balance: manual sales tax can be added by admin if needed.
 - Parent Reset, Family Reset, Helper Block, Errand Helper, and family-service invoices: not taxed by default.
 - Commercial Reset routine/recurring janitorial-style lines: not taxed by default.
 - Commercial Reset specialty/non-repetitive cleaning-style lines such as first-time reset, carpet deep cleaning, spot treatment, floor scrub, buff/shine, wax/finish, strip & wax, turnover, and linen/restock are treated as taxable commercial cleaning lines.
-- If a commercial invoice mixes taxable and nontaxable lines, Stripe Tax is enabled for the invoice and each line is assigned either the commercial cleaning tax code or the nontaxable tax code.
+- If a commercial invoice mixes taxable and nontaxable lines, manual sales tax is applied only to saved lines marked taxable when the admin checks the manual sales-tax box.
 
 Keep the Stripe Dashboard preset product category as a safe default, but the code now explicitly sets tax codes on the lines it creates so Laundry Rescue and Commercial Reset behave more predictably.
 
@@ -171,13 +171,13 @@ Commercial Reset invoices are now selective by line item. The quote builder save
 
 Admin can override a commercial line in the quote builder with **Tax mode**:
 - **Auto**: NestHelper decides by preset/keywords.
-- **Force taxable**: Stripe automatic tax applies to that line.
+- **Force taxable**: manual sales tax applies to that line only when the admin checks the manual sales-tax box before creating the invoice.
 - **Force no tax**: Uses the nontaxable tax code for that line.
 
 Recommended environment variables:
 
 ```text
-ENABLE_STRIPE_AUTOMATIC_TAX=true
+ENABLE_STRIPE_AUTOMATIC_TAX=false
 STRIPE_COMMERCIAL_CLEANING_TAX_CODE=txcd_20010004
 STRIPE_NONTAXABLE_TAX_CODE=txcd_00000000
 ```

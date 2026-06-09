@@ -9,16 +9,18 @@ import { services } from "@/lib/services";
 import { emailAliases } from "@/lib/emailRouting";
 import { sendFamilyInvoiceEmail } from "@/lib/sendFamilyInvoiceEmail";
 import { getAvailableCustomerReferralCreditsForEmail, getTotalCustomerCreditAmount, reserveAppliedCustomerReferralCreditsForPayment } from "@/lib/referrals";
+import { getManualSalesTaxFirestoreFields, getManualSalesTaxMetadata, getOrCreateManualSalesTaxRate, manualTaxRatesParam, resolveManualSalesTaxConfig, type ManualSalesTaxConfig } from "@/lib/stripeManualTax";
 
 export const runtime = "nodejs";
 
 const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
-const enableAutomaticTax = process.env.ENABLE_STRIPE_AUTOMATIC_TAX !== "false";
 const laundryProductTaxCode = (process.env.STRIPE_LAUNDRY_TAX_CODE || process.env.STRIPE_PRODUCT_TAX_CODE || process.env.STRIPE_TAX_CODE || "txcd_20090012").trim();
 
 type CreateFamilyInvoiceBody = {
   requestId?: string;
   sendEmail?: boolean;
+  manualSalesTax?: boolean | string;
+  manualSalesTaxRate?: number | string;
 };
 
 type LaundryFinalPaymentCustomField = {
@@ -151,8 +153,9 @@ async function createLaundryDepositCheckoutFromBreakdown(params: {
   amountDueNowCents: number;
   shouldSendEmail: boolean;
   adminEmail: string;
+  manualSalesTax: ManualSalesTaxConfig;
 }) {
-  const { stripe, requestRef, requestId, data, breakdown, amountDueNowCents, shouldSendEmail, adminEmail } = params;
+  const { stripe, requestRef, requestId, data, breakdown, amountDueNowCents, shouldSendEmail, adminEmail, manualSalesTax } = params;
   const email = getString(data.email);
   const fullName = getString(data.fullName) || getString(data.contactName) || "NestHelper customer";
   const serviceTitle = getServiceTitle(data) || "Laundry Rescue";
@@ -166,6 +169,7 @@ async function createLaundryDepositCheckoutFromBreakdown(params: {
     : "";
 
   const address = getAddress(data);
+  const manualSalesTaxRateId = await getOrCreateManualSalesTaxRate(stripe, manualSalesTax, { requestId, serviceId: "laundry-rescue", paymentType: "laundry_deposit_checkout" });
   const customerWithServiceAddress = address
     ? await stripe.customers.create({
         email: email || undefined,
@@ -205,9 +209,10 @@ async function createLaundryDepositCheckoutFromBreakdown(params: {
           },
         },
         quantity: 1,
+        ...manualTaxRatesParam(manualSalesTaxRateId),
       },
     ],
-    automatic_tax: { enabled: true },
+    automatic_tax: { enabled: false },
     billing_address_collection: "required",
     phone_number_collection: { enabled: true },
     client_reference_id: requestId,
@@ -237,6 +242,8 @@ async function createLaundryDepositCheckoutFromBreakdown(params: {
       customerEmail: email,
       customerPhone: getString(data.phone),
       referralCreditDeductedAmount: referralCreditAlreadyDeductedNote ? String(Number(discountCredit.toFixed(2))) : "",
+      taxHandling: manualSalesTax.enabled ? "manual_sales_tax" : "no_sales_tax",
+      ...getManualSalesTaxMetadata(manualSalesTax, manualSalesTaxRateId),
     },
   };
 
@@ -263,7 +270,7 @@ async function createLaundryDepositCheckoutFromBreakdown(params: {
         quoteBreakdownText: [
           customerBreakdownText,
           referralCreditAlreadyDeductedNote,
-          "This non-refundable deposit/minimum is taxable and credited toward the final Laundry Rescue total.",
+          manualSalesTax.enabled ? `Manual sales tax of ${manualSalesTax.rate}% is added in Stripe checkout.` : "No sales tax is added unless NestHelper manually enables it before sending.",
           "During Stripe checkout, the customer chooses either auto-charge for the final balance after dry weigh-in or invoice-before-delivery. Laundry is not released until the final balance is fully paid.",
         ].filter(Boolean).join("\n\n"),
         servicePeriodLabel,
@@ -301,7 +308,10 @@ async function createLaundryDepositCheckoutFromBreakdown(params: {
     laundryDepositCheckoutSessionId: session.id,
     laundryDepositExpectedAmountCents: amountDueNowCents,
     laundryDepositNonRefundable: true,
-    laundryDepositTaxMode: "Stripe automatic tax with Laundry Services product tax code",
+    laundryDepositTaxMode: manualSalesTax.enabled ? "Manual sales tax on Laundry Rescue deposit" : "No sales tax applied",
+    laundryDepositManualSalesTaxEnabled: manualSalesTax.enabled,
+    laundryDepositManualSalesTaxRate: manualSalesTax.enabled ? manualSalesTax.rate : 0,
+    laundryDepositManualSalesTaxRateId: manualSalesTaxRateId,
     laundryFinalPaymentChoiceRequired: true,
     laundryFinalPaymentOptions: "auto_charge_or_invoice_before_delivery",
     updatedAt: FieldValue.serverTimestamp(),
@@ -332,6 +342,8 @@ async function createLaundryDepositCheckoutFromBreakdown(params: {
     deliveryMethod: shouldSendEmail ? "nesthelper_email" : "manual",
     isLaundryDepositCheckout: true,
     reservedCustomerCredit,
+    manualSalesTaxEnabled: manualSalesTax.enabled,
+    manualSalesTaxRate: manualSalesTax.rate,
   };
 }
 
@@ -354,6 +366,7 @@ export async function POST(request: Request) {
     const body = (await request.json().catch(() => null)) as CreateFamilyInvoiceBody | null;
     const requestId = getString(body?.requestId);
     const shouldSendEmail = body?.sendEmail !== false;
+    const manualSalesTax = resolveManualSalesTaxConfig({ enabled: body?.manualSalesTax, rate: body?.manualSalesTaxRate });
 
     if (!requestId) return NextResponse.json({ ok: false, error: "Missing request ID." }, { status: 400 });
 
@@ -414,6 +427,7 @@ export async function POST(request: Request) {
         amountDueNowCents,
         shouldSendEmail,
         adminEmail: decoded.email || "admin",
+        manualSalesTax,
       });
       return NextResponse.json(laundryCheckout);
     }
@@ -421,6 +435,7 @@ export async function POST(request: Request) {
     const customerName = getString(data.fullName) || getString(data.contactName) || "NestHelper customer";
     const serviceTitle = getServiceTitle(data);
     const address = getAddress(data);
+    const manualSalesTaxRateId = await getOrCreateManualSalesTaxRate(stripe, manualSalesTax, { requestId, serviceId: getString(data.service) || "family-service", paymentType: "family_invoice" });
     const customer = await stripe.customers.create({
       email,
       name: customerName,
@@ -434,7 +449,7 @@ export async function POST(request: Request) {
       customer: customer.id,
       collection_method: "send_invoice",
       days_until_due: 7,
-      automatic_tax: { enabled: enableAutomaticTax },
+      automatic_tax: { enabled: false },
       auto_advance: false,
       description: getString(breakdown.quoteTitle) || `${serviceTitle} invoice`,
       footer:
@@ -449,6 +464,8 @@ export async function POST(request: Request) {
         servicePeriodLabel,
         siteUrl,
         referralCreditDeductedAmount: referralCreditAlreadyDeductedNote ? String(Number(savedDiscountCredit.toFixed(2))) : "",
+        taxHandling: manualSalesTax.enabled ? "manual_sales_tax" : "no_sales_tax",
+        ...getManualSalesTaxMetadata(manualSalesTax, manualSalesTaxRateId),
       },
     });
 
@@ -468,8 +485,10 @@ export async function POST(request: Request) {
           serviceId: getString(data.service) || "family-service",
           preset: getString(line.preset),
           lineLabel: getString(line.label) || "NestHelper family line item",
+          taxMode: manualSalesTax.enabled ? "manual_sales_tax" : "no_sales_tax",
         },
-      });
+        ...manualTaxRatesParam(manualSalesTaxRateId),
+      } as any);
       attachedLineCount += 1;
     }
 
@@ -573,6 +592,8 @@ export async function POST(request: Request) {
       familyInvoiceCreatedAt: FieldValue.serverTimestamp(),
       familyInvoiceSentAt: shouldSendEmail && emailSent ? FieldValue.serverTimestamp() : null,
       familyInvoiceCreatedBy: decoded.email || "admin",
+      familyInvoiceTaxMode: manualSalesTax.enabled ? "Manual sales tax" : "No sales tax",
+      ...getManualSalesTaxFirestoreFields(manualSalesTax, manualSalesTaxRateId),
       updatedAt: FieldValue.serverTimestamp(),
       updatedBy: decoded.email || "admin",
     });
@@ -600,6 +621,8 @@ export async function POST(request: Request) {
       servicePeriodLabel,
       deliveryMethod: shouldSendEmail ? "nesthelper_email" : "manual",
       reservedCustomerCredit,
+      manualSalesTaxEnabled: manualSalesTax.enabled,
+      manualSalesTaxRate: manualSalesTax.rate,
     });
   } catch (error: any) {
     console.error("Unable to create family invoice", error);

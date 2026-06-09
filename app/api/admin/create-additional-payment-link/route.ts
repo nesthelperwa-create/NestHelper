@@ -8,11 +8,11 @@ import { emailAliases } from "@/lib/emailRouting";
 import { getFirebaseAdminDb } from "@/lib/firebaseAdmin";
 import { services } from "@/lib/services";
 import { sendAdditionalPaymentLinkEmail } from "@/lib/sendAdditionalPaymentLinkEmail";
+import { getManualSalesTaxFirestoreFields, getManualSalesTaxMetadata, getOrCreateManualSalesTaxRate, manualTaxRatesParam, resolveManualSalesTaxConfig } from "@/lib/stripeManualTax";
 
 export const runtime = "nodejs";
 
 const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
-const enableAutomaticTax = process.env.ENABLE_STRIPE_AUTOMATIC_TAX !== "false";
 const nontaxableProductTaxCode = (process.env.STRIPE_NONTAXABLE_TAX_CODE || "txcd_00000000").trim();
 const laundryProductTaxCode = (process.env.STRIPE_LAUNDRY_TAX_CODE || process.env.STRIPE_PRODUCT_TAX_CODE || process.env.STRIPE_TAX_CODE || "txcd_20090012").trim();
 const commercialCleaningTaxCode = (process.env.STRIPE_COMMERCIAL_CLEANING_TAX_CODE || "txcd_20010004").trim();
@@ -23,6 +23,8 @@ type AdditionalPaymentBody = {
   reason?: string;
   note?: string;
   sendEmail?: boolean;
+  manualSalesTax?: boolean | string;
+  manualSalesTaxRate?: number | string;
 };
 
 function getString(value: unknown) {
@@ -78,6 +80,7 @@ export async function POST(request: Request) {
     const reason = getString(body?.reason) || "Additional approved balance";
     const note = getString(body?.note);
     const shouldSendEmail = body?.sendEmail !== false;
+    const manualSalesTax = resolveManualSalesTaxConfig({ enabled: body?.manualSalesTax, rate: body?.manualSalesTaxRate });
 
     if (!requestId) return NextResponse.json({ ok: false, error: "Missing request ID." }, { status: 400 });
     if (amountCents <= 0) return NextResponse.json({ ok: false, error: "Enter an additional payment amount greater than $0." }, { status: 400 });
@@ -95,6 +98,7 @@ export async function POST(request: Request) {
     const fullName = getString(data.fullName);
     const replyToEmail = getAdditionalPaymentReplyEmail(serviceId);
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+    const manualSalesTaxRateId = await getOrCreateManualSalesTaxRate(stripe, manualSalesTax, { requestId, serviceId, paymentType: "additional_payment" });
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
@@ -111,9 +115,10 @@ export async function POST(request: Request) {
             },
           },
           quantity: 1,
+          ...manualTaxRatesParam(manualSalesTaxRateId),
         },
       ],
-      automatic_tax: { enabled: enableAutomaticTax },
+      automatic_tax: { enabled: false },
       billing_address_collection: "required",
       phone_number_collection: { enabled: true },
       allow_promotion_codes: false,
@@ -131,6 +136,7 @@ export async function POST(request: Request) {
         additionalAmount: String(Number(amount.toFixed(2))),
         customerName: fullName,
         customerEmail: email,
+        ...getManualSalesTaxMetadata(manualSalesTax, manualSalesTaxRateId),
       },
     });
 
@@ -176,6 +182,8 @@ export async function POST(request: Request) {
       additionalPaymentEmailError: emailError,
       additionalPaymentCreatedAt: FieldValue.serverTimestamp(),
       additionalPaymentCreatedBy: decoded.email || "admin",
+      additionalPaymentTaxMode: manualSalesTax.enabled ? "Manual sales tax" : "No sales tax",
+      ...getManualSalesTaxFirestoreFields(manualSalesTax, manualSalesTaxRateId),
       additionalPaymentHistory: FieldValue.arrayUnion({
         type: "sent",
         amountCents,
@@ -187,15 +195,19 @@ export async function POST(request: Request) {
         emailSent,
         emailError,
         createdBy: decoded.email || "admin",
+        manualSalesTaxEnabled: manualSalesTax.enabled,
+        manualSalesTaxRate: manualSalesTax.enabled ? manualSalesTax.rate : 0,
+        manualSalesTaxRateId,
         createdAtIso: new Date().toISOString(),
       }),
       updatedAt: FieldValue.serverTimestamp(),
       updatedBy: decoded.email || "admin",
     });
 
-    return NextResponse.json({ ok: true, url: checkoutUrl, sessionId: session.id, emailSent, emailError, amount });
+    return NextResponse.json({ ok: true, url: checkoutUrl, sessionId: session.id, emailSent, emailError, amount, manualSalesTaxEnabled: manualSalesTax.enabled, manualSalesTaxRate: manualSalesTax.rate });
   } catch (error) {
     console.error(error);
-    return NextResponse.json({ ok: false, error: "Unable to create additional payment link." }, { status: 500 });
+    const message = error instanceof Error && error.message ? error.message : "Unable to create additional payment link.";
+    return NextResponse.json({ ok: false, error: message }, { status: 500 });
   }
 }

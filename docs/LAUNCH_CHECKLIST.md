@@ -8,7 +8,7 @@
 - WA business license / UBI active
 - Business bank account active
 - Insurance active before sending helpers into homes
-- Sales tax / Stripe Tax configured
+- Sales tax workflow confirmed: Stripe automatic tax stays off; manual sales tax is added only by admin when needed
 - Business email and phone active
 
 ## Website readiness

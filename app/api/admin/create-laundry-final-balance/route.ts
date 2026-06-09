@@ -6,11 +6,11 @@ import Stripe from "stripe";
 import { isAllowedAdminEmail } from "@/lib/adminAuth";
 import { getFirebaseAdminDb } from "@/lib/firebaseAdmin";
 import { sendLaundryFinalBalanceEmail } from "@/lib/sendLaundryFinalBalanceEmail";
+import { getManualSalesTaxFirestoreFields, getManualSalesTaxMetadata, getOrCreateManualSalesTaxRate, manualTaxRatesParam, resolveManualSalesTaxConfig } from "@/lib/stripeManualTax";
 
 export const runtime = "nodejs";
 
 const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
-const enableAutomaticTax = process.env.ENABLE_STRIPE_AUTOMATIC_TAX !== "false";
 const laundryProductTaxCode = (process.env.STRIPE_LAUNDRY_TAX_CODE || process.env.STRIPE_PRODUCT_TAX_CODE || process.env.STRIPE_TAX_CODE || "txcd_20090012").trim();
 
 type LaundryFinalBalanceBody = {
@@ -21,6 +21,8 @@ type LaundryFinalBalanceBody = {
   depositCredit?: number;
   finalBalanceNote?: string;
   sendEmail?: boolean;
+  manualSalesTax?: boolean | string;
+  manualSalesTaxRate?: number | string;
 };
 
 function getString(value: unknown) {
@@ -154,6 +156,7 @@ export async function POST(request: Request) {
     const addOnsAmount = Math.max(0, cleanNumber(body?.addOnsAmount));
     const finalBalanceNote = getString(body?.finalBalanceNote);
     const shouldSendEmail = body?.sendEmail !== false;
+    const manualSalesTax = resolveManualSalesTaxConfig({ enabled: body?.manualSalesTax, rate: body?.manualSalesTaxRate });
 
     if (!requestId) return NextResponse.json({ ok: false, error: "Missing request ID." }, { status: 400 });
     if (dryWeightLbs <= 0) return NextResponse.json({ ok: false, error: "Enter the dry weight before creating a final balance invoice." }, { status: 400 });
@@ -201,7 +204,8 @@ export async function POST(request: Request) {
       laundryBalanceDue: Number(balanceDue.toFixed(2)),
       laundryBalanceDueCents: balanceDueCents,
       laundryFinalBalanceNote: finalBalanceNote,
-      laundryFinalBalanceTaxMode: "Stripe automatic tax on final amount after non-refundable deposit credit",
+      laundryFinalBalanceTaxMode: manualSalesTax.enabled ? "Manual sales tax on final balance" : "No sales tax applied",
+      ...getManualSalesTaxFirestoreFields(manualSalesTax),
       updatedAt: FieldValue.serverTimestamp(),
       updatedBy: decoded.email || "admin",
     };
@@ -236,13 +240,14 @@ export async function POST(request: Request) {
 
     const customerId = await getOrCreateStripeCustomer(data, requestId, fullName, email);
     const couponId = await createDepositCreditCoupon(requestId, depositCredit);
+    const manualSalesTaxRateId = await getOrCreateManualSalesTaxRate(stripe, manualSalesTax, { requestId, serviceId: "laundry-rescue", paymentType: "laundry_final_balance" });
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
     const collectionMethod: "charge_automatically" | "send_invoice" = autoCharge ? "charge_automatically" : "send_invoice";
     const invoice = await stripe.invoices.create({
       customer: customerId,
       collection_method: collectionMethod,
       ...(autoCharge ? { default_payment_method: savedPaymentMethodId } : { days_until_due: 7 }),
-      automatic_tax: { enabled: true },
+      automatic_tax: { enabled: false },
       auto_advance: false,
       description: autoCharge ? "Laundry Rescue final balance — auto-charge authorized" : "Laundry Rescue final balance",
       footer: autoCharge
@@ -267,6 +272,8 @@ export async function POST(request: Request) {
         depositCredit: String(Number(depositCredit.toFixed(2))),
         balanceDue: String(Number(balanceDue.toFixed(2))),
         siteUrl,
+        taxHandling: manualSalesTax.enabled ? "manual_sales_tax" : "no_sales_tax",
+        ...getManualSalesTaxMetadata(manualSalesTax, manualSalesTaxRateId),
       },
     });
 
@@ -282,8 +289,9 @@ export async function POST(request: Request) {
         `Calculation: ${formatNumber(dryWeightLbs)} lb × ${formatMoney(ratePerLb)} per lb`,
         `Dry weight total before deposit credit: ${formatMoney(laundryBaseAmount)}`,
       ].join("\n"),
-      metadata: { requestId, serviceId: "laundry-rescue", lineType: "dry_weight" },
-    });
+      metadata: { requestId, serviceId: "laundry-rescue", lineType: "dry_weight", taxMode: manualSalesTax.enabled ? "manual_sales_tax" : "no_sales_tax" },
+      ...manualTaxRatesParam(manualSalesTaxRateId),
+    } as any);
 
     if (addOnsAmount > 0) {
       await stripe.invoiceItems.create({
@@ -300,8 +308,9 @@ export async function POST(request: Request) {
         ]
           .filter(Boolean)
           .join("\n"),
-        metadata: { requestId, serviceId: "laundry-rescue", lineType: "add_ons" },
-      });
+        metadata: { requestId, serviceId: "laundry-rescue", lineType: "add_ons", taxMode: manualSalesTax.enabled ? "manual_sales_tax" : "no_sales_tax" },
+        ...manualTaxRatesParam(manualSalesTaxRateId),
+      } as any);
     }
 
     const finalized = await stripe.invoices.finalizeInvoice(invoice.id, { auto_advance: false });
@@ -360,6 +369,8 @@ export async function POST(request: Request) {
           laundryAutoChargeError: error?.message || "Stripe could not auto-charge the saved payment method.",
           laundryFinalBalanceCreatedAt: FieldValue.serverTimestamp(),
           laundryFinalBalanceCreatedBy: decoded.email || "admin",
+      laundryFinalInvoiceTaxMode: manualSalesTax.enabled ? "Manual sales tax" : "No sales tax",
+      ...getManualSalesTaxFirestoreFields(manualSalesTax, manualSalesTaxRateId),
           laundryFinalCheckoutUrl: hostedInvoiceUrl,
           laundryFinalCheckoutSessionId: "",
         });
@@ -454,6 +465,8 @@ export async function POST(request: Request) {
       laundryAutoChargeError: "",
       laundryFinalBalanceCreatedAt: FieldValue.serverTimestamp(),
       laundryFinalBalanceCreatedBy: decoded.email || "admin",
+      laundryFinalInvoiceTaxMode: manualSalesTax.enabled ? "Manual sales tax" : "No sales tax",
+      ...getManualSalesTaxFirestoreFields(manualSalesTax, manualSalesTaxRateId),
       // Keep older dashboard fields populated so existing buttons and filters do not break.
       laundryFinalCheckoutUrl: responseInvoice.hosted_invoice_url || hostedInvoiceUrl,
       laundryFinalCheckoutSessionId: "",
@@ -474,6 +487,8 @@ export async function POST(request: Request) {
       amountPaid: (responseInvoice.amount_paid ?? 0) / 100,
       status: nextStatus,
       paymentStatus: nextPaymentStatus,
+      manualSalesTaxEnabled: manualSalesTax.enabled,
+      manualSalesTaxRate: manualSalesTax.rate,
     });
   } catch (error: any) {
     console.error(error);

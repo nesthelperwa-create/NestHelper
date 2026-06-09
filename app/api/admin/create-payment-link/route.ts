@@ -10,11 +10,11 @@ import { services } from "@/lib/services";
 import { getStripePriceId } from "@/lib/stripePriceMap";
 import { sendPaymentLinkEmail } from "@/lib/sendPaymentLinkEmail";
 import { getAvailableCustomerReferralCreditsForEmail, getTotalCustomerCreditAmount, reserveAppliedCustomerReferralCreditsForPayment } from "@/lib/referrals";
+import { getManualSalesTaxFirestoreFields, getManualSalesTaxMetadata, getOrCreateManualSalesTaxRate, manualTaxRatesParam, resolveManualSalesTaxConfig } from "@/lib/stripeManualTax";
 
 export const runtime = "nodejs";
 
 const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
-const enableAutomaticTax = process.env.ENABLE_STRIPE_AUTOMATIC_TAX !== "false";
 const laundryProductTaxCode = (process.env.STRIPE_LAUNDRY_TAX_CODE || "txcd_20090012").trim();
 const nontaxableProductTaxCode = (process.env.STRIPE_NONTAXABLE_TAX_CODE || "txcd_00000000").trim();
 const commercialCleaningTaxCode = (process.env.STRIPE_COMMERCIAL_CLEANING_TAX_CODE || "txcd_20010004").trim();
@@ -29,6 +29,8 @@ type CreatePaymentLinkBody = {
   customNote?: string;
   includeQuoteBreakdown?: boolean;
   includeFamilyBreakdown?: boolean;
+  manualSalesTax?: boolean | string;
+  manualSalesTaxRate?: number | string;
 };
 
 
@@ -223,6 +225,7 @@ export async function POST(request: Request) {
     const useCustomInitial = Boolean(body?.customInitial);
     const shouldIncludeQuoteBreakdown = body?.includeQuoteBreakdown !== false;
     const shouldIncludeFamilyBreakdown = body?.includeFamilyBreakdown !== false;
+    const manualSalesTax = resolveManualSalesTaxConfig({ enabled: body?.manualSalesTax, rate: body?.manualSalesTaxRate });
 
     if (!requestId) {
       return NextResponse.json({ ok: false, error: "Missing request ID." }, { status: 400 });
@@ -294,6 +297,8 @@ export async function POST(request: Request) {
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
     const laundryDepositAmount = getLaundryDepositAmount(customAmount, useCustomInitial);
     const laundryDepositAmountCents = moneyToCents(laundryDepositAmount);
+    const manualSalesTaxRateId = await getOrCreateManualSalesTaxRate(stripe, manualSalesTax, { requestId, serviceId, paymentType: isLaundryRescue ? "laundry_deposit" : "quick_checkout" });
+
     const lineItems = isLaundryRescue
       ? [
           {
@@ -332,11 +337,15 @@ export async function POST(request: Request) {
           ]
         : [{ price: priceId, quantity: 1 }];
 
+    const checkoutLineItems = manualSalesTaxRateId
+      ? lineItems.map((item) => ({ ...item, ...manualTaxRatesParam(manualSalesTaxRateId) }))
+      : lineItems;
+
     const successPaymentType = isLaundryRescue ? "laundry_deposit" : useCustomInitial ? "custom_initial" : "service_payment";
     const checkoutParams: any = {
       mode: "payment",
-      line_items: lineItems,
-      automatic_tax: { enabled: enableAutomaticTax && (isLaundryRescue || (isCommercialReset && useCustomInitial && commercialBreakdownHasTaxableLines(savedCommercialBreakdown))) },
+      line_items: checkoutLineItems,
+      automatic_tax: { enabled: false },
       billing_address_collection: "required",
       phone_number_collection: { enabled: true },
       allow_promotion_codes: !useCustomInitial && !isLaundryRescue,
@@ -357,11 +366,10 @@ export async function POST(request: Request) {
         laundryDepositNonRefundable: isLaundryRescue ? "true" : "",
         laundryDepositAmount: isLaundryRescue ? String(Number(laundryDepositAmount.toFixed(2))) : "",
         laundryFinalPaymentOptions: isLaundryRescue ? "auto_charge_or_invoice_before_delivery" : "",
-        taxHandling: isLaundryRescue
-          ? "taxable_laundry_rescue"
-          : isCommercialReset && useCustomInitial && commercialBreakdownHasTaxableLines(savedCommercialBreakdown)
-            ? "taxable_commercial_specialty"
-            : "nontaxable_default",
+        taxHandling: manualSalesTax.enabled
+          ? "manual_sales_tax"
+          : "no_sales_tax",
+        ...getManualSalesTaxMetadata(manualSalesTax, manualSalesTaxRateId),
         servicePeriodLabel,
         servicePeriodStart: isCommercialReset ? getString(savedCommercialBreakdown.servicePeriodStart) : getString(savedFamilyBreakdown.servicePeriodStart),
         servicePeriodEnd: isCommercialReset ? getString(savedCommercialBreakdown.servicePeriodEnd) : getString(savedFamilyBreakdown.servicePeriodEnd),
@@ -467,6 +475,8 @@ export async function POST(request: Request) {
       checkoutServicePeriodStart: isCommercialReset ? getString(savedCommercialBreakdown.servicePeriodStart) : getString(savedFamilyBreakdown.servicePeriodStart),
       checkoutServicePeriodEnd: isCommercialReset ? getString(savedCommercialBreakdown.servicePeriodEnd) : getString(savedFamilyBreakdown.servicePeriodEnd),
       checkoutCreatedBy: decoded.email || "admin",
+      checkoutTaxMode: manualSalesTax.enabled ? "Manual sales tax" : "No sales tax",
+      ...getManualSalesTaxFirestoreFields(manualSalesTax, manualSalesTaxRateId),
       updatedAt: FieldValue.serverTimestamp(),
       updatedBy: decoded.email || "admin",
     };
@@ -505,6 +515,8 @@ export async function POST(request: Request) {
       includedQuoteBreakdown: Boolean(isCommercialReset && useCustomInitial && shouldIncludeQuoteBreakdown && savedCommercialBreakdownText),
       includedFamilyBreakdown: Boolean(!isCommercialReset && shouldIncludeFamilyBreakdown && savedFamilyBreakdownText),
       reservedCustomerCredit,
+      manualSalesTaxEnabled: manualSalesTax.enabled,
+      manualSalesTaxRate: manualSalesTax.rate,
     });
   } catch (error) {
     const message = error instanceof Error && error.message ? error.message : "Unable to create payment link.";

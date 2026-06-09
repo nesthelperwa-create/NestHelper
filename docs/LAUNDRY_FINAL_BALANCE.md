@@ -1,6 +1,6 @@
 # Laundry Rescue Final Balance
 
-Laundry Rescue uses a two-step payment flow: a non-refundable taxable deposit/minimum first, then an itemized final Stripe invoice after dry weigh-in.
+Laundry Rescue uses a two-step payment flow: a non-refundable deposit/minimum first, then an itemized final Stripe invoice after dry weigh-in. Manual sales tax can be added by admin only when needed.
 
 ## Step 1: Deposit / minimum
 
@@ -14,7 +14,7 @@ Deposit Checkout Sent → Deposit Paid - Final Pending
 
 not fully paid.
 
-The deposit checkout is tax-exclusive and uses Stripe automatic tax when `ENABLE_STRIPE_AUTOMATIC_TAX=true`. The deposit/minimum is non-refundable and is credited toward the final laundry total before tax.
+The deposit checkout keeps Stripe automatic tax disabled. If sales tax should be collected, the admin checks the manual sales-tax box and enters the verified rate before creating the checkout. The deposit/minimum is non-refundable and is credited toward the final laundry total before tax.
 
 During Stripe checkout, the customer must choose one final-balance option:
 
@@ -39,10 +39,10 @@ The site calculates:
 
 ```text
 Laundry subtotal before tax = dry weight × rate per lb + add-ons
-Final taxable balance = laundry subtotal before tax - pre-tax deposit credit
+Final balance before optional manual sales tax = laundry subtotal before tax - pre-tax deposit credit
 ```
 
-The final balance is created as a Stripe Invoice with line-item details, not a plain Checkout link. The invoice uses positive taxable line items and an invoice discount/coupon for the non-refundable deposit credit, so Stripe taxes only the remaining final balance after the deposit credit.
+The final balance is created as a Stripe Invoice with line-item details, not a plain Checkout link. Stripe automatic tax stays disabled. If sales tax is needed, admin checks the manual sales-tax box before creating the invoice, and the manual tax rate is applied to the remaining balance after the deposit credit.
 
 ## Auto-charge customers
 
@@ -86,11 +86,11 @@ Completed
 
 ## Important
 
-Tax only shows when Stripe Tax is set up and `ENABLE_STRIPE_AUTOMATIC_TAX=true` in the deployed environment. For sandbox testing, it may be disabled until Stripe live/tax setup is complete.
+Tax only shows when the admin intentionally checks the manual sales-tax box and enters a rate before creating the checkout/invoice. Keep `ENABLE_STRIPE_AUTOMATIC_TAX=false` in the deployed environment.
 
 
 ## Laundry Rescue tax and final-balance choice note
 
 Laundry Rescue deposits created from either Quick Checkout or the saved Family Payment Breakdown are Checkout Sessions, not normal Stripe invoices, so Stripe can collect the customer’s required final-balance choice: auto-charge saved card after weigh-in, or email final invoice before delivery. The final balance after dry weight remains a Stripe invoice with line-item details.
 
-Laundry Rescue tax is forced on in code for deposit Checkout and final balance invoices with Stripe automatic tax enabled. The default Laundry Rescue product tax code is `txcd_20090012` (Linen Services - Laundry only) unless `STRIPE_LAUNDRY_TAX_CODE`, `STRIPE_PRODUCT_TAX_CODE`, or `STRIPE_TAX_CODE` is set in Vercel. Stripe Tax must be active in the Stripe account and the customer location must be collected/valid for tax to appear.
+Laundry Rescue tax is no longer forced on through Stripe automatic tax. Admin can add manual Washington sales tax to the deposit checkout or final balance invoice only when needed and after verifying the correct rate.

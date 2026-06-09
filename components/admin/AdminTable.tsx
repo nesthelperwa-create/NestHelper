@@ -143,7 +143,7 @@ function getLaundryDefaultDepositCredit(item: AdminDoc | null, mode: CheckoutMod
   if (toNumber(item.laundryDepositCredit) > 0) return toNumber(item.laundryDepositCredit);
   if (toNumber(item.laundryDepositCreditCents) > 0) return centsToDollars(item.laundryDepositCreditCents);
   // Credit only the pre-tax non-refundable deposit/minimum toward the final invoice.
-  // Tax is charged separately by Stripe on the deposit and then only on the final taxable balance.
+  // Manual sales tax is added only when the admin sales-tax box is checked before sending the payment.
   if (toNumber(item.laundryDepositAmountSubtotal) > 0) return centsToDollars(item.laundryDepositAmountSubtotal);
   if (toNumber(item.depositPaidAmountSubtotal) > 0) return centsToDollars(item.depositPaidAmountSubtotal);
   if (toNumber(item.laundryDepositExpectedAmountCents) > 0) return centsToDollars(item.laundryDepositExpectedAmountCents);
@@ -207,6 +207,57 @@ const SERVICE_LOOKS: Record<string, { label: string; badge: string; row: string;
     dot: "bg-white ring-2 ring-cyan-100",
   },
 };
+
+
+function ManualSalesTaxControls({
+  enabled,
+  rate,
+  onEnabledChange,
+  onRateChange,
+  context,
+}: {
+  enabled: boolean;
+  rate: string;
+  onEnabledChange: (enabled: boolean) => void;
+  onRateChange: (rate: string) => void;
+  context: string;
+}) {
+  return (
+    <div className="mt-4 rounded-3xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-950">
+      <label className="flex gap-3 font-bold">
+        <input
+          type="checkbox"
+          checked={enabled}
+          onChange={(e) => onEnabledChange(e.target.checked)}
+          className="mt-1 h-4 w-4 rounded border-amber-300 accent-[#075c58]"
+        />
+        <span>
+          <span className="block font-black text-amber-950">Add manual Washington sales tax to this {context}</span>
+          <span className="mt-1 block text-xs font-semibold leading-5 text-amber-900">
+            Stripe automatic tax stays off. Only check this when you intentionally want sales tax added and you have verified the customer/location rate.
+          </span>
+        </span>
+      </label>
+      {enabled && (
+        <div className="mt-3 grid gap-2 sm:max-w-xs">
+          <label className="grid gap-2 text-xs font-black uppercase tracking-[0.12em] text-amber-900">
+            Sales tax rate %
+            <input
+              value={rate}
+              onChange={(e) => onRateChange(e.target.value)}
+              inputMode="decimal"
+              placeholder="Example: 10.2"
+              className="rounded-2xl border border-amber-200 bg-white px-4 py-3 text-sm font-bold normal-case tracking-normal text-[#075c58] outline-none focus:border-[#075c58]"
+            />
+          </label>
+          <p className="text-xs font-semibold leading-5 text-amber-900">
+            The rate is manual. Do not use this as tax advice; verify the rate and whether the service is taxable before sending.
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
 
 const DEFAULT_SERVICE_LOOK = {
   label: "Unselected",
@@ -1869,6 +1920,8 @@ export default function AdminTable({
   const [checkoutError, setCheckoutError] = useState("");
   const [includeCommercialQuoteBreakdown, setIncludeCommercialQuoteBreakdown] = useState(true);
   const [includeFamilyPaymentBreakdown, setIncludeFamilyPaymentBreakdown] = useState(true);
+  const [manualSalesTaxEnabled, setManualSalesTaxEnabled] = useState(false);
+  const [manualSalesTaxRate, setManualSalesTaxRate] = useState("");
   const [commercialInvoiceBusy, setCommercialInvoiceBusy] = useState(false);
   const [commercialInvoiceMessage, setCommercialInvoiceMessage] = useState("");
   const [commercialInvoiceError, setCommercialInvoiceError] = useState("");
@@ -1959,6 +2012,8 @@ export default function AdminTable({
     setCustomInitialNote(selected?.customInitialNote ? String(selected.customInitialNote) : "");
     setIncludeCommercialQuoteBreakdown(Boolean(selected?.commercialQuoteBreakdown?.customerBreakdownText));
     setIncludeFamilyPaymentBreakdown(Boolean(selected?.familyPaymentBreakdown?.customerBreakdownText));
+    setManualSalesTaxEnabled(false);
+    setManualSalesTaxRate(selected?.manualSalesTaxRate ? String(selected.manualSalesTaxRate) : "");
     setStatusValue(nextStatus);
     setStatusNote("");
     setNotifyCustomer(shouldNotifyByDefault(nextStatus));
@@ -2322,6 +2377,12 @@ export default function AdminTable({
   }
 
 
+  function getManualSalesTaxPayload() {
+    return {
+      manualSalesTax: manualSalesTaxEnabled,
+      manualSalesTaxRate: manualSalesTaxEnabled ? toNumber(manualSalesTaxRate) : 0,
+    };
+  }
 
 
   async function emailCommercialQuoteOnly() {
@@ -2377,7 +2438,7 @@ export default function AdminTable({
       const res = await fetch("/api/admin/create-commercial-invoice", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ requestId: selected.id, sendEmail }),
+        body: JSON.stringify({ requestId: selected.id, sendEmail, ...getManualSalesTaxPayload() }),
       });
       const data = await res.json().catch(() => ({}));
 
@@ -2433,7 +2494,7 @@ export default function AdminTable({
       const res = await fetch("/api/admin/create-family-invoice", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ requestId: selected.id, sendEmail }),
+        body: JSON.stringify({ requestId: selected.id, sendEmail, ...getManualSalesTaxPayload() }),
       });
       const data = await res.json().catch(() => ({}));
 
@@ -2509,6 +2570,7 @@ export default function AdminTable({
           customNote: useCustomInitial ? customInitialNote : undefined,
           includeQuoteBreakdown: selected.service === "commercial-reset" && useCustomInitial ? includeCommercialQuoteBreakdown : undefined,
           includeFamilyBreakdown: selected.service !== "commercial-reset" ? includeFamilyPaymentBreakdown : undefined,
+          ...getManualSalesTaxPayload(),
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -2542,7 +2604,7 @@ export default function AdminTable({
             : " Family payment breakdown was not included because the checkbox was off."
         : "";
       const laundryDepositNotice = selected.service === "laundry-rescue"
-        ? " Stripe checkout will collect the non-refundable taxable deposit and ask the customer to choose auto-charge or invoice-before-delivery for the final laundry balance."
+        ? " Stripe checkout will collect the non-refundable deposit and ask the customer to choose auto-charge or invoice-before-delivery. Manual sales tax is added only if the sales-tax box is checked."
         : "";
       setCheckoutMessage(data.emailError || (data.emailSent ? `Quick checkout link created and emailed to the customer.${commercialBreakdownNotice}${familyBreakdownNotice}${laundryDepositNotice}` : `Quick checkout link created. Copy it and send it manually.${commercialBreakdownNotice}${familyBreakdownNotice}${laundryDepositNotice}`));
     } catch (error) {
@@ -2574,6 +2636,7 @@ export default function AdminTable({
           depositCredit: toNumber(laundryDepositCredit),
           finalBalanceNote: laundryFinalNote,
           sendEmail,
+          ...getManualSalesTaxPayload(),
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -2641,6 +2704,7 @@ export default function AdminTable({
           reason: additionalPaymentReason,
           note: additionalPaymentNote,
           sendEmail,
+          ...getManualSalesTaxPayload(),
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -3835,6 +3899,14 @@ export default function AdminTable({
                   </div>
                 </div>
 
+                <ManualSalesTaxControls
+                  enabled={manualSalesTaxEnabled}
+                  rate={manualSalesTaxRate}
+                  onEnabledChange={setManualSalesTaxEnabled}
+                  onRateChange={setManualSalesTaxRate}
+                  context={selected.service === "laundry-rescue" ? "deposit checkout" : selectedIsCommercial ? "commercial payment" : "family payment"}
+                />
+
                 {selectedIsCommercial && (
                   <div className="mt-4 rounded-3xl border border-cyan-200 bg-white p-4">
                     <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
@@ -3883,7 +3955,7 @@ export default function AdminTable({
                         <h5 className="mt-1 text-base font-black text-[#075c58]">{selected.service === "laundry-rescue" ? "Create a deposit checkout from the saved laundry breakdown" : "Create a Stripe invoice from the saved family breakdown"}</h5>
                         <p className="mt-1 text-sm leading-6 text-slate-700">
                           {selected.service === "laundry-rescue"
-                            ? "This uses the saved breakdown amount to create a taxable, non-refundable Laundry Rescue deposit checkout. Stripe asks the customer to choose auto-charge for the final balance or invoice-before-delivery."
+                            ? "This uses the saved breakdown amount to create a non-refundable Laundry Rescue deposit checkout with manual sales tax only if checked. Stripe asks the customer to choose auto-charge for the final balance or invoice-before-delivery."
                             : "Use this when you want a formal invoice/PDF instead of only a checkout receipt: Errand Helper, custom family quotes, recurring family help, approved add-ons, or refund/credit documentation."}
                         </p>
                       </div>
@@ -4050,7 +4122,7 @@ export default function AdminTable({
                     <div className="mt-4 rounded-3xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm leading-6 text-rose-900">
                       <p className="font-black text-rose-950">Laundry deposit checkout note</p>
                       <p className="mt-1 font-semibold">
-                        This creates the non-refundable, taxable deposit/minimum checkout. Stripe will ask the customer to choose either auto-charge for the final dry-weight balance or invoice-before-delivery. Deposit paid does not mean fully paid.
+                        This creates the non-refundable deposit/minimum checkout with manual sales tax only if checked. Stripe will ask the customer to choose either auto-charge for the final dry-weight balance or invoice-before-delivery. Deposit paid does not mean fully paid.
                       </p>
                     </div>
                   )}
@@ -4114,7 +4186,7 @@ export default function AdminTable({
                     <p className="mt-2 text-sm leading-6 text-slate-700">
                       {laundryAutoChargeAuthorized
                         ? "The customer chose auto-charge during deposit checkout. Enter the dry weight, rate, add-ons, and deposit credit; NestHelper creates an itemized Stripe invoice and charges the saved payment method instead of showing a manual sender section."
-                        : "The customer chose invoice-before-delivery, or no auto-charge authorization is saved. Enter the dry weight, rate, add-ons, and deposit credit; NestHelper creates a Stripe invoice with line-item details for the remaining taxable balance only."}
+                        : "The customer chose invoice-before-delivery, or no auto-charge authorization is saved. Enter the dry weight, rate, add-ons, and deposit credit; NestHelper creates a Stripe invoice with line-item details for the remaining balance only, with manual sales tax only if checked."}
                     </p>
                   </div>
                   <StatusBadge status={String(selected.laundryPaymentStatus || selected.paymentStatus || selected.status || "New")} />
@@ -4125,7 +4197,7 @@ export default function AdminTable({
                     <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Customer final-payment choice</p>
                     <p className="mt-1 font-black text-[#075c58]">{selected.laundryFinalPaymentPreferenceLabel || "Not captured yet"}</p>
                     <p className="mt-1 text-xs font-semibold text-slate-600">
-                      The deposit/minimum is non-refundable and taxable. The final invoice applies the pre-tax deposit as a credit so Stripe only taxes the remaining final balance.
+                      The deposit/minimum is non-refundable. The final invoice applies the pre-tax deposit as a credit; add manual sales tax only if this final balance should be taxed.
                     </p>
                   </div>
                   {laundryAutoChargeAuthorized ? (
@@ -4204,7 +4276,7 @@ export default function AdminTable({
                     <p className="mt-1 text-xl font-black text-[#075c58]">-{formatMoney(toNumber(laundryDepositCredit))}</p>
                   </div>
                   <div>
-                    <p className="font-black uppercase tracking-[0.14em] text-[#b98a2f]">Final taxable balance</p>
+                    <p className="font-black uppercase tracking-[0.14em] text-[#b98a2f]">Final balance before any manual tax</p>
                     <p className="mt-1 text-xl font-black text-[#075c58]">{formatMoney(laundryBalanceDue)}</p>
                   </div>
                 </div>
@@ -4219,6 +4291,14 @@ export default function AdminTable({
                     className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
                   />
                 </label>
+
+                <ManualSalesTaxControls
+                  enabled={manualSalesTaxEnabled}
+                  rate={manualSalesTaxRate}
+                  onEnabledChange={setManualSalesTaxEnabled}
+                  onRateChange={setManualSalesTaxRate}
+                  context="final laundry balance"
+                />
 
                 {laundryAutoChargeAuthorized ? (
                   <div className="mt-4">
@@ -4338,6 +4418,14 @@ export default function AdminTable({
                     className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
                   />
                 </label>
+
+                <ManualSalesTaxControls
+                  enabled={manualSalesTaxEnabled}
+                  rate={manualSalesTaxRate}
+                  onEnabledChange={setManualSalesTaxEnabled}
+                  onRateChange={setManualSalesTaxRate}
+                  context="additional payment"
+                />
 
                 <div className="mt-4 grid gap-3 md:grid-cols-2">
                   <button

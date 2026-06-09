@@ -6,17 +6,19 @@ import Stripe from "stripe";
 import { isAllowedAdminEmail } from "@/lib/adminAuth";
 import { getFirebaseAdminDb } from "@/lib/firebaseAdmin";
 import { sendCommercialInvoiceEmail } from "@/lib/sendCommercialInvoiceEmail";
+import { getManualSalesTaxFirestoreFields, getManualSalesTaxMetadata, getOrCreateManualSalesTaxRate, manualTaxRatesParam, resolveManualSalesTaxConfig } from "@/lib/stripeManualTax";
 
 export const runtime = "nodejs";
 
 const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
-const enableAutomaticTax = process.env.ENABLE_STRIPE_AUTOMATIC_TAX !== "false";
 const nontaxableProductTaxCode = (process.env.STRIPE_NONTAXABLE_TAX_CODE || "txcd_00000000").trim();
 const commercialCleaningTaxCode = (process.env.STRIPE_COMMERCIAL_CLEANING_TAX_CODE || "txcd_20010004").trim();
 
 type CreateCommercialInvoiceBody = {
   requestId?: string;
   sendEmail?: boolean;
+  manualSalesTax?: boolean | string;
+  manualSalesTaxRate?: number | string;
 };
 
 type AddressResult = {
@@ -160,7 +162,7 @@ function getCommercialAddress(data: Record<string, unknown>): AddressResult {
       sourceText,
       hasUsableLocation: false,
       missingReason:
-        "The commercial request is missing a ZIP code. Stripe Tax needs a customer/service ZIP code to calculate sales tax on taxable commercial lines.",
+        "The commercial request is missing a ZIP code. Add the customer/service ZIP code before using a manual local sales-tax rate.",
     };
   }
 
@@ -290,10 +292,6 @@ function getCommercialTaxCounts(lineItems: Record<string, unknown>[]): { taxable
   );
 }
 
-function getAutomaticTaxStatus(invoice: Stripe.Invoice) {
-  const automaticTax = invoice.automatic_tax as Stripe.Invoice.AutomaticTax | null | undefined;
-  return automaticTax?.status || "";
-}
 
 export async function POST(request: Request) {
   try {
@@ -315,6 +313,7 @@ export async function POST(request: Request) {
     const body = (await request.json().catch(() => null)) as CreateCommercialInvoiceBody | null;
     const requestId = getString(body?.requestId);
     const shouldSendEmail = body?.sendEmail !== false;
+    const manualSalesTax = resolveManualSalesTaxConfig({ enabled: body?.manualSalesTax, rate: body?.manualSalesTaxRate });
 
     if (!requestId) return NextResponse.json({ ok: false, error: "Missing request ID." }, { status: 400 });
 
@@ -351,18 +350,6 @@ export async function POST(request: Request) {
       );
     }
 
-    if (hasTaxableCommercialLines && !commercialAddress.hasUsableLocation) {
-      return NextResponse.json(
-        {
-          ok: false,
-          error:
-            commercialAddress.missingReason ||
-            "This quote has taxable commercial lines, but the request is missing a complete service address for Stripe Tax.",
-        },
-        { status: 400 }
-      );
-    }
-
     const customerName =
       getString(data.fullName) ||
       getString(data.contactName) ||
@@ -390,12 +377,13 @@ export async function POST(request: Request) {
 
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
     const servicePeriodLabel = formatServicePeriodLabel(breakdown.servicePeriodStart, breakdown.servicePeriodEnd);
+    const manualSalesTaxRateId = await getOrCreateManualSalesTaxRate(stripe, manualSalesTax, { requestId, serviceId: "commercial-reset", paymentType: "commercial_invoice" });
 
     const invoice = await stripe.invoices.create({
       customer: customer.id,
       collection_method: "send_invoice",
       days_until_due: 7,
-      automatic_tax: { enabled: enableAutomaticTax && hasTaxableCommercialLines },
+      automatic_tax: { enabled: false },
       auto_advance: false,
       description: getString(breakdown.quoteTitle) || "NestHelper Commercial Reset invoice",
       footer:
@@ -408,7 +396,8 @@ export async function POST(request: Request) {
         servicePeriodStart: getString(breakdown.servicePeriodStart),
         servicePeriodEnd: getString(breakdown.servicePeriodEnd),
         servicePeriodLabel,
-        taxHandling: hasTaxableCommercialLines ? "mixed_or_taxable_commercial_lines" : "nontaxable_routine_janitorial",
+        taxHandling: manualSalesTax.enabled ? "manual_sales_tax_on_taxable_lines" : "no_sales_tax",
+        ...getManualSalesTaxMetadata(manualSalesTax, manualSalesTaxRateId),
         serviceAddress: commercialAddress.sourceText,
         siteUrl,
       },
@@ -436,8 +425,10 @@ export async function POST(request: Request) {
           preset: getString(line.preset),
           lineLabel: getString(line.label) || "Commercial Reset line item",
           taxMode,
+          manualSalesTaxApplied: manualSalesTax.enabled && taxMode === "taxable" ? "true" : "false",
         },
-      });
+        ...manualTaxRatesParam(manualSalesTaxRateId, manualSalesTax.enabled && taxMode === "taxable"),
+      } as any);
 
       attachedLineCount += 1;
     }
@@ -472,30 +463,7 @@ export async function POST(request: Request) {
     }
 
     let finalized = await stripe.invoices.finalizeInvoice(invoice.id, { auto_advance: false });
-
-    const taxStatus = getAutomaticTaxStatus(finalized);
-    if (hasTaxableCommercialLines && enableAutomaticTax && taxStatus && taxStatus !== "complete") {
-      await requestRef.update({
-        commercialInvoiceId: finalized.id,
-        commercialInvoiceNumber: finalized.number || "",
-        commercialInvoiceTaxStatus: taxStatus,
-        commercialInvoiceTaxWarning: `Stripe automatic tax status: ${taxStatus}. Check the service address, Stripe Tax registration, and tax code settings.`,
-        commercialInvoiceCreatedAt: FieldValue.serverTimestamp(),
-        updatedAt: FieldValue.serverTimestamp(),
-        updatedBy: decoded.email || "admin",
-      });
-
-      return NextResponse.json(
-        {
-          ok: false,
-          error: `Stripe created the invoice, but automatic tax did not complete. Stripe tax status: ${taxStatus}. Check the commercial service address, ZIP code, live/test tax registration, and tax code settings before sending this invoice.`,
-          invoiceId: finalized.id,
-          invoiceNumber: finalized.number,
-          taxStatus,
-        },
-        { status: 500 }
-      );
-    }
+    const taxStatus = manualSalesTax.enabled ? "manual_sales_tax_applied" : "automatic_tax_disabled";
 
     const hostedInvoiceUrl = finalized.hosted_invoice_url || "";
     const invoicePdf = finalized.invoice_pdf || "";
@@ -582,11 +550,13 @@ export async function POST(request: Request) {
       commercialInvoiceServicePeriodEnd: getString(breakdown.servicePeriodEnd),
       commercialInvoiceServicePeriodLabel: servicePeriodLabel,
       commercialInvoiceCustomerId: customer.id,
-      commercialInvoiceTaxHandling: hasTaxableCommercialLines
-        ? "Stripe automatic tax for taxable Commercial Reset lines; nontaxable tax code for routine janitorial lines"
-        : "No sales tax applied by NestHelper for routine/repetitive janitorial-style Commercial Reset lines",
+      commercialInvoiceTaxHandling: manualSalesTax.enabled
+        ? "Manual sales tax applied only to saved Commercial Reset lines marked taxable"
+        : "No sales tax applied by NestHelper; Stripe automatic tax disabled",
       commercialInvoiceTaxStatus: taxStatus,
       commercialInvoiceServiceAddress: commercialAddress.sourceText,
+      commercialInvoiceTaxMode: manualSalesTax.enabled ? "Manual sales tax" : "No sales tax",
+      ...getManualSalesTaxFirestoreFields(manualSalesTax, manualSalesTaxRateId),
       commercialInvoiceTaxableLineCount: commercialTaxCounts.taxable,
       commercialInvoiceNontaxableLineCount: commercialTaxCounts.nontaxable,
       commercialInvoiceDeliveryMethod: shouldSendEmail ? "nesthelper_email" : "manual",
@@ -615,6 +585,8 @@ export async function POST(request: Request) {
       nontaxableLineCount: commercialTaxCounts.nontaxable,
       taxStatus,
       serviceAddress: commercialAddress.sourceText,
+      manualSalesTaxEnabled: manualSalesTax.enabled,
+      manualSalesTaxRate: manualSalesTax.rate,
     });
   } catch (error: any) {
     console.error("Unable to create commercial invoice", error);

@@ -5,7 +5,6 @@ import { getStripePriceId, normalizeStripePriceMode } from "@/lib/stripePriceMap
 export const runtime = "nodejs";
 
 const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
-const enableAutomaticTax = process.env.ENABLE_STRIPE_AUTOMATIC_TAX !== "false";
 
 export async function POST(req: Request) {
   if (process.env.ENABLE_PUBLIC_CHECKOUT !== "true") {
@@ -29,7 +28,7 @@ export async function POST(req: Request) {
   const session = await stripe.checkout.sessions.create({
     mode: "payment",
     line_items: [{ price: priceId, quantity: 1 }],
-    automatic_tax: { enabled: enableAutomaticTax },
+    automatic_tax: { enabled: false },
     billing_address_collection: "required",
     shipping_address_collection: { allowed_countries: ["US"] },
     phone_number_collection: { enabled: true },
@@ -37,7 +36,7 @@ export async function POST(req: Request) {
     client_reference_id: requestId,
     success_url: `${baseUrl}/checkout?success=true&payment_type=${successPaymentType}&service_id=${encodeURIComponent(serviceId)}&session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${baseUrl}/checkout?cancelled=true&payment_type=${successPaymentType}&service_id=${encodeURIComponent(serviceId)}`,
-    metadata: { serviceId, requestId, paymentMode: mode }
+    metadata: { serviceId, requestId, paymentMode: mode, stripeAutomaticTaxEnabled: "false" }
   });
 
   return NextResponse.json({ url: session.url });
