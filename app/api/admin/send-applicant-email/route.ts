@@ -126,16 +126,31 @@ export async function POST(request: Request) {
 
     const sentAtIso = new Date().toISOString();
     const sentBy = decoded.email || "admin";
+    const resendId = (result as { data?: { id?: string } }).data?.id || "";
+    const initialStatus = resendId ? "accepted" : "sent";
+    const initialStatusLabel = resendId ? "Accepted by Resend" : "Sent request accepted";
     const emailHistoryEntry = {
       sentAtIso,
       sentBy,
       to,
       subject,
       bodyPreview: message.slice(0, 300),
-      resendId: (result as { data?: { id?: string } }).data?.id || "",
+      resendId,
+      status: initialStatus,
+      statusLabel: initialStatusLabel,
+      statusAtIso: sentAtIso,
+    };
+    const statusHistoryEntry = {
+      status: initialStatus,
+      statusLabel: initialStatusLabel,
+      type: "applicant.email.accepted",
+      atIso: sentAtIso,
+      resendId,
+      to,
+      subject,
     };
 
-    await docRef.update({
+    const docUpdate: Record<string, unknown> = {
       updatedAt: FieldValue.serverTimestamp(),
       applicantEmailLastSentAt: FieldValue.serverTimestamp(),
       applicantEmailLastSentAtIso: sentAtIso,
@@ -143,11 +158,20 @@ export async function POST(request: Request) {
       applicantEmailLastTo: to,
       applicantEmailLastSubject: subject,
       applicantEmailLastBodyPreview: message.slice(0, 300),
+      applicantEmailLastResendId: resendId,
+      applicantEmailLastDeliveryStatus: initialStatus,
+      applicantEmailLastDeliveryStatusLabel: initialStatusLabel,
+      applicantEmailLastStatusAtIso: sentAtIso,
+      applicantEmailLastStatusType: "applicant.email.accepted",
       applicantEmailCount: FieldValue.increment(1),
       applicantEmailHistory: FieldValue.arrayUnion(emailHistoryEntry),
-    });
+      applicantEmailStatusHistory: FieldValue.arrayUnion(statusHistoryEntry),
+    };
+    if (resendId) docUpdate.applicantEmailResendIds = FieldValue.arrayUnion(resendId);
 
-    return NextResponse.json({ ok: true, to, sentAtIso, subject });
+    await docRef.update(docUpdate);
+
+    return NextResponse.json({ ok: true, to, sentAtIso, subject, resendId, status: initialStatus, statusLabel: initialStatusLabel });
   } catch (error) {
     console.error("Applicant email failed", error);
     return NextResponse.json({ ok: false, error: "Unable to send applicant email." }, { status: 500 });

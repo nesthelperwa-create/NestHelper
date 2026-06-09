@@ -390,6 +390,32 @@ function getApplicantEmailAddress(item: AdminDoc | null | undefined) {
   return email.includes("@") ? email : "";
 }
 
+function getApplicantEmailStatusLabel(item: AdminDoc | null | undefined) {
+  return String(item?.applicantEmailLastDeliveryStatusLabel || item?.applicantEmailLastDeliveryStatus || "Not sent yet").trim();
+}
+
+function getApplicantEmailStatusClass(statusValue: unknown) {
+  const status = String(statusValue || "").toLowerCase();
+  if (["delivered", "opened", "clicked"].includes(status)) return "bg-emerald-50 text-emerald-800 ring-1 ring-emerald-100";
+  if (["accepted", "sent"].includes(status)) return "bg-sky-50 text-sky-800 ring-1 ring-sky-100";
+  if (["delayed"].includes(status)) return "bg-amber-50 text-amber-800 ring-1 ring-amber-100";
+  if (["bounced", "failed", "complained", "suppressed"].includes(status)) return "bg-red-50 text-red-800 ring-1 ring-red-100";
+  return "bg-slate-50 text-slate-700 ring-1 ring-slate-100";
+}
+
+function getApplicantEmailStatusHistory(item: AdminDoc | null | undefined) {
+  const history = item?.applicantEmailStatusHistory;
+  if (!Array.isArray(history)) return [] as Array<Record<string, any>>;
+  return history
+    .filter((entry) => entry && typeof entry === "object")
+    .slice()
+    .sort((a, b) => {
+      const aDate = getDateObject(a.atIso || a.statusAtIso || a.createdAt);
+      const bDate = getDateObject(b.atIso || b.statusAtIso || b.createdAt);
+      return (bDate?.getTime() || 0) - (aDate?.getTime() || 0);
+    });
+}
+
 type ApplicantEmailTemplateKey = "phone-interview" | "needs-documents" | "not-selected" | "custom";
 
 function getApplicantEmailTemplate(collectionName: string, item: AdminDoc | null | undefined, template: ApplicantEmailTemplateKey) {
@@ -2337,11 +2363,28 @@ export default function AdminTable({
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.ok) throw new Error(data.error || "Unable to send applicant email.");
 
+      const sentAtIso = data.sentAtIso || new Date().toISOString();
+      const statusEntry = {
+        status: data.status || "accepted",
+        statusLabel: data.statusLabel || "Accepted by Resend",
+        type: "applicant.email.accepted",
+        atIso: sentAtIso,
+        resendId: data.resendId || "",
+        to: data.to || getApplicantEmailAddress(selected),
+        subject: applicantEmailSubject.trim(),
+      };
       const updates = {
-        applicantEmailLastSentAt: data.sentAtIso || new Date().toISOString(),
+        applicantEmailLastSentAt: sentAtIso,
+        applicantEmailLastSentAtIso: sentAtIso,
         applicantEmailLastSubject: applicantEmailSubject.trim(),
         applicantEmailLastBodyPreview: applicantEmailBody.trim().slice(0, 300),
+        applicantEmailLastResendId: data.resendId || "",
+        applicantEmailLastDeliveryStatus: data.status || "accepted",
+        applicantEmailLastDeliveryStatusLabel: data.statusLabel || "Accepted by Resend",
+        applicantEmailLastStatusAtIso: sentAtIso,
+        applicantEmailLastStatusType: "applicant.email.accepted",
         applicantEmailCount: toNumber(selected.applicantEmailCount) + 1,
+        applicantEmailStatusHistory: [statusEntry, ...getApplicantEmailStatusHistory(selected)].slice(0, 20),
       };
       setSelected((prev) => (prev ? { ...prev, ...updates } : prev));
       setItems((prev) => prev.map((item) => item.id === selected.id ? { ...item, ...updates } : item));
@@ -3433,6 +3476,10 @@ export default function AdminTable({
                     <div className="rounded-2xl bg-[#fbf6ea] px-4 py-3 text-xs font-bold text-slate-700">
                       Last sent: {formatDate(selected.applicantEmailLastSentAt)}
                       {selected.applicantEmailLastSubject && <span className="mt-1 block text-[#075c58]">{String(selected.applicantEmailLastSubject)}</span>}
+                      <span className={`mt-2 inline-flex rounded-full px-3 py-1 text-[11px] font-black ${getApplicantEmailStatusClass(selected.applicantEmailLastDeliveryStatus)}`}>
+                        {getApplicantEmailStatusLabel(selected)}
+                      </span>
+                      {selected.applicantEmailLastStatusAtIso && <span className="mt-1 block text-[11px] text-slate-500">Updated: {formatDate(selected.applicantEmailLastStatusAtIso)}</span>}
                     </div>
                   )}
                 </div>
@@ -3491,6 +3538,27 @@ export default function AdminTable({
 
                 {applicantEmailMessage && <p className="mt-3 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">{applicantEmailMessage}</p>}
                 {applicantEmailError && <p className="mt-3 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{applicantEmailError}</p>}
+
+                {getApplicantEmailStatusHistory(selected).length > 0 && (
+                  <div className="mt-4 rounded-2xl border border-[#eadfc8] bg-[#fbf6ea] p-4">
+                    <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                      <p className="text-xs font-black uppercase tracking-[0.18em] text-[#b98a2f]">Email status log</p>
+                      <p className="text-xs font-semibold text-slate-500">Auto-updates after Resend webhook events.</p>
+                    </div>
+                    <div className="mt-3 grid gap-2">
+                      {getApplicantEmailStatusHistory(selected).slice(0, 6).map((entry, index) => (
+                        <div key={`${entry.resendId || "email"}-${entry.type || entry.status || index}-${entry.atIso || index}`} className="rounded-2xl bg-white px-4 py-3 text-xs text-slate-700 shadow-sm">
+                          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                            <span className={`inline-flex w-fit rounded-full px-3 py-1 text-[11px] font-black ${getApplicantEmailStatusClass(entry.status)}`}>{entry.statusLabel || entry.status || "Email event"}</span>
+                            <span className="font-semibold text-slate-500">{formatDate(entry.atIso || entry.statusAtIso)}</span>
+                          </div>
+                          {entry.subject && <p className="mt-2 font-bold text-[#075c58]">{String(entry.subject)}</p>}
+                          {entry.reason && <p className="mt-1 font-semibold text-red-700">Reason: {String(entry.reason)}</p>}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
