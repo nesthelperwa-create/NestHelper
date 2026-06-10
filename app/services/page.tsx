@@ -12,7 +12,7 @@ export default function ServicesPage() {
       <PageHero
         eyebrow="Services & Pricing"
         title="Clear packages. Real accountability."
-        text="Choose a parent-reset package, submit the details, and NestHelper reviews scope, timing, service area, safety notes, and pricing before sending a secure payment link."
+        text="Choose a parent-reset package, submit the details, and NestHelper reviews scope, timing, service area, safety notes, current availability, and pricing before sending a secure payment link."
       />
 
       <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
@@ -24,7 +24,7 @@ export default function ServicesPage() {
           <div className="pro-card rounded-[2rem] p-6">
             <h3 className="text-xl font-black text-nest-teal">Simple at first glance. Details when you need them.</h3>
             <p className="mt-3 font-medium leading-7 text-nest-ink/70">
-              Each card shows the essentials first. Open a package to see what is included, then request the one that fits your family best.
+              Each card shows the essentials first. Open a package to see what is included, then request the one that fits your family best. Availability is limited while we grow carefully.
             </p>
           </div>
         </div>
@@ -63,6 +63,7 @@ export default function ServicesPage() {
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {[
                 "Request review before checkout",
+                "Limited openings reviewed carefully",
                 "Clear scope and prep notes",
                 "Service coordination",
                 "Insured local service",

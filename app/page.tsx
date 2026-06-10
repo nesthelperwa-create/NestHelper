@@ -32,13 +32,13 @@ export default function HomePage() {
         <div className="relative mx-auto grid max-w-[90rem] items-center gap-8 lg:grid-cols-[0.82fr_1.18fr] lg:gap-12">
           <AnimatedSection className="order-1 min-w-0 text-center lg:text-left">
             <div className="pill-label mx-auto max-w-full lg:mx-0">
-              <Sparkles size={16} /> Parent Reset Concierge
+              <Sparkles size={16} /> Limited Parent Reset Openings
             </div>
             <h1 className="text-balance mx-auto mt-4 max-w-3xl text-[2.55rem] font-black leading-[0.95] tracking-tight text-nest-teal sm:text-6xl sm:leading-[0.96] lg:mx-0 lg:text-7xl">
               Reset the home. Reclaim the day.
             </h1>
             <p className="mx-auto mt-5 max-w-2xl text-base font-semibold leading-7 text-nest-ink/74 sm:text-xl sm:leading-8 lg:mx-0">
-              Parent Reset help for busy families — home resets, laundry rescue, errands, and household support with clear packages, reviewed requests, and follow-up.
+              Parent Reset help for busy families — home resets, laundry rescue, errands, and household support with clear packages, reviewed requests, and follow-up. We accept a limited number of requests at a time so service stays thoughtful, reliable, and well-matched.
             </p>
             <div className="mx-auto mt-7 flex max-w-sm flex-col gap-3 sm:max-w-none sm:flex-row lg:mx-0">
               <ButtonLink href="/request">Request Help</ButtonLink>
@@ -48,7 +48,7 @@ export default function HomePage() {
               <div className="grid gap-3 sm:grid-cols-3">
                 <TrustProofItem icon={<CheckCircle2 size={15} />} text="Washington business licensed" />
                 <TrustProofItem icon={<ShieldCheck size={15} />} text="Insured local service" />
-                <TrustProofItem icon={<ClipboardCheck size={15} />} text="Request reviewed before payment" />
+                <TrustProofItem icon={<ClipboardCheck size={15} />} text="Limited openings, reviewed first" />
               </div>
               <div id="service-area" className="mt-4 flex scroll-mt-24 items-start gap-2 border-t border-nest-gold/14 pt-3 text-sm font-black leading-5 text-nest-teal sm:items-center">
                 <MapPin size={16} className="mt-0.5 shrink-0 text-nest-gold sm:mt-0" />
@@ -81,7 +81,7 @@ export default function HomePage() {
             label="What NestHelper is"
             icon={<Heart size={15} />}
             title="Parent Reset help, coordinated for busy families."
-            description="NestHelper is a managed local parent-help service for families who need extra hands at home without having to coordinate everything themselves. Send one request and we review the scope, timing, location, safety notes, and best-fit package before checkout."
+            description="NestHelper is a managed local parent-help service for families who need extra hands at home without having to coordinate everything themselves. Send one request and we review the scope, timing, location, safety notes, current availability, and best-fit package before checkout."
           />
 
           <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -131,7 +131,7 @@ export default function HomePage() {
               label="How it works"
               icon={<Star size={15} />}
               title="Simple steps. Clear communication. Family-first help."
-              description="We review the details before payment so each visit starts with clearer expectations, safer boundaries, and a plan that makes sense for the family."
+              description="We review the details and current availability before payment so each visit starts with clearer expectations, safer boundaries, and a plan that makes sense for the family."
             />
 
             <div className="relative mt-10 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -146,7 +146,7 @@ export default function HomePage() {
                 step="2"
                 icon={<ShieldCheck size={31} />}
                 title="We review the request"
-                text="We check scope, location, timing, pets or access, and helper fit before confirming."
+                text="We check scope, location, timing, pets or access, helper fit, and limited opening availability before confirming."
               />
               <ProcessStepCard
                 step="3"
@@ -202,7 +202,7 @@ export default function HomePage() {
             <p className="pill-label mx-auto w-fit"><Star size={15} /> Services</p>
             <h2 className="text-balance mt-4 text-3xl font-black leading-tight text-nest-teal sm:text-5xl">Extra hands for busy parents.</h2>
             <p className="mx-auto mt-5 max-w-3xl text-base font-medium leading-7 text-nest-ink/70 sm:text-lg sm:leading-8">
-              Choose a package, submit the details, and NestHelper reviews the request before payment. Open each card for what fits, pricing notes, and next steps.
+              Choose a package, submit the details, and NestHelper reviews the request before payment. Because openings are limited while we grow carefully, request approval depends on fit, timing, service area, and helper availability.
             </p>
           </div>
           <div className="mt-10 grid items-start gap-6 md:grid-cols-2 lg:grid-cols-3">
