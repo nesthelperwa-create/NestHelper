@@ -12,10 +12,18 @@ export default function ServicesPage() {
       <PageHero
         eyebrow="Services & Pricing"
         title="Clear packages. Real accountability."
-        text="Choose a parent-reset package, submit the details, and NestHelper reviews scope, timing, service area, safety notes, current availability, and pricing before sending a secure payment link."
+        text="Choose a parent-reset package, submit the details, and NestHelper reviews scope, timing, service area, safety notes, and pricing before sending a secure payment link."
       />
 
       <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
+        <div className="mb-10 rounded-[2rem] border border-nest-gold/16 bg-white/86 p-5 text-center shadow-sm sm:p-6">
+          <p className="pill-label mx-auto w-fit"><ShieldCheck size={15} /> Managed service</p>
+          <h2 className="text-balance mt-4 text-2xl font-black text-nest-teal sm:text-3xl">Premium support is built into every request.</h2>
+          <p className="mx-auto mt-3 max-w-3xl text-sm font-semibold leading-6 text-nest-ink/70 sm:text-base sm:leading-7">
+            NestHelper pricing includes more than task time: request review, clear scope, helper coordination, secure payment, insured local service, and follow-up after the visit.
+          </p>
+        </div>
+
         <div className="mb-10 grid gap-6 lg:grid-cols-[0.95fr_1.05fr] lg:items-end">
           <div>
             <p className="pill-label w-fit"><Sparkles size={15} /> Parent Reset Packages</p>
@@ -24,7 +32,7 @@ export default function ServicesPage() {
           <div className="pro-card rounded-[2rem] p-6">
             <h3 className="text-xl font-black text-nest-teal">Simple at first glance. Details when you need them.</h3>
             <p className="mt-3 font-medium leading-7 text-nest-ink/70">
-              Each card shows the essentials first. Open a package to see what is included, then request the one that fits your family best. Availability is limited while we grow carefully.
+              Each card shows the essentials first. Open a package to see what is included, then request the one that fits your family best. We review availability and scope before sending payment.
             </p>
           </div>
         </div>
@@ -58,14 +66,14 @@ export default function ServicesPage() {
           <div className="grid gap-8 lg:grid-cols-[0.7fr_1.3fr] lg:items-center">
             <div>
               <p className="pill-label w-fit"><ShieldCheck size={15} /> Included</p>
-              <h2 className="mt-4 text-3xl font-black text-nest-teal sm:text-4xl">Every request includes more than the task list.</h2>
+              <h2 className="mt-4 text-3xl font-black text-nest-teal sm:text-4xl">Every request includes more than task time.</h2>
             </div>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {[
                 "Request review before checkout",
-                "Limited openings reviewed carefully",
                 "Clear scope and prep notes",
                 "Service coordination",
+                "Helper fit and availability review",
                 "Insured local service",
                 "Secure payment link",
                 "Follow-up after service",
