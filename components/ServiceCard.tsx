@@ -252,6 +252,11 @@ export function ServiceCard({ service, equalCollapsedHeight = false }: { service
               <div className={`mt-2 font-bold text-nest-ink/60 ${isLaundry ? "text-[0.72rem] leading-4 sm:text-xs" : "text-sm"}`}>
                 Helper-based launch pricing
               </div>
+              {service.recurringRates && (
+                <div className="mt-3 rounded-2xl border border-nest-gold/14 bg-white/80 px-3 py-2 text-xs font-black leading-5 text-nest-teal">
+                  Recurring after first visit: {service.recurringRates.biweekly} biweekly · {service.recurringRates.weekly} weekly
+                </div>
+              )}
             </div>
             <div className={`flex min-h-[3.5rem] items-center justify-center px-3 py-3 text-center text-[0.58rem] font-black uppercase leading-5 tracking-[0.075em] sm:text-[0.62rem] ${theme.price}`}>
               {service.priceNote}

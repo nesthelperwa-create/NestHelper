@@ -11,6 +11,10 @@ export type Service = {
   image: string;
   stripeStandardEnv?: string;
   note?: string;
+  recurringRates?: {
+    biweekly: string;
+    weekly: string;
+  };
 };
 
 export const services: Service[] = [
@@ -28,6 +32,7 @@ export const services: Service[] = [
     ],
     standardPrice: "$129",
     priceNote: "Flat 2-hour visit",
+    recurringRates: { biweekly: "$125/visit", weekly: "$119/visit" },
     serviceTime: "2 hours of in-home help",
     travelInfo: "Core Eastside service area",
     image: "/assets/services/service-parent-reset.png",
@@ -47,6 +52,7 @@ export const services: Service[] = [
     ],
     standardPrice: "$199",
     priceNote: "Flat 3-hour visit",
+    recurringRates: { biweekly: "$189/visit", weekly: "$179/visit" },
     serviceTime: "3 hours of in-home help",
     travelInfo: "Core Eastside service area",
     image: "/assets/services/service-family-reset.png",
@@ -66,6 +72,7 @@ export const services: Service[] = [
     ],
     standardPrice: "$279",
     priceNote: "Flat 4-hour visit",
+    recurringRates: { biweekly: "$269/visit", weekly: "$259/visit" },
     serviceTime: "4 hours of helper time",
     travelInfo: "Core Eastside service area",
     image: "/assets/services/service-helper-block.png",

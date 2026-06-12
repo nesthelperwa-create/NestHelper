@@ -19,8 +19,8 @@ export default function RequestPage() {
           <p className="mx-auto mt-3 max-w-3xl text-sm font-semibold leading-6 text-nest-ink/70 sm:text-base sm:leading-7">
             NestHelper reviews each request before confirmation so we can protect quality, helper fit, and availability while we grow carefully. Submitting a request does not charge you or guarantee a booking.
           </p>
-          <div className="mx-auto mt-5 grid max-w-3xl gap-3 text-left sm:grid-cols-3">
-            {["Scope reviewed first", "Clear price before payment", "Follow-up after service"].map((item) => (
+          <div className="mx-auto mt-5 grid max-w-3xl gap-3 text-left sm:grid-cols-2 lg:grid-cols-4">
+            {["Scope reviewed first", "Clear price before payment", "Recurring rates after first visit", "Follow-up after service"].map((item) => (
               <div key={item} className="flex items-center gap-2 rounded-2xl bg-nest-cream px-4 py-3 text-sm font-black text-nest-teal">
                 <CheckCircle2 size={16} className="shrink-0 text-nest-gold" />
                 {item}

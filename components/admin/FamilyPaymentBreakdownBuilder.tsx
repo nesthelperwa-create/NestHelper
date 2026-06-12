@@ -39,6 +39,22 @@ const FAMILY_PRESETS = [
     amount: "129",
   },
   {
+    id: "parent-reset-biweekly",
+    label: "Recurring 2-Hour Parent Reset — every 2 weeks",
+    description: "Recurring every-2-weeks Parent Reset rate. First visit stays standard price; recurring rate is for approved ongoing support.",
+    unit: "visit",
+    rate: "125",
+    amount: "125",
+  },
+  {
+    id: "parent-reset-weekly",
+    label: "Recurring 2-Hour Parent Reset — weekly",
+    description: "Recurring weekly Parent Reset rate. First visit stays standard price; recurring rate is for approved ongoing support.",
+    unit: "visit",
+    rate: "119",
+    amount: "119",
+  },
+  {
     id: "family-reset-standard",
     label: "3-Hour Family Reset",
     description: "One-time 3-hour Family Reset package based on the customer request.",
@@ -47,12 +63,44 @@ const FAMILY_PRESETS = [
     amount: "199",
   },
   {
+    id: "family-reset-biweekly",
+    label: "Recurring 3-Hour Family Reset — every 2 weeks",
+    description: "Recurring every-2-weeks Family Reset rate. First visit stays standard price; recurring rate is for approved ongoing support.",
+    unit: "visit",
+    rate: "189",
+    amount: "189",
+  },
+  {
+    id: "family-reset-weekly",
+    label: "Recurring 3-Hour Family Reset — weekly",
+    description: "Recurring weekly Family Reset rate. First visit stays standard price; recurring rate is for approved ongoing support.",
+    unit: "visit",
+    rate: "179",
+    amount: "179",
+  },
+  {
     id: "helper-block-standard",
     label: "4-Hour Helper Block",
     description: "One-time 4-hour Helper Block package based on the customer request.",
     unit: "flat",
     rate: "279",
     amount: "279",
+  },
+  {
+    id: "helper-block-biweekly",
+    label: "Recurring 4-Hour Helper Block — every 2 weeks",
+    description: "Recurring every-2-weeks Helper Block rate. First visit stays standard price; recurring rate is for approved ongoing support.",
+    unit: "visit",
+    rate: "269",
+    amount: "269",
+  },
+  {
+    id: "helper-block-weekly",
+    label: "Recurring 4-Hour Helper Block — weekly",
+    description: "Recurring weekly Helper Block rate. First visit stays standard price; recurring rate is for approved ongoing support.",
+    unit: "visit",
+    rate: "259",
+    amount: "259",
   },
   {
     id: "errand-helper-standard",
@@ -128,8 +176,8 @@ const FAMILY_PRESETS = [
   },
   {
     id: "recurring-family-visit",
-    label: "Recurring family reset visit",
-    description: "Per-visit amount for recurring weekly or biweekly family help. Schedule is confirmed by NestHelper.",
+    label: "Custom recurring family reset visit",
+    description: "Custom per-visit amount for approved recurring weekly or every-2-weeks family help. Use a named recurring preset when possible.",
     unit: "visit",
     rate: "189",
     amount: "189",
@@ -789,6 +837,9 @@ export default function FamilyPaymentBreakdownBuilder({
                       <input type="date" value={servicePeriodEnd} onChange={(e) => { markDirty(); setServicePeriodEnd(e.target.value); }} className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]" />
                     </label>
                   </div>
+                  <p className="mt-3 rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-xs font-bold leading-5 text-slate-600">
+                    Recurring rates are for approved ongoing support after the first completed standard visit. Use the named recurring presets for weekly or every-2-weeks visits; monthly refresh visits stay at standard pricing unless you approve a custom amount.
+                  </p>
                 </div>
 
                 {totalSuggestedCreditAmount > 0 && (
