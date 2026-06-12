@@ -39,44 +39,12 @@ const FAMILY_PRESETS = [
     amount: "129",
   },
   {
-    id: "parent-reset-biweekly",
-    label: "Recurring 2-Hour Parent Reset — every 2 weeks",
-    description: "Recurring every-2-weeks Parent Reset rate. First visit stays standard price; recurring rate is for approved ongoing support.",
-    unit: "visit",
-    rate: "125",
-    amount: "125",
-  },
-  {
-    id: "parent-reset-weekly",
-    label: "Recurring 2-Hour Parent Reset — weekly",
-    description: "Recurring weekly Parent Reset rate. First visit stays standard price; recurring rate is for approved ongoing support.",
-    unit: "visit",
-    rate: "119",
-    amount: "119",
-  },
-  {
     id: "family-reset-standard",
     label: "3-Hour Family Reset",
     description: "One-time 3-hour Family Reset package based on the customer request.",
     unit: "flat",
     rate: "199",
     amount: "199",
-  },
-  {
-    id: "family-reset-biweekly",
-    label: "Recurring 3-Hour Family Reset — every 2 weeks",
-    description: "Recurring every-2-weeks Family Reset rate. First visit stays standard price; recurring rate is for approved ongoing support.",
-    unit: "visit",
-    rate: "189",
-    amount: "189",
-  },
-  {
-    id: "family-reset-weekly",
-    label: "Recurring 3-Hour Family Reset — weekly",
-    description: "Recurring weekly Family Reset rate. First visit stays standard price; recurring rate is for approved ongoing support.",
-    unit: "visit",
-    rate: "179",
-    amount: "179",
   },
   {
     id: "helper-block-standard",
@@ -87,17 +55,49 @@ const FAMILY_PRESETS = [
     amount: "279",
   },
   {
+    id: "parent-reset-biweekly",
+    label: "Parent Reset recurring — every 2 weeks",
+    description: "Recurring 2-hour Parent Reset rate after the first completed standard visit. Intended for consistent scope and schedule.",
+    unit: "visit",
+    rate: "125",
+    amount: "125",
+  },
+  {
+    id: "parent-reset-weekly",
+    label: "Parent Reset recurring — weekly",
+    description: "Weekly 2-hour Parent Reset rate after the first completed standard visit. Intended for consistent scope and schedule.",
+    unit: "visit",
+    rate: "119",
+    amount: "119",
+  },
+  {
+    id: "family-reset-biweekly",
+    label: "Family Reset recurring — every 2 weeks",
+    description: "Recurring 3-hour Family Reset rate after the first completed standard visit. Intended for consistent scope and schedule.",
+    unit: "visit",
+    rate: "189",
+    amount: "189",
+  },
+  {
+    id: "family-reset-weekly",
+    label: "Family Reset recurring — weekly",
+    description: "Weekly 3-hour Family Reset rate after the first completed standard visit. Intended for consistent scope and schedule.",
+    unit: "visit",
+    rate: "179",
+    amount: "179",
+  },
+  {
     id: "helper-block-biweekly",
-    label: "Recurring 4-Hour Helper Block — every 2 weeks",
-    description: "Recurring every-2-weeks Helper Block rate. First visit stays standard price; recurring rate is for approved ongoing support.",
+    label: "Helper Block recurring — every 2 weeks",
+    description: "Recurring 4-hour Helper Block rate after the first completed standard visit. Intended for consistent scope and schedule.",
     unit: "visit",
     rate: "269",
     amount: "269",
   },
   {
     id: "helper-block-weekly",
-    label: "Recurring 4-Hour Helper Block — weekly",
-    description: "Recurring weekly Helper Block rate. First visit stays standard price; recurring rate is for approved ongoing support.",
+    label: "Helper Block recurring — weekly",
+    description: "Weekly 4-hour Helper Block rate after the first completed standard visit. Intended for consistent scope and schedule.",
     unit: "visit",
     rate: "259",
     amount: "259",
@@ -176,8 +176,8 @@ const FAMILY_PRESETS = [
   },
   {
     id: "recurring-family-visit",
-    label: "Custom recurring family reset visit",
-    description: "Custom per-visit amount for approved recurring weekly or every-2-weeks family help. Use a named recurring preset when possible.",
+    label: "Recurring family reset visit",
+    description: "Per-visit amount for recurring weekly or biweekly family help. Schedule is confirmed by NestHelper.",
     unit: "visit",
     rate: "189",
     amount: "189",
@@ -277,6 +277,34 @@ function getDefaultPaymentPlan(item: AdminDoc) {
   if (raw.includes("laundry")) return "Laundry Rescue deposit";
   if (raw.includes("errand")) return "One-time errand helper";
   return "One-time family service";
+}
+
+function getRecommendedRecurringPresetId(item: AdminDoc, cadence = "Every 2 weeks") {
+  const raw = String(item.service || item.selectedServiceTitle || item.packageType || "").toLowerCase();
+  const weekly = cadence.toLowerCase().includes("weekly");
+  if (raw.includes("helper")) return weekly ? "helper-block-weekly" : "helper-block-biweekly";
+  if (raw.includes("family")) return weekly ? "family-reset-weekly" : "family-reset-biweekly";
+  return weekly ? "parent-reset-weekly" : "parent-reset-biweekly";
+}
+
+function getRecurringPresetAmount(presetId: string) {
+  const preset = FAMILY_PRESETS.find((item) => item.id === presetId);
+  return preset ? cleanNumber(preset.amount) : 0;
+}
+
+function getRecurringPlanLabel(cadence: string) {
+  const clean = getString(cadence);
+  if (!clean || clean === "Not recurring") return "Not recurring";
+  return clean === "Weekly" ? "Recurring weekly family service" : "Recurring every 2 weeks";
+}
+
+function getNextVisitFromDate(dateValue: string, cadence: string) {
+  const cleanDate = getString(dateValue);
+  if (!cleanDate) return "";
+  const date = new Date(`${cleanDate}T12:00:00`);
+  if (Number.isNaN(date.getTime())) return "";
+  date.setDate(date.getDate() + (cadence === "Weekly" ? 7 : 14));
+  return date.toISOString().slice(0, 10);
 }
 
 function hasIncomingFamilyReferral(item: AdminDoc) {
@@ -447,6 +475,7 @@ function buildCustomerBreakdownText({
   laterAmount,
   customerNote,
   servicePeriodLabel,
+  recurringTracking,
   formatMoney,
 }: {
   quoteTitle: string;
@@ -459,6 +488,7 @@ function buildCustomerBreakdownText({
   laterAmount: number;
   customerNote: string;
   servicePeriodLabel: string;
+  recurringTracking?: Record<string, any>;
   formatMoney: (value: number) => string;
 }) {
   const lines = lineItems
@@ -475,6 +505,8 @@ function buildCustomerBreakdownText({
     `Service: ${serviceLabel}`,
     `Payment type: ${paymentPlan}`,
     servicePeriodLabel ? `Service period: ${servicePeriodLabel}` : "",
+    recurringTracking?.status && recurringTracking.status !== "Not recurring" ? `Recurring plan: ${recurringTracking.cadence || "Recurring"} at ${formatMoney(cleanNumber(recurringTracking.rate))}/visit` : "",
+    recurringTracking?.nextVisitDate ? `Next planned visit: ${recurringTracking.nextVisitDate}` : "",
     "",
     lines,
     "",
@@ -529,6 +561,17 @@ export default function FamilyPaymentBreakdownBuilder({
   const [refundAmount, setRefundAmount] = useState(getString(item.familyRefundTracking?.refundAmount) || "0");
   const [refundReason, setRefundReason] = useState(getString(item.familyRefundTracking?.refundReason));
   const [customerNotified, setCustomerNotified] = useState(Boolean(item.familyRefundTracking?.customerNotified));
+  const savedRecurring = (item.familyRecurringPlan || saved.recurringTracking || {}) as Record<string, any>;
+  const [recurringStatus, setRecurringStatus] = useState(getString(savedRecurring.status) || "Not recurring");
+  const [recurringCadence, setRecurringCadence] = useState(getString(savedRecurring.cadence) || "Every 2 weeks");
+  const [recurringRate, setRecurringRate] = useState(getString(savedRecurring.rate) || String(getRecurringPresetAmount(getRecommendedRecurringPresetId(item, getString(savedRecurring.cadence) || "Every 2 weeks"))));
+  const [nextVisitDate, setNextVisitDate] = useState(getString(savedRecurring.nextVisitDate));
+  const [recurringCompletedVisits, setRecurringCompletedVisits] = useState(getString(savedRecurring.completedVisits) || "0");
+  const [recurringMinimumVisits, setRecurringMinimumVisits] = useState(getString(savedRecurring.minimumVisits) || "2");
+  const [recurringFirstVisitCompleted, setRecurringFirstVisitCompleted] = useState(Boolean(savedRecurring.firstVisitCompleted));
+  const [recurringCardOnFile, setRecurringCardOnFile] = useState(Boolean(savedRecurring.cardOnFile));
+  const [recurringAutoReady, setRecurringAutoReady] = useState(Boolean(savedRecurring.autoReady));
+  const [recurringNotes, setRecurringNotes] = useState(getString(savedRecurring.notes));
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -550,6 +593,18 @@ export default function FamilyPaymentBreakdownBuilder({
     setRefundAmount(getString(item.familyRefundTracking?.refundAmount) || "0");
     setRefundReason(getString(item.familyRefundTracking?.refundReason));
     setCustomerNotified(Boolean(item.familyRefundTracking?.customerNotified));
+    const nextRecurring = (item.familyRecurringPlan || nextSaved.recurringTracking || {}) as Record<string, any>;
+    const nextCadence = getString(nextRecurring.cadence) || "Every 2 weeks";
+    setRecurringStatus(getString(nextRecurring.status) || "Not recurring");
+    setRecurringCadence(nextCadence);
+    setRecurringRate(getString(nextRecurring.rate) || String(getRecurringPresetAmount(getRecommendedRecurringPresetId(item, nextCadence))));
+    setNextVisitDate(getString(nextRecurring.nextVisitDate));
+    setRecurringCompletedVisits(getString(nextRecurring.completedVisits) || "0");
+    setRecurringMinimumVisits(getString(nextRecurring.minimumVisits) || "2");
+    setRecurringFirstVisitCompleted(Boolean(nextRecurring.firstVisitCompleted));
+    setRecurringCardOnFile(Boolean(nextRecurring.cardOnFile));
+    setRecurringAutoReady(Boolean(nextRecurring.autoReady));
+    setRecurringNotes(getString(nextRecurring.notes));
     setMessage("");
     setError("");
     setDirty(false);
@@ -562,6 +617,25 @@ export default function FamilyPaymentBreakdownBuilder({
   const referralCreditNeedsAttention = totalSuggestedCreditAmount > 0 && discount < totalSuggestedCreditAmount;
   const possibleLaterAmount = Math.max(0, cleanNumber(laterAmount));
   const servicePeriodLabel = useMemo(() => formatServicePeriodLabel(servicePeriodStart, servicePeriodEnd), [servicePeriodStart, servicePeriodEnd]);
+  const recurringRateValue = Math.max(0, cleanNumber(recurringRate));
+  const recurringCompletedVisitCount = Math.max(0, Math.floor(cleanNumber(recurringCompletedVisits)));
+  const recurringMinimumVisitCount = Math.max(1, Math.floor(cleanNumber(recurringMinimumVisits)) || 2);
+  const recurringIsActive = recurringStatus === "Recurring active" || recurringStatus === "Approved recurring";
+  const recurringReadyForNextInvoice = recurringIsActive && recurringFirstVisitCompleted && recurringRateValue > 0 && Boolean(nextVisitDate);
+  const recurringNeedsSafeguard = recurringIsActive && (!recurringFirstVisitCompleted || recurringRateValue <= 0 || !nextVisitDate);
+  const recurringTracking = {
+    status: recurringStatus,
+    cadence: recurringCadence,
+    rate: Number(recurringRateValue.toFixed(2)),
+    nextVisitDate,
+    completedVisits: recurringCompletedVisitCount,
+    minimumVisits: recurringMinimumVisitCount,
+    firstVisitCompleted: recurringFirstVisitCompleted,
+    cardOnFile: recurringCardOnFile,
+    autoReady: recurringAutoReady,
+    notes: recurringNotes,
+    updatedAtLocal: new Date().toISOString(),
+  };
   const customerBreakdownText = useMemo(
     () =>
       buildCustomerBreakdownText({
@@ -575,9 +649,10 @@ export default function FamilyPaymentBreakdownBuilder({
         laterAmount: possibleLaterAmount,
         customerNote,
         servicePeriodLabel,
+        recurringTracking,
         formatMoney,
       }),
-    [quoteTitle, serviceLabel, paymentPlan, lineItems, subtotal, discount, amountDueNow, possibleLaterAmount, customerNote, servicePeriodLabel, formatMoney]
+    [quoteTitle, serviceLabel, paymentPlan, lineItems, subtotal, discount, amountDueNow, possibleLaterAmount, customerNote, servicePeriodLabel, recurringStatus, recurringCadence, recurringRateValue, nextVisitDate, recurringCompletedVisitCount, recurringMinimumVisitCount, recurringFirstVisitCompleted, recurringCardOnFile, recurringAutoReady, recurringNotes, formatMoney]
   );
 
   function markDirty() {
@@ -615,6 +690,57 @@ export default function FamilyPaymentBreakdownBuilder({
   function addLineFromPreset() {
     markDirty();
     setLineItems((prev) => [...prev, createLineFromPreset(selectedPreset)]);
+  }
+
+  function applyRecurringPlanToBuilder() {
+    if (recurringStatus === "Not recurring") {
+      setError("Choose an approved/active recurring status before applying a recurring rate.");
+      return;
+    }
+    if (!recurringFirstVisitCompleted) {
+      setError("Fail-safe: complete the first standard-price visit before using recurring pricing.");
+      return;
+    }
+    const presetId = getRecommendedRecurringPresetId(item, recurringCadence);
+    const preset = FAMILY_PRESETS.find((item) => item.id === presetId);
+    const rate = recurringRateValue || getRecurringPresetAmount(presetId);
+    if (!preset || rate <= 0) {
+      setError("Set a recurring rate before applying the plan.");
+      return;
+    }
+    markDirty();
+    setPaymentPlan(getRecurringPlanLabel(recurringCadence));
+    setQuoteTitle(`${serviceLabel} recurring reset visit`);
+    setLineItems([createLineFromPreset(presetId, { amount: String(rate), rate: String(rate), note: "Recurring rate applied after first completed standard-price reset." })]);
+    setDiscountCredit("0");
+    setServicePeriodStart(nextVisitDate || servicePeriodStart);
+    setCustomerNote("Recurring reset visit. Recurring pricing is reserved for consistent scope, schedule, service area, and helper availability. Schedule changes, added scope, or early cancellation may return future visits to standard pricing.");
+    setMessage("Recurring rate applied to this draft. Review, save, then create/send the next payment link or invoice.");
+    setError("");
+  }
+
+  function fillNextRecurringCheckout() {
+    if (!recurringReadyForNextInvoice) {
+      setError("Recurring checkout blocked: mark first visit completed, choose an active recurring status, set the next visit date, and confirm the recurring rate.");
+      return;
+    }
+    const note = `Recurring ${recurringCadence.toLowerCase()} reset visit${nextVisitDate ? ` planned for ${nextVisitDate}` : ""}. Recurring pricing applies after the first completed standard-price visit and depends on consistent scope, schedule, service area, and helper availability.`;
+    onApplyCheckout({ amount: recurringRateValue, title: `${serviceLabel} recurring reset visit`, note });
+    setMessage("Next recurring checkout amount filled. Review the payment card before sending.");
+    setError("");
+  }
+
+  function advanceNextVisitDate() {
+    const nextDate = getNextVisitFromDate(nextVisitDate || servicePeriodStart, recurringCadence);
+    if (!nextDate) {
+      setError("Add a next visit date first, then advance it.");
+      return;
+    }
+    markDirty();
+    setNextVisitDate(nextDate);
+    setRecurringCompletedVisits(String(recurringCompletedVisitCount + 1));
+    setMessage(`Next visit moved to ${nextDate}. Save the recurring plan to keep this update.`);
+    setError("");
   }
 
   function resetToCustomerSelections() {
@@ -702,7 +828,9 @@ export default function FamilyPaymentBreakdownBuilder({
             customerNote,
             internalNotes,
             customerBreakdownText,
+            recurringTracking,
           },
+          recurringTracking,
           refundTracking: {
             refundStatus,
             refundAmount: Number(Math.max(0, cleanNumber(refundAmount)).toFixed(2)),
@@ -733,8 +861,10 @@ export default function FamilyPaymentBreakdownBuilder({
           customerNote,
           internalNotes,
           customerBreakdownText,
+          recurringTracking,
         },
         familyPaymentStatus: "Breakdown saved",
+        familyRecurringPlan: recurringTracking,
         familyInitialAmount: Number(amountDueNow.toFixed(2)),
         familyAdditionalAmount: Number(possibleLaterAmount.toFixed(2)),
         familyRefundTracking: {
@@ -774,6 +904,12 @@ export default function FamilyPaymentBreakdownBuilder({
             Amount due now: {formatMoney(amountDueNow)}
             {referralCreditApplied && <span className="mt-1 block text-xs text-emerald-700">Referral/customer credit included: -{formatMoney(totalSuggestedCreditAmount)}</span>}{referralCreditNeedsAttention && <span className="mt-1 block text-xs text-amber-700">Referral/customer credit needs review: -{formatMoney(totalSuggestedCreditAmount)}</span>}
           </div>
+          {recurringStatus !== "Not recurring" && (
+            <div className={`rounded-2xl px-4 py-3 text-xs font-black shadow-sm ${recurringNeedsSafeguard ? "bg-amber-50 text-amber-800" : "bg-emerald-50 text-emerald-800"}`}>
+              Recurring: {recurringStatus} • {recurringCadence} • {formatMoney(recurringRateValue)}/visit
+              {nextVisitDate && <span className="block">Next: {nextVisitDate}</span>}
+            </div>
+          )}
           <button type="button" onClick={() => setOpen(true)} className={getButtonClass("primary")}>Open family builder</button>
         </div>
       </div>
@@ -810,6 +946,17 @@ export default function FamilyPaymentBreakdownBuilder({
 
             <div className="grid gap-5 p-4 sm:p-5 lg:grid-cols-[1.25fr_0.75fr]">
               <div className="space-y-5">
+                <div className="rounded-3xl border border-[#eadfc8] bg-white p-4">
+                  <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Recurring safeguards</p>
+                  <div className="mt-3 space-y-2 text-sm font-bold leading-6 text-slate-700">
+                    <p>Status: <span className="text-[#075c58]">{recurringStatus}</span></p>
+                    <p>Rate: <span className="text-[#075c58]">{recurringRateValue > 0 ? `${formatMoney(recurringRateValue)}/visit` : "Not set"}</span></p>
+                    <p>Next visit: <span className="text-[#075c58]">{nextVisitDate || "Not set"}</span></p>
+                    <p>First visit completed: <span className={recurringFirstVisitCompleted ? "text-emerald-700" : "text-amber-700"}>{recurringFirstVisitCompleted ? "Yes" : "No"}</span></p>
+                    <p className="rounded-2xl bg-[#fbf6ea] p-3 text-xs leading-5">No automatic subscription is created. Admin still reviews before sending payment, but saved recurring details make the next invoice/check-out faster and safer.</p>
+                  </div>
+                </div>
+
                 <div className="rounded-3xl border border-[#eadfc8] bg-[#fbf6ea] p-4">
                   <div className="grid gap-3 md:grid-cols-2">
                     <label className="grid gap-2 text-sm font-bold text-slate-700">
@@ -837,9 +984,84 @@ export default function FamilyPaymentBreakdownBuilder({
                       <input type="date" value={servicePeriodEnd} onChange={(e) => { markDirty(); setServicePeriodEnd(e.target.value); }} className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]" />
                     </label>
                   </div>
-                  <p className="mt-3 rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-xs font-bold leading-5 text-slate-600">
-                    Recurring rates are for approved ongoing support after the first completed standard visit. Use the named recurring presets for weekly or every-2-weeks visits; monthly refresh visits stay at standard pricing unless you approve a custom amount.
-                  </p>
+                </div>
+
+                <div className="rounded-3xl border border-[#075c58]/18 bg-[#f4fbf8] p-4">
+                  <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                    <div>
+                      <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Recurring client tracking</p>
+                      <h5 className="mt-1 text-base font-black text-[#075c58]">Set once, then use one-click next visit checkout</h5>
+                      <p className="mt-1 text-sm font-semibold leading-6 text-slate-700">
+                        This does not create a subscription or auto-bill the family. It saves the recurring plan, guards against early discounts, and lets admin fill the next payment amount quickly.
+                      </p>
+                    </div>
+                    <div className={`rounded-2xl px-4 py-3 text-xs font-black ${recurringNeedsSafeguard ? "bg-amber-100 text-amber-900" : recurringReadyForNextInvoice ? "bg-emerald-100 text-emerald-900" : "bg-white text-slate-700"}`}>
+                      {recurringNeedsSafeguard ? "Needs fail-safe review" : recurringReadyForNextInvoice ? "Ready for next recurring payment" : "No auto billing active"}
+                    </div>
+                  </div>
+                  <div className="mt-4 grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+                    <label className="grid gap-2 text-sm font-bold text-slate-700">
+                      Recurring status
+                      <select value={recurringStatus} onChange={(e) => { markDirty(); setRecurringStatus(e.target.value); }} className="rounded-2xl border border-[#cfe4da] bg-white px-4 py-3 text-sm font-bold text-[#075c58] outline-none focus:border-[#075c58]">
+                        <option>Not recurring</option>
+                        <option>Approved recurring</option>
+                        <option>Recurring active</option>
+                        <option>Paused</option>
+                        <option>Canceled</option>
+                      </select>
+                    </label>
+                    <label className="grid gap-2 text-sm font-bold text-slate-700">
+                      Cadence
+                      <select value={recurringCadence} onChange={(e) => { markDirty(); setRecurringCadence(e.target.value); const presetId = getRecommendedRecurringPresetId(item, e.target.value); setRecurringRate(String(getRecurringPresetAmount(presetId))); }} className="rounded-2xl border border-[#cfe4da] bg-white px-4 py-3 text-sm font-bold text-[#075c58] outline-none focus:border-[#075c58]">
+                        <option>Every 2 weeks</option>
+                        <option>Weekly</option>
+                      </select>
+                    </label>
+                    <label className="grid gap-2 text-sm font-bold text-slate-700">
+                      Recurring rate / visit
+                      <input value={recurringRate} onChange={(e) => { markDirty(); setRecurringRate(e.target.value); }} inputMode="decimal" className="rounded-2xl border border-[#cfe4da] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]" />
+                    </label>
+                    <label className="grid gap-2 text-sm font-bold text-slate-700">
+                      Next visit date
+                      <input type="date" value={nextVisitDate} onChange={(e) => { markDirty(); setNextVisitDate(e.target.value); }} className="rounded-2xl border border-[#cfe4da] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]" />
+                    </label>
+                    <label className="grid gap-2 text-sm font-bold text-slate-700">
+                      Completed recurring visits
+                      <input value={recurringCompletedVisits} onChange={(e) => { markDirty(); setRecurringCompletedVisits(e.target.value); }} inputMode="numeric" className="rounded-2xl border border-[#cfe4da] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]" />
+                    </label>
+                    <label className="grid gap-2 text-sm font-bold text-slate-700">
+                      Minimum recurring visits
+                      <input value={recurringMinimumVisits} onChange={(e) => { markDirty(); setRecurringMinimumVisits(e.target.value); }} inputMode="numeric" className="rounded-2xl border border-[#cfe4da] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]" />
+                    </label>
+                  </div>
+                  <div className="mt-4 grid gap-3 md:grid-cols-3">
+                    <label className="flex gap-3 rounded-2xl bg-white p-3 text-sm font-bold text-slate-700">
+                      <input type="checkbox" checked={recurringFirstVisitCompleted} onChange={(e) => { markDirty(); setRecurringFirstVisitCompleted(e.target.checked); }} className="mt-1 h-4 w-4 accent-[#075c58]" />
+                      First standard-price visit completed
+                    </label>
+                    <label className="flex gap-3 rounded-2xl bg-white p-3 text-sm font-bold text-slate-700">
+                      <input type="checkbox" checked={recurringCardOnFile} onChange={(e) => { markDirty(); setRecurringCardOnFile(e.target.checked); }} className="mt-1 h-4 w-4 accent-[#075c58]" />
+                      Card/payment method confirmed
+                    </label>
+                    <label className="flex gap-3 rounded-2xl bg-white p-3 text-sm font-bold text-slate-700">
+                      <input type="checkbox" checked={recurringAutoReady} onChange={(e) => { markDirty(); setRecurringAutoReady(e.target.checked); }} className="mt-1 h-4 w-4 accent-[#075c58]" />
+                      Admin reviewed for faster future billing
+                    </label>
+                  </div>
+                  <label className="mt-3 grid gap-2 text-sm font-bold text-slate-700">
+                    Recurring notes
+                    <input value={recurringNotes} onChange={(e) => { markDirty(); setRecurringNotes(e.target.value); }} placeholder="Example: Same checklist every other Friday, keep scope to kitchen/living/laundry folding." className="rounded-2xl border border-[#cfe4da] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]" />
+                  </label>
+                  {recurringCompletedVisitCount < recurringMinimumVisitCount && recurringStatus !== "Not recurring" && (
+                    <p className="mt-3 rounded-2xl bg-amber-50 px-4 py-3 text-xs font-black leading-5 text-amber-900">
+                      Policy reminder: recurring rates are intended for at least {recurringMinimumVisitCount} recurring visits after the first standard-price visit. If the plan cancels early, review whether future visits return to standard pricing.
+                    </p>
+                  )}
+                  <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+                    <button type="button" onClick={applyRecurringPlanToBuilder} className={getButtonClass("secondary")}>Apply recurring rate to draft</button>
+                    <button type="button" onClick={fillNextRecurringCheckout} className={getButtonClass("primary")}>Fill next recurring checkout</button>
+                    <button type="button" onClick={advanceNextVisitDate} className={getButtonClass("quiet")}>Advance next visit date</button>
+                  </div>
                 </div>
 
                 {totalSuggestedCreditAmount > 0 && (

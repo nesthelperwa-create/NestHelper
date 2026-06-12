@@ -45,34 +45,32 @@ export default function ServicesPage() {
           {services.map((service) => <ServiceCard key={service.id} service={service} equalCollapsedHeight />)}
         </div>
 
-        <div className="mt-10 rounded-[2.5rem] border border-nest-gold/18 bg-gradient-to-br from-white via-nest-cream to-nest-mint/30 p-7 shadow-soft sm:p-8">
-          <div className="grid gap-6 lg:grid-cols-[0.85fr_1.15fr] lg:items-start">
+        <div className="mt-10 rounded-[2.5rem] border border-nest-gold/18 bg-gradient-to-br from-white via-nest-cream to-nest-mint/25 p-7 shadow-soft sm:p-8">
+          <div className="grid gap-6 lg:grid-cols-[0.78fr_1.22fr] lg:items-center">
             <div>
               <p className="pill-label w-fit"><Sparkles size={15} /> Recurring Reset Plans</p>
-              <h2 className="mt-4 text-3xl font-black text-nest-teal sm:text-4xl">Steady support, modest loyalty savings.</h2>
-              <p className="mt-4 font-medium leading-7 text-nest-ink/70">
-                After a first completed reset, eligible families may request recurring support. Recurring rates are available when the schedule, scope, service area, and helper fit are consistent.
+              <h2 className="mt-4 text-3xl font-black text-nest-teal sm:text-4xl">Small loyalty savings after the first completed reset.</h2>
+              <p className="mt-3 font-medium leading-7 text-nest-ink/70">
+                Recurring rates are available after a first standard-price visit when the scope, schedule, service area, and helper fit are consistent. This keeps pricing fair while protecting service quality.
               </p>
             </div>
             <div className="grid gap-3 sm:grid-cols-3">
               {[
-                { title: "2-Hour Parent Reset", biweekly: "$125", weekly: "$119" },
-                { title: "3-Hour Family Reset", biweekly: "$189", weekly: "$179" },
-                { title: "4-Hour Helper Block", biweekly: "$269", weekly: "$259" },
+                { title: "Parent Reset", biweekly: "$125", weekly: "$119" },
+                { title: "Family Reset", biweekly: "$189", weekly: "$179" },
+                { title: "Helper Block", biweekly: "$269", weekly: "$259" },
               ].map((plan) => (
-                <div key={plan.title} className="rounded-[1.7rem] border border-nest-gold/16 bg-white/86 p-5 shadow-sm">
+                <div key={plan.title} className="rounded-[1.6rem] border border-nest-gold/14 bg-white p-5 shadow-sm">
                   <h3 className="text-lg font-black text-nest-teal">{plan.title}</h3>
-                  <div className="mt-4 grid gap-2 text-sm font-bold text-nest-ink/70">
-                    <div className="flex justify-between gap-3 rounded-2xl bg-nest-cream px-3 py-2"><span>Every 2 weeks</span><span className="text-nest-teal">{plan.biweekly}/visit</span></div>
-                    <div className="flex justify-between gap-3 rounded-2xl bg-nest-mint/25 px-3 py-2"><span>Weekly</span><span className="text-nest-teal">{plan.weekly}/visit</span></div>
+                  <div className="mt-4 space-y-2 text-sm font-black text-nest-ink/76">
+                    <div className="flex justify-between gap-3"><span>Every 2 weeks</span><span>{plan.biweekly}</span></div>
+                    <div className="flex justify-between gap-3"><span>Weekly</span><span>{plan.weekly}</span></div>
                   </div>
+                  <p className="mt-3 text-xs font-semibold leading-5 text-nest-ink/58">Per visit. First reset stays standard price.</p>
                 </div>
               ))}
             </div>
           </div>
-          <p className="mt-5 rounded-3xl border border-nest-gold/14 bg-white/75 p-4 text-sm font-bold leading-6 text-nest-ink/68">
-            First visits are completed at standard pricing. Recurring rates are not discounted trials; they reflect consistent scope, priority scheduling, and a family planning ongoing support. Monthly refresh visits remain at standard pricing when openings allow.
-          </p>
         </div>
 
         <div className="mt-10 rounded-[2.5rem] border border-nest-gold/18 bg-gradient-to-br from-white via-nest-cream to-nest-mint/30 p-7 shadow-soft sm:p-8">

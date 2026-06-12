@@ -16,6 +16,7 @@ type UpdateFamilyPaymentBreakdownBody = {
   customerNote?: string;
   internalNotes?: string;
   paymentBreakdown?: unknown;
+  recurringTracking?: unknown;
   refundTracking?: unknown;
 };
 
@@ -89,6 +90,7 @@ export async function POST(request: Request) {
     const customerNote = getString(body?.customerNote);
     const internalNotes = getString(body?.internalNotes);
     const paymentBreakdown = cleanJsonValue(body?.paymentBreakdown);
+    const recurringTracking = cleanJsonValue(body?.recurringTracking);
     const refundTracking = cleanJsonValue(body?.refundTracking);
 
     const updatePayload: Record<string, unknown> = {
@@ -109,6 +111,10 @@ export async function POST(request: Request) {
 
     if (paymentBreakdown && typeof paymentBreakdown === "object") {
       updatePayload.familyPaymentBreakdown = paymentBreakdown;
+    }
+
+    if (recurringTracking && typeof recurringTracking === "object") {
+      updatePayload.familyRecurringPlan = recurringTracking;
     }
 
     if (refundTracking && typeof refundTracking === "object") {

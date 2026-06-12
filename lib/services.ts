@@ -10,11 +10,8 @@ export type Service = {
   travelInfo?: string;
   image: string;
   stripeStandardEnv?: string;
+  recurringRates?: { cadence: string; price: string; note?: string }[];
   note?: string;
-  recurringRates?: {
-    biweekly: string;
-    weekly: string;
-  };
 };
 
 export const services: Service[] = [
@@ -32,11 +29,14 @@ export const services: Service[] = [
     ],
     standardPrice: "$129",
     priceNote: "Flat 2-hour visit",
-    recurringRates: { biweekly: "$125/visit", weekly: "$119/visit" },
     serviceTime: "2 hours of in-home help",
     travelInfo: "Core Eastside service area",
     image: "/assets/services/service-parent-reset.png",
-    stripeStandardEnv: "STRIPE_PRICE_PARENT_RESET_STANDARD"
+    stripeStandardEnv: "STRIPE_PRICE_PARENT_RESET_STANDARD",
+    recurringRates: [
+      { cadence: "Every 2 weeks", price: "$125/visit" },
+      { cadence: "Weekly", price: "$119/visit" }
+    ]
   },
   {
     id: "family-reset-3hr",
@@ -52,11 +52,14 @@ export const services: Service[] = [
     ],
     standardPrice: "$199",
     priceNote: "Flat 3-hour visit",
-    recurringRates: { biweekly: "$189/visit", weekly: "$179/visit" },
     serviceTime: "3 hours of in-home help",
     travelInfo: "Core Eastside service area",
     image: "/assets/services/service-family-reset.png",
-    stripeStandardEnv: "STRIPE_PRICE_FAMILY_RESET_STANDARD"
+    stripeStandardEnv: "STRIPE_PRICE_FAMILY_RESET_STANDARD",
+    recurringRates: [
+      { cadence: "Every 2 weeks", price: "$189/visit" },
+      { cadence: "Weekly", price: "$179/visit" }
+    ]
   },
   {
     id: "helper-block-4hr",
@@ -72,11 +75,14 @@ export const services: Service[] = [
     ],
     standardPrice: "$279",
     priceNote: "Flat 4-hour visit",
-    recurringRates: { biweekly: "$269/visit", weekly: "$259/visit" },
     serviceTime: "4 hours of helper time",
     travelInfo: "Core Eastside service area",
     image: "/assets/services/service-helper-block.png",
-    stripeStandardEnv: "STRIPE_PRICE_HELPER_BLOCK_STANDARD"
+    stripeStandardEnv: "STRIPE_PRICE_HELPER_BLOCK_STANDARD",
+    recurringRates: [
+      { cadence: "Every 2 weeks", price: "$269/visit" },
+      { cadence: "Weekly", price: "$259/visit" }
+    ]
   },
   {
     id: "errand-helper",
