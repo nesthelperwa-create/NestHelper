@@ -81,7 +81,7 @@ export default function ServicesPage() {
             </div>
             <div>
               <p className="font-medium leading-7 text-nest-ink/70">
-                For small offices, studios, churches, daycare common areas, salons, and local business spaces, use the Commercial Reset page. Commercial work is quoted after review instead of listed as a guaranteed flat package. It is available in select Pierce County, Eastside, and Northshore areas, and product preferences can be noted before quoting.
+                For small offices, studios, churches, daycare common areas, salons, and local business spaces, use the Commercial Reset page. Commercial work is quoted after review instead of listed as a guaranteed flat package. It is available in select Eastside and Northshore areas, and product preferences can be noted before quoting.
               </p>
               <div className="mt-5 flex flex-col gap-3 sm:flex-row">
                 <ButtonLink href="/commercial-reset" variant="secondary">View Commercial Reset</ButtonLink>

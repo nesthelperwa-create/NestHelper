@@ -36,7 +36,7 @@ export default function ContactPage() {
             </Info>
 
             <Info icon={<Building2 />} label="Commercial Reset area">
-              <div className="font-bold text-nest-ink/78">Select Pierce County, Eastside, and Northshore areas.</div>
+              <div className="font-bold text-nest-ink/78">Select Eastside and Northshore areas.</div>
             </Info>
 
             <Info icon={<Sparkles />} label="Social media">

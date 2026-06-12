@@ -911,12 +911,11 @@ export function CommercialResetForm() {
         </div>
       </Section>
 
-      <Section title="2. Cleaning address" description="Commercial Reset is quoted in select Pierce County, Eastside, and Northshore areas. Parent Reset home services remain focused on the Eastside/Northshore side.">
+      <Section title="2. Cleaning address" description="Commercial Reset is quoted in select Eastside and Northshore areas. Parent Reset home services remain focused on the Eastside/Northshore side.">
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Service area">
             <select className="input" value={form.serviceRegion} onChange={(e) => update("serviceRegion", e.target.value)}>
               <option>Not sure yet</option>
-              <option>Pierce County commercial area</option>
               <option>Eastside / Northshore commercial area</option>
               <option>Nearby area — please review</option>
             </select>

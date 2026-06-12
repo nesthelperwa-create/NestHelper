@@ -236,7 +236,7 @@ export default function HomePage() {
               Commercial Reset has its own page.
             </h2>
             <p className="mx-auto mt-5 max-w-3xl text-base font-medium leading-7 text-nest-ink/72 sm:text-lg sm:leading-8">
-              Parent Reset stays focused on families. Commercial Reset is a separate quote-first service lane for small offices, studios, churches, daycare common areas, salons, and local business spaces in select Pierce County, Eastside, and Northshore areas that need routine cleaning support — including non-toxic or low-odor product preferences when appropriate.
+              Parent Reset stays focused on families. Commercial Reset is a separate quote-first service lane for small offices, studios, churches, daycare common areas, salons, and local business spaces in select Eastside and Northshore areas that need routine cleaning support — including non-toxic or low-odor product preferences when appropriate.
             </p>
             <div className="mx-auto mt-7 flex max-w-sm flex-col justify-center gap-3 sm:max-w-none sm:flex-row">
               <ButtonLink href="/commercial-reset">Explore Commercial Reset</ButtonLink>

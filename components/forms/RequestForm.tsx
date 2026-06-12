@@ -447,7 +447,7 @@ export function RequestForm() {
         </div>
       </Section>
 
-      <Section title="2. Service address" description="Parent Reset service is focused on Woodinville, Bothell, Kirkland, Redmond, and nearby Eastside/Northshore communities. Pierce County is currently listed for Commercial Reset only.">
+      <Section title="2. Service address" description="Parent Reset service is focused on Woodinville, Bothell, Kirkland, Redmond, and nearby Eastside/Northshore communities.">
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Street address" required><input className="input" required autoComplete="address-line1" placeholder="123 Main St" value={form.address} onChange={(e) => update("address", e.target.value)} /></Field>
           <Field label="Apt / unit / suite (optional)"><input className="input" autoComplete="address-line2" placeholder="Apt, unit, suite, gate code note, etc." value={form.address2} onChange={(e) => update("address2", e.target.value)} /></Field>

@@ -4023,7 +4023,7 @@ export default function AdminTable({
                       value={commercialInternalQuoteNotes}
                       onChange={(e) => setCommercialInternalQuoteNotes(e.target.value)}
                       rows={3}
-                      placeholder="Private notes: walkthrough needed, Pierce assignment, supply considerations, floor add-ons, tight turnover window, or pricing logic."
+                      placeholder="Private notes: walkthrough needed, Eastside/Northshore assignment, supply considerations, floor add-ons, tight turnover window, or pricing logic."
                       className="rounded-2xl border border-cyan-200 bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
                     />
                   </label>

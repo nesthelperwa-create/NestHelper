@@ -132,7 +132,6 @@ const partnerAreaOptions = [
   "Bothell / Kenmore",
   "Kirkland / Redmond",
   "Bellevue / Eastside",
-  "Pierce County",
   "Seattle / nearby",
   "Other nearby area",
 ];

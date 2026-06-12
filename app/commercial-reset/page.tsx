@@ -20,7 +20,7 @@ import { CommercialAddOnPricingSelector } from "./CommercialAddOnPricingSelector
 
 export const metadata: Metadata = {
   title: "Commercial Reset | NestHelper",
-  description: "Quote-first commercial cleaning and reset services for small offices, studios, churches, daycare common areas, salons, short-term rental turnovers, and local small businesses in select Pierce County, Eastside, and Northshore areas.",
+  description: "Quote-first commercial cleaning and reset services for small offices, studios, churches, daycare common areas, salons, short-term rental turnovers, and local small businesses in select Eastside and Northshore areas.",
 };
 
 const businessTypes = [
@@ -119,7 +119,7 @@ export default function CommercialResetPage() {
             <div>
               <p className="pill-label w-fit"><MapPin size={15} /> Service area check</p>
               <h2 className="mt-4 text-2xl font-black leading-tight text-nest-teal sm:text-3xl">
-                Now quoting select Pierce County, Eastside, and Northshore areas.
+                Now quoting select Eastside and Northshore areas.
               </h2>
               <p className="mt-3 font-medium leading-7 text-nest-ink/70">
                 This service is not available everywhere yet. If your business is near these areas, submit a quote request and NestHelper will review the address, schedule, scope, and any local endorsement requirements before confirming service.
@@ -128,9 +128,9 @@ export default function CommercialResetPage() {
 
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="rounded-[1.5rem] border border-nest-gold/14 bg-white/88 p-4 shadow-sm">
-                <h3 className="text-lg font-black text-nest-teal">Pierce County focus</h3>
+                <h3 className="text-lg font-black text-nest-teal">Eastside focus</h3>
                 <p className="mt-2 text-sm font-bold leading-6 text-nest-ink/68">
-                  Tacoma, Lakewood, Puyallup, University Place, Fife, Sumner, Bonney Lake, Gig Harbor, Spanaway, Parkland, Graham, Frederickson, South Hill, and nearby communities.
+                  Woodinville, Bothell, Kenmore, Kirkland, Redmond, Bellevue, Duvall, Mill Creek, and nearby communities.
                 </p>
               </div>
               <div className="rounded-[1.5rem] border border-nest-gold/14 bg-white/88 p-4 shadow-sm">
@@ -286,7 +286,7 @@ export default function CommercialResetPage() {
         <div className="mx-auto max-w-4xl text-center">
           <p className="pill-label mx-auto w-fit"><MapPin size={15} /> Detailed Service Areas</p>
           <h2 className="text-balance mt-4 text-3xl font-black leading-tight text-nest-teal sm:text-5xl">
-            Now quoting select Pierce County, Eastside, and Northshore areas.
+            Now quoting select Eastside and Northshore areas.
           </h2>
           <p className="mx-auto mt-5 max-w-3xl font-medium leading-7 text-nest-ink/70">
             Service availability depends on schedule, scope, address, and local licensing/endorsement requirements. Some city-limit jobs may require a city endorsement before service begins.
@@ -295,17 +295,17 @@ export default function CommercialResetPage() {
 
         <div className="mt-10 grid gap-5 lg:grid-cols-3">
           <AreaCard
-            title="Pierce County focus"
-            text="Tacoma, Lakewood, Puyallup, University Place, Fife, Sumner, Bonney Lake, Gig Harbor, Spanaway, Parkland, Graham, Frederickson, South Hill, Midland, Summit-Waller, Elk Plain, and nearby unincorporated Pierce County areas."
+            title="Eastside focus"
+            text="Woodinville, Bothell, Kirkland, Redmond, Bellevue, Duvall, and nearby Eastside communities."
           />
           <AreaCard
-            title="Eastside and Northshore"
-            text="Woodinville, Bothell, Kenmore, Kirkland, Redmond, Bellevue, Duvall, Mill Creek, and nearby Eastside/Northshore areas."
+            title="Northshore focus"
+            text="Woodinville, Bothell, Kenmore, Mill Creek, and nearby Northshore communities."
           />
           <div className="rounded-[2rem] border border-nest-gold/16 bg-nest-mint/20 p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-soft">
             <h3 className="text-2xl font-black text-nest-teal">Nearby communities welcome</h3>
             <p className="mt-3 font-medium leading-7 text-nest-ink/70">
-              We include nearby unincorporated Pierce County communities as service areas because many local businesses are outside city limits. Availability still depends on the address, schedule, scope, and any required local endorsements.
+              Nearby Eastside and Northshore communities are welcome to request a quote, but availability still depends on the address, schedule, scope, helper/partner fit, and any required local endorsements.
             </p>
           </div>
         </div>
