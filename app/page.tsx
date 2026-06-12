@@ -30,21 +30,21 @@ export default function HomePage() {
         <div className="absolute -right-20 bottom-10 -z-10 h-80 w-80 rounded-full bg-nest-gold/20 blur-3xl" />
 
         <div className="relative mx-auto grid max-w-[90rem] items-center gap-8 lg:grid-cols-[0.82fr_1.18fr] lg:gap-12">
-          <AnimatedSection className="order-1 min-w-0 text-center lg:text-left">
-            <div className="pill-label mx-auto max-w-full lg:mx-0">
+          <AnimatedSection className="order-1 min-w-0 text-center">
+            <div className="pill-label mx-auto max-w-full">
               <Sparkles size={16} /> Parent Reset Concierge
             </div>
-            <h1 className="text-balance mx-auto mt-4 max-w-3xl text-[2.55rem] font-black leading-[0.95] tracking-tight text-nest-teal sm:text-6xl sm:leading-[0.96] lg:mx-0 lg:text-7xl">
+            <h1 className="text-balance mx-auto mt-4 max-w-3xl text-[2.55rem] font-black leading-[0.95] tracking-tight text-nest-teal sm:text-6xl sm:leading-[0.96] lg:text-7xl">
               Reset the home. Reclaim the day.
             </h1>
-            <p className="mx-auto mt-5 max-w-2xl text-base font-semibold leading-7 text-nest-ink/74 sm:text-xl sm:leading-8 lg:mx-0">
+            <p className="mx-auto mt-5 max-w-2xl text-base font-semibold leading-7 text-nest-ink/74 sm:text-xl sm:leading-8">
               Parent Reset help for busy families — home resets, laundry rescue, errands, and household support with clear packages, reviewed requests, limited openings, and follow-up.
             </p>
-            <div className="mx-auto mt-7 flex max-w-sm flex-col gap-3 sm:max-w-none sm:flex-row lg:mx-0">
+            <div className="mx-auto mt-7 flex max-w-sm flex-col justify-center gap-3 sm:max-w-none sm:flex-row">
               <ButtonLink href="/request">Request Help</ButtonLink>
               <ButtonLink href="/services" variant="secondary">View Services</ButtonLink>
             </div>
-            <div className="mx-auto mt-6 max-w-2xl rounded-[1.8rem] border border-nest-gold/16 bg-white/70 p-4 text-left shadow-sm backdrop-blur lg:mx-0">
+            <div className="mx-auto mt-6 max-w-2xl rounded-[1.8rem] border border-nest-gold/16 bg-white/70 p-4 text-left shadow-sm backdrop-blur">
               <div className="grid gap-3 sm:grid-cols-3">
                 <TrustProofItem icon={<CheckCircle2 size={15} />} text="Washington business licensed" />
                 <TrustProofItem icon={<ShieldCheck size={15} />} text="Insured local service" />
