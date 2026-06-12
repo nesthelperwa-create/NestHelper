@@ -125,6 +125,16 @@ function campaignForLink(path: string, source: string) {
   const month = new Date().toLocaleString("en-US", { month: "short" }).toLowerCase();
   const year = new Date().getFullYear();
 
+  if (path === "/") {
+    if (source.includes("flyer")) return `main_landing_flyer_${month}_${year}`;
+    if (source.includes("instagram")) return `main_landing_instagram_${month}_${year}`;
+    if (source.includes("facebook")) return `main_landing_facebook_group_${month}_${year}`;
+    if (source.includes("nextdoor")) return `main_landing_nextdoor_${month}_${year}`;
+    if (source.includes("google")) return `main_landing_google_profile_${month}_${year}`;
+    if (source.includes("partner")) return `main_landing_partner_referral_${month}_${year}`;
+    return `main_landing_awareness_${month}_${year}`;
+  }
+
   if (path === "/helpers") return `helper_recruiting_${month}_${year}`;
   if (path === "/contact") return `general_contact_${month}_${year}`;
 
@@ -724,6 +734,7 @@ function CampaignLinkBuilder({ onNotice }: { onNotice: (message: string) => void
       <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <Field label="Destination">
           <select className="input" value={path} onChange={(e) => updatePath(e.target.value)}>
+            <option value="/">Main landing page</option>
             <option value="/request">Parent Reset request</option>
             <option value="/commercial-reset/request">Commercial Reset quote</option>
             <option value="/helpers">Helper / partner application</option>
