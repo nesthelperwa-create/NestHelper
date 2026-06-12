@@ -10,6 +10,7 @@ const cards = [
   { collection: "helperApplications", label: "New Helper Applications", href: "/admin/helpers" },
   { collection: "serviceRequests", label: "Helper Ops Review", href: "/admin/helper-ops", status: "Submitted by helper" },
   { collection: "partnerApplications", label: "New Partner Applications", href: "/admin/partners" },
+  { collection: "marketingOutreach", label: "Marketing Leads", href: "/admin/marketing", status: "New lead" },
   { collection: "contactMessages", label: "New Contact Messages", href: "/admin/contact" },
 ];
 
