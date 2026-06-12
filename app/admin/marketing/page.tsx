@@ -121,6 +121,33 @@ function buildCampaignUrl(path: string, source: string, medium: string, campaign
   return `https://www.nesthelperwa.com${path}?${params.toString()}`;
 }
 
+function campaignForLink(path: string, source: string) {
+  const month = new Date().toLocaleString("en-US", { month: "short" }).toLowerCase();
+  const year = new Date().getFullYear();
+
+  if (path === "/helpers") return `helper_recruiting_${month}_${year}`;
+  if (path === "/contact") return `general_contact_${month}_${year}`;
+
+  if (path === "/commercial-reset/request") {
+    if (source.includes("daycare")) return `daycare_commercial_reset_intro_${month}_${year}`;
+    if (source.includes("church")) return `church_commercial_reset_intro_${month}_${year}`;
+    if (source.includes("airbnb")) return `short_term_rental_turnover_intro_${month}_${year}`;
+    if (source.includes("flyer")) return `commercial_reset_flyer_${month}_${year}`;
+    if (source.includes("google")) return `commercial_reset_google_profile_${month}_${year}`;
+    return `commercial_reset_intro_${month}_${year}`;
+  }
+
+  if (source.includes("daycare")) return `daycare_parent_reset_intro_${month}_${year}`;
+  if (source.includes("church")) return `church_parent_reset_intro_${month}_${year}`;
+  if (source.includes("flyer")) return `parent_reset_flyer_${month}_${year}`;
+  if (source.includes("instagram")) return `parent_reset_instagram_${month}_${year}`;
+  if (source.includes("facebook")) return `parent_reset_facebook_group_${month}_${year}`;
+  if (source.includes("nextdoor")) return `parent_reset_nextdoor_${month}_${year}`;
+  if (source.includes("partner")) return `parent_reset_partner_referral_${month}_${year}`;
+  if (source.includes("google")) return `parent_reset_google_profile_${month}_${year}`;
+  return `parent_reset_openings_${month}_${year}`;
+}
+
 function actionLink(category?: AudienceKey) {
   const path = isFamilyReferral(category) ? "/request" : "/commercial-reset/request";
   return buildCampaignUrl(path, campaignSourceForAudience(category), "email", "marketing_outreach", category || "general");
@@ -654,9 +681,27 @@ function CampaignLinkBuilder({ onNotice }: { onNotice: (message: string) => void
   const [path, setPath] = useState("/request");
   const [source, setSource] = useState("facebook_group");
   const [medium, setMedium] = useState("social");
-  const [campaign, setCampaign] = useState("parent_reset_openings");
+  const [campaign, setCampaign] = useState(() => campaignForLink("/request", "facebook_group"));
   const [content, setContent] = useState("");
+  const [campaignEdited, setCampaignEdited] = useState(false);
+  const suggestedCampaign = useMemo(() => campaignForLink(path, source), [path, source]);
   const url = buildCampaignUrl(path, source, medium, campaign, content);
+
+  function updatePath(nextPath: string) {
+    setPath(nextPath);
+    if (!campaignEdited) setCampaign(campaignForLink(nextPath, source));
+  }
+
+  function updateSource(nextSource: string) {
+    setSource(nextSource);
+    if (!campaignEdited) setCampaign(campaignForLink(path, nextSource));
+  }
+
+  function useSuggestedCampaign() {
+    setCampaign(suggestedCampaign);
+    setCampaignEdited(false);
+    onNotice("Campaign field auto-filled.");
+  }
 
   async function copyUrl() {
     await navigator.clipboard.writeText(url);
@@ -678,7 +723,7 @@ function CampaignLinkBuilder({ onNotice }: { onNotice: (message: string) => void
 
       <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <Field label="Destination">
-          <select className="input" value={path} onChange={(e) => setPath(e.target.value)}>
+          <select className="input" value={path} onChange={(e) => updatePath(e.target.value)}>
             <option value="/request">Parent Reset request</option>
             <option value="/commercial-reset/request">Commercial Reset quote</option>
             <option value="/helpers">Helper / partner application</option>
@@ -686,7 +731,7 @@ function CampaignLinkBuilder({ onNotice }: { onNotice: (message: string) => void
           </select>
         </Field>
         <Field label="Source">
-          <select className="input" value={source} onChange={(e) => setSource(e.target.value)}>
+          <select className="input" value={source} onChange={(e) => updateSource(e.target.value)}>
             <option value="facebook_group">Facebook group</option>
             <option value="instagram_bio">Instagram bio</option>
             <option value="instagram_post">Instagram post</option>
@@ -710,11 +755,28 @@ function CampaignLinkBuilder({ onNotice }: { onNotice: (message: string) => void
           </select>
         </Field>
         <Field label="Campaign">
-          <input className="input" value={campaign} onChange={(e) => setCampaign(e.target.value)} placeholder="parent_reset_openings" />
+          <input
+            className="input"
+            value={campaign}
+            onChange={(e) => {
+              setCampaign(e.target.value);
+              setCampaignEdited(true);
+            }}
+            placeholder={suggestedCampaign}
+          />
         </Field>
         <Field label="Content">
           <input className="input" value={content} onChange={(e) => setContent(e.target.value)} placeholder="Optional: june_flyer" />
         </Field>
+      </div>
+
+      <div className="mt-3 flex flex-col gap-2 rounded-2xl border border-[#eadfc8] bg-[#fbf6ea] p-4 text-sm font-semibold text-slate-600 sm:flex-row sm:items-center sm:justify-between">
+        <span>
+          Suggested campaign: <span className="font-black text-[#075c58]">{suggestedCampaign}</span>
+        </span>
+        <button onClick={useSuggestedCampaign} className="rounded-full bg-white px-4 py-2 text-xs font-black text-[#075c58] shadow-sm transition hover:bg-[#e9f4f1]">
+          Auto-fill campaign
+        </button>
       </div>
 
       <div className="mt-4 rounded-2xl border border-[#eadfc8] bg-[#fbf6ea] p-4 text-sm font-bold text-[#075c58] break-all">
