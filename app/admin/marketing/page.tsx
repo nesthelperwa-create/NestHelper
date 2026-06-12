@@ -7,6 +7,7 @@ import AdminShell from "@/components/admin/AdminShell";
 import { firebaseAuth, firestoreDb } from "@/lib/firebaseClient";
 
 type AudienceKey = "daycare" | "church" | "shortTermRental" | "salonStudioOffice" | "familyPartner" | "generalCommercial";
+type EmailMode = "intro" | "followup";
 
 type OutreachLead = {
   id: string;
@@ -19,9 +20,11 @@ type OutreachLead = {
   videoLink?: string;
   status?: string;
   followUpDate?: string;
+  noResponseReviewDate?: string;
   lastSubject?: string;
   lastMessagePreview?: string;
   lastSentAtIso?: string;
+  lastFollowUpSentAtIso?: string;
   emailCount?: number;
   createdAt?: unknown;
   updatedAt?: unknown;
@@ -42,10 +45,13 @@ const statusOptions = [
   "Intro sent",
   "Follow-up needed",
   "Follow-up sent",
+  "No response",
+  "Try different channel",
   "Interested",
   "Requested through site",
-  "Not a fit",
+  "Remove requested",
   "Do not contact",
+  "Not a fit",
   "Archived",
 ];
 
@@ -61,10 +67,19 @@ const emptyForm = {
   followUpDate: "",
 };
 
+function todayIso() {
+  return new Date().toISOString().slice(0, 10);
+}
+
 function todayPlus(days: number) {
   const date = new Date();
   date.setDate(date.getDate() + days);
   return date.toISOString().slice(0, 10);
+}
+
+function isDue(date?: string) {
+  if (!date) return false;
+  return date <= todayIso();
 }
 
 function firstName(value?: string) {
@@ -81,13 +96,11 @@ function isFamilyReferral(category?: AudienceKey) {
 }
 
 function actionLink(category?: AudienceKey) {
-  if (isFamilyReferral(category)) return "https://www.nesthelperwa.com/request";
-  return "https://www.nesthelperwa.com/commercial-reset/request";
+  return isFamilyReferral(category) ? "https://www.nesthelperwa.com/request" : "https://www.nesthelperwa.com/commercial-reset/request";
 }
 
 function actionLabel(category?: AudienceKey) {
-  if (isFamilyReferral(category)) return "Request family help";
-  return "Request a Commercial Reset quote";
+  return isFamilyReferral(category) ? "Request family help" : "Request a Commercial Reset quote";
 }
 
 function introAngle(category: AudienceKey) {
@@ -131,7 +144,7 @@ function introAngle(category: AudienceKey) {
   }
 }
 
-function buildEmail(lead: Partial<OutreachLead>) {
+function buildIntroEmail(lead: Partial<OutreachLead>) {
   const category = (lead.category || "generalCommercial") as AudienceKey;
   const angle = introAngle(category);
   const greeting = lead.contactName?.trim() ? `Hi ${firstName(lead.contactName)},` : "Hi there,";
@@ -140,7 +153,6 @@ function buildEmail(lead: Partial<OutreachLead>) {
   const video = lead.videoLink?.trim() ? `\n\nHere’s a short intro from us: ${lead.videoLink.trim()}` : "";
   const link = actionLink(category);
   const cta = actionLabel(category);
-  const subject = lead.lastSubject?.trim() || angle.subject;
 
   const message = `${greeting}
 
@@ -165,22 +177,51 @@ Leo & Gen
 NestHelper
 hello@nesthelperwa.com
 (425) 790-1330`;
+  return { subject: lead.lastSubject?.trim() || angle.subject, message, link, cta };
+}
+
+function buildFollowUpEmail(lead: Partial<OutreachLead>) {
+  const category = (lead.category || "generalCommercial") as AudienceKey;
+  const greeting = lead.contactName?.trim() ? `Hi ${firstName(lead.contactName)},` : "Hi there,";
+  const link = actionLink(category);
+  const cta = actionLabel(category);
+  const subject = isFamilyReferral(category) ? "Following up from NestHelper" : "Following up on NestHelper reset support";
+  const business = lead.businessName?.trim() ? ` for ${lead.businessName.trim()}` : "";
+
+  const message = `${greeting}
+
+I just wanted to follow up once on my note about NestHelper${business}.
+
+We’re a local Eastside/Northshore service focused on practical reset support. Depending on the fit, we help with parent-focused home resets, laundry support, errands, and quote-based Commercial Reset support for small local spaces.
+
+No pressure at all — the easiest next step, if it would be helpful, is to submit a request through our site so we can review the address, timing, scope, and availability before confirming anything:
+
+${cta}: ${link}
+
+If now is not the right time, no worries. If this is not relevant, just reply “remove” and we won’t follow up again.
+
+Thank you,
+
+Leo & Gen
+NestHelper
+hello@nesthelperwa.com
+(425) 790-1330`;
   return { subject, message, link, cta };
 }
 
-function formatDate(value: unknown) {
-  if (!value) return "—";
-  if (typeof value === "string") return value;
-  if (typeof value === "object" && value && "toDate" in value && typeof value.toDate === "function") {
-    return value.toDate().toLocaleString();
-  }
-  return String(value);
+function buildEmail(lead: Partial<OutreachLead>, mode: EmailMode) {
+  return mode === "followup" ? buildFollowUpEmail(lead) : buildIntroEmail(lead);
+}
+
+function isRemoveStatus(status?: string) {
+  return status === "Remove requested" || status === "Do not contact";
 }
 
 export default function AdminMarketingPage() {
   const [leads, setLeads] = useState<OutreachLead[]>([]);
   const [form, setForm] = useState(emptyForm);
   const [selectedId, setSelectedId] = useState("");
+  const [emailMode, setEmailMode] = useState<EmailMode>("intro");
   const [saving, setSaving] = useState(false);
   const [sending, setSending] = useState(false);
   const [notice, setNotice] = useState("");
@@ -196,29 +237,45 @@ export default function AdminMarketingPage() {
 
   const selectedLead = useMemo(() => leads.find((item) => item.id === selectedId) || null, [leads, selectedId]);
   const previewLead = selectedLead || form;
-  const generated = useMemo(() => buildEmail(previewLead), [previewLead]);
+  const generated = useMemo(() => buildEmail(previewLead, emailMode), [previewLead, emailMode]);
   const subject = manualSubject || generated.subject;
   const message = manualMessage || generated.message;
 
   useEffect(() => {
-    if (selectedLead) {
-      const next = buildEmail(selectedLead);
-      setManualSubject(selectedLead.lastSubject || next.subject);
-      setManualMessage(next.message);
-    }
+    if (!selectedLead) return;
+    const nextMode: EmailMode = selectedLead.status === "Intro sent" || selectedLead.status === "Follow-up needed" ? "followup" : "intro";
+    setEmailMode(nextMode);
+    const next = buildEmail(selectedLead, nextMode);
+    setManualSubject(next.subject);
+    setManualMessage(next.message);
   }, [selectedLead]);
+
+  useEffect(() => {
+    const next = buildEmail(previewLead, emailMode);
+    setManualSubject(next.subject);
+    setManualMessage(next.message);
+  }, [emailMode]);
+
+  const followUpDueLeads = useMemo(
+    () => leads.filter((lead) => (lead.status === "Intro sent" || lead.status === "Follow-up needed") && isDue(lead.followUpDate)),
+    [leads]
+  );
+  const removeLeads = useMemo(() => leads.filter((lead) => isRemoveStatus(lead.status)), [leads]);
 
   const counts = useMemo(() => {
     return leads.reduce(
       (acc, lead) => {
         acc.total += 1;
         if (lead.status === "Intro sent") acc.sent += 1;
-        if (lead.status === "Follow-up needed") acc.followUp += 1;
+        if (lead.status === "Follow-up needed" || ((lead.status === "Intro sent" || lead.status === "Follow-up needed") && isDue(lead.followUpDate))) acc.followUp += 1;
+        if (lead.status === "Follow-up sent") acc.followUpSent += 1;
+        if (lead.status === "No response") acc.noResponse += 1;
         if (lead.status === "Interested") acc.interested += 1;
         if (lead.status === "Requested through site") acc.requested += 1;
+        if (isRemoveStatus(lead.status)) acc.remove += 1;
         return acc;
       },
-      { total: 0, sent: 0, followUp: 0, interested: 0, requested: 0 }
+      { total: 0, sent: 0, followUp: 0, followUpSent: 0, noResponse: 0, interested: 0, requested: 0, remove: 0 }
     );
   }, [leads]);
 
@@ -253,11 +310,20 @@ export default function AdminMarketingPage() {
     });
   }
 
-  async function sendEmail() {
+  async function sendEmail(mode: EmailMode) {
     if (!selectedLead) {
       setNotice("Select a lead before sending.");
       return;
     }
+    if (isRemoveStatus(selectedLead.status)) {
+      setNotice("This lead requested removal or is marked Do not contact. Email sending is blocked.");
+      return;
+    }
+    if (mode === "followup" && (selectedLead.emailCount || 0) >= 2) {
+      setNotice("Two emails have already been sent. Stop emailing this lead unless they respond.");
+      return;
+    }
+
     setNotice("");
     setSending(true);
     try {
@@ -268,11 +334,11 @@ export default function AdminMarketingPage() {
           "Content-Type": "application/json",
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-        body: JSON.stringify({ id: selectedLead.id, subject, message }),
+        body: JSON.stringify({ id: selectedLead.id, subject, message, mode }),
       });
       const result = await response.json().catch(() => ({}));
       if (!response.ok || !result.ok) throw new Error(result.error || "Email was not sent.");
-      setNotice(`Email sent to ${result.to}. Follow-up set for ${result.followUpDate || "later"}.`);
+      setNotice(`${mode === "followup" ? "Follow-up" : "Intro"} email sent to ${result.to}. ${result.followUpDate ? `Next follow-up set for ${result.followUpDate}.` : "No further email follow-up is scheduled."}`);
     } catch (error) {
       setNotice(error instanceof Error ? error.message : "Could not send email.");
     } finally {
@@ -285,6 +351,32 @@ export default function AdminMarketingPage() {
     setNotice("Email copied.");
   }
 
+  async function markNoResponse() {
+    if (!selectedLead) return;
+    await updateLead(selectedLead.id, { status: "No response", followUpDate: "", noResponseReviewDate: todayPlus(60) });
+    setNotice("Marked no response. Optional 60-day review date saved.");
+  }
+
+  async function markTryDifferentChannel() {
+    if (!selectedLead) return;
+    await updateLead(selectedLead.id, { status: "Try different channel", followUpDate: "" });
+    setNotice("Marked for a different channel. Try phone, flyer drop-off, Facebook/Instagram, or local networking instead of more emails.");
+  }
+
+  async function markRemoveRequested() {
+    if (!selectedLead) return;
+    await updateLead(selectedLead.id, { status: "Remove requested", followUpDate: "" });
+    setNotice("Marked Remove requested. Do not email this lead again.");
+  }
+
+  async function markDoNotContact() {
+    if (!selectedLead) return;
+    await updateLead(selectedLead.id, { status: "Do not contact", followUpDate: "" });
+    setNotice("Marked Do not contact. Email sending is blocked for this lead.");
+  }
+
+  const selectedBlocked = isRemoveStatus(selectedLead?.status);
+
   return (
     <AdminShell>
       <section className="space-y-6">
@@ -292,19 +384,40 @@ export default function AdminMarketingPage() {
           <p className="text-sm font-bold uppercase tracking-[0.25em] text-[#f1c96b]">Marketing Dashboard</p>
           <h2 className="mt-2 text-3xl font-bold sm:text-4xl">Local outreach</h2>
           <p className="mt-3 max-w-3xl text-white/82">
-            Build targeted outreach lists, generate audience-specific emails, and guide leads to request help through the NestHelper site.
+            Run a simple two-touch outreach flow: send one personal intro, send one follow-up 4–7 days later, then stop or try a different channel.
           </p>
         </div>
 
         {notice && <div className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-bold text-[#075c58] shadow-sm">{notice}</div>}
 
-        <div className="grid gap-4 sm:grid-cols-5">
+        {removeLeads.length > 0 && (
+          <div className="rounded-[1.75rem] border-2 border-rose-300 bg-rose-50 p-4 shadow-sm">
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-rose-700">Removal / do-not-contact list</p>
+            <p className="mt-1 text-sm font-bold text-rose-900">
+              {removeLeads.length} lead{removeLeads.length === 1 ? "" : "s"} requested removal or are marked do not contact. Keep them off future outreach lists.
+            </p>
+          </div>
+        )}
+
+        <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-8">
           <Stat label="Total leads" value={counts.total} />
           <Stat label="Intro sent" value={counts.sent} />
-          <Stat label="Follow-up needed" value={counts.followUp} />
+          <Stat label="Follow-up due" value={counts.followUp} />
+          <Stat label="Follow-up sent" value={counts.followUpSent} />
+          <Stat label="No response" value={counts.noResponse} />
           <Stat label="Interested" value={counts.interested} />
           <Stat label="Requested on site" value={counts.requested} />
+          <Stat label="Remove/DNC" value={counts.remove} alert={counts.remove > 0} />
         </div>
+
+        {followUpDueLeads.length > 0 && (
+          <div className="rounded-[1.75rem] border border-amber-200 bg-amber-50 p-4 shadow-sm">
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-amber-700">Follow-up queue</p>
+            <p className="mt-1 text-sm font-bold text-slate-700">
+              {followUpDueLeads.length} lead{followUpDueLeads.length === 1 ? "" : "s"} due for the second and final email follow-up.
+            </p>
+          </div>
+        )}
 
         <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
           <div className="space-y-6">
@@ -355,47 +468,86 @@ export default function AdminMarketingPage() {
                   <p className="text-xs font-black uppercase tracking-[0.2em] text-[#b98a2f]">Lead list</p>
                   <h3 className="text-2xl font-black text-[#075c58]">Outreach contacts</h3>
                 </div>
-                <p className="text-xs font-bold text-slate-500">Send small, targeted batches. Avoid mass blasting.</p>
+                <p className="text-xs font-bold text-slate-500">Two emails max unless they respond.</p>
               </div>
 
               <div className="max-h-[620px] space-y-3 overflow-y-auto pr-1">
                 {leads.length === 0 && <div className="rounded-2xl bg-[#fbf6ea] p-4 text-sm font-semibold text-slate-600">No marketing leads yet.</div>}
-                {leads.map((lead) => (
-                  <button
-                    key={lead.id}
-                    onClick={() => setSelectedId(lead.id)}
-                    className={`w-full rounded-2xl border p-4 text-left transition hover:-translate-y-0.5 ${
-                      selectedId === lead.id ? "border-[#075c58] bg-[#e9f4f1]" : "border-[#eadfc8] bg-white hover:border-[#075c58]/30"
-                    }`}
-                  >
-                    <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                      <div>
-                        <p className="font-black text-[#075c58]">{leadName(lead)}</p>
-                        <p className="mt-1 text-sm font-semibold text-slate-600">{lead.email || "No email"} • {lead.city || "No city"}</p>
-                        <p className="mt-1 text-xs font-bold uppercase tracking-[0.14em] text-[#b98a2f]">{categoryLabels[(lead.category || "generalCommercial") as AudienceKey]}</p>
+                {leads.map((lead) => {
+                  const due = (lead.status === "Intro sent" || lead.status === "Follow-up needed") && isDue(lead.followUpDate);
+                  const removed = isRemoveStatus(lead.status);
+                  return (
+                    <button
+                      key={lead.id}
+                      onClick={() => setSelectedId(lead.id)}
+                      className={`w-full rounded-2xl border p-4 text-left transition hover:-translate-y-0.5 ${
+                        selectedId === lead.id
+                          ? "border-[#075c58] bg-[#e9f4f1]"
+                          : removed
+                            ? "border-rose-300 bg-rose-50"
+                            : due
+                              ? "border-amber-300 bg-amber-50"
+                              : "border-[#eadfc8] bg-white hover:border-[#075c58]/30"
+                      }`}
+                    >
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                        <div>
+                          <p className={`font-black ${removed ? "text-rose-700" : "text-[#075c58]"}`}>{leadName(lead)}</p>
+                          <p className="mt-1 text-sm font-semibold text-slate-600">{lead.email || "No email"} • {lead.city || "No city"}</p>
+                          <p className="mt-1 text-xs font-bold uppercase tracking-[0.14em] text-[#b98a2f]">{categoryLabels[(lead.category || "generalCommercial") as AudienceKey]}</p>
+                        </div>
+                        <span className={`w-fit rounded-full px-3 py-1 text-xs font-black ${
+                          removed ? "bg-rose-200 text-rose-900" : due ? "bg-amber-200 text-amber-900" : "bg-[#fbf6ea] text-[#075c58]"
+                        }`}>
+                          {removed ? "Remove / DNC" : due ? "Follow-up due" : lead.status || "New lead"}
+                        </span>
                       </div>
-                      <span className="w-fit rounded-full bg-[#fbf6ea] px-3 py-1 text-xs font-black text-[#075c58]">{lead.status || "New lead"}</span>
-                    </div>
-                    <p className="mt-3 text-xs font-semibold text-slate-500">Follow-up: {lead.followUpDate || "not set"} • Emails: {lead.emailCount || 0}</p>
-                  </button>
-                ))}
+                      <p className="mt-3 text-xs font-semibold text-slate-500">
+                        Follow-up: {lead.followUpDate || "not set"} • Emails: {lead.emailCount || 0}
+                      </p>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>
 
           <div className="space-y-6">
-            <div className="rounded-[2rem] border border-[#eadfc8] bg-white p-5 shadow-lg shadow-[#075c58]/5 sm:p-6">
+            <div className={`rounded-[2rem] border p-5 shadow-lg shadow-[#075c58]/5 sm:p-6 ${selectedBlocked ? "border-rose-300 bg-rose-50" : "border-[#eadfc8] bg-white"}`}>
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div>
-                  <p className="text-xs font-black uppercase tracking-[0.2em] text-[#b98a2f]">Email generator</p>
-                  <h3 className="mt-1 text-2xl font-black text-[#075c58]">{selectedLead ? leadName(selectedLead) : "Preview before selecting"}</h3>
-                  <p className="mt-2 text-sm font-semibold text-slate-500">Goal: get the lead to submit a request through the site so you can review fit, scope, and availability.</p>
+                  <p className="text-xs font-black uppercase tracking-[0.2em] text-[#b98a2f]">Two-touch email flow</p>
+                  <h3 className={`mt-1 text-2xl font-black ${selectedBlocked ? "text-rose-700" : "text-[#075c58]"}`}>{selectedLead ? leadName(selectedLead) : "Preview before selecting"}</h3>
+                  <p className="mt-2 text-sm font-semibold text-slate-500">Goal: get them to request through the site. Send one intro, one follow-up, then stop or try a different channel.</p>
                 </div>
                 {selectedLead && (
                   <button onClick={() => deleteDoc(doc(firestoreDb, "marketingOutreach", selectedLead.id))} className="inline-flex items-center gap-2 rounded-full border border-rose-200 px-4 py-2 text-sm font-bold text-rose-600 transition hover:bg-rose-50">
                     <Trash2 size={15} /> Delete
                   </button>
                 )}
+              </div>
+
+              {selectedBlocked && (
+                <div className="mt-4 rounded-2xl border-2 border-rose-300 bg-white p-4 text-sm font-black text-rose-700">
+                  Do not email this lead again. Keep them off future outreach lists.
+                </div>
+              )}
+
+              <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                <button
+                  onClick={() => setEmailMode("intro")}
+                  className={`rounded-2xl border px-4 py-3 text-left text-sm font-black transition ${emailMode === "intro" ? "border-[#075c58] bg-[#e9f4f1] text-[#075c58]" : "border-[#eadfc8] bg-white text-slate-600 hover:bg-[#fbf6ea]"}`}
+                >
+                  Email 1: Intro
+                  <span className="mt-1 block text-xs font-semibold">Personal introduction + request-site CTA</span>
+                </button>
+                <button
+                  onClick={() => setEmailMode("followup")}
+                  className={`rounded-2xl border px-4 py-3 text-left text-sm font-black transition ${emailMode === "followup" ? "border-[#075c58] bg-[#e9f4f1] text-[#075c58]" : "border-[#eadfc8] bg-white text-slate-600 hover:bg-[#fbf6ea]"}`}
+                >
+                  Email 2: Final follow-up
+                  <span className="mt-1 block text-xs font-semibold">One polite follow-up, then stop</span>
+                </button>
               </div>
 
               {selectedLead && (
@@ -409,7 +561,7 @@ export default function AdminMarketingPage() {
                     <input className="input" type="date" value={selectedLead.followUpDate || ""} onChange={(e) => updateLead(selectedLead.id, { followUpDate: e.target.value })} />
                   </Field>
                   <Field label="Quick action">
-                    <button onClick={() => updateLead(selectedLead.id, { status: "Follow-up needed", followUpDate: todayPlus(5) })} className="inline-flex h-[46px] w-full items-center justify-center gap-2 rounded-2xl bg-[#fbf6ea] px-4 text-sm font-black text-[#075c58] transition hover:bg-[#e9f4f1]">
+                    <button onClick={() => updateLead(selectedLead.id, { status: "Follow-up needed", followUpDate: todayPlus(5) })} disabled={selectedBlocked} className="inline-flex h-[46px] w-full items-center justify-center gap-2 rounded-2xl bg-[#fbf6ea] px-4 text-sm font-black text-[#075c58] transition hover:bg-[#e9f4f1] disabled:opacity-50">
                       <RefreshCw size={15} /> Set follow-up
                     </button>
                   </Field>
@@ -418,30 +570,47 @@ export default function AdminMarketingPage() {
 
               <div className="mt-5 grid gap-4">
                 <Field label="Subject">
-                  <input className="input" value={subject} onChange={(e) => setManualSubject(e.target.value)} />
+                  <input className="input" value={subject} onChange={(e) => setManualSubject(e.target.value)} disabled={selectedBlocked} />
                 </Field>
                 <Field label="Message">
-                  <textarea className="input min-h-[420px] font-mono text-sm leading-6" value={message} onChange={(e) => setManualMessage(e.target.value)} />
+                  <textarea className="input min-h-[420px] font-mono text-sm leading-6" value={message} onChange={(e) => setManualMessage(e.target.value)} disabled={selectedBlocked} />
                 </Field>
               </div>
 
-              <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-                <button onClick={sendEmail} disabled={!selectedLead || sending} className="inline-flex items-center justify-center gap-2 rounded-full bg-[#075c58] px-5 py-3 text-sm font-black text-white shadow-lg shadow-[#075c58]/20 transition hover:scale-[1.01] disabled:opacity-60">
-                  <Mail size={17} /> {sending ? "Sending..." : "Send email"}
+              <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+                <button onClick={() => sendEmail(emailMode)} disabled={!selectedLead || sending || selectedBlocked} className="inline-flex items-center justify-center gap-2 rounded-full bg-[#075c58] px-5 py-3 text-sm font-black text-white shadow-lg shadow-[#075c58]/20 transition hover:scale-[1.01] disabled:opacity-60">
+                  <Mail size={17} /> {sending ? "Sending..." : emailMode === "followup" ? "Send final follow-up" : "Send intro"}
                 </button>
-                <button onClick={copyMessage} className="inline-flex items-center justify-center gap-2 rounded-full border border-[#075c58]/20 bg-white px-5 py-3 text-sm font-black text-[#075c58] transition hover:bg-[#e9f4f1]">
+                <button onClick={copyMessage} disabled={selectedBlocked} className="inline-flex items-center justify-center gap-2 rounded-full border border-[#075c58]/20 bg-white px-5 py-3 text-sm font-black text-[#075c58] transition hover:bg-[#e9f4f1] disabled:opacity-50">
                   <Copy size={17} /> Copy email
                 </button>
                 {selectedLead && (
-                  <button onClick={() => updateLead(selectedLead.id, { lastSubject: subject, lastMessagePreview: message.slice(0, 500), updatedAt: undefined })} className="inline-flex items-center justify-center gap-2 rounded-full border border-[#eadfc8] bg-[#fbf6ea] px-5 py-3 text-sm font-black text-[#075c58] transition hover:bg-[#e9f4f1]">
+                  <button onClick={() => updateLead(selectedLead.id, { lastSubject: subject, lastMessagePreview: message.slice(0, 500) })} disabled={selectedBlocked} className="inline-flex items-center justify-center gap-2 rounded-full border border-[#eadfc8] bg-[#fbf6ea] px-5 py-3 text-sm font-black text-[#075c58] transition hover:bg-[#e9f4f1] disabled:opacity-50">
                     <Save size={17} /> Save draft note
                   </button>
                 )}
               </div>
 
+              {selectedLead && (
+                <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                  <button onClick={markNoResponse} className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-black text-slate-600 transition hover:bg-slate-50">
+                    Mark no response
+                  </button>
+                  <button onClick={markTryDifferentChannel} className="rounded-2xl border border-[#eadfc8] bg-[#fbf6ea] px-4 py-3 text-sm font-black text-[#075c58] transition hover:bg-[#e9f4f1]">
+                    Try different channel
+                  </button>
+                  <button onClick={markRemoveRequested} className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-black text-rose-700 transition hover:bg-rose-100">
+                    Mark remove requested
+                  </button>
+                  <button onClick={markDoNotContact} className="rounded-2xl border border-rose-300 bg-rose-100 px-4 py-3 text-sm font-black text-rose-800 transition hover:bg-rose-200">
+                    Mark do not contact
+                  </button>
+                </div>
+              )}
+
               <div className="mt-5 rounded-2xl border border-[#eadfc8] bg-[#fbf6ea] p-4 text-sm font-semibold leading-6 text-slate-600">
                 <p className="font-black text-[#075c58]">Built-in fail-safes</p>
-                <p className="mt-1">Each template points to the correct request page, includes a remove/opt-out line, and is meant for small targeted outreach — not bulk spam.</p>
+                <p className="mt-1">Two emails max unless they respond. Leads marked Remove requested or Do not contact are highlighted red and blocked from email sending.</p>
               </div>
             </div>
           </div>
@@ -451,11 +620,11 @@ export default function AdminMarketingPage() {
   );
 }
 
-function Stat({ label, value }: { label: string; value: number }) {
+function Stat({ label, value, alert = false }: { label: string; value: number; alert?: boolean }) {
   return (
-    <div className="rounded-[1.5rem] border border-[#eadfc8] bg-white p-4 shadow-sm">
-      <p className="text-xs font-black uppercase tracking-[0.18em] text-[#b98a2f]">{label}</p>
-      <p className="mt-2 text-3xl font-black text-[#075c58]">{value}</p>
+    <div className={`rounded-[1.5rem] border p-4 shadow-sm ${alert ? "border-rose-300 bg-rose-50" : "border-[#eadfc8] bg-white"}`}>
+      <p className={`text-xs font-black uppercase tracking-[0.18em] ${alert ? "text-rose-700" : "text-[#b98a2f]"}`}>{label}</p>
+      <p className={`mt-2 text-3xl font-black ${alert ? "text-rose-700" : "text-[#075c58]"}`}>{value}</p>
     </div>
   );
 }

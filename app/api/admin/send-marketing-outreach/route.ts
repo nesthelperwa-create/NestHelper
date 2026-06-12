@@ -12,6 +12,7 @@ type Body = {
   id?: string;
   subject?: string;
   message?: string;
+  mode?: "intro" | "followup";
 };
 
 function cleanText(value: unknown, max = 5000) {
@@ -46,6 +47,10 @@ function getLeadName(data: Record<string, unknown>) {
   return cleanText(data.businessName || data.contactName || data.email || "Marketing lead", 140);
 }
 
+function isBlockedStatus(status: string) {
+  return status === "Remove requested" || status === "Do not contact";
+}
+
 export async function POST(request: Request) {
   try {
     getFirebaseAdminDb();
@@ -59,6 +64,7 @@ export async function POST(request: Request) {
     const id = cleanText(body.id, 160);
     const subject = cleanText(body.subject, 180);
     const message = cleanText(body.message, 8000);
+    const mode = body.mode === "followup" ? "followup" : "intro";
 
     if (!id) return NextResponse.json({ ok: false, error: "Missing outreach lead." }, { status: 400 });
     if (!subject || subject.length < 3) return NextResponse.json({ ok: false, error: "Add a subject before sending." }, { status: 400 });
@@ -76,9 +82,15 @@ export async function POST(request: Request) {
 
     const data = docSnap.data() || {};
     const to = cleanEmail(data.email);
+    const currentStatus = cleanText(data.status, 80);
+    const emailCount = Number(data.emailCount || 0);
+
     if (!to) return NextResponse.json({ ok: false, error: "This lead does not have a valid email address." }, { status: 400 });
-    if (cleanText(data.status, 80) === "Do not contact") {
-      return NextResponse.json({ ok: false, error: "This lead is marked Do not contact." }, { status: 400 });
+    if (isBlockedStatus(currentStatus)) {
+      return NextResponse.json({ ok: false, error: "This lead requested removal or is marked Do not contact." }, { status: 400 });
+    }
+    if (mode === "followup" && emailCount >= 2) {
+      return NextResponse.json({ ok: false, error: "Two emails have already been sent. Stop emailing this lead unless they respond." }, { status: 400 });
     }
 
     const from = process.env.NOTIFICATION_FROM_EMAIL || "NestHelper <onboarding@resend.dev>";
@@ -112,17 +124,19 @@ export async function POST(request: Request) {
     }
 
     const sentAtIso = new Date().toISOString();
-    const followUpDate = todayPlus(5);
     const sentBy = decoded.email || "admin";
     const resendId = (result as { data?: { id?: string } }).data?.id || "";
+    const followUpDate = mode === "intro" ? todayPlus(5) : "";
 
     await docRef.update({
-      status: "Intro sent",
+      status: mode === "followup" ? "Follow-up sent" : "Intro sent",
       followUpDate,
+      noResponseReviewDate: mode === "followup" ? todayPlus(14) : "",
       updatedAt: FieldValue.serverTimestamp(),
       updatedBy: sentBy,
       lastSentAt: FieldValue.serverTimestamp(),
       lastSentAtIso: sentAtIso,
+      ...(mode === "followup" ? { lastFollowUpSentAtIso: sentAtIso } : {}),
       lastSentBy: sentBy,
       lastTo: to,
       lastSubject: subject,
@@ -130,7 +144,7 @@ export async function POST(request: Request) {
       lastResendId: resendId,
       emailCount: FieldValue.increment(1),
       outreachHistory: FieldValue.arrayUnion({
-        type: "intro.sent",
+        type: mode === "followup" ? "followup.sent" : "intro.sent",
         sentAtIso,
         sentBy,
         to,
