@@ -95,8 +95,35 @@ function isFamilyReferral(category?: AudienceKey) {
   return category === "familyPartner";
 }
 
+function campaignSourceForAudience(category?: AudienceKey) {
+  switch (category) {
+    case "daycare":
+      return "daycare_email";
+    case "church":
+      return "church_email";
+    case "shortTermRental":
+      return "airbnb_email";
+    case "salonStudioOffice":
+      return "small_business_email";
+    case "familyPartner":
+      return "partner_referral_email";
+    default:
+      return "local_outreach_email";
+  }
+}
+
+function buildCampaignUrl(path: string, source: string, medium: string, campaign: string, content = "") {
+  const params = new URLSearchParams();
+  if (source) params.set("source", source);
+  if (medium) params.set("utm_medium", medium);
+  if (campaign) params.set("utm_campaign", campaign);
+  if (content) params.set("utm_content", content);
+  return `https://www.nesthelperwa.com${path}?${params.toString()}`;
+}
+
 function actionLink(category?: AudienceKey) {
-  return isFamilyReferral(category) ? "https://www.nesthelperwa.com/request" : "https://www.nesthelperwa.com/commercial-reset/request";
+  const path = isFamilyReferral(category) ? "/request" : "/commercial-reset/request";
+  return buildCampaignUrl(path, campaignSourceForAudience(category), "email", "marketing_outreach", category || "general");
 }
 
 function actionLabel(category?: AudienceKey) {
@@ -410,6 +437,8 @@ export default function AdminMarketingPage() {
           <Stat label="Remove/DNC" value={counts.remove} alert={counts.remove > 0} />
         </div>
 
+        <CampaignLinkBuilder onNotice={setNotice} />
+
         {followUpDueLeads.length > 0 && (
           <div className="rounded-[1.75rem] border border-amber-200 bg-amber-50 p-4 shadow-sm">
             <p className="text-xs font-black uppercase tracking-[0.18em] text-amber-700">Follow-up queue</p>
@@ -617,6 +646,82 @@ export default function AdminMarketingPage() {
         </div>
       </section>
     </AdminShell>
+  );
+}
+
+
+function CampaignLinkBuilder({ onNotice }: { onNotice: (message: string) => void }) {
+  const [path, setPath] = useState("/request");
+  const [source, setSource] = useState("facebook_group");
+  const [medium, setMedium] = useState("social");
+  const [campaign, setCampaign] = useState("parent_reset_openings");
+  const [content, setContent] = useState("");
+  const url = buildCampaignUrl(path, source, medium, campaign, content);
+
+  async function copyUrl() {
+    await navigator.clipboard.writeText(url);
+    onNotice("Campaign link copied.");
+  }
+
+  return (
+    <div className="rounded-[2rem] border border-[#eadfc8] bg-white p-5 shadow-lg shadow-[#075c58]/5 sm:p-6">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="text-xs font-black uppercase tracking-[0.2em] text-[#b98a2f]">Campaign links</p>
+          <h3 className="mt-1 text-2xl font-black text-[#075c58]">Create trackable request links</h3>
+          <p className="mt-2 text-sm font-semibold text-slate-500">Use these for flyers, QR codes, emails, Facebook groups, Instagram, Nextdoor, churches, daycares, and partner posts.</p>
+        </div>
+        <button onClick={copyUrl} className="inline-flex items-center justify-center gap-2 rounded-full bg-[#075c58] px-5 py-3 text-sm font-black text-white shadow-lg shadow-[#075c58]/20 transition hover:scale-[1.01]">
+          <Copy size={17} /> Copy link
+        </button>
+      </div>
+
+      <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <Field label="Destination">
+          <select className="input" value={path} onChange={(e) => setPath(e.target.value)}>
+            <option value="/request">Parent Reset request</option>
+            <option value="/commercial-reset/request">Commercial Reset quote</option>
+            <option value="/helpers">Helper / partner application</option>
+            <option value="/contact">Contact page</option>
+          </select>
+        </Field>
+        <Field label="Source">
+          <select className="input" value={source} onChange={(e) => setSource(e.target.value)}>
+            <option value="facebook_group">Facebook group</option>
+            <option value="instagram_bio">Instagram bio</option>
+            <option value="instagram_post">Instagram post</option>
+            <option value="nextdoor_post">Nextdoor post</option>
+            <option value="flyer_qr">Flyer / QR</option>
+            <option value="daycare_email">Daycare email</option>
+            <option value="church_email">Church email</option>
+            <option value="airbnb_email">Airbnb email</option>
+            <option value="partner_referral">Referral partner</option>
+            <option value="google_business_profile">Google Business Profile</option>
+          </select>
+        </Field>
+        <Field label="Medium">
+          <select className="input" value={medium} onChange={(e) => setMedium(e.target.value)}>
+            <option value="social">Social</option>
+            <option value="email">Email</option>
+            <option value="print">Print / flyer</option>
+            <option value="qr">QR code</option>
+            <option value="referral">Referral</option>
+            <option value="local_group">Local group</option>
+          </select>
+        </Field>
+        <Field label="Campaign">
+          <input className="input" value={campaign} onChange={(e) => setCampaign(e.target.value)} placeholder="parent_reset_openings" />
+        </Field>
+        <Field label="Content">
+          <input className="input" value={content} onChange={(e) => setContent(e.target.value)} placeholder="Optional: june_flyer" />
+        </Field>
+      </div>
+
+      <div className="mt-4 rounded-2xl border border-[#eadfc8] bg-[#fbf6ea] p-4 text-sm font-bold text-[#075c58] break-all">
+        {url}
+      </div>
+      <p className="mt-3 text-xs font-semibold text-slate-500">When someone submits a form from this link, the source/campaign saves into the request, application, or contact record and appears in the Marketing source CSV.</p>
+    </div>
   );
 }
 

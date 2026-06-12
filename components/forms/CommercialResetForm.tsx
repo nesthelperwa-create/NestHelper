@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import type { FormEvent, ReactNode } from "react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ArrowRight, Building2, Calculator, CheckCircle2, ClipboardCheck, CreditCard, ShieldCheck } from "lucide-react";
 import { formatPhoneNumber } from "@/lib/formatPhoneNumber";
 import { focusFirstInvalidField } from "@/lib/formInvalidFocus";
 import { PhotoUploadField, photoUploadSummary, type PhotoUpload } from "@/components/forms/PhotoUploadField";
+import { mergeCampaignAttribution } from "@/lib/campaignAttribution";
 
 const defaultState = {
   businessName: "",
@@ -22,6 +23,14 @@ const defaultState = {
   serviceRegion: "Not sure yet",
   howFoundUs: "",
   howFoundUsDetails: "",
+  campaignSource: "",
+  campaignMedium: "",
+  campaignName: "",
+  campaignContent: "",
+  campaignTerm: "",
+  campaignLandingPage: "",
+  campaignReferrer: "",
+  campaignCapturedAtIso: "",
   businessType: "",
   squareFootage: "",
   bathrooms: "",
@@ -94,6 +103,7 @@ const howFoundUsOptions = [
   "Google search",
   "Instagram",
   "Facebook",
+  "Nextdoor",
   "Local business referral",
   "Property manager / host group",
   "Community or networking group",
@@ -103,7 +113,7 @@ const howFoundUsOptions = [
 ];
 
 function shouldShowHowFoundUsDetails(value: string) {
-  return ["Local business referral", "Property manager / host group", "Community or networking group", "Flyer / QR code", "Existing customer", "Other / not listed"].includes(value);
+  return ["Nextdoor", "Local business referral", "Property manager / host group", "Community or networking group", "Flyer / QR code", "Existing customer", "Other / not listed"].includes(value);
 }
 
 const businessTypes = [
@@ -703,6 +713,14 @@ function buildPayload(form: CommercialResetFormState) {
     serviceRegion: form.serviceRegion,
     howFoundUs: form.howFoundUs,
     howFoundUsDetails: form.howFoundUsDetails,
+    campaignSource: form.campaignSource,
+    campaignMedium: form.campaignMedium,
+    campaignName: form.campaignName,
+    campaignContent: form.campaignContent,
+    campaignTerm: form.campaignTerm,
+    campaignLandingPage: form.campaignLandingPage,
+    campaignReferrer: form.campaignReferrer,
+    campaignCapturedAtIso: form.campaignCapturedAtIso,
     businessType: form.businessType,
     squareFootage: form.squareFootage,
     bathrooms: form.bathrooms,
@@ -760,7 +778,7 @@ function buildPayload(form: CommercialResetFormState) {
 }
 
 export function CommercialResetForm() {
-  const [form, setForm] = useState(defaultState);
+  const [form, setForm] = useState(() => mergeCampaignAttribution(defaultState));
   const [status, setStatus] = useState<Status>("idle");
   const [message, setMessage] = useState("");
   const businessKind = getBusinessKind(form.businessType);
@@ -775,6 +793,10 @@ export function CommercialResetForm() {
   const needsGlassDetails = hasAddOn(form, "Interior glass quote");
   const hasSpecialtyAddOnDetails = needsCarpetDetails || needsSpotDetails || needsHardFloorDetails || needsUpholsteryDetails || needsGlassDetails;
   const showHowFoundUsDetails = shouldShowHowFoundUsDetails(form.howFoundUs);
+
+  useEffect(() => {
+    setForm((prev) => mergeCampaignAttribution(prev));
+  }, []);
 
   function update(name: keyof CommercialResetFormState, value: unknown) {
     setForm((prev) => ({ ...prev, [name]: value }) as CommercialResetFormState);
@@ -859,7 +881,7 @@ export function CommercialResetForm() {
 
       setStatus("success");
       setMessage("Commercial Reset quote request received. We’ll review the address, space type, square footage range, bathrooms/kitchens/showers, condition, schedule, and optional photos before sending next steps or a clear quote/payment link.");
-      setForm(defaultState);
+      setForm(mergeCampaignAttribution(defaultState));
     } catch (err) {
       console.error(err);
       setStatus("error");
@@ -871,10 +893,10 @@ export function CommercialResetForm() {
     <form onSubmit={onSubmit} onInvalidCapture={focusFirstInvalidField} className="grid gap-6 overflow-hidden rounded-[2.5rem] border border-nest-gold/18 bg-white/90 p-4 shadow-soft backdrop-blur sm:p-6 lg:p-8">
       <div className="relative overflow-hidden rounded-[1.9rem] bg-gradient-to-br from-nest-cream via-white to-nest-mint/35 p-5 shadow-sm sm:p-7">
         <div className="absolute -right-16 -top-20 h-48 w-48 rounded-full bg-nest-gold/15 blur-3xl" />
-        <div className="relative text-center">
+        <div className="relative">
           <p className="text-xs font-black uppercase tracking-[0.22em] text-nest-gold">No payment due yet</p>
           <h2 className="mt-2 text-2xl font-black text-nest-teal sm:text-3xl">Request a Commercial Reset quote</h2>
-          <p className="mx-auto mt-3 max-w-2xl leading-7 text-nest-ink/72">
+          <p className="mt-3 max-w-2xl leading-7 text-nest-ink/72">
             This guided form stays quick, but asks the pricing details that matter: type of space, size range, restrooms, kitchens, showers, condition, frequency, and photos if helpful.
           </p>
           <p className="mt-3 text-sm font-bold text-nest-ink/65"><span className="text-red-600">*</span> Required fields</p>
@@ -1327,7 +1349,7 @@ function Field({ label, children, required = false }: { label: string; children:
 
 function Step({ icon, title, text }: { icon: ReactNode; title: string; text: string }) {
   return (
-    <div className="rounded-2xl border border-white/70 bg-white/80 p-4 text-left shadow-sm">
+    <div className="rounded-2xl border border-white/70 bg-white/80 p-4 shadow-sm">
       <div className="text-nest-gold">{icon}</div>
       <p className="mt-2 font-black text-nest-teal">{title}</p>
       <p className="mt-1 text-sm leading-5 text-nest-ink/65">{text}</p>

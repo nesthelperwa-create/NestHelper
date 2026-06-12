@@ -745,6 +745,12 @@ const DETAIL_FIELD_LABELS: Record<string, string> = {
   incomingReferralCode: "Referral",
   howFoundUs: "Found us",
   howFoundUsDetails: "Source details",
+  campaignSource: "Campaign source",
+  campaignMedium: "Campaign medium",
+  campaignName: "Campaign",
+  campaignContent: "Campaign content",
+  campaignTerm: "Campaign term",
+  campaignLandingPage: "Landing page",
   availability: "Availability",
   services: "Services",
   serviceType: "Services",
@@ -762,15 +768,15 @@ const DETAIL_FIELD_LABELS: Record<string, string> = {
 
 const DETAIL_FIELD_ORDER: Record<string, string[]> = {
   serviceRequests: [
-    "fullName", "service", "phone", "email", "howFoundUs", "howFoundUsDetails", "address", "city", "state", "zip", "zipCode", "preferredDate", "preferredTime", "roomsOrAreas", "requestDetails", "notes", "specialInstructions", "promoCode", "incomingReferralCode",
+    "fullName", "service", "phone", "email", "howFoundUs", "howFoundUsDetails", "campaignSource", "campaignName", "address", "city", "state", "zip", "zipCode", "preferredDate", "preferredTime", "roomsOrAreas", "requestDetails", "notes", "specialInstructions", "promoCode", "incomingReferralCode",
   ],
   helperApplications: [
-    "fullName", "phone", "email", "city", "howFoundUs", "howFoundUsDetails", "state", "zip", "availability", "services", "transportation", "travelRadius", "experienceLevel", "comfortLevel", "notWillingToDo", "applicationDocumentCount",
+    "fullName", "phone", "email", "city", "howFoundUs", "howFoundUsDetails", "campaignSource", "campaignName", "state", "zip", "availability", "services", "transportation", "travelRadius", "experienceLevel", "comfortLevel", "notWillingToDo", "applicationDocumentCount",
   ],
   partnerApplications: [
-    "businessName", "ownerName", "phone", "email", "howFoundUs", "howFoundUsDetails", "city", "state", "zip", "serviceType", "serviceArea", "businessStructure", "licenseStatus", "insuranceStatus", "availability", "applicationDocumentCount",
+    "businessName", "ownerName", "phone", "email", "howFoundUs", "howFoundUsDetails", "campaignSource", "campaignName", "city", "state", "zip", "serviceType", "serviceArea", "businessStructure", "licenseStatus", "insuranceStatus", "availability", "applicationDocumentCount",
   ],
-  contactMessages: ["fullName", "name", "phone", "email", "howFoundUs", "howFoundUsDetails", "subject", "message", "preferredContactMethod"],
+  contactMessages: ["fullName", "name", "phone", "email", "howFoundUs", "howFoundUsDetails", "campaignSource", "campaignName", "subject", "message", "preferredContactMethod"],
 };
 
 const ADVANCED_FIELD_HIDE_KEYS = new Set([
@@ -1154,6 +1160,10 @@ function getCleanContactSection(collectionName: string, item: AdminDoc): AdminEx
   if (address) entries.push({ key: "cleanAddress", label: "Address", value: address });
   entries.push(makeExportEntry("howFoundUs", item.howFoundUs, "How they found us"));
   entries.push(makeExportEntry("howFoundUsDetails", item.howFoundUsDetails, "Source details"));
+  entries.push(makeExportEntry("campaignSource", item.campaignSource, "Campaign source"));
+  entries.push(makeExportEntry("campaignMedium", item.campaignMedium, "Campaign medium"));
+  entries.push(makeExportEntry("campaignName", item.campaignName, "Campaign"));
+  entries.push(makeExportEntry("campaignLandingPage", item.campaignLandingPage, "Landing page"));
   return { title: "Contact", entries: entries.filter((entry): entry is AdminExportEntry => Boolean(entry)) };
 }
 
@@ -1839,6 +1849,12 @@ function getMarketingSourceCsv(collectionName: string, records: AdminDoc[]) {
     "Service requested / offered",
     "How they found us",
     "Source details",
+    "Campaign source",
+    "Campaign medium",
+    "Campaign",
+    "Campaign content",
+    "Landing page",
+    "Captured at",
     "Converted to paid customer",
     "Amount paid",
     "Status",
@@ -1850,6 +1866,12 @@ function getMarketingSourceCsv(collectionName: string, records: AdminDoc[]) {
     collectionName === "serviceRequests" ? getCleanServiceLabel(item) : exportValueToText("services", item.services || item.serviceType || item.subject),
     String(item.howFoundUs || ""),
     String(item.howFoundUsDetails || ""),
+    String(item.campaignSource || ""),
+    String(item.campaignMedium || ""),
+    String(item.campaignName || ""),
+    String(item.campaignContent || ""),
+    String(item.campaignLandingPage || ""),
+    String(item.campaignCapturedAtIso || ""),
     collectionName === "serviceRequests" && isPaidForBookkeeping(item) ? "Yes" : "No",
     collectionName === "serviceRequests" ? formatMoney(getNetCustomerCharge(item)) : "",
     String(item.status || item.applicationStatus || ""),

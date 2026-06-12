@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { FormEvent, HTMLAttributes } from "react";
 import { ArrowRight, MessageCircle } from "lucide-react";
 import { formatPhoneNumber } from "@/lib/formatPhoneNumber";
 import { focusFirstInvalidField } from "@/lib/formInvalidFocus";
+import { mergeCampaignAttribution } from "@/lib/campaignAttribution";
 
 type Status = "idle" | "loading" | "success" | "error";
 
@@ -12,6 +13,7 @@ const howFoundUsOptions = [
   "Google search",
   "Instagram",
   "Facebook",
+  "Nextdoor",
   "Friend or family referral",
   "NestHelper referral link",
   "Local community group",
@@ -21,7 +23,7 @@ const howFoundUsOptions = [
 ];
 
 function shouldShowHowFoundUsDetails(value: string) {
-  return ["Friend or family referral", "Local community group", "Flyer / QR code", "Existing customer", "Other / not listed"].includes(value);
+  return ["Friend or family referral", "Nextdoor", "Local community group", "Flyer / QR code", "Existing customer", "Other / not listed"].includes(value);
 }
 
 const topicOptions = [
@@ -43,15 +45,27 @@ const defaultForm = {
   topic: topicOptions[0],
   howFoundUs: "",
   howFoundUsDetails: "",
+  campaignSource: "",
+  campaignMedium: "",
+  campaignName: "",
+  campaignContent: "",
+  campaignTerm: "",
+  campaignLandingPage: "",
+  campaignReferrer: "",
+  campaignCapturedAtIso: "",
   subject: "",
   message: "",
 };
 
 export function ContactForm() {
-  const [form, setForm] = useState(defaultForm);
+  const [form, setForm] = useState(() => mergeCampaignAttribution(defaultForm));
   const [status, setStatus] = useState<Status>("idle");
   const [message, setMessage] = useState("");
   const showHowFoundUsDetails = shouldShowHowFoundUsDetails(form.howFoundUs);
+
+  useEffect(() => {
+    setForm((prev) => mergeCampaignAttribution(prev));
+  }, []);
 
   const update = (name: keyof typeof defaultForm, value: string) => setForm((prev) => ({ ...prev, [name]: value }));
 
@@ -71,7 +85,7 @@ export function ContactForm() {
 
       setStatus("success");
       setMessage("Message received. We’ll route it to the right NestHelper inbox, email you a copy, and follow up as soon as we can.");
-      setForm(defaultForm);
+      setForm(mergeCampaignAttribution(defaultForm));
     } catch (err) {
       console.error(err);
       setStatus("error");
@@ -81,12 +95,12 @@ export function ContactForm() {
 
   return (
     <form onSubmit={submit} onInvalidCapture={focusFirstInvalidField} className="overflow-hidden rounded-[2.5rem] border border-nest-gold/18 bg-white/90 shadow-soft backdrop-blur">
-      <div className="bg-gradient-to-br from-nest-cream via-white to-nest-mint/30 p-6 text-center sm:p-8">
+      <div className="bg-gradient-to-br from-nest-cream via-white to-nest-mint/30 p-6 sm:p-8">
         <div className="inline-flex rounded-2xl bg-white p-3 text-nest-teal shadow-sm">
           <MessageCircle />
         </div>
         <h2 className="mt-4 text-2xl font-black text-nest-teal sm:text-3xl">Send a message</h2>
-        <p className="mx-auto mt-2 max-w-2xl leading-7 text-nest-ink/68">
+        <p className="mt-2 leading-7 text-nest-ink/68">
           Choose a topic so your message routes to the right NestHelper inbox, including Commercial Reset when it is a business-space question.
         </p>
       </div>

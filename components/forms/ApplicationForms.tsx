@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { FormEvent, HTMLAttributes, ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { formatPhoneNumber } from "@/lib/formatPhoneNumber";
 import { focusFirstInvalidField } from "@/lib/formInvalidFocus";
+import { mergeCampaignAttribution } from "@/lib/campaignAttribution";
 
 type Status = "idle" | "loading" | "success" | "error";
 type ApplicationPath = "helper" | "partner";
@@ -40,6 +41,7 @@ const howFoundUsOptions = [
   "Google search",
   "Instagram",
   "Facebook",
+  "Nextdoor",
   "Friend or family referral",
   "NestHelper customer referral",
   "Community group",
@@ -49,7 +51,7 @@ const howFoundUsOptions = [
 ];
 
 function shouldShowHowFoundUsDetails(value: string) {
-  return ["Friend or family referral", "NestHelper customer referral", "Community group", "Job board / hiring post", "Flyer / QR code", "Other / not listed"].includes(value);
+  return ["Friend or family referral", "Nextdoor", "NestHelper customer referral", "Community group", "Job board / hiring post", "Flyer / QR code", "Other / not listed"].includes(value);
 }
 
 const helperServiceOptions = [
@@ -164,6 +166,14 @@ const helperDefaultState = {
   city: "",
   howFoundUs: "",
   howFoundUsDetails: "",
+  campaignSource: "",
+  campaignMedium: "",
+  campaignName: "",
+  campaignContent: "",
+  campaignTerm: "",
+  campaignLandingPage: "",
+  campaignReferrer: "",
+  campaignCapturedAtIso: "",
   availability: [] as string[],
   weeklyCapacity: "",
   services: [] as string[],
@@ -190,6 +200,14 @@ const partnerDefaultState = {
   website: "",
   howFoundUs: "",
   howFoundUsDetails: "",
+  campaignSource: "",
+  campaignMedium: "",
+  campaignName: "",
+  campaignContent: "",
+  campaignTerm: "",
+  campaignLandingPage: "",
+  campaignReferrer: "",
+  campaignCapturedAtIso: "",
   businessStructure: "",
   serviceArea: [] as string[],
   serviceAreaDetails: "",
@@ -427,9 +445,14 @@ export function ApplicationFormChooser() {
 export function HelperApplicationForm() {
   const [status, setStatus] = useState<Status>("idle");
   const [message, setMessage] = useState("");
-  const [form, setForm] = useState<HelperFormState>(helperDefaultState);
+  const [form, setForm] = useState<HelperFormState>(() => mergeCampaignAttribution(helperDefaultState));
   const [documents, setDocuments] = useState<ApplicationDocumentDraft[]>([emptyDocumentDraft()]);
   const showHowFoundUsDetails = shouldShowHowFoundUsDetails(form.howFoundUs);
+
+  useEffect(() => {
+    setForm((prev) => mergeCampaignAttribution(prev));
+  }, []);
+
   const update = (name: keyof HelperFormState, value: unknown) => setForm((prev) => ({ ...prev, [name]: value }));
   const toggle = (name: "availability" | "services" | "workStyle" | "comfortLevel" | "notWillingToDo", value: string, checked: boolean) => {
     setForm((prev) => ({
@@ -461,7 +484,7 @@ export function HelperApplicationForm() {
       const warning = typeof result?.warning === "string" ? result.warning : "";
       setStatus("success");
       setMessage(warning || "Application received. We’ll review it and follow up about next steps. Sensitive ID/background-check steps happen through secure providers, not this form.");
-      setForm(helperDefaultState);
+      setForm(mergeCampaignAttribution(helperDefaultState));
       setDocuments([emptyDocumentDraft()]);
     } catch (err) {
       console.error(err);
@@ -472,10 +495,10 @@ export function HelperApplicationForm() {
 
   return (
     <form onSubmit={submit} onInvalidCapture={focusFirstInvalidField} className="grid gap-5 overflow-hidden rounded-[2.5rem] border border-nest-gold/18 bg-white/90 p-5 shadow-soft backdrop-blur sm:p-8">
-      <div className="rounded-[1.75rem] bg-gradient-to-br from-nest-cream via-white to-nest-mint/30 p-5 text-center">
+      <div className="rounded-[1.75rem] bg-gradient-to-br from-nest-cream via-white to-nest-mint/30 p-5">
         <p className="text-xs font-black uppercase tracking-[0.22em] text-nest-gold">Individual helper</p>
         <h2 className="mt-2 text-2xl font-black text-nest-teal">Part-Time Helper Application</h2>
-        <p className="mx-auto mt-2 max-w-3xl text-nest-ink/70">For individuals interested in becoming a NestHelper Gold Star Checked helper. Most questions are simple choices; use the notes boxes only where details help.</p>
+        <p className="mt-2 text-nest-ink/70">For individuals interested in becoming a NestHelper Gold Star Checked helper. Most questions are simple choices; use the notes boxes only where details help.</p>
       </div>
 
       <Grid>
@@ -580,9 +603,14 @@ export function HelperApplicationForm() {
 export function PartnerApplicationForm() {
   const [status, setStatus] = useState<Status>("idle");
   const [message, setMessage] = useState("");
-  const [form, setForm] = useState<PartnerFormState>(partnerDefaultState);
+  const [form, setForm] = useState<PartnerFormState>(() => mergeCampaignAttribution(partnerDefaultState));
   const [documents, setDocuments] = useState<ApplicationDocumentDraft[]>([emptyDocumentDraft()]);
   const showHowFoundUsDetails = shouldShowHowFoundUsDetails(form.howFoundUs);
+
+  useEffect(() => {
+    setForm((prev) => mergeCampaignAttribution(prev));
+  }, []);
+
   const update = (name: keyof PartnerFormState, value: unknown) => setForm((prev) => ({ ...prev, [name]: value }));
   const toggle = (name: "serviceType" | "serviceArea" | "availability" | "documentsAvailable", value: string, checked: boolean) => {
     setForm((prev) => ({
@@ -614,7 +642,7 @@ export function PartnerApplicationForm() {
       const warning = typeof result?.warning === "string" ? result.warning : "";
       setStatus("success");
       setMessage(warning || "Partner application received. We’ll review service fit, standards, insurance/business information, and availability before next steps.");
-      setForm(partnerDefaultState);
+      setForm(mergeCampaignAttribution(partnerDefaultState));
       setDocuments([emptyDocumentDraft()]);
     } catch (err) {
       console.error(err);
@@ -625,10 +653,10 @@ export function PartnerApplicationForm() {
 
   return (
     <form onSubmit={submit} onInvalidCapture={focusFirstInvalidField} className="grid gap-5 overflow-hidden rounded-[2.5rem] border border-nest-gold/18 bg-white/90 p-5 shadow-soft backdrop-blur sm:p-8">
-      <div className="rounded-[1.75rem] bg-gradient-to-br from-nest-cream via-white to-nest-mint/30 p-5 text-center">
+      <div className="rounded-[1.75rem] bg-gradient-to-br from-nest-cream via-white to-nest-mint/30 p-5">
         <p className="text-xs font-black uppercase tracking-[0.22em] text-nest-gold">Partner provider</p>
         <h2 className="mt-2 text-2xl font-black text-nest-teal">Independent Contractor / Partner Provider Application</h2>
-        <p className="mx-auto mt-2 max-w-3xl text-nest-ink/70">For cleaners, laundromats, errand providers, organizers, and local businesses interested in partnering with NestHelper.</p>
+        <p className="mt-2 text-nest-ink/70">For cleaners, laundromats, errand providers, organizers, and local businesses interested in partnering with NestHelper.</p>
       </div>
 
       <Grid>

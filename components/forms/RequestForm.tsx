@@ -2,12 +2,13 @@
 
 import { useSearchParams } from "next/navigation";
 import type { FormEvent, ReactNode } from "react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ArrowRight, CheckCircle2, Clock, CreditCard, Gift, MapPin, ShieldCheck } from "lucide-react";
 import { services, laundryAddOns } from "@/lib/services";
 import { formatPhoneNumber } from "@/lib/formatPhoneNumber";
 import { focusFirstInvalidField } from "@/lib/formInvalidFocus";
 import { PhotoUploadField, photoUploadSummary, type PhotoUpload } from "@/components/forms/PhotoUploadField";
+import { mergeCampaignAttribution } from "@/lib/campaignAttribution";
 
 const defaultState = {
   fullName: "",
@@ -26,6 +27,14 @@ const defaultState = {
   promoCode: "",
   howFoundUs: "",
   howFoundUsDetails: "",
+  campaignSource: "",
+  campaignMedium: "",
+  campaignName: "",
+  campaignContent: "",
+  campaignTerm: "",
+  campaignLandingPage: "",
+  campaignReferrer: "",
+  campaignCapturedAtIso: "",
   incomingReferralCode: "",
   incomingReferralProgram: "",
   incomingReferralLandingPage: "",
@@ -93,6 +102,7 @@ const howFoundUsOptions = [
   "Google search",
   "Instagram",
   "Facebook",
+  "Nextdoor",
   "Friend or family referral",
   "NestHelper referral link",
   "Local community group",
@@ -102,7 +112,7 @@ const howFoundUsOptions = [
 ];
 
 function shouldShowHowFoundUsDetails(value: string) {
-  return ["Friend or family referral", "Local community group", "Flyer / QR code", "Existing customer", "Other / not listed"].includes(value);
+  return ["Friend or family referral", "Nextdoor", "Local community group", "Flyer / QR code", "Existing customer", "Other / not listed"].includes(value);
 }
 
 const laundryTypeOptions = [
@@ -214,6 +224,14 @@ function cleanForSelectedService(form: RequestFormState) {
     parkingAccess: form.parkingAccess,
     howFoundUs: form.howFoundUs,
     howFoundUsDetails: form.howFoundUsDetails,
+    campaignSource: form.campaignSource,
+    campaignMedium: form.campaignMedium,
+    campaignName: form.campaignName,
+    campaignContent: form.campaignContent,
+    campaignTerm: form.campaignTerm,
+    campaignLandingPage: form.campaignLandingPage,
+    campaignReferrer: form.campaignReferrer,
+    campaignCapturedAtIso: form.campaignCapturedAtIso,
     consent: form.consent,
     ...(form.photoUploads.length ? {
       photoUploadCount: form.photoUploads.length,
@@ -276,11 +294,13 @@ export function RequestForm() {
   const requestedService = params.get("service") || "";
   const requestedReferralCode = normalizeReferralInput(params.get("ref") || params.get("referral") || params.get("referralCode") || "");
   const [form, setForm] = useState({
-    ...defaultState,
-    service: requestedService,
-    incomingReferralCode: requestedReferralCode,
-    incomingReferralProgram: requestedReferralCode ? "family-to-family" : "",
-    incomingReferralLandingPage: requestedReferralCode ? "/referrals" : "",
+    ...mergeCampaignAttribution({
+      ...defaultState,
+      service: requestedService,
+      incomingReferralCode: requestedReferralCode,
+      incomingReferralProgram: requestedReferralCode ? "family-to-family" : "",
+      incomingReferralLandingPage: requestedReferralCode ? "/referrals" : "",
+    }),
   });
   const [status, setStatus] = useState<Status>("idle");
   const [message, setMessage] = useState("");
@@ -296,6 +316,10 @@ export function RequestForm() {
   const referralApplies = Boolean(form.incomingReferralCode && isReferralEligibleService(form.service));
   const referralNeedsEligiblePackage = Boolean(form.incomingReferralCode && form.service && !isReferralEligibleService(form.service));
   const showHowFoundUsDetails = shouldShowHowFoundUsDetails(form.howFoundUs);
+
+  useEffect(() => {
+    setForm((prev) => mergeCampaignAttribution(prev));
+  }, []);
 
   function update(name: keyof RequestFormState, value: unknown) {
     setForm((prev) => ({ ...prev, [name]: value }) as RequestFormState);
@@ -381,7 +405,7 @@ export function RequestForm() {
       setMessage(form.incomingReferralCode
         ? "Request received with the family referral link. We’ll review the request and keep the referral pending until the eligible reset is completed."
         : "Request received. We’ll review your service area, timing, scope, safety notes, and pricing before sending a secure checkout link. A confirmation email is on its way.");
-      setForm({ ...defaultState, service: requestedService });
+      setForm(mergeCampaignAttribution({ ...defaultState, service: requestedService }));
     } catch (err) {
       console.error(err);
       setStatus("error");
@@ -393,10 +417,10 @@ export function RequestForm() {
     <form onSubmit={onSubmit} onInvalidCapture={focusFirstInvalidField} className="grid gap-6 overflow-hidden rounded-[2.5rem] border border-nest-gold/18 bg-white/90 p-4 shadow-soft backdrop-blur sm:p-6 lg:p-8">
       <div className="relative overflow-hidden rounded-[1.9rem] bg-gradient-to-br from-nest-cream via-white to-nest-mint/35 p-5 shadow-sm sm:p-7">
         <div className="absolute -right-16 -top-20 h-48 w-48 rounded-full bg-nest-gold/15 blur-3xl" />
-        <div className="relative text-center">
+        <div className="relative">
           <p className="text-xs font-black uppercase tracking-[0.22em] text-nest-gold">No payment due yet</p>
           <h2 className="mt-2 text-2xl font-black text-nest-teal sm:text-3xl">Request a Parent Reset</h2>
-          <p className="mx-auto mt-3 max-w-2xl leading-7 text-nest-ink/72">
+          <p className="mt-3 max-w-2xl leading-7 text-nest-ink/72">
             Choose a service, then answer only the questions that match that package. NestHelper reviews the request before checkout so families get the right scope, timing, helper, and price before anything is confirmed.
           </p>
           <p className="mt-3 text-sm font-bold text-nest-ink/65"><span className="text-red-600">*</span> Required fields</p>
@@ -802,7 +826,7 @@ function Field({ label, children, required = false }: { label: string; children:
 
 function Step({ icon, title, text }: { icon: ReactNode; title: string; text: string }) {
   return (
-    <div className="rounded-2xl border border-white/70 bg-white/80 p-4 text-left shadow-sm">
+    <div className="rounded-2xl border border-white/70 bg-white/80 p-4 shadow-sm">
       <div className="text-nest-gold">{icon}</div>
       <p className="mt-2 font-black text-nest-teal">{title}</p>
       <p className="mt-1 text-sm leading-5 text-nest-ink/65">{text}</p>
