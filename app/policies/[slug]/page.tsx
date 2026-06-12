@@ -46,11 +46,13 @@ export default async function PolicyDetailPage({ params }: PolicyPageProps) {
       </div>
 
       <div className="mt-6 rounded-[2rem] border border-nest-gold/16 bg-white p-6 shadow-soft sm:p-8">
-        <div className="inline-flex rounded-full bg-nest-mint/55 px-3 py-1 text-xs font-black uppercase tracking-[0.18em] text-nest-teal">
-          NestHelper Policy
+        <div className="text-center">
+          <div className="inline-flex rounded-full bg-nest-mint/55 px-3 py-1 text-xs font-black uppercase tracking-[0.18em] text-nest-teal">
+            NestHelper Policy
+          </div>
+          <h1 className="mx-auto mt-5 max-w-3xl text-4xl font-black tracking-tight text-nest-teal sm:text-5xl">{policy.title}</h1>
+          <p className="mx-auto mt-4 max-w-3xl text-lg leading-8 text-nest-ink/72">{policy.intro}</p>
         </div>
-        <h1 className="mt-5 text-4xl font-black tracking-tight text-nest-teal sm:text-5xl">{policy.title}</h1>
-        <p className="mt-4 text-lg leading-8 text-nest-ink/72">{policy.intro}</p>
 
         <div className="mt-8 grid gap-5">
           {policy.sections.map((section) => (

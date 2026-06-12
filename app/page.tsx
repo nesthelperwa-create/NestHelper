@@ -268,10 +268,10 @@ export default function HomePage() {
             <Image src={siteConfig.assets.badge} alt="NestHelper Gold Star Checked badge" width={600} height={600} className="relative mx-auto max-h-[420px] w-full object-contain animate-float" />
           </div>
         </div>
-        <div className="self-center text-center lg:text-left">
-          <p className="pill-label mx-auto w-fit lg:mx-0"><ShieldCheck size={15} /> Trust & Safety</p>
+        <div className="self-center text-center">
+          <p className="pill-label mx-auto w-fit"><ShieldCheck size={15} /> Trust & Safety</p>
           <h2 className="text-balance mt-4 text-3xl font-black leading-tight text-nest-teal sm:text-5xl">The trust standards behind every reset.</h2>
-          <p className="mt-5 text-base font-medium leading-7 text-nest-ink/72 sm:text-lg sm:leading-8">
+          <p className="mx-auto mt-5 max-w-3xl text-base font-medium leading-7 text-nest-ink/72 sm:text-lg sm:leading-8">
             NestHelper uses a checked-helper and vetted-partner model with screening steps, service boundaries, and follow-up after service. The Trust & Safety page explains how we review helpers, partners, scope, and safety before matching work.
           </p>
           <div className="mt-7 grid gap-3 sm:grid-cols-2">
@@ -291,7 +291,7 @@ export default function HomePage() {
               </div>
             ))}
           </div>
-          <div className="mt-8 flex justify-center lg:justify-start"><ButtonLink href="/trust" variant="secondary">See Trust Standards</ButtonLink></div>
+          <div className="mt-8 flex justify-center"><ButtonLink href="/trust" variant="secondary">See Trust Standards</ButtonLink></div>
         </div>
       </AnimatedSection>
     </>

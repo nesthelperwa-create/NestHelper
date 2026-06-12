@@ -472,10 +472,10 @@ export function HelperApplicationForm() {
 
   return (
     <form onSubmit={submit} onInvalidCapture={focusFirstInvalidField} className="grid gap-5 overflow-hidden rounded-[2.5rem] border border-nest-gold/18 bg-white/90 p-5 shadow-soft backdrop-blur sm:p-8">
-      <div className="rounded-[1.75rem] bg-gradient-to-br from-nest-cream via-white to-nest-mint/30 p-5">
+      <div className="rounded-[1.75rem] bg-gradient-to-br from-nest-cream via-white to-nest-mint/30 p-5 text-center">
         <p className="text-xs font-black uppercase tracking-[0.22em] text-nest-gold">Individual helper</p>
         <h2 className="mt-2 text-2xl font-black text-nest-teal">Part-Time Helper Application</h2>
-        <p className="mt-2 text-nest-ink/70">For individuals interested in becoming a NestHelper Gold Star Checked helper. Most questions are simple choices; use the notes boxes only where details help.</p>
+        <p className="mx-auto mt-2 max-w-3xl text-nest-ink/70">For individuals interested in becoming a NestHelper Gold Star Checked helper. Most questions are simple choices; use the notes boxes only where details help.</p>
       </div>
 
       <Grid>
@@ -625,10 +625,10 @@ export function PartnerApplicationForm() {
 
   return (
     <form onSubmit={submit} onInvalidCapture={focusFirstInvalidField} className="grid gap-5 overflow-hidden rounded-[2.5rem] border border-nest-gold/18 bg-white/90 p-5 shadow-soft backdrop-blur sm:p-8">
-      <div className="rounded-[1.75rem] bg-gradient-to-br from-nest-cream via-white to-nest-mint/30 p-5">
+      <div className="rounded-[1.75rem] bg-gradient-to-br from-nest-cream via-white to-nest-mint/30 p-5 text-center">
         <p className="text-xs font-black uppercase tracking-[0.22em] text-nest-gold">Partner provider</p>
         <h2 className="mt-2 text-2xl font-black text-nest-teal">Independent Contractor / Partner Provider Application</h2>
-        <p className="mt-2 text-nest-ink/70">For cleaners, laundromats, errand providers, organizers, and local businesses interested in partnering with NestHelper.</p>
+        <p className="mx-auto mt-2 max-w-3xl text-nest-ink/70">For cleaners, laundromats, errand providers, organizers, and local businesses interested in partnering with NestHelper.</p>
       </div>
 
       <Grid>

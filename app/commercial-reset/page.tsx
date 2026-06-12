@@ -116,8 +116,8 @@ export default function CommercialResetPage() {
       <section className="mx-auto max-w-7xl px-4 pb-6 sm:px-6 lg:px-8">
         <div className="overflow-hidden rounded-[2.35rem] border border-nest-gold/18 bg-gradient-to-br from-white via-nest-cream to-nest-mint/25 p-5 shadow-soft sm:p-6 lg:p-7">
           <div className="grid gap-5 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
-            <div>
-              <p className="pill-label w-fit"><MapPin size={15} /> Service area check</p>
+            <div className="text-center lg:text-left">
+              <p className="pill-label mx-auto w-fit lg:mx-0"><MapPin size={15} /> Service area check</p>
               <h2 className="mt-4 text-2xl font-black leading-tight text-nest-teal sm:text-3xl">
                 Now quoting select Eastside and Northshore areas.
               </h2>
@@ -157,8 +157,8 @@ export default function CommercialResetPage() {
         <div className="grid gap-5 lg:grid-cols-[1.05fr_0.95fr] lg:items-stretch">
           <div className="relative overflow-hidden rounded-[2.5rem] border border-nest-gold/18 bg-white/88 p-6 shadow-soft backdrop-blur sm:p-8 lg:p-10">
             <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-nest-mint/45 blur-3xl" />
-            <div className="relative">
-              <p className="pill-label w-fit"><Building2 size={15} /> Built separately from Parent Reset</p>
+            <div className="relative text-center lg:text-left">
+              <p className="pill-label mx-auto w-fit lg:mx-0"><Building2 size={15} /> Built separately from Parent Reset</p>
               <h2 className="text-balance mt-4 text-3xl font-black leading-tight text-nest-teal sm:text-5xl">
                 Same NestHelper care, different service lane.
               </h2>
@@ -199,8 +199,8 @@ export default function CommercialResetPage() {
         <div className="mx-auto max-w-7xl">
           <div className="grid gap-8 lg:grid-cols-[0.92fr_1.08fr] lg:items-stretch">
             <div className="flex h-full flex-col justify-between rounded-[2.5rem] border border-nest-gold/18 bg-white/88 p-6 shadow-soft sm:p-8 lg:p-10">
-              <div>
-                <p className="pill-label w-fit"><SprayCan size={15} /> Routine Scope</p>
+              <div className="text-center lg:text-left">
+                <p className="pill-label mx-auto w-fit lg:mx-0"><SprayCan size={15} /> Routine Scope</p>
                 <h2 className="mt-4 text-3xl font-black leading-tight text-nest-teal sm:text-5xl">
                   What routine Commercial Reset can include.
                 </h2>

@@ -81,12 +81,12 @@ export function ContactForm() {
 
   return (
     <form onSubmit={submit} onInvalidCapture={focusFirstInvalidField} className="overflow-hidden rounded-[2.5rem] border border-nest-gold/18 bg-white/90 shadow-soft backdrop-blur">
-      <div className="bg-gradient-to-br from-nest-cream via-white to-nest-mint/30 p-6 sm:p-8">
+      <div className="bg-gradient-to-br from-nest-cream via-white to-nest-mint/30 p-6 text-center sm:p-8">
         <div className="inline-flex rounded-2xl bg-white p-3 text-nest-teal shadow-sm">
           <MessageCircle />
         </div>
         <h2 className="mt-4 text-2xl font-black text-nest-teal sm:text-3xl">Send a message</h2>
-        <p className="mt-2 leading-7 text-nest-ink/68">
+        <p className="mx-auto mt-2 max-w-2xl leading-7 text-nest-ink/68">
           Choose a topic so your message routes to the right NestHelper inbox, including Commercial Reset when it is a business-space question.
         </p>
       </div>

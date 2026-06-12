@@ -393,10 +393,10 @@ export function RequestForm() {
     <form onSubmit={onSubmit} onInvalidCapture={focusFirstInvalidField} className="grid gap-6 overflow-hidden rounded-[2.5rem] border border-nest-gold/18 bg-white/90 p-4 shadow-soft backdrop-blur sm:p-6 lg:p-8">
       <div className="relative overflow-hidden rounded-[1.9rem] bg-gradient-to-br from-nest-cream via-white to-nest-mint/35 p-5 shadow-sm sm:p-7">
         <div className="absolute -right-16 -top-20 h-48 w-48 rounded-full bg-nest-gold/15 blur-3xl" />
-        <div className="relative">
+        <div className="relative text-center">
           <p className="text-xs font-black uppercase tracking-[0.22em] text-nest-gold">No payment due yet</p>
           <h2 className="mt-2 text-2xl font-black text-nest-teal sm:text-3xl">Request a Parent Reset</h2>
-          <p className="mt-3 max-w-2xl leading-7 text-nest-ink/72">
+          <p className="mx-auto mt-3 max-w-2xl leading-7 text-nest-ink/72">
             Choose a service, then answer only the questions that match that package. NestHelper reviews the request before checkout so families get the right scope, timing, helper, and price before anything is confirmed.
           </p>
           <p className="mt-3 text-sm font-bold text-nest-ink/65"><span className="text-red-600">*</span> Required fields</p>
@@ -802,7 +802,7 @@ function Field({ label, children, required = false }: { label: string; children:
 
 function Step({ icon, title, text }: { icon: ReactNode; title: string; text: string }) {
   return (
-    <div className="rounded-2xl border border-white/70 bg-white/80 p-4 shadow-sm">
+    <div className="rounded-2xl border border-white/70 bg-white/80 p-4 text-left shadow-sm">
       <div className="text-nest-gold">{icon}</div>
       <p className="mt-2 font-black text-nest-teal">{title}</p>
       <p className="mt-1 text-sm leading-5 text-nest-ink/65">{text}</p>

@@ -25,9 +25,9 @@ export default function ServicesPage() {
         </div>
 
         <div className="mb-10 grid gap-6 lg:grid-cols-[0.95fr_1.05fr] lg:items-end">
-          <div>
-            <p className="pill-label w-fit"><Sparkles size={15} /> Parent Reset Packages</p>
-            <h2 className="text-balance mt-4 text-4xl font-black text-nest-teal sm:text-5xl">Designed for the moments when the house feels like too much.</h2>
+          <div className="text-center lg:text-left">
+            <p className="pill-label mx-auto w-fit lg:mx-0"><Sparkles size={15} /> Parent Reset Packages</p>
+            <h2 className="text-balance mt-4 text-3xl font-black leading-tight text-nest-teal sm:text-5xl">Designed for the moments when the house feels like too much.</h2>
           </div>
           <div className="pro-card rounded-[2rem] p-6">
             <h3 className="text-xl font-black text-nest-teal">Simple at first glance. Details when you need them.</h3>
@@ -47,9 +47,9 @@ export default function ServicesPage() {
 
         <div className="mt-10 rounded-[2.5rem] border border-nest-gold/18 bg-gradient-to-br from-white via-nest-cream to-nest-mint/25 p-7 shadow-soft sm:p-8">
           <div className="grid gap-6 lg:grid-cols-[0.78fr_1.22fr] lg:items-center">
-            <div>
-              <p className="pill-label w-fit"><Sparkles size={15} /> Recurring Reset Plans</p>
-              <h2 className="mt-4 text-3xl font-black text-nest-teal sm:text-4xl">Small loyalty savings after the first completed reset.</h2>
+            <div className="text-center lg:text-left">
+              <p className="pill-label mx-auto w-fit lg:mx-0"><Sparkles size={15} /> Recurring Reset Plans</p>
+              <h2 className="mt-4 text-3xl font-black leading-tight text-nest-teal sm:text-4xl">Small loyalty savings after the first completed reset.</h2>
               <p className="mt-3 font-medium leading-7 text-nest-ink/70">
                 Recurring rates are available after a first standard-price visit when the scope, schedule, service area, and helper fit are consistent. This keeps pricing fair while protecting service quality.
               </p>
@@ -75,15 +75,15 @@ export default function ServicesPage() {
 
         <div className="mt-10 rounded-[2.5rem] border border-nest-gold/18 bg-gradient-to-br from-white via-nest-cream to-nest-mint/30 p-7 shadow-soft sm:p-8">
           <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
-            <div>
-              <p className="pill-label w-fit"><Building2 size={15} /> Need business cleaning?</p>
-              <h2 className="mt-4 text-3xl font-black text-nest-teal sm:text-4xl">Commercial Reset is separate from Parent Reset.</h2>
+            <div className="text-center lg:text-left">
+              <p className="pill-label mx-auto w-fit lg:mx-0"><Building2 size={15} /> Need business cleaning?</p>
+              <h2 className="mt-4 text-3xl font-black leading-tight text-nest-teal sm:text-4xl">Commercial Reset is separate from Parent Reset.</h2>
             </div>
             <div>
               <p className="font-medium leading-7 text-nest-ink/70">
                 For small offices, studios, churches, daycare common areas, salons, and local business spaces, use the Commercial Reset page. Commercial work is quoted after review instead of listed as a guaranteed flat package. It is available in select Eastside and Northshore areas, and product preferences can be noted before quoting.
               </p>
-              <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+              <div className="mt-5 flex flex-col justify-center gap-3 sm:flex-row lg:justify-start">
                 <ButtonLink href="/commercial-reset" variant="secondary">View Commercial Reset</ButtonLink>
               </div>
             </div>
@@ -92,9 +92,9 @@ export default function ServicesPage() {
 
         <div className="mt-10 rounded-[2.5rem] border border-nest-gold/20 bg-white p-7 shadow-soft sm:p-8">
           <div className="grid gap-8 lg:grid-cols-[0.7fr_1.3fr] lg:items-center">
-            <div>
-              <p className="pill-label w-fit"><ShieldCheck size={15} /> Included</p>
-              <h2 className="mt-4 text-3xl font-black text-nest-teal sm:text-4xl">Every request includes more than task time.</h2>
+            <div className="text-center lg:text-left">
+              <p className="pill-label mx-auto w-fit lg:mx-0"><ShieldCheck size={15} /> Included</p>
+              <h2 className="mt-4 text-3xl font-black leading-tight text-nest-teal sm:text-4xl">Every request includes more than task time.</h2>
             </div>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {[
@@ -120,9 +120,9 @@ export default function ServicesPage() {
 
         <div className="mt-10 rounded-[2.5rem] border border-nest-gold/18 bg-gradient-to-br from-nest-mint/25 via-white to-nest-cream p-7 shadow-soft sm:p-8">
           <div className="grid gap-6 lg:grid-cols-[0.7fr_1.3fr] lg:items-center">
-            <div>
-              <p className="pill-label w-fit"><SprayCan size={15} /> Product preferences</p>
-              <h2 className="mt-4 text-3xl font-black text-nest-teal sm:text-4xl">Non-toxic, low-odor, and sensitive options can be requested.</h2>
+            <div className="text-center lg:text-left">
+              <p className="pill-label mx-auto w-fit lg:mx-0"><SprayCan size={15} /> Product preferences</p>
+              <h2 className="mt-4 text-3xl font-black leading-tight text-nest-teal sm:text-4xl">Non-toxic, low-odor, and sensitive options can be requested.</h2>
             </div>
             <p className="font-medium leading-7 text-nest-ink/70">
               NestHelper brings the supplies. Tell us in the request if your family prefers non-toxic, low-odor, fragrance-free, or baby/sensitive products. We review the surface, task, supplies, and scope before confirming what fits the visit.
@@ -131,10 +131,10 @@ export default function ServicesPage() {
         </div>
 
         <div id="laundry" className="mt-10 overflow-hidden rounded-[2.5rem] border border-rose-200 bg-white shadow-soft">
-          <div className="bg-gradient-to-br from-rose-50 via-white to-nest-cream p-7 sm:p-8">
-            <p className="pill-label w-fit"><Scale size={15} /> Laundry Rescue</p>
-            <h2 className="text-balance mt-4 text-3xl font-black text-nest-teal sm:text-4xl">Deposit first. Dry weigh-in after pickup. Final balance after we know the real amount.</h2>
-            <p className="mt-4 max-w-4xl text-lg font-medium leading-8 text-nest-ink/72">
+          <div className="bg-gradient-to-br from-rose-50 via-white to-nest-cream p-7 text-center sm:p-8">
+            <p className="pill-label mx-auto w-fit"><Scale size={15} /> Laundry Rescue</p>
+            <h2 className="text-balance mx-auto mt-4 max-w-4xl text-3xl font-black leading-tight text-nest-teal sm:text-4xl">Deposit first. Dry weigh-in after pickup. Final balance after we know the real amount.</h2>
+            <p className="mx-auto mt-4 max-w-4xl text-lg font-medium leading-8 text-nest-ink/72">
               Laundry Rescue uses a non-refundable minimum deposit first. At pickup, laundry is weighed dry using a portable scale. The final total is calculated from dry weight, add-ons, and any bulky quoted items, then the pre-tax deposit is credited toward the final balance. During checkout, customers can choose auto-charge for the final balance or invoice-before-delivery.
             </p>
           </div>

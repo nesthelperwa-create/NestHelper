@@ -47,8 +47,8 @@ export default async function ReferralsPage({ searchParams }: ReferralsPageProps
           <div className="mb-8 overflow-hidden rounded-[2rem] border border-nest-gold/20 bg-gradient-to-br from-white via-nest-cream to-nest-mint/30 p-5 shadow-soft sm:p-7">
             <div className="grid gap-6 lg:grid-cols-[1fr_0.9fr] lg:items-center">
               <div>
-                <p className="pill-label w-fit"><Gift size={15} /> One-time family referral</p>
-                <h2 className="mt-4 text-3xl font-black text-nest-teal sm:text-4xl">Your family gets a referral discount.</h2>
+                <p className="pill-label mx-auto w-fit lg:mx-0"><Gift size={15} /> One-time family referral</p>
+                <h2 className="mt-4 text-3xl font-black leading-tight text-nest-teal sm:text-4xl">Your family gets a referral discount.</h2>
                 <p className="mt-3 font-medium leading-7 text-nest-ink/72">
                   This referral can be used once for an eligible NestHelper family service. Submit your request with the button below and the referral code will stay attached automatically.
                 </p>
@@ -73,10 +73,10 @@ export default async function ReferralsPage({ searchParams }: ReferralsPageProps
 
         {!referralCode && (
           <div className="grid gap-6 lg:grid-cols-[1fr_0.9fr] lg:items-start">
-            <div className="rounded-[2.5rem] border border-nest-gold/18 bg-white p-6 shadow-soft sm:p-8">
-              <p className="pill-label w-fit"><HeartHandshake size={15} /> Family Referrals</p>
-              <h2 className="mt-4 text-3xl font-black text-nest-teal sm:text-4xl">Simple family-to-family rewards.</h2>
-              <p className="mt-4 font-medium leading-7 text-nest-ink/72">
+            <div className="rounded-[2.5rem] border border-nest-gold/18 bg-white p-6 text-center shadow-soft sm:p-8">
+              <p className="pill-label mx-auto w-fit"><HeartHandshake size={15} /> Family Referrals</p>
+              <h2 className="mt-4 text-3xl font-black leading-tight text-nest-teal sm:text-4xl">Simple family-to-family rewards.</h2>
+              <p className="mx-auto mt-4 max-w-2xl font-medium leading-7 text-nest-ink/72">
                 After your completed eligible family service, NestHelper may send you a one-time referral link to share with one family. Happy customers can receive another one-time link after a referred family completes service.
               </p>
 
@@ -98,17 +98,17 @@ export default async function ReferralsPage({ searchParams }: ReferralsPageProps
               </div>
             </div>
 
-            <div className="rounded-[2.5rem] border border-nest-gold/18 bg-gradient-to-br from-nest-mint/25 via-white to-nest-cream p-6 shadow-soft sm:p-8">
-              <p className="pill-label w-fit"><Gift size={15} /> How it works</p>
+            <div className="rounded-[2.5rem] border border-nest-gold/18 bg-gradient-to-br from-nest-mint/25 via-white to-nest-cream p-6 text-center shadow-soft sm:p-8">
+              <p className="pill-label mx-auto w-fit"><Gift size={15} /> How it works</p>
               <div className="mt-5 grid gap-3">
                 {familySteps.map((item) => (
-                  <div key={item} className="flex gap-3 rounded-2xl bg-white p-4 font-black text-nest-ink/75 shadow-sm">
+                  <div key={item} className="flex gap-3 rounded-2xl bg-white p-4 text-left font-black text-nest-ink/75 shadow-sm">
                     <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-nest-mint/60 text-nest-teal"><CheckCircle2 size={17} /></span>
                     <span>{item}</span>
                   </div>
                 ))}
               </div>
-              <Link href="/policies/referral-program-policy" className="mt-6 inline-flex items-center gap-2 font-black text-nest-gold transition hover:gap-3 hover:text-nest-teal">
+              <Link href="/policies/referral-program-policy" className="mt-6 inline-flex items-center justify-center gap-2 font-black text-nest-gold transition hover:gap-3 hover:text-nest-teal">
                 Read referral policy <ArrowRight size={18} />
               </Link>
             </div>

@@ -38,14 +38,14 @@ export default async function ReferralSharePage({ searchParams }: ReferralShareP
 
       <section className="mx-auto max-w-4xl px-4 py-12 sm:px-6 lg:px-8">
         {referralCode ? (
-          <div className="rounded-[2.25rem] border border-nest-gold/20 bg-gradient-to-br from-white via-nest-cream to-nest-mint/30 p-5 shadow-soft sm:p-8">
-            <p className="pill-label w-fit"><Gift size={15} /> One-time family referral</p>
-            <h2 className="mt-4 text-3xl font-black text-nest-teal sm:text-4xl">Send this to one family you know.</h2>
-            <p className="mt-3 font-medium leading-7 text-nest-ink/72">
+          <div className="rounded-[2.25rem] border border-nest-gold/20 bg-gradient-to-br from-white via-nest-cream to-nest-mint/30 p-5 text-center shadow-soft sm:p-8">
+            <p className="pill-label mx-auto w-fit"><Gift size={15} /> One-time family referral</p>
+            <h2 className="mt-4 text-3xl font-black leading-tight text-nest-teal sm:text-4xl">Send this to one family you know.</h2>
+            <p className="mx-auto mt-3 max-w-2xl font-medium leading-7 text-nest-ink/72">
               Tap the button below to copy the referral link. Then paste it into a text message or email to the family you want to refer.
             </p>
 
-            <div className="mt-6 rounded-3xl border border-nest-gold/18 bg-white p-5 shadow-sm">
+            <div className="mt-6 rounded-3xl border border-nest-gold/18 bg-white p-5 text-left shadow-sm">
               <p className="text-xs font-black uppercase tracking-[0.18em] text-nest-gold">Copy this referral link</p>
               <p className="mt-2 break-words text-sm font-bold leading-6 text-nest-ink/65">{referralLinkToCopy}</p>
               <div className="mt-4">
@@ -71,7 +71,7 @@ export default async function ReferralSharePage({ searchParams }: ReferralShareP
               />
             </div>
 
-            <div className="mt-6 rounded-3xl border border-nest-gold/18 bg-white p-5 shadow-sm">
+            <div className="mt-6 rounded-3xl border border-nest-gold/18 bg-white p-5 text-left shadow-sm">
               <h3 className="flex items-center gap-2 text-xl font-black text-nest-teal"><ShieldCheck className="h-5 w-5" /> How your reward works</h3>
               <div className="mt-3 grid gap-3 text-sm font-black leading-6 text-nest-ink/70">
                 <div className="flex gap-3 rounded-2xl bg-nest-cream p-3"><CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-nest-teal" /> Your referred family gets the referral discount on an eligible family service.</div>

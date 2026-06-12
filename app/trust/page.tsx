@@ -42,9 +42,9 @@ export default function TrustPage() {
         </div>
 
         <div className="grid gap-8">
-          <div>
-            <p className="pill-label w-fit"><ShieldCheck size={15} /> Standards</p>
-            <h2 className="text-balance mt-4 text-4xl font-black text-nest-teal sm:text-5xl">Built for parents who want trust, scope, and accountability.</h2>
+          <div className="text-center lg:text-left">
+            <p className="pill-label mx-auto w-fit lg:mx-0"><ShieldCheck size={15} /> Standards</p>
+            <h2 className="text-balance mt-4 text-3xl font-black leading-tight text-nest-teal sm:text-5xl">Built for parents who want trust, scope, and accountability.</h2>
             <p className="mt-4 text-lg font-medium leading-8 text-nest-ink/72">
               NestHelper coordinates the details, sets expectations, reviews scope, and uses checked helpers or vetted partner providers depending on the service. This page is the proof behind the homepage promise.
             </p>
@@ -79,9 +79,9 @@ export default function TrustPage() {
             </div>
           </div>
 
-          <div className="rounded-[2.5rem] bg-white p-7 shadow-soft sm:p-8">
+          <div className="rounded-[2.5rem] bg-white p-7 text-center shadow-soft sm:p-8">
             <h2 className="text-3xl font-black text-nest-teal">Ready to request help?</h2>
-            <p className="mt-3 font-medium leading-7 text-nest-ink/70">Submit the details first. We review the request before checkout so the scope is clear and the service is a fit.</p>
+            <p className="mx-auto mt-3 max-w-2xl font-medium leading-7 text-nest-ink/70">Submit the details first. We review the request before checkout so the scope is clear and the service is a fit.</p>
             <div className="mt-6"><ButtonLink href="/request">Request Help</ButtonLink></div>
           </div>
         </div>

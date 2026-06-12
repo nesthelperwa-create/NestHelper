@@ -231,7 +231,7 @@ export default async function CheckoutPage({ searchParams }: CheckoutPageProps) 
         <section className="mx-auto max-w-5xl px-4 py-14 sm:px-6 lg:px-8">
           <div className="grid gap-6 lg:grid-cols-[1.2fr_.8fr]">
             <div className="rounded-[2rem] border border-nest-gold/20 bg-white p-7 shadow-soft">
-              <h2 className="text-2xl font-black text-nest-teal">What happens next</h2>
+              <h2 className="text-center text-2xl font-black text-nest-teal">What happens next</h2>
               <ol className="mt-5 grid gap-3">
                 {content.steps.map((step, index) => (
                   <Step key={step} number={index + 1}>{step}</Step>
@@ -244,7 +244,7 @@ export default async function CheckoutPage({ searchParams }: CheckoutPageProps) 
               ) : null}
             </div>
 
-            <aside className="rounded-[2rem] border border-nest-gold/20 bg-nest-cream p-7 shadow-soft">
+            <aside className="rounded-[2rem] border border-nest-gold/20 bg-nest-cream p-7 text-center shadow-soft">
               <h2 className="text-2xl font-black text-nest-teal">Payment status</h2>
               <div className="mt-5 rounded-2xl bg-white p-5">
                 <p className="text-sm font-black uppercase tracking-[0.2em] text-nest-gold">Status</p>
@@ -332,9 +332,9 @@ export default async function CheckoutPage({ searchParams }: CheckoutPageProps) 
             ]}
           />
         </div>
-        <div className="mt-8 rounded-[2rem] border border-nest-gold/20 bg-nest-gold/10 p-6">
+        <div className="mt-8 rounded-[2rem] border border-nest-gold/20 bg-nest-gold/10 p-6 text-center">
           <h2 className="text-2xl font-black text-nest-teal">Request-first checkout</h2>
-          <p className="mt-2 text-nest-ink/75">
+          <p className="mx-auto mt-2 max-w-3xl text-nest-ink/75">
             Customers submit a request first. NestHelper reviews the request and sends a secure checkout link only after the service is approved.
           </p>
         </div>
@@ -346,7 +346,7 @@ export default async function CheckoutPage({ searchParams }: CheckoutPageProps) 
 function Flow({ title, steps }: { title: string; steps: string[] }) {
   return (
     <div className="rounded-[2rem] bg-white p-6 shadow-soft">
-      <h2 className="text-2xl font-black text-nest-teal">{title}</h2>
+      <h2 className="text-center text-2xl font-black text-nest-teal">{title}</h2>
       <ol className="mt-5 grid gap-3">
         {steps.map((s, i) => (
           <Step key={s} number={i + 1}>{s}</Step>
