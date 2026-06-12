@@ -34,6 +34,7 @@ const defaultState = {
   petDetails: "",
   parkingAccess: "",
   supplyPreference: "NestHelper brings standard supplies",
+  recurringResetInterest: "One-time reset for now",
   homePriorities: [] as string[],
   homeAreas: [] as string[],
   requestDetails: "",
@@ -78,6 +79,14 @@ const homeAreaOptions = [
   "Laundry area",
   "Entryway / mudroom",
   WHOLE_HOME_OPTION,
+];
+
+const recurringResetOptions = [
+  "One-time reset for now",
+  "Interested in weekly recurring resets after the first visit",
+  "Interested in every-2-weeks recurring resets after the first visit",
+  "Interested in monthly support when openings allow",
+  "Not sure yet — please help me decide",
 ];
 
 const howFoundUsOptions = [
@@ -222,6 +231,10 @@ function cleanForSelectedService(form: RequestFormState) {
       pets: form.pets,
       petDetails: form.petDetails,
       supplyPreference: form.supplyPreference,
+      recurringResetInterest: form.recurringResetInterest,
+      recurringResetNote: form.recurringResetInterest !== "One-time reset for now"
+        ? "Recurring rates are request-based and begin only after the first completed standard-price reset if scope, schedule, service area, and helper fit are consistent."
+        : "Customer requested a one-time reset for now.",
       homePriorities: form.homePriorities,
       homeAreas: form.homeAreas,
       roomsAreas: form.homeAreas.length ? form.homeAreas.join(", ") : form.roomsAreas,
@@ -301,6 +314,7 @@ export function RequestForm() {
       pets: nextCategory === "home" ? prev.pets : defaultState.pets,
       petDetails: nextCategory === "home" ? prev.petDetails : "",
       supplyPreference: nextCategory === "home" ? prev.supplyPreference : defaultState.supplyPreference,
+      recurringResetInterest: nextCategory === "home" ? prev.recurringResetInterest : defaultState.recurringResetInterest,
       errandType: nextCategory === "errand" ? prev.errandType : defaultState.errandType,
       errandDistance: nextCategory === "errand" ? prev.errandDistance : defaultState.errandDistance,
       errandStops: nextCategory === "errand" ? prev.errandStops : "",
@@ -523,6 +537,16 @@ export function RequestForm() {
               </select>
             </Field>
           </div>
+          <Field label="Interested in recurring resets?">
+            <select className="input" value={form.recurringResetInterest} onChange={(e) => update("recurringResetInterest", e.target.value)}>
+              {recurringResetOptions.map((option) => (
+                <option key={option}>{option}</option>
+              ))}
+            </select>
+            <p className="mt-2 text-sm font-semibold leading-6 text-nest-ink/62">
+              First resets stay at standard pricing. Recurring rates may be offered after the first completed visit when schedule, scope, service area, and helper fit are consistent.
+            </p>
+          </Field>
           <div>
             <div className="label mb-3">Main priorities</div>
             <div className="grid gap-2 sm:grid-cols-2">
