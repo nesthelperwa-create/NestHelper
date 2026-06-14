@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { policies, getPolicy } from "@/lib/policies";
+import { siteConfig } from "@/lib/siteConfig";
 
 type PolicyPageProps = {
   params: Promise<{ slug: string }>;
@@ -65,6 +66,18 @@ export default async function PolicyDetailPage({ params }: PolicyPageProps) {
 
         <div className="mt-8 rounded-2xl border border-nest-gold/20 bg-nest-gold/10 p-5 text-sm leading-6 text-nest-ink/70">
           These policies are written to set clear expectations for NestHelper customers, helpers, and partner providers. Final approval, scheduling, and pricing are reviewed before checkout.
+        </div>
+
+        <div className="mt-4 rounded-2xl border border-nest-teal/12 bg-nest-mint/35 p-5 text-sm leading-6 text-nest-ink/72">
+          Questions about this policy? Contact NestHelper at{" "}
+          <a href={`mailto:${siteConfig.email}`} className="font-black text-nest-teal underline decoration-nest-gold/50 underline-offset-4">
+            {siteConfig.email}
+          </a>{" "}
+          or call/text the NestHelper business line at{" "}
+          <a href={siteConfig.phoneHref} className="font-black text-nest-teal underline decoration-nest-gold/50 underline-offset-4">
+            {siteConfig.phone}
+          </a>
+          .
         </div>
 
         {commercialReturnHref ? (
