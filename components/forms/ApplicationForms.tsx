@@ -84,6 +84,8 @@ const helperWorkStyleOptions = [
   "Prefers organizing/laundry support",
 ];
 
+const EMPTY_HOME_ONLY_COMFORT = "Prefer empty homes only";
+
 const helperComfortOptions = [
   "Comfortable around children",
   "Comfortable around pets",
@@ -93,7 +95,7 @@ const helperComfortOptions = [
   "Comfortable lifting 20–30 lbs",
   "Comfortable driving for errands",
   "Comfortable working while family is home",
-  "Prefer empty homes only",
+  EMPTY_HOME_ONLY_COMFORT,
 ];
 
 const helperNotWillingOptions = [
@@ -455,10 +457,23 @@ export function HelperApplicationForm() {
 
   const update = (name: keyof HelperFormState, value: unknown) => setForm((prev) => ({ ...prev, [name]: value }));
   const toggle = (name: "availability" | "services" | "workStyle" | "comfortLevel" | "notWillingToDo", value: string, checked: boolean) => {
-    setForm((prev) => ({
-      ...prev,
-      [name]: checked ? [...prev[name], value] : prev[name].filter((item) => item !== value),
-    }));
+    setForm((prev) => {
+      if (name === "comfortLevel") {
+        const currentValues = prev[name];
+        const nextValues = checked
+          ? value === EMPTY_HOME_ONLY_COMFORT
+            ? [EMPTY_HOME_ONLY_COMFORT]
+            : [...currentValues.filter((item) => item !== EMPTY_HOME_ONLY_COMFORT && item !== value), value]
+          : currentValues.filter((item) => item !== value);
+
+        return { ...prev, [name]: nextValues };
+      }
+
+      return {
+        ...prev,
+        [name]: checked ? [...prev[name], value] : prev[name].filter((item) => item !== value),
+      };
+    });
   };
 
   async function submit(e: FormEvent) {
@@ -567,6 +582,7 @@ export function HelperApplicationForm() {
 
       <CheckboxGroup
         label="Comfort level"
+        description="Choose either empty-homes only or the comfort items that apply. Selecting empty-homes only clears the other comfort choices."
         options={helperComfortOptions}
         values={form.comfortLevel}
         onChange={(option, checked) => toggle("comfortLevel", option, checked)}
@@ -873,10 +889,11 @@ function Textarea({ label, value, onChange, placeholder = "" }: { label: string;
   );
 }
 
-function CheckboxGroup({ label, options, values, onChange }: { label: string; options: string[]; values: string[]; onChange: (option: string, checked: boolean) => void }) {
+function CheckboxGroup({ label, description, options, values, onChange }: { label: string; description?: string; options: string[]; values: string[]; onChange: (option: string, checked: boolean) => void }) {
   return (
     <div>
-      <div className="label mb-3">{label}</div>
+      <div className="label mb-2">{label}</div>
+      {description && <p className="mb-3 text-sm font-semibold text-nest-ink/65">{description}</p>}
       <div className="grid gap-2 sm:grid-cols-2">
         {options.map((option) => {
           const checked = values.includes(option);
