@@ -54,17 +54,6 @@ function shouldShowHowFoundUsDetails(value: string) {
   return ["Friend or family referral", "Nextdoor", "NestHelper customer referral", "Community group", "Job board / hiring post", "Flyer / QR code", "Other / not listed"].includes(value);
 }
 
-const helperServiceOptions = [
-  "Parent Reset / home reset support",
-  "Family Reset / deeper reset visits",
-  "Laundry folding and put-away",
-  "Errands / pickup and drop-off",
-  "Light organizing",
-  "Dishes / kitchen reset",
-  "Changing linens / bed reset",
-  "Pet-friendly homes",
-];
-
 const helperAvailabilityOptions = [
   "Weekday mornings",
   "Weekday afternoons",
@@ -75,35 +64,61 @@ const helperAvailabilityOptions = [
   "Occasional/on-call openings",
 ];
 
-const helperWorkStyleOptions = [
-  "Comfortable around children/family homes",
-  "Comfortable with pets",
-  "Okay with laundry-heavy visits",
-  "Okay with errand driving",
-  "Prefers cleaning/reset visits only",
-  "Prefers organizing/laundry support",
+const SERVICE_ERRANDS = "Errands / pickup and drop-off";
+
+const helperServiceOptions = [
+  "Parent Reset / home reset support",
+  "Family Reset / deeper reset visits",
+  "Laundry folding and put-away",
+  SERVICE_ERRANDS,
+  "Light organizing",
+  "Dishes / kitchen reset",
+  "Changing linens / bed reset",
+  "Pet-friendly homes",
 ];
 
-const EMPTY_HOME_ONLY_COMFORT = "Prefer empty homes only";
+const WORKSTYLE_CHILDREN_FAMILY_HOMES = "Comfortable around children/family homes";
+const WORKSTYLE_LAUNDRY_HEAVY = "Okay with laundry-heavy visits";
+const WORKSTYLE_ERRAND_DRIVING = "Okay with errand driving";
+
+const helperWorkStyleOptions = [
+  WORKSTYLE_CHILDREN_FAMILY_HOMES,
+  "Comfortable with pets",
+  WORKSTYLE_LAUNDRY_HEAVY,
+  WORKSTYLE_ERRAND_DRIVING,
+  "Mostly prefers cleaning/reset visits",
+  "Mostly prefers organizing/laundry support",
+];
+
+const COMFORT_CHILDREN = "Comfortable around children";
+const COMFORT_BATHROOMS = "Comfortable with bathrooms";
+const COMFORT_LIFTING = "Comfortable lifting 20–30 lbs";
+const COMFORT_DRIVING_ERRANDS = "Comfortable driving for errands";
+const COMFORT_WORKING_WITH_FAMILY_HOME = "Comfortable working while family is home";
+const EMPTY_HOME_ONLY_COMFORT = "Only empty homes / no family present during visit";
 
 const helperComfortOptions = [
-  "Comfortable around children",
+  COMFORT_CHILDREN,
   "Comfortable around pets",
   "Comfortable with laundry",
   "Comfortable with kitchens",
-  "Comfortable with bathrooms",
-  "Comfortable lifting 20–30 lbs",
-  "Comfortable driving for errands",
-  "Comfortable working while family is home",
+  COMFORT_BATHROOMS,
+  COMFORT_LIFTING,
+  COMFORT_DRIVING_ERRANDS,
+  COMFORT_WORKING_WITH_FAMILY_HOME,
   EMPTY_HOME_ONLY_COMFORT,
 ];
 
+const NOT_WILLING_BATHROOMS = "No bathrooms";
+const NOT_WILLING_HEAVY_LIFTING = "No heavy lifting";
+const NOT_WILLING_DRIVING_ERRANDS = "No driving errands";
+
 const helperNotWillingOptions = [
-  "No bathrooms",
+  NOT_WILLING_BATHROOMS,
   "No pet messes",
   "No biohazards",
-  "No heavy lifting",
-  "No driving errands",
+  NOT_WILLING_HEAVY_LIFTING,
+  NOT_WILLING_DRIVING_ERRANDS,
   "No homes with smoking",
   "No homes with aggressive pets",
   "Other / depends on the job",
@@ -231,6 +246,17 @@ type ApplicationDocumentDraft = {
   label: string;
   file: File | null;
 };
+
+type HelperMultiSelectField = "availability" | "services" | "workStyle" | "comfortLevel" | "notWillingToDo";
+
+function toggleValue(values: string[], value: string, checked: boolean) {
+  if (!checked) return values.filter((item) => item !== value);
+  return Array.from(new Set([...values.filter((item) => item !== value), value]));
+}
+
+function removeValues(values: string[], valuesToRemove: string[]) {
+  return values.filter((item) => !valuesToRemove.includes(item));
+}
 
 const MAX_APPLICATION_DOCUMENTS = 5;
 const MAX_APPLICATION_DOCUMENT_BYTES = 3 * 1024 * 1024;
@@ -456,23 +482,66 @@ export function HelperApplicationForm() {
   }, []);
 
   const update = (name: keyof HelperFormState, value: unknown) => setForm((prev) => ({ ...prev, [name]: value }));
-  const toggle = (name: "availability" | "services" | "workStyle" | "comfortLevel" | "notWillingToDo", value: string, checked: boolean) => {
+  const toggle = (name: HelperMultiSelectField, value: string, checked: boolean) => {
     setForm((prev) => {
-      if (name === "comfortLevel") {
-        const currentValues = prev[name];
-        const nextValues = checked
-          ? value === EMPTY_HOME_ONLY_COMFORT
-            ? [EMPTY_HOME_ONLY_COMFORT]
-            : [...currentValues.filter((item) => item !== EMPTY_HOME_ONLY_COMFORT && item !== value), value]
-          : currentValues.filter((item) => item !== value);
+      const next: HelperFormState = {
+        ...prev,
+        availability: [...prev.availability],
+        services: [...prev.services],
+        workStyle: [...prev.workStyle],
+        comfortLevel: [...prev.comfortLevel],
+        notWillingToDo: [...prev.notWillingToDo],
+      };
 
-        return { ...prev, [name]: nextValues };
+      if (name === "comfortLevel") {
+        if (checked && value === EMPTY_HOME_ONLY_COMFORT) {
+          next.comfortLevel = [EMPTY_HOME_ONLY_COMFORT];
+          next.workStyle = removeValues(next.workStyle, [WORKSTYLE_CHILDREN_FAMILY_HOMES]);
+          return next;
+        }
+
+        next.comfortLevel = toggleValue(removeValues(next.comfortLevel, [EMPTY_HOME_ONLY_COMFORT]), value, checked);
+
+        if (checked && value === COMFORT_BATHROOMS) next.notWillingToDo = removeValues(next.notWillingToDo, [NOT_WILLING_BATHROOMS]);
+        if (checked && value === COMFORT_LIFTING) next.notWillingToDo = removeValues(next.notWillingToDo, [NOT_WILLING_HEAVY_LIFTING]);
+        if (checked && value === COMFORT_DRIVING_ERRANDS) next.notWillingToDo = removeValues(next.notWillingToDo, [NOT_WILLING_DRIVING_ERRANDS]);
+
+        return next;
       }
 
-      return {
-        ...prev,
-        [name]: checked ? [...prev[name], value] : prev[name].filter((item) => item !== value),
-      };
+      if (name === "workStyle") {
+        next.workStyle = toggleValue(next.workStyle, value, checked);
+
+        if (checked && value === WORKSTYLE_CHILDREN_FAMILY_HOMES) next.comfortLevel = removeValues(next.comfortLevel, [EMPTY_HOME_ONLY_COMFORT]);
+        if (checked && value === WORKSTYLE_ERRAND_DRIVING) next.notWillingToDo = removeValues(next.notWillingToDo, [NOT_WILLING_DRIVING_ERRANDS]);
+
+        return next;
+      }
+
+      if (name === "services") {
+        next.services = toggleValue(next.services, value, checked);
+
+        if (checked && value === SERVICE_ERRANDS) next.notWillingToDo = removeValues(next.notWillingToDo, [NOT_WILLING_DRIVING_ERRANDS]);
+
+        return next;
+      }
+
+      if (name === "notWillingToDo") {
+        next.notWillingToDo = toggleValue(next.notWillingToDo, value, checked);
+
+        if (checked && value === NOT_WILLING_BATHROOMS) next.comfortLevel = removeValues(next.comfortLevel, [COMFORT_BATHROOMS]);
+        if (checked && value === NOT_WILLING_HEAVY_LIFTING) next.comfortLevel = removeValues(next.comfortLevel, [COMFORT_LIFTING]);
+        if (checked && value === NOT_WILLING_DRIVING_ERRANDS) {
+          next.services = removeValues(next.services, [SERVICE_ERRANDS]);
+          next.workStyle = removeValues(next.workStyle, [WORKSTYLE_ERRAND_DRIVING]);
+          next.comfortLevel = removeValues(next.comfortLevel, [COMFORT_DRIVING_ERRANDS]);
+        }
+
+        return next;
+      }
+
+      next.availability = toggleValue(next.availability, value, checked);
+      return next;
     });
   };
 
@@ -568,6 +637,7 @@ export function HelperApplicationForm() {
 
       <CheckboxGroup
         label="Services you’re comfortable with"
+        description="Choose every service you are generally open to. This helps with matching and does not guarantee you will be assigned every selected service."
         options={helperServiceOptions}
         values={form.services}
         onChange={(option, checked) => toggle("services", option, checked)}
@@ -575,6 +645,7 @@ export function HelperApplicationForm() {
 
       <CheckboxGroup
         label="Work-style fit"
+        description="These are preferences, not hard limits. It is okay to select more than one. Use the not-willing section below for firm boundaries."
         options={helperWorkStyleOptions}
         values={form.workStyle}
         onChange={(option, checked) => toggle("workStyle", option, checked)}
@@ -582,14 +653,16 @@ export function HelperApplicationForm() {
 
       <CheckboxGroup
         label="Comfort level"
-        description="Choose either empty-homes only or the comfort items that apply. Selecting empty-homes only clears the other comfort choices."
+        description="Choose either the comfort items that apply or the empty-homes-only option. Empty-homes-only is exclusive and disables the other comfort choices until it is unchecked."
         options={helperComfortOptions}
         values={form.comfortLevel}
+        disabledOptions={form.comfortLevel.includes(EMPTY_HOME_ONLY_COMFORT) ? helperComfortOptions.filter((option) => option !== EMPTY_HOME_ONLY_COMFORT) : []}
         onChange={(option, checked) => toggle("comfortLevel", option, checked)}
       />
 
       <CheckboxGroup
         label="Not willing to do / needs approval first"
+        description="Use this for hard no’s or items that need review before NestHelper assigns a visit. These choices override conflicting comfort/service choices above."
         options={helperNotWillingOptions}
         values={form.notWillingToDo}
         onChange={(option, checked) => toggle("notWillingToDo", option, checked)}
@@ -889,7 +962,21 @@ function Textarea({ label, value, onChange, placeholder = "" }: { label: string;
   );
 }
 
-function CheckboxGroup({ label, description, options, values, onChange }: { label: string; description?: string; options: string[]; values: string[]; onChange: (option: string, checked: boolean) => void }) {
+function CheckboxGroup({
+  label,
+  description,
+  options,
+  values,
+  disabledOptions = [],
+  onChange,
+}: {
+  label: string;
+  description?: string;
+  options: string[];
+  values: string[];
+  disabledOptions?: string[];
+  onChange: (option: string, checked: boolean) => void;
+}) {
   return (
     <div>
       <div className="label mb-2">{label}</div>
@@ -897,9 +984,25 @@ function CheckboxGroup({ label, description, options, values, onChange }: { labe
       <div className="grid gap-2 sm:grid-cols-2">
         {options.map((option) => {
           const checked = values.includes(option);
+          const disabled = disabledOptions.includes(option);
           return (
-            <label key={option} className={`flex items-center gap-3 rounded-2xl border p-3 text-sm font-semibold transition ${checked ? "border-nest-gold/45 bg-nest-mint/35 text-nest-teal shadow-sm" : "border-nest-gold/10 bg-nest-cream text-nest-ink/78 hover:bg-nest-mint/25"}`}>
-              <input type="checkbox" className="h-4 w-4 accent-nest-teal" checked={checked} onChange={(e) => onChange(option, e.target.checked)} />
+            <label
+              key={option}
+              className={`flex items-center gap-3 rounded-2xl border p-3 text-sm font-semibold transition ${
+                disabled
+                  ? "cursor-not-allowed border-nest-gold/10 bg-slate-50 text-nest-ink/35"
+                  : checked
+                    ? "border-nest-gold/45 bg-nest-mint/35 text-nest-teal shadow-sm"
+                    : "border-nest-gold/10 bg-nest-cream text-nest-ink/78 hover:bg-nest-mint/25"
+              }`}
+            >
+              <input
+                type="checkbox"
+                className="h-4 w-4 accent-nest-teal disabled:cursor-not-allowed"
+                checked={checked}
+                disabled={disabled}
+                onChange={(e) => onChange(option, e.target.checked)}
+              />
               <span>{option}</span>
             </label>
           );
