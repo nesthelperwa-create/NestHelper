@@ -6,6 +6,7 @@ import { firebaseAuth, firestoreDb } from "@/lib/firebaseClient";
 import StatusBadge from "./StatusBadge";
 import CommercialQuoteBreakdownBuilder from "./CommercialQuoteBreakdownBuilder";
 import FamilyPaymentBreakdownBuilder from "./FamilyPaymentBreakdownBuilder";
+import ReviewRequestPanel from "./ReviewRequestPanel";
 
 type AdminDoc = { id: string; status?: string; createdAt?: unknown; checkoutUrl?: string; promoCode?: string; [key: string]: any };
 type CustomerCredit = { id: string; status?: string; amount?: number; remainingAmount?: number; customerEmail?: string; customerEmailKey?: string; creditCode?: string; [key: string]: any };
@@ -2982,6 +2983,7 @@ export default function AdminTable({
   const showCommercialQuotePanel = showPaymentActions && selectedIsCommercial;
   const showFamilyPaymentBreakdownPanel = showPaymentActions && !selectedIsCommercial;
   const showFamilyReferralPanel = showPaymentActions && !selectedIsCommercial;
+  const showReviewRequestPanel = Boolean(showPaymentActions);
   const selectedIsFamilyReferralEligible = isFamilyReferralEligibleRequest(selected);
   const selectedCanGenerateReferral = Boolean(selectedIsFamilyReferralEligible && isCompletedRequest(selected));
   const selectedAvailableCustomerCredits = getAvailableCustomerCreditsForRequest(selected, customerCredits);
@@ -3843,6 +3845,16 @@ export default function AdminTable({
                 {referralMessage && <p className="mt-3 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">{referralMessage}</p>}
                 {referralError && <p className="mt-3 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{referralError}</p>}
               </div>
+            )}
+
+            {showReviewRequestPanel && (
+              <ReviewRequestPanel
+                selected={selected}
+                onRecordUpdate={(updates) => {
+                  setSelected((prev) => (prev ? { ...prev, ...updates } : prev));
+                  setItems((prev) => prev.map((item) => item.id === selected.id ? { ...item, ...updates } : item));
+                }}
+              />
             )}
 
             {showCommercialQuotePanel && (
