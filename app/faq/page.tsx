@@ -1,6 +1,27 @@
+import type { Metadata } from "next";
 import { PageHero } from "@/components/PageHero";
+import { siteConfig } from "@/lib/siteConfig";
+
+export const metadata: Metadata = {
+  title: "Parent Help FAQ: Mother’s Helper-Style Support, Laundry & Errands",
+  description:
+    "Answers about NestHelper parent help, mother’s helper-style household support, home reset services, Laundry Rescue, errands, pricing, and trust standards for Eastside families.",
+  alternates: {
+    canonical: `${siteConfig.url}/faq`,
+  },
+  openGraph: {
+    title: "Parent Help FAQ | NestHelper",
+    description:
+      "Learn how NestHelper parent help, home reset support, laundry help, and errands work for busy families.",
+    url: `${siteConfig.url}/faq`,
+    images: [siteConfig.assets.og],
+  },
+};
 
 const faqs = [
+  ["What is a mother’s helper-style service?", "A mother’s helper-style service gives busy parents extra hands around the home. NestHelper focuses on household support, home resets, laundry rescue, errands, and practical family support. We do not provide licensed childcare or unsupervised babysitting."],
+  ["Do you offer parent help near Woodinville?", `Yes. NestHelper serves ${siteConfig.serviceArea}. Families can request parent help, home reset support, laundry help, errands, and household support through one reviewed request.`],
+  ["Can I request home reset help, laundry help, or errand help separately?", "Yes. You can request a full Parent Reset package or a more focused service such as Laundry Rescue, approved errands, or light household catch-up support."],
   ["Is this childcare?", "No. NestHelper provides household support and parent reset services. We do not provide licensed childcare, unsupervised babysitting, medical care, elder care, or emergency services."],
   ["Why do you review requests before payment?", "We review location, scope, availability, safety, pets, access, and pricing first so customers are not charged for a job we cannot safely or reliably fulfill."],
   ["Why does NestHelper cost more than hiring someone from a local group?", "NestHelper is not trying to be the cheapest option or an open marketplace. Pricing reflects a managed service: request review, helper fit, clear scope, scheduling coordination, insured local service, secure payment, and follow-up after service."],
@@ -14,9 +35,26 @@ const faqs = [
   ["What if something is missed?", "Contact us within 24 hours. If something within the agreed scope was missed, we’ll review and may offer a correction, credit, partial refund, or other resolution when appropriate."],
 ];
 
+const faqJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: faqs.map(([question, answer]) => ({
+    "@type": "Question",
+    name: question,
+    acceptedAnswer: {
+      "@type": "Answer",
+      text: answer,
+    },
+  })),
+};
+
 export default function FAQPage() {
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+      />
       <PageHero eyebrow="FAQ" title="Clear answers before you request help." text="Simple policies, clear expectations, and answers to common pricing, trust, laundry, and service-scope questions." />
       <section className="mx-auto max-w-4xl px-4 py-14 sm:px-6 lg:px-8">
         <div className="grid gap-4">

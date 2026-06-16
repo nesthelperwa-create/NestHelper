@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import Image from "next/image";
 import {
@@ -20,9 +21,64 @@ import { ServiceCard } from "@/components/ServiceCard";
 import { services } from "@/lib/services";
 import { siteConfig } from "@/lib/siteConfig";
 
+export const metadata: Metadata = {
+  title: "Mother’s Helper & Parent Help in Woodinville, WA",
+  description:
+    "NestHelper provides mother’s helper-style parent help, home reset help, laundry rescue, errands, and household support for busy families in Woodinville, Bothell, Kirkland, Redmond, and nearby Eastside communities.",
+  alternates: {
+    canonical: siteConfig.url,
+  },
+  openGraph: {
+    title: "Mother’s Helper & Parent Help in Woodinville, WA | NestHelper",
+    description:
+      "Local parent help, household support, home resets, laundry rescue, and errand help for busy Eastside families.",
+    url: siteConfig.url,
+    images: [siteConfig.assets.og],
+  },
+};
+
+const localParentHelpFaqs = [
+  {
+    question: "What is a mother’s helper-style service?",
+    answer:
+      "A mother’s helper-style service gives busy parents extra hands around the home. NestHelper focuses on household support, home resets, laundry rescue, errands, and practical family support, not licensed childcare or unsupervised babysitting.",
+  },
+  {
+    question: "Do you offer parent help near Woodinville?",
+    answer: `Yes. NestHelper serves ${siteConfig.serviceArea}. Families can request parent help, home reset support, laundry help, errands, and household support through one reviewed request.`,
+  },
+  {
+    question: "Can I request only laundry help or errand help?",
+    answer:
+      "Yes. Families can request a full Parent Reset package or a more focused service such as Laundry Rescue, errand help, or light household catch-up support.",
+  },
+  {
+    question: "How is NestHelper different from hiring someone casually online?",
+    answer:
+      "NestHelper is a managed local service. Requests are reviewed before payment, helpers and partners are checked or vetted, scope is clarified, payment is handled securely, and NestHelper follows up after service.",
+  },
+];
+
+const homeFaqJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: localParentHelpFaqs.map((faq) => ({
+    "@type": "Question",
+    name: faq.question,
+    acceptedAnswer: {
+      "@type": "Answer",
+      text: faq.answer,
+    },
+  })),
+};
+
 export default function HomePage() {
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(homeFaqJsonLd) }}
+      />
       <section className="relative isolate overflow-hidden px-4 pb-10 pt-7 sm:px-6 sm:py-12 lg:px-8 lg:py-16">
         <div className="absolute inset-0 -z-10 bg-[url('/assets/backgrounds/warm-mint-gradient.png')] bg-cover opacity-80" />
         <div className="absolute inset-0 -z-10 bg-white/44" />
@@ -38,7 +94,7 @@ export default function HomePage() {
               Reset the home. Reclaim the day.
             </h1>
             <p className="mx-auto mt-5 max-w-2xl text-base font-semibold leading-7 text-nest-ink/74 sm:text-xl sm:leading-8">
-              Parent Reset help for busy families — home resets, laundry rescue, errands, and household support with clear packages, reviewed requests, limited openings, and follow-up.
+              Parent help for busy families — a local mother’s helper-style service for home resets, laundry rescue, errands, and household support with clear packages, reviewed requests, limited openings, and follow-up.
             </p>
             <div className="mx-auto mt-7 flex max-w-sm flex-col justify-center gap-3 sm:max-w-none sm:flex-row">
               <ButtonLink href="/request">Request Help</ButtonLink>
@@ -74,6 +130,24 @@ export default function HomePage() {
           </AnimatedSection>
         </div>
       </section>
+
+      <AnimatedSection className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
+        <SectionShell>
+          <SectionIntro
+            label="Local Parent Help"
+            icon={<MapPin size={15} />}
+            title="Mother’s helper-style support for Woodinville and nearby families."
+            description="Some families search for this as mother’s help, mothers help, a mother’s helper, parent help, household help, laundry help, errand help, or home reset help. NestHelper brings those everyday supports into one reviewed local request."
+          />
+
+          <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <InfoCard icon={<Heart size={20} />} title="Parent help near me" text={`Serving ${siteConfig.serviceArea} with practical support for busy parents who need an extra set of hands.`} />
+            <InfoCard icon={<Home size={20} />} title="Mother’s helper-style support" text="Household support, light reset help, laundry, errands, and family support without positioning NestHelper as licensed childcare." />
+            <InfoCard icon={<Sparkles size={20} />} title="Household help for families" text="Clear packages, reviewed scope, insured local service, secure payment, and follow-up after the visit." />
+            <InfoCard icon={<ClipboardCheck size={20} />} title="Home reset and laundry help" text="Kitchen resets, light household catch-up, dry-weighed laundry rescue, return delivery, and practical reset support." />
+          </div>
+        </SectionShell>
+      </AnimatedSection>
 
       <AnimatedSection className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8 lg:py-16">
         <SectionShell>
@@ -261,6 +335,27 @@ export default function HomePage() {
         </div>
       </AnimatedSection>
 
+      <AnimatedSection className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+        <SectionShell>
+          <CenteredSectionIntro
+            label="Common parent-help searches"
+            icon={<MessageCircle size={15} />}
+            title="Clear answers for families looking for extra help at home."
+            description="NestHelper is built for the searches busy families actually make: parent help near me, mother’s helper-style support, laundry help, errand help, and household help for families."
+          />
+
+          <div className="mt-8 grid gap-4 md:grid-cols-2">
+            {localParentHelpFaqs.map((faq) => (
+              <FAQCard key={faq.question} question={faq.question} answer={faq.answer} />
+            ))}
+          </div>
+
+          <div className="mt-8 flex justify-center">
+            <ButtonLink href="/faq" variant="secondary">View Full FAQ</ButtonLink>
+          </div>
+        </SectionShell>
+      </AnimatedSection>
+
       <AnimatedSection className="mx-auto grid max-w-7xl gap-8 px-4 py-16 sm:px-6 lg:grid-cols-[0.95fr_1.05fr] lg:px-8">
         <div className="pro-card overflow-hidden rounded-[2.5rem] p-5 sm:p-8">
           <div className="relative overflow-hidden rounded-[2rem] bg-nest-cream p-6">
@@ -295,6 +390,15 @@ export default function HomePage() {
         </div>
       </AnimatedSection>
     </>
+  );
+}
+
+function FAQCard({ question, answer }: { question: string; answer: string }) {
+  return (
+    <div className="h-full rounded-[1.9rem] border border-nest-gold/12 bg-white/88 p-5 shadow-sm transition hover:-translate-y-1 hover:border-nest-gold/28 hover:shadow-soft">
+      <h3 className="text-xl font-black text-nest-teal">{question}</h3>
+      <p className="mt-3 text-sm font-medium leading-7 text-nest-ink/68">{answer}</p>
+    </div>
   );
 }
 

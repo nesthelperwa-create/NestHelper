@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { Building2, CheckCircle2, ClipboardCheck, CreditCard, Mail, Scale, ShieldCheck, Sparkles, SprayCan } from "lucide-react";
 import { PageHero } from "@/components/PageHero";
@@ -6,13 +7,29 @@ import { ButtonLink } from "@/components/ui/ButtonLink";
 import { services, laundryAddOns } from "@/lib/services";
 import { siteConfig } from "@/lib/siteConfig";
 
+export const metadata: Metadata = {
+  title: "Parent Help Services, Home Reset, Laundry & Errands",
+  description:
+    "View NestHelper parent help services for Woodinville and nearby Eastside families, including home reset help, Laundry Rescue, errand help, and household support.",
+  alternates: {
+    canonical: `${siteConfig.url}/services`,
+  },
+  openGraph: {
+    title: "Parent Help Services, Home Reset, Laundry & Errands | NestHelper",
+    description:
+      "Mother’s helper-style household support, home reset packages, laundry help, and errand help for busy families.",
+    url: `${siteConfig.url}/services`,
+    images: [siteConfig.assets.og],
+  },
+};
+
 export default function ServicesPage() {
   return (
     <>
       <PageHero
         eyebrow="Services & Pricing"
         title="Clear packages. Real accountability."
-        text="Choose a parent-reset package, submit the details, and NestHelper reviews scope, timing, service area, safety notes, and pricing before sending a secure payment link."
+        text="Choose a parent-help package, submit the details, and NestHelper reviews scope, timing, service area, safety notes, and pricing before sending a secure payment link."
       />
 
       <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
@@ -27,12 +44,12 @@ export default function ServicesPage() {
         <div className="mb-10 grid gap-6 lg:grid-cols-[0.95fr_1.05fr] lg:items-end">
           <div className="text-center lg:text-left">
             <p className="pill-label mx-auto w-fit lg:mx-0"><Sparkles size={15} /> Parent Reset Packages</p>
-            <h2 className="text-balance mt-4 text-3xl font-black leading-tight text-nest-teal sm:text-5xl">Designed for the moments when the house feels like too much.</h2>
+            <h2 className="text-balance mt-4 text-3xl font-black leading-tight text-nest-teal sm:text-5xl">Parent help, home reset support, laundry help, and errands when the house feels like too much.</h2>
           </div>
           <div className="pro-card rounded-[2rem] p-6">
             <h3 className="text-xl font-black text-nest-teal">Simple at first glance. Details when you need them.</h3>
             <p className="mt-3 font-medium leading-7 text-nest-ink/70">
-              Each card shows the essentials first. Open a package to see what is included, then request the one that fits your family best. We review availability and scope before sending payment.
+              Each card shows the essentials first. Open a package to see what is included, then request the one that fits your family best. Families may think of this as mother’s helper-style household support, but NestHelper keeps the scope focused on reviewed home help, laundry, errands, and reset tasks.
             </p>
           </div>
         </div>
