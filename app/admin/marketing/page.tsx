@@ -114,11 +114,20 @@ function campaignSourceForAudience(category?: AudienceKey) {
 
 function buildCampaignUrl(path: string, source: string, medium: string, campaign: string, content = "") {
   const params = new URLSearchParams();
-  if (source) params.set("source", source);
+  if (source) params.set("utm_source", source);
   if (medium) params.set("utm_medium", medium);
   if (campaign) params.set("utm_campaign", campaign);
   if (content) params.set("utm_content", content);
   return `https://www.nesthelperwa.com${path}?${params.toString()}`;
+}
+
+function suggestedMediumForSource(source: string) {
+  if (source.includes("google")) return "organic";
+  if (source.includes("flyer")) return "print";
+  if (source.includes("email") || source.includes("daycare") || source.includes("church") || source.includes("airbnb")) return "email";
+  if (source.includes("partner") || source.includes("referral")) return "referral";
+  if (source.includes("facebook") || source.includes("instagram") || source.includes("nextdoor")) return "social";
+  return "local_group";
 }
 
 function campaignForLink(path: string, source: string) {
@@ -704,6 +713,7 @@ function CampaignLinkBuilder({ onNotice }: { onNotice: (message: string) => void
 
   function updateSource(nextSource: string) {
     setSource(nextSource);
+    setMedium(suggestedMediumForSource(nextSource));
     if (!campaignEdited) setCampaign(campaignForLink(path, nextSource));
   }
 
@@ -757,6 +767,7 @@ function CampaignLinkBuilder({ onNotice }: { onNotice: (message: string) => void
         </Field>
         <Field label="Medium">
           <select className="input" value={medium} onChange={(e) => setMedium(e.target.value)}>
+            <option value="organic">Organic search / Google Profile</option>
             <option value="social">Social</option>
             <option value="email">Email</option>
             <option value="print">Print / flyer</option>
