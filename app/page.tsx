@@ -294,7 +294,41 @@ export default function HomePage() {
             A local business with a community heart.
           </h2>
           <p className="mx-auto mt-3 max-w-3xl text-sm font-semibold leading-6 text-nest-ink/70 sm:text-base sm:leading-7">
-            As NestHelper grows, our goal is to support local family relief, community partners, and reliable helper opportunities in the areas we serve.
+            As NestHelper grows, our goal is to support the families around us by giving to local churches, nonprofits, schools, and community organizations, and by helping useful family items like toys reach families going through a hard season when we can responsibly coordinate it.
+          </p>
+
+          <div className="mt-5 grid gap-3 sm:grid-cols-3">
+            <div className="rounded-2xl border border-nest-gold/12 bg-white/76 p-4 text-left shadow-sm">
+              <div className="mb-3 inline-flex rounded-xl bg-nest-mint/35 p-2 text-nest-teal">
+                <Heart size={18} />
+              </div>
+              <h3 className="text-sm font-black text-nest-teal">Support local organizations</h3>
+              <p className="mt-2 text-xs font-semibold leading-5 text-nest-ink/68">
+                We plan to give back through churches, nonprofits, schools, and community groups as the business grows.
+              </p>
+            </div>
+            <div className="rounded-2xl border border-nest-gold/12 bg-white/76 p-4 text-left shadow-sm">
+              <div className="mb-3 inline-flex rounded-xl bg-nest-mint/35 p-2 text-nest-teal">
+                <Home size={18} />
+              </div>
+              <h3 className="text-sm font-black text-nest-teal">Share useful family items</h3>
+              <p className="mt-2 text-xs font-semibold leading-5 text-nest-ink/68">
+                When appropriate, we may accept gently used toys and family items to pass along to families who need them.
+              </p>
+            </div>
+            <div className="rounded-2xl border border-nest-gold/12 bg-white/76 p-4 text-left shadow-sm">
+              <div className="mb-3 inline-flex rounded-xl bg-nest-mint/35 p-2 text-nest-teal">
+                <Sparkles size={18} />
+              </div>
+              <h3 className="text-sm font-black text-nest-teal">Help families through hard seasons</h3>
+              <p className="mt-2 text-xs font-semibold leading-5 text-nest-ink/68">
+                The goal is to turn completed bookings into practical relief for local families and neighbors.
+              </p>
+            </div>
+          </div>
+
+          <p className="mx-auto mt-4 max-w-2xl text-xs font-semibold leading-5 text-nest-ink/58">
+            This part of NestHelper is still growing, but the mission is simple: serve families well and help the community feel supported.
           </p>
         </div>
       </AnimatedSection>
