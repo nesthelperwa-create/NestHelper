@@ -7,7 +7,7 @@ import { siteConfig } from "@/lib/siteConfig";
 export const metadata: Metadata = {
   title: "Helpers & Partners | NestHelper",
   description:
-    "Apply to work with NestHelper as an individual household helper or local partner provider supporting families with home resets, laundry, errands, and organizing.",
+    "Apply to work with NestHelper as a household helper or local partner supporting home resets, laundry, errands, and organizing.",
   alternates: {
     canonical: `${siteConfig.url}/helpers`,
   },

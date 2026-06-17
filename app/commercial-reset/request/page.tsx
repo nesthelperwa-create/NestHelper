@@ -6,7 +6,7 @@ import { ButtonLink } from "@/components/ui/ButtonLink";
 export const metadata: Metadata = {
   title: "Request Commercial Reset Quote | NestHelper",
   description:
-    "Request a reviewed Commercial Reset quote for small offices, studios, churches, daycare common areas, salons, short-term rental turnovers, and local small business spaces.",
+    "Request a Commercial Reset quote for small offices, churches, salons, daycare common areas, and local business spaces.",
 };
 
 export default function CommercialResetRequestPage() {

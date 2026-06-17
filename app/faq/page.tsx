@@ -5,7 +5,7 @@ import { siteConfig } from "@/lib/siteConfig";
 export const metadata: Metadata = {
   title: "Household Help FAQ: Home Reset, Laundry & Errands",
   description:
-    "Answers about NestHelper household support, home reset services, Laundry Rescue, errands, organizing, pricing, trust standards, and no-childcare scope for Bothell, Woodinville, Kenmore, Kirkland, Redmond, Mill Creek, and nearby Eastside/Northshore families.",
+    "Answers about NestHelper household help, home resets, laundry, errands, organizing, pricing, safety, and no-childcare service boundaries.",
   alternates: {
     canonical: `${siteConfig.url}/faq`,
   },

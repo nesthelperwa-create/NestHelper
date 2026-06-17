@@ -8,7 +8,7 @@ import { siteConfig } from "@/lib/siteConfig";
 export const metadata: Metadata = {
   title: "Trust & Safety | NestHelper",
   description:
-    "Learn how NestHelper reviews household help requests, screens helpers, sets service boundaries, and protects no-childcare household support for family homes.",
+    "Learn how NestHelper reviews requests, screens helpers, sets service boundaries, and protects no-childcare household support.",
   alternates: {
     canonical: `${siteConfig.url}/trust`,
   },

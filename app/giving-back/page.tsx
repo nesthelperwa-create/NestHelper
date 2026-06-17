@@ -7,7 +7,7 @@ import { siteConfig } from "@/lib/siteConfig";
 export const metadata: Metadata = {
   title: "Giving Back | NestHelper",
   description:
-    "Learn how NestHelper plans to give back through local churches, nonprofits, schools, community organizations, and useful family-item support for families going through hard seasons.",
+    "Learn how NestHelper plans to support churches, nonprofits, schools, and local families through responsible community giving.",
   alternates: {
     canonical: `${siteConfig.url}/giving-back`,
   },

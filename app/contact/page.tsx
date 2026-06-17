@@ -8,7 +8,7 @@ import { SocialLinks } from "@/components/SocialLinks";
 export const metadata: Metadata = {
   title: "Contact NestHelper | Household Help Questions",
   description:
-    "Contact NestHelper with questions about household help, home resets, laundry catch-up, errands, organizing, Commercial Reset, helpers, or service availability.",
+    "Contact NestHelper about household help, Commercial Reset, helper applications, giving back, or service availability.",
   alternates: {
     canonical: `${siteConfig.url}/contact`,
   },

@@ -8,7 +8,7 @@ import { siteConfig } from "@/lib/siteConfig";
 export const metadata: Metadata = {
   title: "Request Household Help | NestHelper",
   description:
-    "Submit a NestHelper household help request for home resets, laundry catch-up, errands, organizing, and extra support in Bothell, Woodinville, and nearby Eastside/Northshore areas. No payment due when you submit.",
+    "Request household help from NestHelper for home resets, laundry catch-up, errands, and organizing in Bothell, Woodinville, and nearby Eastside areas.",
   alternates: {
     canonical: `${siteConfig.url}/request`,
   },
