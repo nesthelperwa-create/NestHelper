@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Building2, Phone, Sparkles } from "lucide-react";
+import { Phone, Sparkles } from "lucide-react";
 import { PageHero } from "@/components/PageHero";
 import { ContactForm } from "@/components/forms/ContactForm";
 import { siteConfig } from "@/lib/siteConfig";
@@ -48,9 +48,6 @@ export default function ContactPage() {
               </a>
             </Info>
 
-            <Info icon={<Building2 />} label="Commercial Reset area">
-              <div className="font-bold text-nest-ink/78">Select Eastside and Northshore areas.</div>
-            </Info>
 
             <Info icon={<Sparkles />} label="Social media">
               <SocialLinks />
