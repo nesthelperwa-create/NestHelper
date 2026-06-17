@@ -1,7 +1,8 @@
 import type { MetadataRoute } from "next";
+import { siteConfig } from "@/lib/siteConfig";
 
 export default function robots(): MetadataRoute.Robots {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://www.nesthelperwa.com";
+  const siteUrl = siteConfig.url.replace(/\/$/, "");
 
   return {
     rules: [
@@ -11,6 +12,6 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ["/admin", "/admin/", "/api/"],
       },
     ],
-    sitemap: `${siteUrl.replace(/\/$/, "")}/sitemap.xml`,
+    sitemap: `${siteUrl}/sitemap.xml`,
   };
 }
