@@ -7,10 +7,10 @@ import { HashScrollManager } from "@/components/HashScrollManager";
 
 export const metadata: Metadata = {
   title: {
-    default: "NestHelper | Household Help in Bothell & Eastside WA",
+    default: "NestHelper | Household Help in Bothell, Woodinville & Eastside WA",
     template: "%s | NestHelper",
   },
-  description: "NestHelper helps busy families with household support, home resets, laundry catch-up, errands, and organizing in Bothell, Woodinville, and nearby Eastside/Northshore areas. No childcare services.",
+  description: "NestHelper helps busy families with household support, home resets, laundry catch-up, errands, and organizing in Bothell, Woodinville, Kenmore, Kirkland, Redmond, Mill Creek, and nearby Eastside/Northshore areas. No childcare services.",
   keywords: [
     "household help Bothell",
     "household help Woodinville",
@@ -33,7 +33,7 @@ export const metadata: Metadata = {
     canonical: siteConfig.url,
   },
   openGraph: {
-    title: "NestHelper | Household Help in Bothell & Eastside WA",
+    title: "NestHelper | Household Help in Bothell, Woodinville & Eastside WA",
     description: "Managed household support, home resets, laundry catch-up, errands, and organizing for busy Eastside/Northshore families. No childcare.",
     url: siteConfig.url,
     siteName: siteConfig.name,
@@ -43,7 +43,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "NestHelper | Household Help in Bothell & Eastside WA",
+    title: "NestHelper | Household Help in Bothell, Woodinville & Eastside WA",
     description: "Local household support, home resets, laundry catch-up, errands, and organizing for busy Eastside/Northshore families. No childcare.",
     images: [siteConfig.assets.og],
   },
@@ -77,6 +77,7 @@ const organizationJsonLd = {
     "Kirkland, WA",
     "Redmond, WA",
     "Kenmore, WA",
+    "Mill Creek, WA",
     "Nearby Eastside communities",
     "Nearby Northshore communities",
   ],

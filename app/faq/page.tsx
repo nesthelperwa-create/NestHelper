@@ -5,7 +5,7 @@ import { siteConfig } from "@/lib/siteConfig";
 export const metadata: Metadata = {
   title: "Household Help FAQ: Home Reset, Laundry & Errands",
   description:
-    "Answers about NestHelper household support, home reset services, Laundry Rescue, errands, organizing, pricing, trust standards, and no-childcare scope for Bothell, Woodinville, and nearby Eastside/Northshore families.",
+    "Answers about NestHelper household support, home reset services, Laundry Rescue, errands, organizing, pricing, trust standards, and no-childcare scope for Bothell, Woodinville, Kenmore, Kirkland, Redmond, Mill Creek, and nearby Eastside/Northshore families.",
   alternates: {
     canonical: `${siteConfig.url}/faq`,
   },
@@ -20,7 +20,7 @@ export const metadata: Metadata = {
 
 const faqs = [
   ["What does NestHelper help with?", "NestHelper gives busy families extra hands around the home with household support, home resets, laundry rescue, errands, organizing, and practical family support. We do not provide childcare, unsupervised babysitting, medical care, elder care, or emergency services."],
-  ["Do you offer household help near Bothell or Woodinville?", `Yes. NestHelper serves ${siteConfig.serviceArea}. Families can request household support, home reset help, laundry help, errands, organizing, and practical support through one reviewed request.`],
+  ["Do you serve outside Bothell?", `Yes. NestHelper serves ${siteConfig.serviceArea}. If you are close by but unsure, submit a request and we will confirm availability before sending any payment link.`],
   ["Can I request home reset help, laundry help, or errand help separately?", "Yes. You can request a full Parent Reset package or a more focused service such as Laundry Rescue, approved errands, or light household catch-up support."],
   ["Is this childcare?", "No. NestHelper provides household support and Parent Reset services only. We do not provide childcare, unsupervised babysitting, medical care, elder care, or emergency services."],
   ["Why do you review requests before payment?", "We review location, scope, availability, safety, pets, access, and pricing first so customers are not charged for a job we cannot safely or reliably fulfill."],

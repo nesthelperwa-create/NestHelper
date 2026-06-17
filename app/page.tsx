@@ -22,14 +22,14 @@ import { services } from "@/lib/services";
 import { siteConfig } from "@/lib/siteConfig";
 
 export const metadata: Metadata = {
-  title: { absolute: "NestHelper | Household Help in Bothell & Eastside WA" },
+  title: { absolute: "NestHelper | Household Help in Bothell, Woodinville & Eastside WA" },
   description:
-    "NestHelper helps busy families with household support, home resets, laundry catch-up, errands, and organizing in Bothell, Woodinville, and nearby Eastside/Northshore communities. No childcare services.",
+    "NestHelper helps busy families with household support, home resets, laundry catch-up, errands, and organizing in Bothell, Woodinville, Kenmore, Kirkland, Redmond, Mill Creek, and nearby Eastside/Northshore communities. No childcare services.",
   alternates: {
     canonical: siteConfig.url,
   },
   openGraph: {
-    title: "NestHelper | Household Help in Bothell & Eastside WA",
+    title: "NestHelper | Household Help in Bothell, Woodinville & Eastside WA",
     description:
       "Local household support, home resets, laundry catch-up, errands, and organizing for busy Eastside/Northshore families. No childcare.",
     url: siteConfig.url,
@@ -44,8 +44,8 @@ const localParentHelpFaqs = [
       "NestHelper gives busy families extra hands around the home with household support, home resets, laundry rescue, errands, organizing, and practical family support. NestHelper does not provide childcare, unsupervised babysitting, medical care, or emergency services.",
   },
   {
-    question: "Do you offer household help near Bothell or Woodinville?",
-    answer: `Yes. NestHelper serves ${siteConfig.serviceArea}. Families can request household support, home reset help, laundry help, errands, organizing, and practical support through one reviewed request.`,
+    question: "Do you serve outside Bothell?",
+    answer: `Yes. NestHelper serves ${siteConfig.serviceArea}. If you are nearby but unsure, submit a request and we will confirm availability before sending any payment link.`,
   },
   {
     question: "Can I request only laundry help or errand help?",
@@ -106,9 +106,21 @@ export default function HomePage() {
                 <TrustProofItem icon={<ShieldCheck size={15} />} text="Insured local service" />
                 <TrustProofItem icon={<ClipboardCheck size={15} />} text="Limited openings reviewed first" />
               </div>
-              <div id="service-area" className="mt-4 flex scroll-mt-24 items-start gap-2 border-t border-nest-gold/14 pt-3 text-sm font-black leading-5 text-nest-teal sm:items-center">
-                <MapPin size={16} className="mt-0.5 shrink-0 text-nest-gold sm:mt-0" />
-                <span>Serving {siteConfig.serviceArea}</span>
+              <div id="service-area" className="mt-4 scroll-mt-24 border-t border-nest-gold/14 pt-3 text-left">
+                <div className="flex items-start gap-2 text-sm font-black leading-5 text-nest-teal sm:items-center">
+                  <MapPin size={16} className="mt-0.5 shrink-0 text-nest-gold sm:mt-0" />
+                  <span>Bothell-based household help for nearby Eastside/Northshore families</span>
+                </div>
+                <p className="mt-2 text-xs font-semibold leading-5 text-nest-ink/64">
+                  Serving Bothell, Woodinville, Kenmore, Kirkland, Redmond, Mill Creek, and nearby areas. Not sure if you are in range? Send a request and we will confirm before payment.
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {["Bothell", "Woodinville", "Kenmore", "Kirkland", "Redmond", "Mill Creek", "Nearby Eastside/Northshore"].map((area) => (
+                    <span key={area} className="rounded-full border border-nest-gold/16 bg-nest-cream px-3 py-1 text-[0.72rem] font-black text-nest-teal">
+                      {area}
+                    </span>
+                  ))}
+                </div>
               </div>
             </div>
           </AnimatedSection>
@@ -136,15 +148,15 @@ export default function HomePage() {
           <SectionIntro
             label="Local Household Help"
             icon={<MapPin size={15} />}
-            title="Household support for Bothell, Woodinville, and nearby families."
-            description="Some families search for this as parent help, household help, laundry help, errand help, organizing help, or home reset help. NestHelper brings those everyday supports into one reviewed local request without offering childcare."
+            title="Nearby household support without turning the homepage into a city list."
+            description="NestHelper is based near Bothell and serves nearby Eastside/Northshore families with home reset help, laundry catch-up, errands, organizing, and extra hands around the house. We keep location wording clear for families and search engines without repeating the same page for every city."
           />
 
           <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            <InfoCard icon={<Heart size={20} />} title="Parent help near me" text={`Serving ${siteConfig.serviceArea} with practical support for busy parents who need an extra set of hands.`} />
-            <InfoCard icon={<Home size={20} />} title="Household support for families" text="Light reset help, laundry, errands, organizing, and practical support around the house without childcare or babysitting." />
-            <InfoCard icon={<Sparkles size={20} />} title="Household help for families" text="Clear packages, reviewed scope, insured local service, secure payment, and follow-up after the visit." />
-            <InfoCard icon={<ClipboardCheck size={20} />} title="Home reset and laundry help" text="Kitchen resets, light household catch-up, dry-weighed laundry rescue, return delivery, and practical reset support." />
+            <InfoCard icon={<MapPin size={20} />} title="Core local areas" text="Bothell, Woodinville, Kenmore, Kirkland, Redmond, Mill Creek, and nearby Eastside/Northshore neighborhoods." />
+            <InfoCard icon={<Home size={20} />} title="Home reset help" text="Kitchen resets, tidying support, light household catch-up, organizing help, and practical support around the house." />
+            <InfoCard icon={<Sparkles size={20} />} title="Laundry and errands" text="Laundry Rescue, approved errands, pickup/drop-off help, returns, and household task catch-up after scope review." />
+            <InfoCard icon={<ClipboardCheck size={20} />} title="Reviewed before payment" text="Send the address and scope first. NestHelper confirms area, timing, and fit before sending a secure checkout link." />
           </div>
         </SectionShell>
       </AnimatedSection>

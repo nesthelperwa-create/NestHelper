@@ -24,7 +24,7 @@ export const siteConfig = {
   },
   phone: "(425) 790-1330",
   phoneHref: "tel:+14257901330",
-  serviceArea: "Bothell, Woodinville, Kenmore, Kirkland, Redmond & nearby Eastside/Northshore communities",
+  serviceArea: "Bothell, Woodinville, Kenmore, Kirkland, Redmond, Mill Creek & nearby Eastside/Northshore communities",
   foundingCode: "FOUNDINGFAMILY",
   social: {
     facebook: "https://www.facebook.com/NestHelperLLC",
