@@ -111,8 +111,8 @@ export default function HomePage() {
           <SectionIntro
             label="What NestHelper is"
             icon={<Heart size={15} />}
-            title="Household support, coordinated for busy families."
-            description="NestHelper is a managed local household-support service for families who need extra hands at home without having to coordinate everything themselves. Send one request and we review the scope, timing, location, safety notes, availability, and best-fit package before checkout."
+            title="Household help without the hiring headache."
+            description="NestHelper coordinates trusted household support for busy families — home resets, laundry catch-up, errands, organizing, and extra hands around the house — with reviewed requests, clear scope, insured support, and no childcare services."
           />
 
           <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
