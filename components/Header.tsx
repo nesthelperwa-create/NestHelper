@@ -35,11 +35,11 @@ export function Header() {
 
   return (
     <header
-      className={`sticky top-0 z-[60] border-b border-nest-gold/15 bg-[#fffaf2]/95 backdrop-blur-2xl transition-shadow duration-200 ${
+      className={`fixed inset-x-0 top-0 z-[60] border-b border-nest-gold/15 bg-[#fffaf2]/95 backdrop-blur-2xl transition-shadow duration-200 ${
         scrolled ? "shadow-[0_14px_40px_rgba(0,93,86,0.12)]" : "shadow-none"
       }`}
     >
-      <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-4 py-2.5 sm:px-6 lg:px-8">
+      <div className="mx-auto flex h-[var(--site-header-height)] max-w-7xl items-center justify-between gap-2 px-4 sm:px-6 lg:px-8">
         <Link href="/" className="focus-ring flex min-w-0 items-center gap-2 rounded-2xl sm:gap-3" aria-label="NestHelper home">
           <Image
             src={siteConfig.assets.icon}
@@ -94,7 +94,7 @@ export function Header() {
       </div>
 
       {open && (
-        <div className="border-t border-nest-gold/15 bg-[#fffaf2] px-4 pb-5 pt-2 shadow-soft lg:hidden">
+        <div className="max-h-[calc(100vh-var(--site-header-height))] overflow-y-auto border-t border-nest-gold/15 bg-[#fffaf2] px-4 pb-5 pt-2 shadow-soft lg:hidden">
           <nav className="mx-auto flex max-w-7xl flex-col gap-2" aria-label="Mobile navigation">
             {nav.map((item) => {
               const active = pathname === item.href || (item.href !== "/" && pathname?.startsWith(item.href));
