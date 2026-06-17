@@ -21,7 +21,7 @@ export default function TrustPage() {
       <PageHero
         eyebrow="Trust & Safety"
         title="Trust standards for family homes."
-        text="NestHelper is designed as a managed parent-help service with checked helpers, vetted partners, clear policies, controlled service scope, and follow-up after service."
+        text="NestHelper is designed as a managed household-support service with checked helpers, vetted partners, clear policies, controlled service scope, and follow-up after service."
       />
 
       <section className="mx-auto grid max-w-7xl gap-8 px-4 py-14 sm:px-6 lg:grid-cols-[0.85fr_1.15fr] lg:px-8">

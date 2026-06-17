@@ -3,26 +3,26 @@ import { PageHero } from "@/components/PageHero";
 import { siteConfig } from "@/lib/siteConfig";
 
 export const metadata: Metadata = {
-  title: "Parent Help FAQ: Mother’s Helper-Style Support, Laundry & Errands",
+  title: "Household Help FAQ: Home Reset, Laundry & Errands",
   description:
-    "Answers about NestHelper parent help, mother’s helper-style household support, home reset services, Laundry Rescue, errands, pricing, and trust standards for Eastside families.",
+    "Answers about NestHelper household support, home reset services, Laundry Rescue, errands, organizing, pricing, trust standards, and no-childcare scope for Eastside/Northshore families.",
   alternates: {
     canonical: `${siteConfig.url}/faq`,
   },
   openGraph: {
-    title: "Parent Help FAQ | NestHelper",
+    title: "Household Help FAQ | NestHelper",
     description:
-      "Learn how NestHelper parent help, home reset support, laundry help, and errands work for busy families.",
+      "Learn how NestHelper household support, home reset help, laundry help, organizing, and errands work for busy families.",
     url: `${siteConfig.url}/faq`,
     images: [siteConfig.assets.og],
   },
 };
 
 const faqs = [
-  ["What is a mother’s helper-style service?", "A mother’s helper-style service gives busy parents extra hands around the home. NestHelper focuses on household support, home resets, laundry rescue, errands, and practical family support. We do not provide licensed childcare or unsupervised babysitting."],
-  ["Do you offer parent help near Woodinville?", `Yes. NestHelper serves ${siteConfig.serviceArea}. Families can request parent help, home reset support, laundry help, errands, and household support through one reviewed request.`],
+  ["What does NestHelper help with?", "NestHelper gives busy families extra hands around the home with household support, home resets, laundry rescue, errands, organizing, and practical family support. We do not provide childcare, unsupervised babysitting, medical care, elder care, or emergency services."],
+  ["Do you offer household help near Woodinville?", `Yes. NestHelper serves ${siteConfig.serviceArea}. Families can request household support, home reset help, laundry help, errands, organizing, and practical support through one reviewed request.`],
   ["Can I request home reset help, laundry help, or errand help separately?", "Yes. You can request a full Parent Reset package or a more focused service such as Laundry Rescue, approved errands, or light household catch-up support."],
-  ["Is this childcare?", "No. NestHelper provides household support and parent reset services. We do not provide licensed childcare, unsupervised babysitting, medical care, elder care, or emergency services."],
+  ["Is this childcare?", "No. NestHelper provides household support and Parent Reset services only. We do not provide childcare, unsupervised babysitting, medical care, elder care, or emergency services."],
   ["Why do you review requests before payment?", "We review location, scope, availability, safety, pets, access, and pricing first so customers are not charged for a job we cannot safely or reliably fulfill."],
   ["Why does NestHelper cost more than hiring someone from a local group?", "NestHelper is not trying to be the cheapest option or an open marketplace. Pricing reflects a managed service: request review, helper fit, clear scope, scheduling coordination, insured local service, secure payment, and follow-up after service."],
   ["Do recurring resets bill automatically?", "Not by default. First resets are standard price. After a completed first visit, eligible families may request weekly or every-other-week recurring rates when the schedule, scope, service area, and helper fit are consistent. NestHelper still reviews each recurring payment before sending it so families are not auto-charged for a visit that has not been confirmed."],

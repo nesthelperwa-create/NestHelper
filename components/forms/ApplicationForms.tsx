@@ -668,7 +668,7 @@ export function HelperApplicationForm() {
         onChange={(option, checked) => toggle("notWillingToDo", option, checked)}
       />
 
-      <Textarea label="Relevant experience details" value={form.experience} onChange={(v) => update("experience", v)} placeholder="Briefly share home-help, cleaning, laundry, organizing, childcare-adjacent, errands, or customer service experience." />
+      <Textarea label="Relevant experience details" value={form.experience} onChange={(v) => update("experience", v)} placeholder="Briefly share home-help, cleaning, laundry, organizing, errands, or customer service experience." />
       <Textarea label="References" value={form.references} onChange={(v) => update("references", v)} placeholder="Names/contact info or 'available upon request'." />
       <Textarea label="Anything else?" value={form.notes} onChange={(v) => update("notes", v)} placeholder="Schedule limits, areas you prefer, languages, allergies/sensitivities, or anything NestHelper should know." />
 

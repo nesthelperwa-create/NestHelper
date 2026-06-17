@@ -7,34 +7,32 @@ import { HashScrollManager } from "@/components/HashScrollManager";
 
 export const metadata: Metadata = {
   title: {
-    default: "NestHelper | Mother’s Helper & Parent Help in Woodinville, WA",
+    default: "NestHelper | Household Help for Busy Parents in Woodinville, WA",
     template: "%s | NestHelper",
   },
-  description: "Local parent help for Woodinville, Bothell, Kirkland, Redmond, and nearby Eastside families: home reset help, laundry rescue, errands, and household support.",
+  description: "NestHelper helps busy families with household support, home resets, laundry catch-up, errands, and organizing in Woodinville and nearby Eastside/Northshore areas. No childcare.",
   keywords: [
-    "mother’s helper Woodinville",
-    "mothers helper Woodinville",
-    "mothers help Woodinville",
-    "mother help Woodinville",
-    "parent help Woodinville",
-    "parent help near me",
-    "family helper service",
+    "household help Woodinville",
+    "household help near me",
+    "busy parents household help",
+    "family household support",
     "household help for busy parents",
+    "no childcare household help",
     "home reset help",
     "laundry help for families",
     "errand help for parents",
     "Woodinville home help",
-    "Bothell parent help",
-    "Kirkland parent help",
-    "Redmond parent help",
+    "Bothell household help",
+    "Kirkland household help",
+    "Redmond household help",
   ],
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"),
   alternates: {
     canonical: siteConfig.url,
   },
   openGraph: {
-    title: "NestHelper | Mother’s Helper & Parent Help in Woodinville, WA",
-    description: "Mother’s helper-style household support, parent help, home resets, laundry rescue, and errands for busy Eastside families.",
+    title: "NestHelper | Household Help for Busy Parents in Woodinville, WA",
+    description: "Managed household support, home resets, laundry catch-up, errands, and organizing for busy Eastside/Northshore families. No childcare.",
     url: siteConfig.url,
     siteName: siteConfig.name,
     images: [siteConfig.assets.og],
@@ -43,8 +41,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "NestHelper | Mother’s Helper & Parent Help in Woodinville, WA",
-    description: "Local parent help, home reset help, laundry rescue, errands, and household support for busy Eastside families.",
+    title: "NestHelper | Household Help for Busy Parents in Woodinville, WA",
+    description: "Local household support, home resets, laundry catch-up, errands, and organizing for busy Eastside/Northshore families. No childcare.",
     images: [siteConfig.assets.og],
   },
   icons: {
@@ -70,7 +68,7 @@ const organizationJsonLd = {
   telephone: siteConfig.phone,
   email: siteConfig.emails.support,
   description:
-    "NestHelper provides mother’s helper-style parent help, home reset help, laundry rescue, errands, and household support for busy families in Woodinville and nearby Eastside communities.",
+    "NestHelper provides managed household support, home reset help, laundry catch-up, errands, organizing, and extra hands around the house for busy families in Woodinville and nearby Eastside/Northshore communities. NestHelper does not provide childcare.",
   areaServed: [
     "Woodinville, WA",
     "Bothell, WA",
@@ -79,8 +77,8 @@ const organizationJsonLd = {
     "Nearby Eastside communities",
   ],
   knowsAbout: [
-    "mother’s helper-style household support",
-    "parent help",
+    "household help for busy parents",
+    "managed household support",
     "home reset help",
     "laundry help for families",
     "errand help for parents",

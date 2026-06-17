@@ -22,16 +22,16 @@ import { services } from "@/lib/services";
 import { siteConfig } from "@/lib/siteConfig";
 
 export const metadata: Metadata = {
-  title: "Mother’s Helper & Parent Help in Woodinville, WA",
+  title: "Household Help for Busy Parents in Woodinville, WA",
   description:
-    "NestHelper provides mother’s helper-style parent help, home reset help, laundry rescue, errands, and household support for busy families in Woodinville, Bothell, Kirkland, Redmond, and nearby Eastside communities.",
+    "NestHelper helps busy families with household support, home resets, laundry catch-up, errands, and organizing in Woodinville, Bothell, Kirkland, Redmond, and nearby Eastside/Northshore communities. No childcare.",
   alternates: {
     canonical: siteConfig.url,
   },
   openGraph: {
-    title: "Mother’s Helper & Parent Help in Woodinville, WA | NestHelper",
+    title: "Household Help for Busy Parents in Woodinville, WA | NestHelper",
     description:
-      "Local parent help, household support, home resets, laundry rescue, and errand help for busy Eastside families.",
+      "Local household support, home resets, laundry catch-up, errands, and organizing for busy Eastside/Northshore families. No childcare.",
     url: siteConfig.url,
     images: [siteConfig.assets.og],
   },
@@ -39,13 +39,13 @@ export const metadata: Metadata = {
 
 const localParentHelpFaqs = [
   {
-    question: "What is a mother’s helper-style service?",
+    question: "What does NestHelper help with?",
     answer:
-      "A mother’s helper-style service gives busy parents extra hands around the home. NestHelper focuses on household support, home resets, laundry rescue, errands, and practical family support, not licensed childcare or unsupervised babysitting.",
+      "NestHelper gives busy families extra hands around the home with household support, home resets, laundry rescue, errands, organizing, and practical family support. NestHelper does not provide childcare, unsupervised babysitting, medical care, or emergency services.",
   },
   {
-    question: "Do you offer parent help near Woodinville?",
-    answer: `Yes. NestHelper serves ${siteConfig.serviceArea}. Families can request parent help, home reset support, laundry help, errands, and household support through one reviewed request.`,
+    question: "Do you offer household help near Woodinville?",
+    answer: `Yes. NestHelper serves ${siteConfig.serviceArea}. Families can request household support, home reset help, laundry help, errands, organizing, and practical support through one reviewed request.`,
   },
   {
     question: "Can I request only laundry help or errand help?",
@@ -94,7 +94,7 @@ export default function HomePage() {
               Reset the home. Reclaim the day.
             </h1>
             <p className="mx-auto mt-5 max-w-2xl text-base font-semibold leading-7 text-nest-ink/74 sm:text-xl sm:leading-8">
-              Parent help for busy families — a local mother’s helper-style service for home resets, laundry rescue, errands, and household support with clear packages, reviewed requests, limited openings, and follow-up.
+              Household help for busy families — local support for home resets, laundry rescue, errands, organizing, and extra hands around the house with clear packages, reviewed requests, limited openings, and follow-up. No childcare services.
             </p>
             <div className="mx-auto mt-7 flex max-w-sm flex-col justify-center gap-3 sm:max-w-none sm:flex-row">
               <ButtonLink href="/request">Request Help</ButtonLink>
@@ -134,15 +134,15 @@ export default function HomePage() {
       <AnimatedSection className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
         <SectionShell>
           <SectionIntro
-            label="Local Parent Help"
+            label="Local Household Help"
             icon={<MapPin size={15} />}
-            title="Mother’s helper-style support for Woodinville and nearby families."
-            description="Some families search for this as mother’s help, mothers help, a mother’s helper, parent help, household help, laundry help, errand help, or home reset help. NestHelper brings those everyday supports into one reviewed local request."
+            title="Household support for Woodinville and nearby families."
+            description="Some families search for this as parent help, household help, laundry help, errand help, organizing help, or home reset help. NestHelper brings those everyday supports into one reviewed local request without offering childcare."
           />
 
           <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             <InfoCard icon={<Heart size={20} />} title="Parent help near me" text={`Serving ${siteConfig.serviceArea} with practical support for busy parents who need an extra set of hands.`} />
-            <InfoCard icon={<Home size={20} />} title="Mother’s helper-style support" text="Household support, light reset help, laundry, errands, and family support without positioning NestHelper as licensed childcare." />
+            <InfoCard icon={<Home size={20} />} title="Household support for families" text="Light reset help, laundry, errands, organizing, and practical support around the house without childcare or babysitting." />
             <InfoCard icon={<Sparkles size={20} />} title="Household help for families" text="Clear packages, reviewed scope, insured local service, secure payment, and follow-up after the visit." />
             <InfoCard icon={<ClipboardCheck size={20} />} title="Home reset and laundry help" text="Kitchen resets, light household catch-up, dry-weighed laundry rescue, return delivery, and practical reset support." />
           </div>
@@ -154,8 +154,8 @@ export default function HomePage() {
           <SectionIntro
             label="What NestHelper is"
             icon={<Heart size={15} />}
-            title="Parent Reset help, coordinated for busy families."
-            description="NestHelper is a managed local parent-help service for families who need extra hands at home without having to coordinate everything themselves. Send one request and we review the scope, timing, location, safety notes, availability, and best-fit package before checkout."
+            title="Household support, coordinated for busy families."
+            description="NestHelper is a managed local household-support service for families who need extra hands at home without having to coordinate everything themselves. Send one request and we review the scope, timing, location, safety notes, availability, and best-fit package before checkout."
           />
 
           <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -338,10 +338,10 @@ export default function HomePage() {
       <AnimatedSection className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
         <SectionShell>
           <CenteredSectionIntro
-            label="Common parent-help searches"
+            label="Common household-help searches"
             icon={<MessageCircle size={15} />}
             title="Clear answers for families looking for extra help at home."
-            description="NestHelper is built for the searches busy families actually make: parent help near me, mother’s helper-style support, laundry help, errand help, and household help for families."
+            description="NestHelper is built for the searches busy families actually make: household help near me, parent help near me, laundry help, errand help, organizing help, and home reset help."
           />
 
           <div className="mt-8 grid gap-4 md:grid-cols-2">
