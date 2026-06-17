@@ -1,9 +1,9 @@
 import type { MetadataRoute } from "next";
 import { siteConfig } from "@/lib/siteConfig";
 
-export default function robots(): MetadataRoute.Robots {
-  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || siteConfig.url).replace(/\/$/, "");
+const siteUrl = siteConfig.url.replace(/\/$/, "");
 
+export default function robots(): MetadataRoute.Robots {
   return {
     rules: [
       {
