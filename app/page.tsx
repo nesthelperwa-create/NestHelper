@@ -109,10 +109,10 @@ export default function HomePage() {
               <div id="service-area" className="mt-4 scroll-mt-24 border-t border-nest-gold/14 pt-3 text-left">
                 <div className="flex items-start gap-2 text-sm font-black leading-5 text-nest-teal sm:items-center">
                   <MapPin size={16} className="mt-0.5 shrink-0 text-nest-gold sm:mt-0" />
-                  <span>Bothell-based household help for nearby Eastside/Northshore families</span>
+                  <span>Serving Bothell, Woodinville & nearby communities</span>
                 </div>
                 <p className="mt-2 text-xs font-semibold leading-5 text-nest-ink/64">
-                  Serving Bothell, Woodinville, Kenmore, Kirkland, Redmond, Mill Creek, and nearby areas. Not sure if you are in range? Send a request and we will confirm before payment.
+                  Bothell, Woodinville, Kenmore, Kirkland, Redmond, Mill Creek, and nearby Eastside/Northshore areas. Send your address and we will confirm availability before payment.
                 </p>
                 <div className="mt-3 flex flex-wrap gap-2">
                   {["Bothell", "Woodinville", "Kenmore", "Kirkland", "Redmond", "Mill Creek", "Nearby Eastside/Northshore"].map((area) => (
@@ -146,17 +146,17 @@ export default function HomePage() {
       <AnimatedSection className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
         <SectionShell>
           <SectionIntro
-            label="Local Household Help"
+            label="Service Area"
             icon={<MapPin size={15} />}
-            title="Nearby household support without turning the homepage into a city list."
-            description="NestHelper is based near Bothell and serves nearby Eastside/Northshore families with home reset help, laundry catch-up, errands, organizing, and extra hands around the house. We keep location wording clear for families and search engines without repeating the same page for every city."
+            title="Serving Bothell, Woodinville & nearby Eastside/Northshore communities."
+            description="Not sure if you are in range? Send your address with the request and we will confirm availability before payment."
           />
 
           <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             <InfoCard icon={<MapPin size={20} />} title="Core local areas" text="Bothell, Woodinville, Kenmore, Kirkland, Redmond, Mill Creek, and nearby Eastside/Northshore neighborhoods." />
-            <InfoCard icon={<Home size={20} />} title="Home reset help" text="Kitchen resets, tidying support, light household catch-up, organizing help, and practical support around the house." />
-            <InfoCard icon={<Sparkles size={20} />} title="Laundry and errands" text="Laundry Rescue, approved errands, pickup/drop-off help, returns, and household task catch-up after scope review." />
-            <InfoCard icon={<ClipboardCheck size={20} />} title="Reviewed before payment" text="Send the address and scope first. NestHelper confirms area, timing, and fit before sending a secure checkout link." />
+            <InfoCard icon={<Home size={20} />} title="Nearby communities" text="If you are close to the listed areas, submit the address and we will review whether we can reasonably serve the visit." />
+            <InfoCard icon={<Sparkles size={20} />} title="Availability confirmed" text="Service area, timing, helper availability, and route fit are reviewed before payment is requested." />
+            <InfoCard icon={<ClipboardCheck size={20} />} title="No guessing at checkout" text="You send the request first. NestHelper confirms the location and scope before sending a secure checkout link." />
           </div>
         </SectionShell>
       </AnimatedSection>
