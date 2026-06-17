@@ -5,7 +5,12 @@ import { Footer } from "@/components/Footer";
 import { siteConfig } from "@/lib/siteConfig";
 import { HashScrollManager } from "@/components/HashScrollManager";
 
+const siteUrl = siteConfig.url.replace(/\/$/, "");
+const absoluteUrl = (path: string) => `${siteUrl}${path.startsWith("/") ? path : `/${path}`}`;
+
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
+  applicationName: siteConfig.name,
   title: {
     default: "NestHelper | Household Help in Bothell, Woodinville & Eastside WA",
     template: "%s | NestHelper",
@@ -28,16 +33,22 @@ export const metadata: Metadata = {
     "Kirkland household help",
     "Redmond household help",
   ],
-  metadataBase: new URL(siteConfig.url),
   alternates: {
-    canonical: siteConfig.url,
+    canonical: "/",
   },
   openGraph: {
     title: "NestHelper | Household Help in Bothell, Woodinville & Eastside WA",
     description: "Managed household support, home resets, laundry catch-up, errands, and organizing for busy Eastside/Northshore families. No childcare.",
-    url: siteConfig.url,
+    url: siteUrl,
     siteName: siteConfig.name,
-    images: [siteConfig.assets.og],
+    images: [
+      {
+        url: siteConfig.assets.og,
+        width: 1200,
+        height: 630,
+        alt: "NestHelper household help for busy families",
+      },
+    ],
     locale: "en_US",
     type: "website",
   },
@@ -49,24 +60,41 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      { url: "/favicon.ico", sizes: "any" },
+      { url: "/favicon.ico", type: "image/x-icon", sizes: "any" },
+      { url: "/favicon-48x48.png", type: "image/png", sizes: "48x48" },
+      { url: "/favicon-96x96.png", type: "image/png", sizes: "96x96" },
       { url: "/icon.png", type: "image/png", sizes: "512x512" },
-      { url: "/favicon-48x48.png", type: "image/png", sizes: "48x48" }
+      { url: siteConfig.assets.icon, type: "image/png", sizes: "512x512" },
     ],
-    shortcut: "/favicon.ico",
-    apple: [{ url: "/apple-touch-icon.png", type: "image/png", sizes: "180x180" }]
-  }
+    shortcut: [{ url: "/favicon.ico", type: "image/x-icon" }],
+    apple: [{ url: "/apple-touch-icon.png", type: "image/png", sizes: "180x180" }],
+  },
+  manifest: "/manifest.webmanifest",
+  other: {
+    "msapplication-TileColor": "#0f4f4a",
+    "msapplication-TileImage": "/icon.png",
+    "msapplication-config": "/browserconfig.xml",
+  },
 };
 
 const organizationJsonLd = {
   "@context": "https://schema.org",
   "@type": "LocalBusiness",
-  "@id": `${siteConfig.url}/#organization`,
+  "@id": `${siteUrl}/#organization`,
   name: siteConfig.name,
   legalName: "NestHelper LLC",
-  url: siteConfig.url,
-  image: `${siteConfig.url}${siteConfig.assets.logo}`,
-  logo: `${siteConfig.url}${siteConfig.assets.icon}`,
+  url: siteUrl,
+  image: [
+    absoluteUrl(siteConfig.assets.logo),
+    absoluteUrl(siteConfig.assets.icon),
+    absoluteUrl(siteConfig.assets.og),
+  ],
+  logo: {
+    "@type": "ImageObject",
+    url: absoluteUrl("/icon.png"),
+    width: 512,
+    height: 512,
+  },
   telephone: siteConfig.phone,
   email: siteConfig.emails.support,
   description:
