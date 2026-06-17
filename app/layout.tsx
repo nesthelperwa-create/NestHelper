@@ -10,7 +10,7 @@ export const metadata: Metadata = {
     default: "NestHelper | Household Help in Bothell, Woodinville & Eastside WA",
     template: "%s | NestHelper",
   },
-  description: "NestHelper helps busy families with household support, home resets, laundry catch-up, errands, and organizing in Bothell, Woodinville, Kenmore, Kirkland, Redmond, Mill Creek, and nearby Eastside/Northshore areas. No childcare services.",
+  description: "NestHelper provides household help, home resets, laundry catch-up, errands, and organizing in Bothell, Woodinville, and nearby Eastside areas.",
   keywords: [
     "household help Bothell",
     "household help Woodinville",
