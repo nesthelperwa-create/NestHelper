@@ -112,7 +112,7 @@ export default function GivingBackPage() {
 
       <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
         <div className="rounded-[2rem] border border-nest-gold/14 bg-nest-mint/18 p-5 text-center shadow-sm sm:p-7 lg:p-8">
-          <p className="pill-label mx-auto w-fit"><ShieldCheck size={15} /> A careful start</p>
+          <p className="pill-label mx-auto w-fit"><ShieldCheck size={15} /> Built to grow responsibly</p>
           <h2 className="mt-3 text-2xl font-black leading-tight text-nest-teal sm:text-3xl">
             Please contact us before dropping off or sending items.
           </h2>
