@@ -26,8 +26,11 @@ function shouldShowHowFoundUsDetails(value: string) {
   return ["Friend or family referral", "Nextdoor", "Local community group", "Flyer / QR code", "Existing customer", "Other / not listed"].includes(value);
 }
 
+const givingBackTopic = "Giving Back / item donation / community support";
+
 const topicOptions = [
   "General question",
+  givingBackTopic,
   "Parent Reset / family services question",
   "Commercial Reset question or quote",
   "Existing request or service issue",
@@ -62,9 +65,22 @@ export function ContactForm() {
   const [status, setStatus] = useState<Status>("idle");
   const [message, setMessage] = useState("");
   const showHowFoundUsDetails = shouldShowHowFoundUsDetails(form.howFoundUs);
+  const isGivingBackTopic = form.topic === givingBackTopic;
 
   useEffect(() => {
     setForm((prev) => mergeCampaignAttribution(prev));
+  }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const requestedTopic = params.get("topic") || params.get("contactTopic") || "";
+    if (requestedTopic.trim().toLowerCase() !== "giving-back") return;
+
+    setForm((prev) => ({
+      ...mergeCampaignAttribution(prev),
+      topic: givingBackTopic,
+      subject: prev.subject || "Giving Back / community support",
+    }));
   }, []);
 
   const update = (name: keyof typeof defaultForm, value: string) => setForm((prev) => ({ ...prev, [name]: value }));
@@ -132,9 +148,22 @@ export function ContactForm() {
           )}
         </div>
         <Input label="Subject" required value={form.subject} onChange={(value) => update("subject", value)} />
+        {isGivingBackTopic && (
+          <div className="rounded-2xl border border-nest-gold/16 bg-nest-cream p-4 text-sm font-semibold leading-6 text-nest-ink/70">
+            Tell us what you have in mind and where you are located. Please wait for NestHelper to confirm before dropping off, mailing, or sending items.
+          </div>
+        )}
         <label className="grid gap-2">
           <span className="label">How can we help?</span>
-          <textarea className="input min-h-36" required placeholder="Tell us what you’re looking for, where you’re located, or what question you have. For Commercial Reset, include business type and city if you can." value={form.message} onChange={(e) => update("message", e.target.value)} />
+          <textarea
+            className="input min-h-36"
+            required
+            placeholder={isGivingBackTopic
+              ? "Example: I have gently used toys to offer, know a church or organization that supports families, or want to connect about community giving. Include item type, condition, city, and any timing limits."
+              : "Tell us what you’re looking for, where you’re located, or what question you have. For Commercial Reset, include business type and city if you can."}
+            value={form.message}
+            onChange={(e) => update("message", e.target.value)}
+          />
         </label>
         <button className="focus-ring inline-flex items-center justify-center gap-2 rounded-full bg-nest-teal px-6 py-4 font-black text-white shadow-soft transition hover:-translate-y-0.5 hover:bg-nest-teal2 hover:shadow-lift disabled:opacity-60" disabled={status === "loading"}>
           {status === "loading" ? "Sending..." : "Send Message"}

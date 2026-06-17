@@ -327,8 +327,13 @@ export default function HomePage() {
             </div>
           </div>
 
+          <div className="mx-auto mt-6 flex max-w-sm flex-col justify-center gap-3 sm:max-w-none sm:flex-row">
+            <ButtonLink href="/giving-back">Read more about giving back</ButtonLink>
+            <ButtonLink href="/contact?topic=giving-back#contact-form" variant="secondary">Offer items or connect with us</ButtonLink>
+          </div>
+
           <p className="mx-auto mt-4 max-w-2xl text-xs font-semibold leading-5 text-nest-ink/58">
-            This part of NestHelper is still growing, but the mission is simple: serve families well and help the community feel supported.
+            This part of NestHelper is still growing, but the mission is simple: serve families well and help the community feel supported. Please contact us before dropping off or sending any items.
           </p>
         </div>
       </AnimatedSection>

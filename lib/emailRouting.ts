@@ -78,6 +78,10 @@ export function getContactTopicEmail(topic: unknown) {
     return emailAliases.partners;
   }
 
+  if (normalized.includes("giving") || normalized.includes("donation") || normalized.includes("donate") || normalized.includes("church") || normalized.includes("nonprofit") || normalized.includes("community")) {
+    return emailAliases.hello;
+  }
+
   if (normalized.includes("existing") || normalized.includes("issue") || normalized.includes("support")) {
     return emailAliases.support;
   }
@@ -136,6 +140,10 @@ export function getContactTopicLabel(topic: unknown) {
 
   if (normalized.includes("partner") || normalized.includes("provider") || normalized.includes("contractor")) {
     return "Partners";
+  }
+
+  if (normalized.includes("giving") || normalized.includes("donation") || normalized.includes("donate") || normalized.includes("church") || normalized.includes("nonprofit") || normalized.includes("community")) {
+    return "Giving Back";
   }
 
   if (normalized.includes("existing") || normalized.includes("issue") || normalized.includes("support")) {

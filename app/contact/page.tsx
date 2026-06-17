@@ -31,7 +31,7 @@ export default function ContactPage() {
         cta={false}
       />
 
-      <section className="mx-auto grid max-w-6xl gap-8 px-4 py-14 sm:px-6 lg:grid-cols-[0.8fr_1.2fr] lg:px-8">
+      <section id="contact-form" className="scroll-mt-24 mx-auto grid max-w-6xl gap-8 px-4 py-14 sm:px-6 lg:grid-cols-[0.8fr_1.2fr] lg:px-8">
         <div className="self-start rounded-[2.5rem] border border-nest-gold/18 bg-white/90 p-6 text-center shadow-soft backdrop-blur lg:sticky lg:top-28">
           <p className="pill-label mx-auto w-fit"><Sparkles size={15} /> We can help</p>
           <h2 className="mt-4 text-3xl font-black text-nest-teal">Not sure what to request?</h2>

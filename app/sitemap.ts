@@ -12,6 +12,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/helpers",
     "/faq",
     "/contact",
+    "/giving-back",
     "/referrals",
     "/commercial-reset",
     "/commercial-reset/request",

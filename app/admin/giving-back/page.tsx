@@ -3,12 +3,13 @@
 import AdminShell from "@/components/admin/AdminShell";
 import AdminTable from "@/components/admin/AdminTable";
 
-export default function AdminContactPage() {
+export default function AdminGivingBackPage() {
   return (
     <AdminShell>
       <AdminTable
         collectionName="contactMessages"
-        title="Contact Messages"
+        title="Giving Back Messages"
+        initialFilter="Giving Back"
         columns={[
           { key: "topic", label: "Topic" },
           { key: "name", label: "Name" },
@@ -22,6 +23,3 @@ export default function AdminContactPage() {
     </AdminShell>
   );
 }
-
-
-

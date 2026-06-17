@@ -1966,17 +1966,19 @@ export default function AdminTable({
   columns,
   statuses,
   enablePaymentActions = false,
+  initialFilter = "",
 }: {
   collectionName: string;
   title: string;
   columns: { key: string; label: string }[];
   statuses: string[];
   enablePaymentActions?: boolean;
+  initialFilter?: string;
 }) {
   const [items, setItems] = useState<AdminDoc[]>([]);
   const [customerCredits, setCustomerCredits] = useState<CustomerCredit[]>([]);
   const [selected, setSelected] = useState<AdminDoc | null>(null);
-  const [filter, setFilter] = useState("");
+  const [filter, setFilter] = useState(initialFilter);
   const [serviceFilter, setServiceFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [paymentFilter, setPaymentFilter] = useState("all");
