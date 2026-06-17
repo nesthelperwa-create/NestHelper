@@ -471,7 +471,7 @@ export function RequestForm() {
         </div>
       </Section>
 
-      <Section title="2. Service address" description="Parent Reset service is focused on Woodinville, Bothell, Kirkland, Redmond, and nearby Eastside/Northshore communities.">
+      <Section title="2. Service address" description="Parent Reset service is focused on Bothell, Woodinville, Kirkland, Redmond, and nearby Eastside/Northshore communities.">
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Street address" required><input className="input" required autoComplete="address-line1" placeholder="123 Main St" value={form.address} onChange={(e) => update("address", e.target.value)} /></Field>
           <Field label="Apt / unit / suite (optional)"><input className="input" autoComplete="address-line2" placeholder="Apt, unit, suite, gate code note, etc." value={form.address2} onChange={(e) => update("address2", e.target.value)} /></Field>
@@ -640,7 +640,7 @@ export function RequestForm() {
             </Field>
           </div>
           <Field label="Errand stops or task list" required><textarea className="input min-h-28" required placeholder="Example: Target return, grocery pickup at QFC, package drop-off." value={form.errandStops} onChange={(e) => update("errandStops", e.target.value)} /></Field>
-          <Field label="Starting area / stores / drop-off area" required><input className="input" required placeholder="Example: Woodinville QFC to my home, or Bothell return drop-off" value={form.errandStartArea} onChange={(e) => update("errandStartArea", e.target.value)} /></Field>
+          <Field label="Starting area / stores / drop-off area" required><input className="input" required placeholder="Example: Bothell QFC to my home, or Woodinville return drop-off" value={form.errandStartArea} onChange={(e) => update("errandStartArea", e.target.value)} /></Field>
           <label className="flex gap-3 rounded-2xl bg-white p-4 text-sm font-semibold text-nest-ink/82 shadow-sm">
             <input type="checkbox" required checked={form.errandMileageAck} onChange={(e) => update("errandMileageAck", e.target.checked)} className="mt-1 h-4 w-4" />
             <span><span className="text-red-600">*</span> I understand Errand Helper includes up to 2 hours and up to 15 driving miles. NestHelper will quote extra distance, complex stops, or special handling before checkout.</span>

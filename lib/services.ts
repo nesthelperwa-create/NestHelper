@@ -102,7 +102,7 @@ export const services: Service[] = [
     travelInfo: "Up to 15 driving miles included",
     image: "/assets/services/service-errand-helper.png",
     stripeStandardEnv: "STRIPE_PRICE_ERRAND_STANDARD",
-    note: "Best for nearby errands in and around Woodinville, Bothell, Kirkland, Redmond, and nearby Eastside communities. Longer routes can be reviewed before checkout."
+    note: "Best for nearby errands in and around Bothell, Woodinville, Kirkland, Redmond, and nearby Eastside/Northshore communities. Longer routes can be reviewed before checkout."
   },
   {
     id: "laundry-rescue",

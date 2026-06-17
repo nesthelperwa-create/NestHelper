@@ -130,13 +130,13 @@ export default function CommercialResetPage() {
               <div className="rounded-[1.5rem] border border-nest-gold/14 bg-white/88 p-4 shadow-sm">
                 <h3 className="text-lg font-black text-nest-teal">Eastside focus</h3>
                 <p className="mt-2 text-sm font-bold leading-6 text-nest-ink/68">
-                  Woodinville, Bothell, Kenmore, Kirkland, Redmond, Bellevue, Duvall, Mill Creek, and nearby communities.
+                  Bothell, Woodinville, Kenmore, Kirkland, Redmond, Bellevue, Duvall, Mill Creek, and nearby communities.
                 </p>
               </div>
               <div className="rounded-[1.5rem] border border-nest-gold/14 bg-white/88 p-4 shadow-sm">
                 <h3 className="text-lg font-black text-nest-teal">Eastside / Northshore</h3>
                 <p className="mt-2 text-sm font-bold leading-6 text-nest-ink/68">
-                  Woodinville, Bothell, Kenmore, Kirkland, Redmond, Bellevue, Duvall, Mill Creek, and nearby Eastside/Northshore areas.
+                  Bothell, Woodinville, Kenmore, Kirkland, Redmond, Bellevue, Duvall, Mill Creek, and nearby Eastside/Northshore areas.
                 </p>
               </div>
             </div>
@@ -296,11 +296,11 @@ export default function CommercialResetPage() {
         <div className="mt-10 grid gap-5 lg:grid-cols-3">
           <AreaCard
             title="Eastside focus"
-            text="Woodinville, Bothell, Kirkland, Redmond, Bellevue, Duvall, and nearby Eastside communities."
+            text="Bothell, Woodinville, Kirkland, Redmond, Bellevue, Duvall, and nearby Eastside communities."
           />
           <AreaCard
             title="Northshore focus"
-            text="Woodinville, Bothell, Kenmore, Mill Creek, and nearby Northshore communities."
+            text="Bothell, Woodinville, Kenmore, Mill Creek, and nearby Northshore communities."
           />
           <div className="rounded-[2rem] border border-nest-gold/16 bg-nest-mint/20 p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-soft">
             <h3 className="text-2xl font-black text-nest-teal">Nearby communities welcome</h3>

@@ -22,14 +22,14 @@ import { services } from "@/lib/services";
 import { siteConfig } from "@/lib/siteConfig";
 
 export const metadata: Metadata = {
-  title: "Household Help for Busy Parents in Woodinville, WA",
+  title: { absolute: "NestHelper | Household Help in Bothell & Eastside WA" },
   description:
-    "NestHelper helps busy families with household support, home resets, laundry catch-up, errands, and organizing in Woodinville, Bothell, Kirkland, Redmond, and nearby Eastside/Northshore communities. No childcare.",
+    "NestHelper helps busy families with household support, home resets, laundry catch-up, errands, and organizing in Bothell, Woodinville, and nearby Eastside/Northshore communities. No childcare services.",
   alternates: {
     canonical: siteConfig.url,
   },
   openGraph: {
-    title: "Household Help for Busy Parents in Woodinville, WA | NestHelper",
+    title: "NestHelper | Household Help in Bothell & Eastside WA",
     description:
       "Local household support, home resets, laundry catch-up, errands, and organizing for busy Eastside/Northshore families. No childcare.",
     url: siteConfig.url,
@@ -44,7 +44,7 @@ const localParentHelpFaqs = [
       "NestHelper gives busy families extra hands around the home with household support, home resets, laundry rescue, errands, organizing, and practical family support. NestHelper does not provide childcare, unsupervised babysitting, medical care, or emergency services.",
   },
   {
-    question: "Do you offer household help near Woodinville?",
+    question: "Do you offer household help near Bothell or Woodinville?",
     answer: `Yes. NestHelper serves ${siteConfig.serviceArea}. Families can request household support, home reset help, laundry help, errands, organizing, and practical support through one reviewed request.`,
   },
   {
@@ -136,7 +136,7 @@ export default function HomePage() {
           <SectionIntro
             label="Local Household Help"
             icon={<MapPin size={15} />}
-            title="Household support for Woodinville and nearby families."
+            title="Household support for Bothell, Woodinville, and nearby families."
             description="Some families search for this as parent help, household help, laundry help, errand help, organizing help, or home reset help. NestHelper brings those everyday supports into one reviewed local request without offering childcare."
           />
 

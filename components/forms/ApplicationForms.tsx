@@ -147,8 +147,8 @@ const partnerServiceOptions = [
 ];
 
 const partnerAreaOptions = [
-  "Woodinville",
   "Bothell / Kenmore",
+  "Woodinville",
   "Kirkland / Redmond",
   "Bellevue / Eastside",
   "Seattle / nearby",

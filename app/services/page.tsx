@@ -10,7 +10,7 @@ import { siteConfig } from "@/lib/siteConfig";
 export const metadata: Metadata = {
   title: "Household Help Services, Home Reset, Laundry & Errands",
   description:
-    "View NestHelper household help services for Woodinville and nearby Eastside/Northshore families, including home reset help, Laundry Rescue, errand help, organizing, and household support. No childcare.",
+    "View NestHelper household help services for Bothell, Woodinville, and nearby Eastside/Northshore families, including home reset help, Laundry Rescue, errand help, organizing, and household support. No childcare.",
   alternates: {
     canonical: `${siteConfig.url}/services`,
   },
