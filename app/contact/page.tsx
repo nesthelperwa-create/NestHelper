@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Building2, MapPin, Phone, Sparkles } from "lucide-react";
+import { Building2, Phone, Sparkles } from "lucide-react";
 import { PageHero } from "@/components/PageHero";
 import { ContactForm } from "@/components/forms/ContactForm";
 import { siteConfig } from "@/lib/siteConfig";
@@ -27,7 +27,7 @@ export default function ContactPage() {
       <PageHero
         eyebrow="Contact"
         title="Questions before you request?"
-        text="Send a note and we’ll help you figure out the right Parent Reset service. Choose the topic in the form so your message goes to the right NestHelper inbox behind the scenes."
+        text="Send a note and we’ll help you figure out the right NestHelper service or next step. Choose the topic in the form so your message goes to the right NestHelper inbox behind the scenes."
         cta={false}
       />
 
@@ -46,10 +46,6 @@ export default function ContactPage() {
               >
                 {siteConfig.phone}
               </a>
-            </Info>
-
-            <Info icon={<MapPin />} label="Parent Reset area">
-              <div className="font-bold text-nest-ink/78">{siteConfig.serviceArea}</div>
             </Info>
 
             <Info icon={<Building2 />} label="Commercial Reset area">
