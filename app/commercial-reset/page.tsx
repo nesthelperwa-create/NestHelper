@@ -20,7 +20,7 @@ import { CommercialAddOnPricingSelector } from "./CommercialAddOnPricingSelector
 
 export const metadata: Metadata = {
   title: "Commercial Reset | NestHelper",
-  description: "Quote-first commercial cleaning and reset services for small offices, studios, churches, daycare common areas, salons, short-term rental turnovers, and local small businesses in select Eastside and Northshore areas.",
+  description: "Quote-first Commercial Reset cleaning for small offices, churches, salons, and local businesses in Eastside, Northshore, and Pierce County.",
 };
 
 const businessTypes = [
