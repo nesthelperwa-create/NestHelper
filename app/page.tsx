@@ -24,7 +24,7 @@ import { siteConfig } from "@/lib/siteConfig";
 export const metadata: Metadata = {
   title: { absolute: "NestHelper | Household Help in Bothell, Woodinville & Eastside WA" },
   description:
-    "NestHelper helps busy families with household support, home resets, laundry catch-up, errands, and organizing in Bothell, Woodinville, Kenmore, Kirkland, Redmond, Mill Creek, and nearby Eastside/Northshore communities. No childcare services.",
+    "NestHelper provides household help, home resets, laundry catch-up, errands, and organizing in Bothell, Woodinville, and nearby Eastside areas.",
   alternates: {
     canonical: siteConfig.url,
   },
