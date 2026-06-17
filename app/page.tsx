@@ -37,48 +37,10 @@ export const metadata: Metadata = {
   },
 };
 
-const localParentHelpFaqs = [
-  {
-    question: "What does NestHelper help with?",
-    answer:
-      "NestHelper gives busy families extra hands around the home with household support, home resets, laundry rescue, errands, organizing, and practical family support. NestHelper does not provide childcare, unsupervised babysitting, medical care, or emergency services.",
-  },
-  {
-    question: "Do you serve outside Bothell?",
-    answer: `Yes. NestHelper serves ${siteConfig.serviceArea}. If you are nearby but unsure, submit a request and we will confirm availability before sending any payment link.`,
-  },
-  {
-    question: "Can I request only laundry help or errand help?",
-    answer:
-      "Yes. Families can request a full Parent Reset package or a more focused service such as Laundry Rescue, errand help, or light household catch-up support.",
-  },
-  {
-    question: "How is NestHelper different from hiring someone casually online?",
-    answer:
-      "NestHelper is a managed local service. Requests are reviewed before payment, helpers and partners are checked or vetted, scope is clarified, payment is handled securely, and NestHelper follows up after service.",
-  },
-];
-
-const homeFaqJsonLd = {
-  "@context": "https://schema.org",
-  "@type": "FAQPage",
-  mainEntity: localParentHelpFaqs.map((faq) => ({
-    "@type": "Question",
-    name: faq.question,
-    acceptedAnswer: {
-      "@type": "Answer",
-      text: faq.answer,
-    },
-  })),
-};
 
 export default function HomePage() {
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(homeFaqJsonLd) }}
-      />
       <section className="relative isolate overflow-hidden px-4 pb-10 pt-7 sm:px-6 sm:py-12 lg:px-8 lg:py-16">
         <div className="absolute inset-0 -z-10 bg-[url('/assets/backgrounds/warm-mint-gradient.png')] bg-cover opacity-80" />
         <div className="absolute inset-0 -z-10 bg-white/44" />
@@ -143,23 +105,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      <AnimatedSection className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
-        <SectionShell>
-          <SectionIntro
-            label="Service Area"
-            icon={<MapPin size={15} />}
-            title="Serving Bothell, Woodinville & nearby Eastside/Northshore communities."
-            description="Not sure if you are in range? Send your address with the request and we will confirm availability before payment."
-          />
-
-          <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            <InfoCard icon={<MapPin size={20} />} title="Core local areas" text="Bothell, Woodinville, Kenmore, Kirkland, Redmond, Mill Creek, and nearby Eastside/Northshore neighborhoods." />
-            <InfoCard icon={<Home size={20} />} title="Nearby communities" text="If you are close to the listed areas, submit the address and we will review whether we can reasonably serve the visit." />
-            <InfoCard icon={<Sparkles size={20} />} title="Availability confirmed" text="Service area, timing, helper availability, and route fit are reviewed before payment is requested." />
-            <InfoCard icon={<ClipboardCheck size={20} />} title="No guessing at checkout" text="You send the request first. NestHelper confirms the location and scope before sending a secure checkout link." />
-          </div>
-        </SectionShell>
-      </AnimatedSection>
 
       <AnimatedSection className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8 lg:py-16">
         <SectionShell>
@@ -179,21 +124,19 @@ export default function HomePage() {
         </SectionShell>
       </AnimatedSection>
 
-      <AnimatedSection className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8 lg:py-16">
-        <SectionShell>
-          <SectionIntro
-            label="Limited Availability"
-            icon={<Sparkles size={15} />}
-            title="Limited Parent Reset Openings"
-            description="NestHelper is accepting a limited number of family requests while we grow carefully. Every request is reviewed for service fit, timing, area, and helper availability so the experience stays personal, reliable, and quality-first."
-          />
-
-          <div className="mt-8 grid gap-4 md:grid-cols-3">
-            <InfoCard icon={<ClipboardCheck size={20} />} title="Reviewed before confirmation" text="A request is not an instant booking. We review the details first so families know what is included before payment." />
-            <InfoCard icon={<ShieldCheck size={20} />} title="Quality over volume" text="We would rather accept fewer requests and do them well than overbook helpers or rush through family homes." />
-            <InfoCard icon={<MessageCircle size={20} />} title="Personal follow-up" text="NestHelper stays connected from request to completion so families are not left managing the process alone." />
+      <AnimatedSection className="soft-section px-4 py-16 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl">
+          <div className="mx-auto max-w-4xl text-center">
+            <p className="pill-label mx-auto w-fit"><Star size={15} /> Services</p>
+            <h2 className="text-balance mt-4 text-3xl font-black leading-tight text-nest-teal sm:text-5xl">Extra hands for busy parents.</h2>
+            <p className="mx-auto mt-5 max-w-3xl text-base font-medium leading-7 text-nest-ink/70 sm:text-lg sm:leading-8">
+              Choose a package, submit the details, and NestHelper reviews the request before payment. Pricing reflects a managed service: clear scope, coordination, insured support, and follow-up — not just someone showing up for an hour.
+            </p>
           </div>
-        </SectionShell>
+          <div className="mt-10 grid items-start gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {services.map((service) => <ServiceCard key={service.id} service={service} />)}
+          </div>
+        </div>
       </AnimatedSection>
 
       <AnimatedSection className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
@@ -268,50 +211,73 @@ export default function HomePage() {
         </div>
       </AnimatedSection>
 
-      <AnimatedSection className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        <div id="giving-back" className="scroll-mt-24">
-          <SectionShell>
-            <CenteredSectionIntro
-              label="Giving Back"
-              icon={<Heart size={15} />}
-              title="A local business with a community heart."
-              description="NestHelper is here to serve busy families, but the mission is bigger than one booking. As we grow, our goal is to set aside a portion of what we earn to support local family relief, community charities, neighborhood partners, and reliable helper opportunities in the community we serve."
-            />
-
-            <div className="mt-10 grid gap-4 md:grid-cols-3">
-              <GivingBackCard
-                icon={<Heart size={30} />}
-                title="Family relief"
-                textLines={["As revenue allows,", "we plan to support", "local families in need."]}
-              />
-              <GivingBackCard
-                icon={<Home size={30} />}
-                title="Community giving"
-                textLines={["Our goal is to give", "to local charities, churches,", "schools, and nonprofits."]}
-              />
-              <GivingBackCard
-                icon={<Sparkles size={30} />}
-                title="Local opportunity"
-                textLines={["Every booking helps", "build trusted local work", "and practical support."]}
-              />
-            </div>
-          </SectionShell>
+      <AnimatedSection className="mx-auto grid max-w-7xl gap-8 px-4 py-16 sm:px-6 lg:grid-cols-[0.95fr_1.05fr] lg:px-8">
+        <div className="pro-card overflow-hidden rounded-[2.5rem] p-5 sm:p-8">
+          <div className="relative overflow-hidden rounded-[2rem] bg-nest-cream p-6">
+            <div className="absolute -left-16 -top-16 h-48 w-48 rounded-full bg-nest-mint/55 blur-3xl" />
+            <Image src={siteConfig.assets.badge} alt="NestHelper Gold Star Checked badge" width={600} height={600} className="relative mx-auto max-h-[420px] w-full object-contain animate-float" />
+          </div>
+        </div>
+        <div className="self-center text-center">
+          <p className="pill-label mx-auto w-fit"><ShieldCheck size={15} /> Trust & Safety</p>
+          <h2 className="text-balance mt-4 text-3xl font-black leading-tight text-nest-teal sm:text-5xl">The trust standards behind every reset.</h2>
+          <p className="mx-auto mt-5 max-w-3xl text-base font-medium leading-7 text-nest-ink/72 sm:text-lg sm:leading-8">
+            NestHelper uses a checked-helper and vetted-partner model with screening steps, service boundaries, and follow-up after service. The Trust & Safety page explains how we review helpers, partners, scope, and safety before matching work.
+          </p>
+          <div className="mt-7 grid gap-3 sm:grid-cols-2">
+            {[
+              "Identity review",
+              "Background screening",
+              "Reference review",
+              "Service standards",
+              "Partner-vetted providers",
+              "Follow-up after service",
+            ].map((item) => (
+              <div key={item} className="group flex gap-3 rounded-2xl border border-nest-gold/12 bg-white p-4 font-black text-nest-ink/78 shadow-sm transition hover:-translate-y-0.5 hover:border-nest-gold/28 hover:shadow-sm">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-nest-mint/35 text-nest-teal transition group-hover:bg-nest-teal group-hover:text-white">
+                  <ShieldCheck size={18} />
+                </span>
+                {item}
+              </div>
+            ))}
+          </div>
+          <div className="mt-8 flex justify-center"><ButtonLink href="/trust" variant="secondary">See Trust Standards</ButtonLink></div>
         </div>
       </AnimatedSection>
 
-      <AnimatedSection className="soft-section px-4 py-16 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-7xl">
-          <div className="mx-auto max-w-4xl text-center">
-            <p className="pill-label mx-auto w-fit"><Star size={15} /> Services</p>
-            <h2 className="text-balance mt-4 text-3xl font-black leading-tight text-nest-teal sm:text-5xl">Extra hands for busy parents.</h2>
-            <p className="mx-auto mt-5 max-w-3xl text-base font-medium leading-7 text-nest-ink/70 sm:text-lg sm:leading-8">
-              Choose a package, submit the details, and NestHelper reviews the request before payment. Pricing reflects a managed service: clear scope, coordination, insured support, and follow-up — not just someone showing up for an hour.
-            </p>
+      <AnimatedSection className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
+        <SectionShell>
+          <SectionIntro
+            label="Service Area"
+            icon={<MapPin size={15} />}
+            title="Serving Bothell, Woodinville & nearby Eastside/Northshore communities."
+            description="Not sure if you are in range? Send your address with the request and we will confirm availability before payment."
+          />
+
+          <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <InfoCard icon={<MapPin size={20} />} title="Core local areas" text="Bothell, Woodinville, Kenmore, Kirkland, Redmond, Mill Creek, and nearby Eastside/Northshore neighborhoods." />
+            <InfoCard icon={<Home size={20} />} title="Nearby communities" text="If you are close to the listed areas, submit the address and we will review whether we can reasonably serve the visit." />
+            <InfoCard icon={<Sparkles size={20} />} title="Availability confirmed" text="Service area, timing, helper availability, and route fit are reviewed before payment is requested." />
+            <InfoCard icon={<ClipboardCheck size={20} />} title="No guessing at checkout" text="You send the request first. NestHelper confirms the location and scope before sending a secure checkout link." />
           </div>
-          <div className="mt-10 grid items-start gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {services.map((service) => <ServiceCard key={service.id} service={service} />)}
+        </SectionShell>
+      </AnimatedSection>
+
+      <AnimatedSection className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8 lg:py-16">
+        <SectionShell>
+          <SectionIntro
+            label="Limited Availability"
+            icon={<Sparkles size={15} />}
+            title="Limited Parent Reset Openings"
+            description="NestHelper is accepting a limited number of family requests while we grow carefully. Every request is reviewed for service fit, timing, area, and helper availability so the experience stays personal, reliable, and quality-first."
+          />
+
+          <div className="mt-8 grid gap-4 md:grid-cols-3">
+            <InfoCard icon={<ClipboardCheck size={20} />} title="Reviewed before confirmation" text="A request is not an instant booking. We review the details first so families know what is included before payment." />
+            <InfoCard icon={<ShieldCheck size={20} />} title="Quality over volume" text="We would rather accept fewer requests and do them well than overbook helpers or rush through family homes." />
+            <InfoCard icon={<MessageCircle size={20} />} title="Personal follow-up" text="NestHelper stays connected from request to completion so families are not left managing the process alone." />
           </div>
-        </div>
+        </SectionShell>
       </AnimatedSection>
 
       <AnimatedSection className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
@@ -347,70 +313,37 @@ export default function HomePage() {
         </div>
       </AnimatedSection>
 
-      <AnimatedSection className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        <SectionShell>
-          <CenteredSectionIntro
-            label="Common household-help searches"
-            icon={<MessageCircle size={15} />}
-            title="Clear answers for families looking for extra help at home."
-            description="NestHelper is built for the searches busy families actually make: household help near me, parent help near me, laundry help, errand help, organizing help, and home reset help."
-          />
+      <AnimatedSection className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+        <div id="giving-back" className="scroll-mt-24">
+          <SectionShell>
+            <CenteredSectionIntro
+              label="Giving Back"
+              icon={<Heart size={15} />}
+              title="A local business with a community heart."
+              description="NestHelper is here to serve busy families, but the mission is bigger than one booking. As we grow, our goal is to set aside a portion of what we earn to support local family relief, community charities, neighborhood partners, and reliable helper opportunities in the community we serve."
+            />
 
-          <div className="mt-8 grid gap-4 md:grid-cols-2">
-            {localParentHelpFaqs.map((faq) => (
-              <FAQCard key={faq.question} question={faq.question} answer={faq.answer} />
-            ))}
-          </div>
-
-          <div className="mt-8 flex justify-center">
-            <ButtonLink href="/faq" variant="secondary">View Full FAQ</ButtonLink>
-          </div>
-        </SectionShell>
-      </AnimatedSection>
-
-      <AnimatedSection className="mx-auto grid max-w-7xl gap-8 px-4 py-16 sm:px-6 lg:grid-cols-[0.95fr_1.05fr] lg:px-8">
-        <div className="pro-card overflow-hidden rounded-[2.5rem] p-5 sm:p-8">
-          <div className="relative overflow-hidden rounded-[2rem] bg-nest-cream p-6">
-            <div className="absolute -left-16 -top-16 h-48 w-48 rounded-full bg-nest-mint/55 blur-3xl" />
-            <Image src={siteConfig.assets.badge} alt="NestHelper Gold Star Checked badge" width={600} height={600} className="relative mx-auto max-h-[420px] w-full object-contain animate-float" />
-          </div>
-        </div>
-        <div className="self-center text-center">
-          <p className="pill-label mx-auto w-fit"><ShieldCheck size={15} /> Trust & Safety</p>
-          <h2 className="text-balance mt-4 text-3xl font-black leading-tight text-nest-teal sm:text-5xl">The trust standards behind every reset.</h2>
-          <p className="mx-auto mt-5 max-w-3xl text-base font-medium leading-7 text-nest-ink/72 sm:text-lg sm:leading-8">
-            NestHelper uses a checked-helper and vetted-partner model with screening steps, service boundaries, and follow-up after service. The Trust & Safety page explains how we review helpers, partners, scope, and safety before matching work.
-          </p>
-          <div className="mt-7 grid gap-3 sm:grid-cols-2">
-            {[
-              "Identity review",
-              "Background screening",
-              "Reference review",
-              "Service standards",
-              "Partner-vetted providers",
-              "Follow-up after service",
-            ].map((item) => (
-              <div key={item} className="group flex gap-3 rounded-2xl border border-nest-gold/12 bg-white p-4 font-black text-nest-ink/78 shadow-sm transition hover:-translate-y-0.5 hover:border-nest-gold/28 hover:shadow-sm">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-nest-mint/35 text-nest-teal transition group-hover:bg-nest-teal group-hover:text-white">
-                  <ShieldCheck size={18} />
-                </span>
-                {item}
-              </div>
-            ))}
-          </div>
-          <div className="mt-8 flex justify-center"><ButtonLink href="/trust" variant="secondary">See Trust Standards</ButtonLink></div>
+            <div className="mt-10 grid gap-4 md:grid-cols-3">
+              <GivingBackCard
+                icon={<Heart size={30} />}
+                title="Family relief"
+                textLines={["As revenue allows,", "we plan to support", "local families in need."]}
+              />
+              <GivingBackCard
+                icon={<Home size={30} />}
+                title="Community giving"
+                textLines={["Our goal is to give", "to local charities, churches,", "schools, and nonprofits."]}
+              />
+              <GivingBackCard
+                icon={<Sparkles size={30} />}
+                title="Local opportunity"
+                textLines={["Every booking helps", "build trusted local work", "and practical support."]}
+              />
+            </div>
+          </SectionShell>
         </div>
       </AnimatedSection>
     </>
-  );
-}
-
-function FAQCard({ question, answer }: { question: string; answer: string }) {
-  return (
-    <div className="h-full rounded-[1.9rem] border border-nest-gold/12 bg-white/88 p-5 shadow-sm transition hover:-translate-y-1 hover:border-nest-gold/28 hover:shadow-soft">
-      <h3 className="text-xl font-black text-nest-teal">{question}</h3>
-      <p className="mt-3 text-sm font-medium leading-7 text-nest-ink/68">{answer}</p>
-    </div>
   );
 }
 
