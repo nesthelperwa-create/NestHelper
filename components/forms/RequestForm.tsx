@@ -3,7 +3,7 @@
 import { useSearchParams } from "next/navigation";
 import type { FormEvent, ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowRight, CheckCircle2, Clock, CreditCard, Gift, MapPin, ShieldCheck } from "lucide-react";
+import { ArrowRight, CheckCircle2, Clock, Gift, MapPin } from "lucide-react";
 import { services, laundryAddOns } from "@/lib/services";
 import { formatPhoneNumber } from "@/lib/formatPhoneNumber";
 import { focusFirstInvalidField } from "@/lib/formInvalidFocus";
@@ -415,19 +415,23 @@ export function RequestForm() {
 
   return (
     <form onSubmit={onSubmit} onInvalidCapture={focusFirstInvalidField} className="grid gap-6 overflow-hidden rounded-[2.5rem] border border-nest-gold/18 bg-white/90 p-4 shadow-soft backdrop-blur sm:p-6 lg:p-8">
-      <div className="relative overflow-hidden rounded-[1.9rem] bg-gradient-to-br from-nest-cream via-white to-nest-mint/35 p-5 shadow-sm sm:p-7">
-        <div className="absolute -right-16 -top-20 h-48 w-48 rounded-full bg-nest-gold/15 blur-3xl" />
-        <div className="relative">
-          <p className="text-xs font-black uppercase tracking-[0.22em] text-nest-gold">No payment due yet</p>
-          <h2 className="mt-2 text-2xl font-black text-nest-teal sm:text-3xl">Request a Parent Reset</h2>
-          <p className="mt-3 max-w-2xl leading-7 text-nest-ink/72">
-            Choose a service, then answer only the questions that match that package. NestHelper reviews the request before checkout so families get the right scope, timing, helper, and price before anything is confirmed.
-          </p>
-          <p className="mt-3 text-sm font-bold text-nest-ink/65"><span className="text-red-600">*</span> Required fields</p>
-          <div className="mt-5 grid gap-3 sm:grid-cols-3">
-            <Step icon={<ShieldCheck className="h-5 w-5" />} title="1. We review" text="Area, safety, pets, access, and scope." />
-            <Step icon={<CreditCard className="h-5 w-5" />} title="2. You approve" text="We send a secure payment link." />
-            <Step icon={<CheckCircle2 className="h-5 w-5" />} title="3. We reset" text="A checked helper or vetted partner gets to work." />
+      <div className="rounded-[1.75rem] border border-nest-gold/16 bg-gradient-to-br from-nest-cream via-white to-nest-mint/25 p-4 shadow-sm sm:p-5">
+        <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-center">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.22em] text-nest-gold">No payment due yet</p>
+            <h2 className="mt-2 text-2xl font-black text-nest-teal sm:text-3xl">Request details</h2>
+            <p className="mt-2 max-w-2xl text-sm font-semibold leading-6 text-nest-ink/70 sm:text-base sm:leading-7">
+              Choose a service, then answer the questions that match that package. NestHelper reviews the request before checkout.
+            </p>
+            <p className="mt-2 text-sm font-bold text-nest-ink/65"><span className="text-red-600">*</span> Required fields</p>
+          </div>
+          <div className="grid gap-2 text-sm font-black text-nest-teal sm:grid-cols-3 lg:min-w-[17rem] lg:grid-cols-1">
+            {["Area reviewed", "Scope confirmed", "Secure payment link"].map((item) => (
+              <div key={item} className="flex items-center gap-2 rounded-2xl bg-white/85 px-4 py-3 shadow-sm">
+                <CheckCircle2 className="h-4 w-4 shrink-0 text-nest-gold" />
+                {item}
+              </div>
+            ))}
           </div>
         </div>
       </div>

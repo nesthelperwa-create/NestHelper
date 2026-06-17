@@ -249,102 +249,53 @@ export default function HomePage() {
         </div>
       </AnimatedSection>
 
-      <AnimatedSection className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
-        <SectionShell>
-          <SectionIntro
-            label="Service Area"
-            icon={<MapPin size={15} />}
-            title="Serving Bothell, Woodinville & nearby Eastside/Northshore communities."
-            description="Not sure if you are in range? Send your address with the request and we will confirm availability before payment."
-          />
-
-          <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            <InfoCard icon={<MapPin size={20} />} title="Core local areas" text="Bothell, Woodinville, Kenmore, Kirkland, Redmond, Mill Creek, and nearby Eastside/Northshore neighborhoods." />
-            <InfoCard icon={<Home size={20} />} title="Nearby communities" text="If you are close to the listed areas, submit the address and we will review whether we can reasonably serve the visit." />
-            <InfoCard icon={<Sparkles size={20} />} title="Availability confirmed" text="Service area, timing, helper availability, and route fit are reviewed before payment is requested." />
-            <InfoCard icon={<ClipboardCheck size={20} />} title="No guessing at checkout" text="You send the request first. NestHelper confirms the location and scope before sending a secure checkout link." />
-          </div>
-        </SectionShell>
-      </AnimatedSection>
-
-      <AnimatedSection className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8 lg:py-16">
-        <SectionShell>
-          <SectionIntro
-            label="Limited Availability"
-            icon={<Sparkles size={15} />}
-            title="Limited Parent Reset Openings"
-            description="NestHelper is accepting a limited number of family requests while we grow carefully. Every request is reviewed for service fit, timing, area, and helper availability so the experience stays personal, reliable, and quality-first."
-          />
-
-          <div className="mt-8 grid gap-4 md:grid-cols-3">
-            <InfoCard icon={<ClipboardCheck size={20} />} title="Reviewed before confirmation" text="A request is not an instant booking. We review the details first so families know what is included before payment." />
-            <InfoCard icon={<ShieldCheck size={20} />} title="Quality over volume" text="We would rather accept fewer requests and do them well than overbook helpers or rush through family homes." />
-            <InfoCard icon={<MessageCircle size={20} />} title="Personal follow-up" text="NestHelper stays connected from request to completion so families are not left managing the process alone." />
-          </div>
-        </SectionShell>
-      </AnimatedSection>
-
-      <AnimatedSection className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        <div className="overflow-hidden rounded-[2.5rem] border border-nest-gold/18 bg-white/86 p-5 text-center shadow-soft backdrop-blur sm:p-8 lg:p-10">
-          <div className="mx-auto max-w-4xl">
-            <p className="pill-label mx-auto w-fit"><Building2 size={15} /> For Local Businesses</p>
-            <h2 className="text-balance mt-4 text-3xl font-black leading-tight text-nest-teal sm:text-5xl">
-              Commercial Reset has its own page.
-            </h2>
-            <p className="mx-auto mt-5 max-w-3xl text-base font-medium leading-7 text-nest-ink/72 sm:text-lg sm:leading-8">
-              Parent Reset stays focused on families. Commercial Reset is a separate quote-first service lane for small offices, studios, churches, daycare common areas, salons, and local business spaces in select Eastside and Northshore areas that need routine cleaning support — including non-toxic or low-odor product preferences when appropriate.
-            </p>
-            <div className="mx-auto mt-7 flex max-w-sm flex-col justify-center gap-3 sm:max-w-none sm:flex-row">
-              <ButtonLink href="/commercial-reset">Explore Commercial Reset</ButtonLink>
+      <AnimatedSection className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        <div className="rounded-[2rem] border border-nest-gold/14 bg-white/86 p-5 shadow-soft backdrop-blur sm:p-6 lg:p-7">
+          <div className="grid gap-5 lg:grid-cols-[1fr_auto] lg:items-center">
+            <div className="text-center lg:text-left">
+              <p className="pill-label mx-auto w-fit lg:mx-0"><Sparkles size={15} /> Limited Availability</p>
+              <h2 className="mt-3 text-2xl font-black leading-tight text-nest-teal sm:text-3xl">
+                Accepting a limited number of family requests.
+              </h2>
+              <p className="mt-3 max-w-3xl text-sm font-semibold leading-6 text-nest-ink/70 sm:text-base sm:leading-7">
+                NestHelper reviews service area, timing, scope, safety notes, and helper availability before payment so quality stays personal while we grow.
+              </p>
             </div>
-          </div>
-          <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-            {[
-              "Small offices and studios",
-              "Churches and nonprofits",
-              "Salons, gyms, and local shops",
-              "Quoted after scope review",
-              "Non-toxic / low-odor options by request",
-            ].map((item) => (
-              <div key={item} className="group flex h-full items-center gap-3 rounded-2xl border border-nest-gold/12 bg-nest-cream p-4 text-left font-black text-nest-ink/78 shadow-sm transition hover:-translate-y-0.5 hover:bg-white hover:shadow-sm">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-nest-teal shadow-sm transition group-hover:bg-nest-teal group-hover:text-white">
-                  <Building2 size={17} />
-                </span>
-                {item}
-              </div>
-            ))}
+            <div className="mx-auto w-full max-w-xs lg:mx-0 lg:w-auto">
+              <ButtonLink href="/request">Request Help</ButtonLink>
+            </div>
           </div>
         </div>
       </AnimatedSection>
 
-      <AnimatedSection className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        <div id="giving-back" className="scroll-mt-24">
-          <SectionShell>
-            <CenteredSectionIntro
-              label="Giving Back"
-              icon={<Heart size={15} />}
-              title="A local business with a community heart."
-              description="NestHelper is here to serve busy families, but the mission is bigger than one booking. As we grow, our goal is to set aside a portion of what we earn to support local family relief, community charities, neighborhood partners, and reliable helper opportunities in the community we serve."
-            />
-
-            <div className="mt-10 grid gap-4 md:grid-cols-3">
-              <GivingBackCard
-                icon={<Heart size={30} />}
-                title="Family relief"
-                textLines={["As revenue allows,", "we plan to support", "local families in need."]}
-              />
-              <GivingBackCard
-                icon={<Home size={30} />}
-                title="Community giving"
-                textLines={["Our goal is to give", "to local charities, churches,", "schools, and nonprofits."]}
-              />
-              <GivingBackCard
-                icon={<Sparkles size={30} />}
-                title="Local opportunity"
-                textLines={["Every booking helps", "build trusted local work", "and practical support."]}
-              />
+      <AnimatedSection className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        <div className="rounded-[2rem] border border-nest-gold/14 bg-white/86 p-5 shadow-soft backdrop-blur sm:p-6 lg:p-7">
+          <div className="grid gap-5 lg:grid-cols-[1fr_auto] lg:items-center">
+            <div className="text-center lg:text-left">
+              <p className="pill-label mx-auto w-fit lg:mx-0"><Building2 size={15} /> Commercial Reset</p>
+              <h2 className="mt-3 text-2xl font-black leading-tight text-nest-teal sm:text-3xl">
+                Need help for a local business space?
+              </h2>
+              <p className="mt-3 max-w-3xl text-sm font-semibold leading-6 text-nest-ink/70 sm:text-base sm:leading-7">
+                Commercial Reset is a separate quote-first service lane for small offices, studios, churches, salons, and select local business spaces.
+              </p>
             </div>
-          </SectionShell>
+            <div className="mx-auto w-full max-w-xs lg:mx-0 lg:w-auto">
+              <ButtonLink href="/commercial-reset" variant="secondary">Explore Commercial Reset</ButtonLink>
+            </div>
+          </div>
+        </div>
+      </AnimatedSection>
+
+      <AnimatedSection className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        <div id="giving-back" className="scroll-mt-24 rounded-[2rem] border border-nest-gold/14 bg-nest-mint/18 p-5 text-center shadow-sm sm:p-6 lg:p-7">
+          <p className="pill-label mx-auto w-fit"><Heart size={15} /> Giving Back</p>
+          <h2 className="mt-3 text-2xl font-black leading-tight text-nest-teal sm:text-3xl">
+            A local business with a community heart.
+          </h2>
+          <p className="mx-auto mt-3 max-w-3xl text-sm font-semibold leading-6 text-nest-ink/70 sm:text-base sm:leading-7">
+            As NestHelper grows, our goal is to support local family relief, community partners, and reliable helper opportunities in the areas we serve.
+          </p>
         </div>
       </AnimatedSection>
     </>
@@ -471,27 +422,6 @@ function ProcessStepCard({
       <div className="mx-auto mt-4 h-0.5 w-12 rounded-full bg-nest-gold/85" />
       <p className="mx-auto mt-4 max-w-[16rem] text-sm font-medium leading-7 text-nest-ink/68">
         {text}
-      </p>
-    </div>
-  );
-}
-
-function GivingBackCard({ icon, title, textLines }: { icon: ReactNode; title: string; textLines: string[] }) {
-  return (
-    <div className="group flex h-full min-h-[20rem] flex-col items-center rounded-[1.9rem] border border-nest-gold/12 bg-white/92 p-6 text-center shadow-sm transition hover:-translate-y-1 hover:border-nest-gold/28 hover:shadow-soft">
-      <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-full border border-nest-gold/12 bg-nest-mint/38 text-nest-teal shadow-sm transition group-hover:border-nest-teal/20 group-hover:bg-nest-teal group-hover:text-white">
-        {icon}
-      </div>
-      <div className="mt-6 h-0.5 w-16 shrink-0 rounded-full bg-nest-gold/85" />
-      <h3 className="mt-5 flex min-h-[2rem] items-center justify-center text-2xl font-black leading-tight text-nest-teal">
-        {title}
-      </h3>
-      <p className="mx-auto mt-3 min-h-[5.25rem] max-w-[18rem] text-sm font-medium leading-7 text-nest-ink/68">
-        {textLines.map((line) => (
-          <span key={line} className="block">
-            {line}
-          </span>
-        ))}
       </p>
     </div>
   );

@@ -1,8 +1,25 @@
+import type { Metadata } from "next";
 import { Building2, MapPin, Phone, Sparkles } from "lucide-react";
 import { PageHero } from "@/components/PageHero";
 import { ContactForm } from "@/components/forms/ContactForm";
 import { siteConfig } from "@/lib/siteConfig";
 import { SocialLinks } from "@/components/SocialLinks";
+
+export const metadata: Metadata = {
+  title: "Contact NestHelper | Household Help Questions",
+  description:
+    "Contact NestHelper with questions about household help, home resets, laundry catch-up, errands, organizing, Commercial Reset, helpers, or service availability.",
+  alternates: {
+    canonical: `${siteConfig.url}/contact`,
+  },
+  openGraph: {
+    title: "Contact NestHelper",
+    description:
+      "Ask NestHelper about household help, laundry rescue, errands, organizing, Commercial Reset, or service availability.",
+    url: `${siteConfig.url}/contact`,
+    images: [siteConfig.assets.og],
+  },
+};
 
 export default function ContactPage() {
   return (

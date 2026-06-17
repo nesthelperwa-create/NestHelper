@@ -1,6 +1,24 @@
+import type { Metadata } from "next";
 import { HeartHandshake, ShieldCheck, Sparkles } from "lucide-react";
 import { PageHero } from "@/components/PageHero";
 import { ApplicationFormChooser } from "@/components/forms/ApplicationForms";
+import { siteConfig } from "@/lib/siteConfig";
+
+export const metadata: Metadata = {
+  title: "Helpers & Partners | NestHelper",
+  description:
+    "Apply to work with NestHelper as an individual household helper or local partner provider supporting families with home resets, laundry, errands, and organizing.",
+  alternates: {
+    canonical: `${siteConfig.url}/helpers`,
+  },
+  openGraph: {
+    title: "Helpers & Partners | NestHelper",
+    description:
+      "Apply to support NestHelper families as a checked household helper or local partner provider.",
+    url: `${siteConfig.url}/helpers`,
+    images: [siteConfig.assets.og],
+  },
+};
 
 export default function HelpersPage() {
   return (

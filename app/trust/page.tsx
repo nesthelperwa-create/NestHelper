@@ -1,8 +1,25 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import { AlertTriangle, HeartHandshake, ShieldCheck, Sparkles, Users } from "lucide-react";
 import { PageHero } from "@/components/PageHero";
 import { ButtonLink } from "@/components/ui/ButtonLink";
 import { siteConfig } from "@/lib/siteConfig";
+
+export const metadata: Metadata = {
+  title: "Trust & Safety | NestHelper",
+  description:
+    "Learn how NestHelper reviews household help requests, screens helpers, sets service boundaries, and protects no-childcare household support for family homes.",
+  alternates: {
+    canonical: `${siteConfig.url}/trust`,
+  },
+  openGraph: {
+    title: "Trust & Safety | NestHelper",
+    description:
+      "NestHelper trust standards, helper screening, clear scope, service boundaries, and no-childcare household support.",
+    url: `${siteConfig.url}/trust`,
+    images: [siteConfig.assets.og],
+  },
+};
 
 const standards = [
   "Identity review",

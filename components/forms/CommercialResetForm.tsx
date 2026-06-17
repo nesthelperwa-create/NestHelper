@@ -3,7 +3,7 @@
 import Link from "next/link";
 import type { FormEvent, ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowRight, Building2, Calculator, CheckCircle2, ClipboardCheck, CreditCard, ShieldCheck } from "lucide-react";
+import { ArrowRight, Building2, Calculator, CheckCircle2 } from "lucide-react";
 import { formatPhoneNumber } from "@/lib/formatPhoneNumber";
 import { focusFirstInvalidField } from "@/lib/formInvalidFocus";
 import { PhotoUploadField, photoUploadSummary, type PhotoUpload } from "@/components/forms/PhotoUploadField";
@@ -891,19 +891,23 @@ export function CommercialResetForm() {
 
   return (
     <form onSubmit={onSubmit} onInvalidCapture={focusFirstInvalidField} className="grid gap-6 overflow-hidden rounded-[2.5rem] border border-nest-gold/18 bg-white/90 p-4 shadow-soft backdrop-blur sm:p-6 lg:p-8">
-      <div className="relative overflow-hidden rounded-[1.9rem] bg-gradient-to-br from-nest-cream via-white to-nest-mint/35 p-5 shadow-sm sm:p-7">
-        <div className="absolute -right-16 -top-20 h-48 w-48 rounded-full bg-nest-gold/15 blur-3xl" />
-        <div className="relative">
-          <p className="text-xs font-black uppercase tracking-[0.22em] text-nest-gold">No payment due yet</p>
-          <h2 className="mt-2 text-2xl font-black text-nest-teal sm:text-3xl">Request a Commercial Reset quote</h2>
-          <p className="mt-3 max-w-2xl leading-7 text-nest-ink/72">
-            This guided form stays quick, but asks the pricing details that matter: type of space, size range, restrooms, kitchens, showers, condition, frequency, and photos if helpful.
-          </p>
-          <p className="mt-3 text-sm font-bold text-nest-ink/65"><span className="text-red-600">*</span> Required fields</p>
-          <div className="mt-5 grid gap-3 sm:grid-cols-3">
-            <Step icon={<ClipboardCheck className="h-5 w-5" />} title="1. Quick basics" text="Contact, address, business type, and service area." />
-            <Step icon={<ShieldCheck className="h-5 w-5" />} title="2. Quote factors" text="Space size, layout, areas that need attention, condition, and frequency." />
-            <Step icon={<CreditCard className="h-5 w-5" />} title="3. Clear quote" text="Flat visit price, recurring plan, or reviewed range before checkout." />
+      <div className="rounded-[1.75rem] border border-nest-gold/16 bg-gradient-to-br from-nest-cream via-white to-nest-mint/25 p-4 shadow-sm sm:p-5">
+        <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-center">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.22em] text-nest-gold">No payment due yet</p>
+            <h2 className="mt-2 text-2xl font-black text-nest-teal sm:text-3xl">Quote request details</h2>
+            <p className="mt-2 max-w-2xl text-sm font-semibold leading-6 text-nest-ink/70 sm:text-base sm:leading-7">
+              Share the space basics, schedule, and condition. NestHelper reviews the details before sending a quote or payment link.
+            </p>
+            <p className="mt-2 text-sm font-bold text-nest-ink/65"><span className="text-red-600">*</span> Required fields</p>
+          </div>
+          <div className="grid gap-2 text-sm font-black text-nest-teal sm:grid-cols-3 lg:min-w-[17rem] lg:grid-cols-1">
+            {["Basics", "Quote factors", "Clear quote"].map((item) => (
+              <div key={item} className="flex items-center gap-2 rounded-2xl bg-white/85 px-4 py-3 shadow-sm">
+                <CheckCircle2 className="h-4 w-4 shrink-0 text-nest-gold" />
+                {item}
+              </div>
+            ))}
           </div>
         </div>
       </div>
