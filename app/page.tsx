@@ -211,37 +211,41 @@ export default function HomePage() {
         </div>
       </AnimatedSection>
 
-      <AnimatedSection className="mx-auto grid max-w-7xl gap-8 px-4 py-16 sm:px-6 lg:grid-cols-[0.95fr_1.05fr] lg:px-8">
-        <div className="pro-card overflow-hidden rounded-[2.5rem] p-5 sm:p-8">
-          <div className="relative overflow-hidden rounded-[2rem] bg-nest-cream p-6">
-            <div className="absolute -left-16 -top-16 h-48 w-48 rounded-full bg-nest-mint/55 blur-3xl" />
-            <Image src={siteConfig.assets.badge} alt="NestHelper Gold Star Checked badge" width={600} height={600} className="relative mx-auto max-h-[420px] w-full object-contain animate-float" />
-          </div>
-        </div>
-        <div className="self-center text-center">
-          <p className="pill-label mx-auto w-fit"><ShieldCheck size={15} /> Trust & Safety</p>
-          <h2 className="text-balance mt-4 text-3xl font-black leading-tight text-nest-teal sm:text-5xl">The trust standards behind every reset.</h2>
-          <p className="mx-auto mt-5 max-w-3xl text-base font-medium leading-7 text-nest-ink/72 sm:text-lg sm:leading-8">
-            NestHelper uses a checked-helper and vetted-partner model with screening steps, service boundaries, and follow-up after service. The Trust & Safety page explains how we review helpers, partners, scope, and safety before matching work.
-          </p>
-          <div className="mt-7 grid gap-3 sm:grid-cols-2">
-            {[
-              "Identity review",
-              "Background screening",
-              "Reference review",
-              "Service standards",
-              "Partner-vetted providers",
-              "Follow-up after service",
-            ].map((item) => (
-              <div key={item} className="group flex gap-3 rounded-2xl border border-nest-gold/12 bg-white p-4 font-black text-nest-ink/78 shadow-sm transition hover:-translate-y-0.5 hover:border-nest-gold/28 hover:shadow-sm">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-nest-mint/35 text-nest-teal transition group-hover:bg-nest-teal group-hover:text-white">
-                  <ShieldCheck size={18} />
-                </span>
-                {item}
+      <AnimatedSection className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
+        <div className="rounded-[2.25rem] border border-nest-gold/14 bg-white/86 p-5 shadow-soft backdrop-blur sm:p-7 lg:p-8">
+          <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
+            <div className="text-center lg:text-left">
+              <p className="pill-label mx-auto w-fit lg:mx-0"><ShieldCheck size={15} /> Trust & Safety</p>
+              <h2 className="text-balance mt-4 text-3xl font-black leading-tight text-nest-teal sm:text-4xl">
+                Clear standards before anyone comes to your home.
+              </h2>
+              <p className="mt-4 text-base font-medium leading-7 text-nest-ink/72 sm:text-lg">
+                NestHelper uses a managed helper model with screening steps, reviewed requests, clear service boundaries, and follow-up after service.
+              </p>
+              <p className="mt-3 text-sm font-black leading-6 text-nest-teal">
+                No childcare, babysitting, medical care, or elder care services.
+              </p>
+              <div className="mt-6 flex justify-center lg:justify-start">
+                <ButtonLink href="/trust" variant="secondary">Read Trust & Safety</ButtonLink>
               </div>
-            ))}
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              {[
+                "Background-checked helpers",
+                "Insured local service",
+                "Scope reviewed before payment",
+                "Service boundaries made clear",
+              ].map((item) => (
+                <div key={item} className="group flex items-center gap-3 rounded-2xl border border-nest-gold/12 bg-nest-cream p-4 text-sm font-black text-nest-ink/78 shadow-sm transition hover:-translate-y-0.5 hover:bg-white hover:shadow-sm">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-nest-teal shadow-sm transition group-hover:bg-nest-teal group-hover:text-white">
+                    <ShieldCheck size={17} />
+                  </span>
+                  {item}
+                </div>
+              ))}
+            </div>
           </div>
-          <div className="mt-8 flex justify-center"><ButtonLink href="/trust" variant="secondary">See Trust Standards</ButtonLink></div>
         </div>
       </AnimatedSection>
 
