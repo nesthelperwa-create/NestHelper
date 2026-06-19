@@ -2,11 +2,22 @@ import type { Metadata } from "next";
 import { Building2, CheckCircle2 } from "lucide-react";
 import { CommercialResetForm } from "@/components/forms/CommercialResetForm";
 import { ButtonLink } from "@/components/ui/ButtonLink";
+import { siteConfig } from "@/lib/siteConfig";
 
 export const metadata: Metadata = {
   title: "Request Commercial Reset Quote | NestHelper",
   description:
     "Request a Commercial Reset quote for small offices, churches, salons, daycare common areas, and local business spaces.",
+  alternates: {
+    canonical: `${siteConfig.url}/commercial-reset/request`,
+  },
+  openGraph: {
+    title: "Request Commercial Reset Quote | NestHelper",
+    description:
+      "Request a Commercial Reset quote for small offices, churches, salons, daycare common areas, and local business spaces.",
+    url: `${siteConfig.url}/commercial-reset/request`,
+    images: [siteConfig.assets.og],
+  },
 };
 
 export default function CommercialResetRequestPage() {

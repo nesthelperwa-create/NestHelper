@@ -1,6 +1,18 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { PageHero } from "@/components/PageHero";
 import { services } from "@/lib/services";
+
+
+export const metadata: Metadata = {
+  title: "NestHelper Checkout Status",
+  description: "NestHelper payment status page.",
+  robots: {
+    index: false,
+    follow: false,
+    nocache: true,
+  },
+};
 
 type SearchParams = Record<string, string | string[] | undefined>;
 

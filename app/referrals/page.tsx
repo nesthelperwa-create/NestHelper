@@ -1,8 +1,10 @@
+import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { ArrowRight, CheckCircle2, Gift, HeartHandshake, LockKeyhole, ShieldCheck, Sparkles } from "lucide-react";
 import { PageHero } from "@/components/PageHero";
 import { ButtonLink } from "@/components/ui/ButtonLink";
+import { siteConfig } from "@/lib/siteConfig";
 
 function normalizeReferralCode(value: unknown) {
   return typeof value === "string" ? value.toUpperCase().replace(/[^A-Z0-9-]/g, "").slice(0, 32) : "";
@@ -12,9 +14,18 @@ type ReferralsPageProps = {
   searchParams: Promise<{ ref?: string; referral?: string; referralCode?: string }>;
 };
 
-export const metadata = {
+export const metadata: Metadata = {
   title: "Family Referrals | NestHelper",
   description: "A simple NestHelper family referral program for eligible family services.",
+  alternates: {
+    canonical: `${siteConfig.url}/referrals`,
+  },
+  openGraph: {
+    title: "Family Referrals | NestHelper",
+    description: "A simple NestHelper family referral program for eligible family services.",
+    url: `${siteConfig.url}/referrals`,
+    images: [siteConfig.assets.og],
+  },
 };
 
 const familySteps = [

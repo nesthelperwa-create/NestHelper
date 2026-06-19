@@ -33,9 +33,6 @@ export const metadata: Metadata = {
     "Kirkland household help",
     "Redmond household help",
   ],
-  alternates: {
-    canonical: "/",
-  },
   openGraph: {
     title: "NestHelper | Household Help in Bothell, Woodinville & Eastside WA",
     description: "Managed household support, home resets, laundry catch-up, errands, and organizing for busy Eastside/Northshore families. No childcare.",

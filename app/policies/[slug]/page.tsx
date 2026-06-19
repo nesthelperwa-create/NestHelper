@@ -15,9 +15,22 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: PolicyPageProps) {
   const { slug } = await params;
   const policy = getPolicy(slug);
+  const title = policy ? `${policy.title} | NestHelper` : "Policy | NestHelper";
+  const description = policy?.intro || "Review NestHelper service policies and expectations.";
+  const url = `${siteConfig.url}/policies/${slug}`;
 
   return {
-    title: policy ? `${policy.title} | NestHelper` : "Policy | NestHelper"
+    title,
+    description,
+    alternates: {
+      canonical: url,
+    },
+    openGraph: {
+      title,
+      description,
+      url,
+      images: [siteConfig.assets.og],
+    },
   };
 }
 

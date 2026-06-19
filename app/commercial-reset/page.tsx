@@ -17,10 +17,20 @@ import {
 import { PageHero } from "@/components/PageHero";
 import { ButtonLink } from "@/components/ui/ButtonLink";
 import { CommercialAddOnPricingSelector } from "./CommercialAddOnPricingSelector";
+import { siteConfig } from "@/lib/siteConfig";
 
 export const metadata: Metadata = {
   title: "Commercial Reset | NestHelper",
   description: "Quote-first Commercial Reset cleaning for small offices, churches, salons, and local businesses in Eastside, Northshore, and Pierce County.",
+  alternates: {
+    canonical: `${siteConfig.url}/commercial-reset`,
+  },
+  openGraph: {
+    title: "Commercial Reset | NestHelper",
+    description: "Quote-first Commercial Reset cleaning for small offices, churches, salons, and local businesses in Eastside, Northshore, and Pierce County.",
+    url: `${siteConfig.url}/commercial-reset`,
+    images: [siteConfig.assets.og],
+  },
 };
 
 const businessTypes = [

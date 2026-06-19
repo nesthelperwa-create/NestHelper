@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { ArrowRight, CheckCircle2, Gift, HeartHandshake, Send, ShieldCheck } from "lucide-react";
@@ -12,9 +13,14 @@ type ReferralSharePageProps = {
   searchParams: Promise<{ ref?: string; referral?: string; referralCode?: string }>;
 };
 
-export const metadata = {
+export const metadata: Metadata = {
   title: "Share Your Family Referral | NestHelper",
   description: "Copy your one-time NestHelper family referral link and share it with one family.",
+  robots: {
+    index: false,
+    follow: false,
+    nocache: true,
+  },
 };
 
 export default async function ReferralSharePage({ searchParams }: ReferralSharePageProps) {

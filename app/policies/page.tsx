@@ -1,7 +1,25 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { PageHero } from "@/components/PageHero";
 import { policies } from "@/lib/policies";
+import { siteConfig } from "@/lib/siteConfig";
+
+export const metadata: Metadata = {
+  title: "NestHelper Policies | Service, Safety, Privacy & Referrals",
+  description:
+    "Review NestHelper policies for service scope, cancellation, laundry handling, refunds, safety, privacy, Commercial Reset, and referrals.",
+  alternates: {
+    canonical: `${siteConfig.url}/policies`,
+  },
+  openGraph: {
+    title: "NestHelper Policies",
+    description:
+      "Review NestHelper policies for service scope, cancellation, laundry handling, refunds, safety, privacy, Commercial Reset, and referrals.",
+    url: `${siteConfig.url}/policies`,
+    images: [siteConfig.assets.og],
+  },
+};
 
 export default function PoliciesPage() {
   return (
