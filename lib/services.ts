@@ -85,6 +85,25 @@ export const services: Service[] = [
     ]
   },
   {
+    id: "specific-area-reset",
+    title: "Specific Area Reset",
+    shortTitle: "Area Reset",
+    description: "Focused reset help for one area like a garage, pantry, closet, playroom, laundry room, or kitchen — quoted after review.",
+    details: [
+      "Garage, pantry, closet, playroom, kitchen, laundry room, or another area",
+      "Sorting, organizing, light cleanup, and practical reset support",
+      "Keep, donate, trash, and relocation piles when requested",
+      "Sweeping or vacuuming accessible floors and wiping reachable surfaces when appropriate",
+      "Hauling, hazardous materials, pest/biohazard cleanup, and heavy lifting reviewed separately"
+    ],
+    standardPrice: "Quoted after review",
+    priceNote: "Area size + condition reviewed",
+    serviceTime: "Scope-based visit, usually 2–4+ hours",
+    travelInfo: "Core Eastside/Northshore service area",
+    image: "/assets/services/service-specific-area-reset.png",
+    note: "Specific Area Resets are reviewed before checkout. The area, size, photos, clutter level, sorting needs, access, hauling/disposal needs, and safety notes all affect the quote. Garage Reset requests are welcome, but hazardous materials, pest/biohazard cleanup, mold remediation, and heavy junk hauling are not included unless separately reviewed and approved."
+  },
+  {
     id: "move-out-cleaning",
     title: "Move-In / Move-Out Cleaning",
     shortTitle: "Move-In / Out Clean",

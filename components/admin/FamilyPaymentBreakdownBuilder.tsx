@@ -127,6 +127,30 @@ const FAMILY_PRESETS = [
     amount: "45",
   },
   {
+    id: "garage-reset-reviewed",
+    label: "Garage Reset reviewed quote",
+    description: "Reviewed garage reset quote based on garage size, clutter level, sorting needs, access, photos, disposal needs, and safety notes.",
+    unit: "flat",
+    rate: "349",
+    amount: "349",
+  },
+  {
+    id: "specific-area-reset-reviewed",
+    label: "Specific Area Reset reviewed quote",
+    description: "Reviewed quote for a focused pantry, closet, playroom, laundry room, kitchen zone, entry, or other area reset.",
+    unit: "flat",
+    rate: "249",
+    amount: "249",
+  },
+  {
+    id: "specific-area-reset-larger-scope",
+    label: "Specific Area Reset larger-scope quote",
+    description: "Higher-scope area reset quote for larger spaces, heavier clutter, extra sorting, multiple zones, or longer approved time.",
+    unit: "flat",
+    rate: "449",
+    amount: "449",
+  },
+  {
     id: "errand-helper-standard",
     label: "Errand Helper",
     description: "Errand Helper base visit. Extra distance, complex stops, reimbursements, or wait time can be added separately after review.",
@@ -280,6 +304,7 @@ function BuilderSpinner() {
 function getServiceLabel(item: AdminDoc) {
   const raw = String(item.service || item.selectedServiceTitle || item.packageType || "").toLowerCase();
   if (raw.includes("laundry")) return "Laundry Rescue";
+  if (raw.includes("specific-area-reset") || raw.includes("specific area") || raw.includes("area reset") || raw.includes("garage reset")) return "Specific Area Reset";
   if (raw.includes("move-out") || raw.includes("move out") || raw.includes("move-in") || raw.includes("move in")) return "Move-In / Move-Out Cleaning";
   if (raw.includes("errand")) return "Errand Helper";
   if (raw.includes("helper")) return "Helper Block";
@@ -291,6 +316,8 @@ function getServiceLabel(item: AdminDoc) {
 function getSuggestedPresetId(item: AdminDoc) {
   const raw = String(item.service || item.selectedServiceTitle || item.packageType || "").toLowerCase();
   if (raw.includes("laundry")) return "laundry-deposit-standard";
+  if (raw.includes("garage reset") || raw.includes("arearesetarea: garage")) return "garage-reset-reviewed";
+  if (raw.includes("specific-area-reset") || raw.includes("specific area") || raw.includes("area reset")) return "specific-area-reset-reviewed";
   if (raw.includes("move-out") || raw.includes("move out") || raw.includes("move-in") || raw.includes("move in")) return "move-out-cleaning-reviewed";
   if (raw.includes("errand")) return "errand-helper-standard";
   if (raw.includes("helper")) return "helper-block-standard";
@@ -301,6 +328,7 @@ function getSuggestedPresetId(item: AdminDoc) {
 function getDefaultPaymentPlan(item: AdminDoc) {
   const raw = String(item.service || item.selectedServiceTitle || item.packageType || "").toLowerCase();
   if (raw.includes("laundry")) return "Laundry Rescue deposit";
+  if (raw.includes("specific-area-reset") || raw.includes("specific area") || raw.includes("area reset") || raw.includes("garage reset")) return "One-time specific area reset";
   if (raw.includes("move-out") || raw.includes("move out") || raw.includes("move-in") || raw.includes("move in")) return "One-time move-in / move-out cleaning";
   if (raw.includes("errand")) return "One-time errand helper";
   return "One-time family service";

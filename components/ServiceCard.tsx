@@ -29,6 +29,13 @@ const serviceStyles: Record<string, { eyebrow: string; accent: string; chip: str
     price: "bg-violet-50 text-violet-900",
     ring: "ring-violet-200/70",
   },
+  "specific-area-reset": {
+    eyebrow: "Area reset",
+    accent: "from-lime-500/12 via-emerald-100 to-white",
+    chip: "bg-lime-50 text-lime-900 border-lime-200",
+    price: "bg-lime-50 text-lime-950",
+    ring: "ring-lime-200/70",
+  },
   "move-out-cleaning": {
     eyebrow: "Move-in / out clean",
     accent: "from-cyan-500/12 via-teal-100 to-white",
@@ -85,6 +92,15 @@ const serviceExtras: Record<string, ServiceExtra> = {
       "Better for families who want fewer limits and more time to work through a checklist",
     ],
     goodToKnow: ["Custom scope reviewed", "Half-day helper block", "Best for bigger lists"],
+  },
+  "specific-area-reset": {
+    bestFor: "One focused space that needs a real reset — like a garage, pantry, closet, playroom, laundry room, entry, kitchen zone, or moving-prep area.",
+    extraDetails: [
+      "Garage Reset can include sorting, organizing, sweeping accessible areas, and grouping keep/donate/trash piles",
+      "Great for making room for storage, parking, strollers, tools, seasonal items, toys, or household systems",
+      "Photos help us quote clutter level, access, floor space, shelving, and any disposal needs before checkout",
+    ],
+    goodToKnow: ["Quote first", "Photos recommended", "No hazardous cleanup"],
   },
   "move-out-cleaning": {
     bestFor: "Empty or mostly empty homes that need a reviewed move-in, move-out, rental turnover, or listing-prep clean before keys are handed over.",

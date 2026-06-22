@@ -10,14 +10,14 @@ import { siteConfig } from "@/lib/siteConfig";
 export const metadata: Metadata = {
   title: "Household Help Services, Home Reset, Move-In / Move-Out Cleaning, Laundry & Errands",
   description:
-    "View NestHelper services for home resets, move-in / move-out cleaning, laundry help, errands, and organizing in Bothell, Woodinville, and nearby Eastside/Northshore areas.",
+    "View NestHelper services for home resets, garage and area resets, move-in / move-out cleaning, laundry help, errands, and organizing in Bothell, Woodinville, and nearby Eastside/Northshore areas.",
   alternates: {
     canonical: `${siteConfig.url}/services`,
   },
   openGraph: {
     title: "Household Help Services, Home Reset, Move-In / Move-Out Cleaning, Laundry & Errands | NestHelper",
     description:
-      "Managed household support, home reset packages, move-in / move-out cleaning, laundry help, organizing, and errand help for busy families. No childcare.",
+      "Managed household support, home reset packages, garage and area resets, move-in / move-out cleaning, laundry help, organizing, and errand help for busy families. No childcare.",
     url: `${siteConfig.url}/services`,
     images: [siteConfig.assets.og],
   },
@@ -44,12 +44,12 @@ export default function ServicesPage() {
         <div className="mb-10 grid gap-6 lg:grid-cols-[0.95fr_1.05fr] lg:items-end">
           <div className="text-center lg:text-left">
             <p className="pill-label mx-auto w-fit lg:mx-0"><Sparkles size={15} /> Household Help Packages</p>
-            <h2 className="text-balance mt-4 text-3xl font-black leading-tight text-nest-teal sm:text-5xl">Household help, home reset support, move-in / move-out cleaning, laundry help, organizing, and errands when the house feels like too much.</h2>
+            <h2 className="text-balance mt-4 text-3xl font-black leading-tight text-nest-teal sm:text-5xl">Household help, home reset support, garage and area resets, move-in / move-out cleaning, laundry help, organizing, and errands when the house feels like too much.</h2>
           </div>
           <div className="pro-card rounded-[2rem] p-6">
             <h3 className="text-xl font-black text-nest-teal">Simple at first glance. Details when you need them.</h3>
             <p className="mt-3 font-medium leading-7 text-nest-ink/70">
-              Each card shows the essentials first. Open a package to see what is included, then request the one that fits your family best. NestHelper keeps the scope focused on reviewed home help, move-in / move-out cleaning, laundry, errands, organizing, and reset tasks — not childcare or babysitting.
+              Each card shows the essentials first. Open a package to see what is included, then request the one that fits your family best. NestHelper keeps the scope focused on reviewed home help, garage and area resets, move-in / move-out cleaning, laundry, errands, organizing, and reset tasks — not childcare or babysitting.
             </p>
           </div>
         </div>

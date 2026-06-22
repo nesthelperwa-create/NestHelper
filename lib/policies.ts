@@ -36,7 +36,7 @@ export const policies: Policy[] = [
     sections: [
       {
         heading: "Family-to-family only",
-        body: "The referral program is for eligible NestHelper family services only, including Parent Reset, Family Reset, Helper Block, Errand Helper, and Laundry Rescue when NestHelper approves the request. Move-In / Move-Out Cleaning, Commercial Reset, partner services, helper applications, and business quote requests are excluded unless NestHelper approves an exception in writing."
+        body: "The referral program is for eligible NestHelper family services only, including Parent Reset, Family Reset, Helper Block, Errand Helper, and Laundry Rescue when NestHelper approves the request. Specific Area Reset, Garage Reset, Move-In / Move-Out Cleaning, Commercial Reset, partner services, helper applications, and business quote requests are excluded unless NestHelper approves an exception in writing."
       },
       {
         heading: "Eligible services",
@@ -90,11 +90,11 @@ export const policies: Policy[] = [
     sections: [
       {
         heading: "Included services",
-        body: "Light home reset help, laundry support, simple organizing, errands, family logistics support, and approved household tasks within the selected package time."
+        body: "Light home reset help, specific area resets, laundry support, simple organizing, errands, family logistics support, and approved household tasks within the selected package time or approved quote."
       },
       {
         heading: "Excluded services",
-        body: "No unsupervised childcare, bathing children, medical care, elder care, heavy lifting, hazardous cleaning, pest cleanup, hoarding/biohazards, illegal tasks, or emergency services."
+        body: "No unsupervised childcare, bathing children, medical care, elder care, unsafe heavy lifting, hazardous cleaning, chemical or paint disposal, pest cleanup, hoarding/biohazards, mold remediation, illegal tasks, or emergency services."
       },
       {
         heading: "Supplies",

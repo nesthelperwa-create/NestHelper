@@ -134,7 +134,7 @@ function getAvailableCustomerCreditTotal(credits: CustomerCredit[]) {
 function guessCheckoutMode(item: AdminDoc | null): CheckoutMode {
   const paymentMode = String(item?.paymentMode || "").toLowerCase();
   const rawService = String(item?.service || item?.selectedServiceTitle || item?.packageType || item?.requestType || "").toLowerCase();
-  if (rawService.includes("commercial") || rawService.includes("move-out") || rawService.includes("move out")) return "custom";
+  if (rawService.includes("commercial") || rawService.includes("move-out") || rawService.includes("move out") || rawService.includes("move-in") || rawService.includes("move in") || rawService.includes("specific area") || rawService.includes("area reset") || rawService.includes("garage reset")) return "custom";
   if (paymentMode === "custom" || paymentMode === "custom_initial" || item?.customInitialPayment) return "custom";
   return "standard";
 }
@@ -189,6 +189,12 @@ const SERVICE_LOOKS: Record<string, { label: string; badge: string; row: string;
     row: "border-l-8 border-l-violet-600 bg-violet-50/40 hover:bg-violet-100/80",
     dot: "bg-white ring-2 ring-violet-100",
   },
+  "specific-area-reset": {
+    label: "Area Reset",
+    badge: "border-lime-800 bg-lime-700 text-white shadow-sm shadow-lime-900/25",
+    row: "border-l-8 border-l-lime-700 bg-lime-50/50 hover:bg-lime-100/80",
+    dot: "bg-white ring-2 ring-lime-100",
+  },
   "move-out-cleaning": {
     label: "Move-In / Move-Out Cleaning",
     badge: "border-cyan-800 bg-cyan-700 text-white shadow-sm shadow-cyan-900/25",
@@ -228,6 +234,7 @@ function getServiceKey(item: AdminDoc | null | undefined) {
   if (raw.includes("parent-reset") || raw.includes("parent reset") || raw.includes("2-hour")) return "parent-reset-2hr";
   if (raw.includes("family-reset") || raw.includes("family reset") || raw.includes("3-hour")) return "family-reset-3hr";
   if (raw.includes("helper-block") || raw.includes("helper block") || raw.includes("4-hour")) return "helper-block-4hr";
+  if (raw.includes("specific-area-reset") || raw.includes("specific area") || raw.includes("area reset") || raw.includes("garage reset")) return "specific-area-reset";
   if (raw.includes("move-out") || raw.includes("move out") || raw.includes("move-in") || raw.includes("move in")) return "move-out-cleaning";
   if (raw.includes("errand")) return "errand-helper";
   if (raw.includes("laundry")) return "laundry-rescue";
@@ -1667,7 +1674,7 @@ function getPaidDateForBookkeeping(item: AdminDoc) {
 
 function getTaxableLabel(item: AdminDoc) {
   const serviceKey = getServiceKey(item);
-  if (serviceKey === "laundry-rescue" || serviceKey === "commercial-reset" || serviceKey === "move-out-cleaning") return "Taxable / verify in Stripe + WA DOR";
+  if (serviceKey === "laundry-rescue" || serviceKey === "commercial-reset" || serviceKey === "move-out-cleaning" || serviceKey === "specific-area-reset") return "Taxable / verify in Stripe + WA DOR";
   if (getSalesTaxCollected(item) > 0) return "Tax collected";
   return "Likely non-taxable / verify";
 }
@@ -1677,6 +1684,7 @@ function getBoCategoryNote(item: AdminDoc) {
   if (serviceKey === "commercial-reset") return "Commercial cleaning / verify WA B&O classification";
   if (serviceKey === "laundry-rescue") return "Laundry service / verify WA B&O classification";
   if (serviceKey === "move-out-cleaning") return "Residential cleaning / verify WA B&O classification";
+  if (serviceKey === "specific-area-reset") return "Residential organizing/cleaning / verify WA B&O classification";
   return "Household/family service / verify WA B&O classification";
 }
 
@@ -4310,7 +4318,7 @@ export default function AdminTable({
                           <input
                             value={customInitialTitle}
                             onChange={(e) => setCustomInitialTitle(e.target.value)}
-                            placeholder={selected.service === "laundry-rescue" ? "Laundry Rescue custom deposit" : selected.service === "commercial-reset" ? "Commercial Reset approved quote" : selected.service === "move-out-cleaning" ? "Move-In / Move-Out Cleaning approved quote" : "Custom Parent Reset checkout"}
+                            placeholder={selected.service === "laundry-rescue" ? "Laundry Rescue custom deposit" : selected.service === "commercial-reset" ? "Commercial Reset approved quote" : selected.service === "move-out-cleaning" ? "Move-In / Move-Out Cleaning approved quote" : selected.service === "specific-area-reset" ? "Specific Area Reset approved quote" : "Custom Parent Reset checkout"}
                             className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]"
                           />
                         </label>

@@ -48,6 +48,13 @@ const defaultState = {
   homeAreas: [] as string[],
   requestDetails: "",
   roomsAreas: "",
+  areaResetArea: "Garage",
+  areaResetOtherArea: "",
+  areaResetSize: "",
+  areaResetCondition: "Normal household clutter",
+  areaResetGoals: [] as string[],
+  areaResetHauling: "No hauling or dump run requested",
+  areaResetNotes: "",
   squareFootage: "",
   bedrooms: "",
   bathrooms: "",
@@ -97,6 +104,39 @@ const homeAreaOptions = [
   "Laundry area",
   "Entryway / mudroom",
   WHOLE_HOME_OPTION,
+];
+
+const areaResetAreaOptions = [
+  "Garage",
+  "Pantry",
+  "Closet",
+  "Playroom / toys",
+  "Laundry room",
+  "Kitchen",
+  "Nursery / kids room",
+  "Entry / mudroom",
+  "Moving prep area",
+  "Other — I’ll explain below",
+];
+
+const areaResetGoalOptions = [
+  "Sort keep / donate / trash piles",
+  "Organize shelves or bins",
+  "Sweep or vacuum accessible floor",
+  "Wipe reachable surfaces",
+  "Clear space for parking or storage",
+  "Set up zones or labels",
+  "Light trash bagging",
+  "Donation pickup prep only",
+  "I’m not sure — help me prioritize",
+];
+
+const areaResetHaulingOptions = [
+  "No hauling or dump run requested",
+  "Customer will handle trash/disposal",
+  "Donation pickup prep only",
+  "May need a separate hauling quote",
+  "Not sure yet — please review",
 ];
 
 const recurringResetOptions = [
@@ -160,6 +200,7 @@ const laundryTypeOptions = [
 function getServiceCategory(serviceId: string) {
   if (serviceId === "laundry-rescue") return "laundry";
   if (serviceId === "errand-helper") return "errand";
+  if (serviceId === "specific-area-reset") return "areaReset";
   if (serviceId === "move-out-cleaning") return "moveOut";
   if (serviceId) return "home";
   return "none";
@@ -292,6 +333,26 @@ function cleanForSelectedService(form: RequestFormState) {
     };
   }
 
+  if (category === "areaReset") {
+    return {
+      ...base,
+      packageType: "Specific Area Reset",
+      areaResetArea: form.areaResetArea,
+      areaResetOtherArea: form.areaResetOtherArea,
+      areaResetSize: form.areaResetSize,
+      areaResetCondition: form.areaResetCondition,
+      areaResetGoals: form.areaResetGoals,
+      areaResetGoalSummary: form.areaResetGoals.join(", "),
+      areaResetHauling: form.areaResetHauling,
+      homeType: form.homeType,
+      pets: form.pets,
+      petDetails: form.petDetails,
+      supplyPreference: form.supplyPreference,
+      requestDetails: form.areaResetNotes,
+      roomsAreas: [form.areaResetArea, form.areaResetOtherArea, form.areaResetSize].filter(Boolean).join(", "),
+    };
+  }
+
   if (category === "moveOut") {
     return {
       ...base,
@@ -363,12 +424,13 @@ export function RequestForm() {
   const selectedService = useMemo(() => services.find((service) => service.id === form.service), [form.service]);
   const serviceCategory = getServiceCategory(form.service);
   const isHomeReset = serviceCategory === "home";
+  const isAreaReset = serviceCategory === "areaReset";
   const isMoveOut = serviceCategory === "moveOut";
   const isErrand = serviceCategory === "errand";
   const isLaundry = serviceCategory === "laundry";
   const wholeHomeSelected = form.homeAreas.includes(WHOLE_HOME_OPTION);
   const homeScopeWarning = isHomeReset ? getHomeScopeWarning(form.service, form.homeAreas) : "";
-  const petDetailsRequired = (isHomeReset || isMoveOut) && form.pets !== "No pets" && form.pets !== "No pets now, but pets lived here before";
+  const petDetailsRequired = (isHomeReset || isAreaReset || isMoveOut) && form.pets !== "No pets" && form.pets !== "No pets now, but pets lived here before";
   const referralApplies = Boolean(form.incomingReferralCode && isReferralEligibleService(form.service));
   const referralNeedsEligiblePackage = Boolean(form.incomingReferralCode && form.service && !isReferralEligibleService(form.service));
   const showHowFoundUsDetails = shouldShowHowFoundUsDetails(form.howFoundUs);
@@ -383,7 +445,7 @@ export function RequestForm() {
 
   function handleServiceChange(service: string) {
     const nextCategory = getServiceCategory(service);
-    const isHomeLike = nextCategory === "home" || nextCategory === "moveOut";
+    const isHomeLike = nextCategory === "home" || nextCategory === "areaReset" || nextCategory === "moveOut";
     setForm((prev) => ({
       ...prev,
       service,
@@ -391,6 +453,13 @@ export function RequestForm() {
       homeAreas: nextCategory === "home" ? prev.homeAreas : [],
       requestDetails: nextCategory === "home" ? prev.requestDetails : "",
       roomsAreas: nextCategory === "home" ? prev.roomsAreas : "",
+      areaResetArea: nextCategory === "areaReset" ? prev.areaResetArea : defaultState.areaResetArea,
+      areaResetOtherArea: nextCategory === "areaReset" ? prev.areaResetOtherArea : "",
+      areaResetSize: nextCategory === "areaReset" ? prev.areaResetSize : "",
+      areaResetCondition: nextCategory === "areaReset" ? prev.areaResetCondition : defaultState.areaResetCondition,
+      areaResetGoals: nextCategory === "areaReset" ? prev.areaResetGoals : [],
+      areaResetHauling: nextCategory === "areaReset" ? prev.areaResetHauling : defaultState.areaResetHauling,
+      areaResetNotes: nextCategory === "areaReset" ? prev.areaResetNotes : "",
       homeType: isHomeLike ? prev.homeType : defaultState.homeType,
       pets: isHomeLike ? prev.pets : defaultState.pets,
       petDetails: isHomeLike ? prev.petDetails : "",
@@ -420,7 +489,7 @@ export function RequestForm() {
     }));
   }
 
-  function toggleList(name: "homePriorities" | "homeAreas" | "moveOutFocus" | "moveOutAppliances" | "laundryTypes" | "laundryAddOns", item: string, checked: boolean) {
+  function toggleList(name: "homePriorities" | "homeAreas" | "areaResetGoals" | "moveOutFocus" | "moveOutAppliances" | "laundryTypes" | "laundryAddOns", item: string, checked: boolean) {
     setForm((prev) => {
       const current = prev[name];
 
@@ -604,7 +673,7 @@ export function RequestForm() {
       {serviceCategory === "none" && (
         <Section title="4. Package-specific questions" description="Choose a service above and this section will only show questions that match that package.">
           <div className="rounded-3xl border border-nest-gold/20 bg-nest-cream p-5 text-sm font-semibold leading-6 text-nest-ink/76">
-            Select 2-Hour Parent Reset, 3-Hour Family Reset, 4-Hour Helper Block, Move-In / Move-Out Cleaning, Errand Helper, or Laundry Rescue to continue.
+            Select 2-Hour Parent Reset, 3-Hour Family Reset, 4-Hour Helper Block, Specific Area Reset, Move-In / Move-Out Cleaning, Errand Helper, or Laundry Rescue to continue.
           </div>
         </Section>
       )}
@@ -678,6 +747,63 @@ export function RequestForm() {
           </div>
           <Field label={wholeHomeSelected ? "Top 2–3 must-do priorities for this visit" : "Top priorities for this visit"} required>
             <textarea className="input min-h-28" required placeholder="Example: If time runs short, please handle kitchen counters, dishes, toy pickup in the living room, and the laundry pile first." value={form.requestDetails} onChange={(e) => update("requestDetails", e.target.value)} />
+          </Field>
+        </Section>
+      )}
+
+      {isAreaReset && (
+        <Section title="4. Specific area reset scope" description="Specific Area Reset is quoted after review. Tell us which space needs help, what kind of sorting or cleanup is needed, and whether there are disposal, access, or safety concerns.">
+          <div className="rounded-3xl border border-nest-gold/20 bg-nest-cream p-5 text-sm leading-6 text-nest-ink/76">
+            <strong className="text-nest-teal">Good fit:</strong> garage reset, pantry reset, closet reset, playroom reset, laundry room reset, kitchen zone reset, entry/mudroom reset, or moving-prep organizing. <strong className="text-nest-teal">Not included unless separately approved:</strong> dump runs, heavy junk hauling, hazardous materials, paint/chemical disposal, pest or rodent cleanup, mold, biohazards, or unsafe heavy lifting.
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Area to reset" required>
+              <select className="input" required value={form.areaResetArea} onChange={(e) => update("areaResetArea", e.target.value)}>
+                {areaResetAreaOptions.map((option) => <option key={option}>{option}</option>)}
+              </select>
+            </Field>
+            {form.areaResetArea === "Other — I’ll explain below" && (
+              <Field label="Other area" required>
+                <input className="input" required placeholder="Example: storage room, office, attic landing" value={form.areaResetOtherArea} onChange={(e) => update("areaResetOtherArea", e.target.value)} />
+              </Field>
+            )}
+            <Field label="Approximate size" required>
+              <input className="input" required placeholder="Example: 1-car garage, small pantry, walk-in closet, 10x12 room" value={form.areaResetSize} onChange={(e) => update("areaResetSize", e.target.value)} />
+            </Field>
+            <Field label="Condition level">
+              <select className="input" value={form.areaResetCondition} onChange={(e) => update("areaResetCondition", e.target.value)}>
+                <option>Light reset / mostly organized</option>
+                <option>Normal household clutter</option>
+                <option>Lots to sort, but walkable</option>
+                <option>Heavy clutter / limited floor space</option>
+                <option>Needs photos or walkthrough before quoting</option>
+              </select>
+            </Field>
+            <Field label="Disposal or hauling needs">
+              <select className="input" value={form.areaResetHauling} onChange={(e) => update("areaResetHauling", e.target.value)}>
+                {areaResetHaulingOptions.map((option) => <option key={option}>{option}</option>)}
+              </select>
+            </Field>
+            <Field label="Product preference">
+              <select className="input" value={form.supplyPreference} onChange={(e) => update("supplyPreference", e.target.value)}>
+                <option>NestHelper brings standard supplies</option>
+                <option>Non-toxic / low-odor options requested where appropriate</option>
+                <option>Fragrance-free / sensitive products requested</option>
+                <option>Customer-provided products only</option>
+                <option>Not sure yet</option>
+              </select>
+            </Field>
+          </div>
+          <div>
+            <div className="label mb-3">What kind of reset do you want?</div>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {areaResetGoalOptions.map((item) => (
+                <CheckOption key={item} checked={form.areaResetGoals.includes(item)} onChange={(checked) => toggleList("areaResetGoals", item, checked)}>{item}</CheckOption>
+              ))}
+            </div>
+          </div>
+          <Field label="Top priorities and safety notes" required>
+            <textarea className="input min-h-28" required placeholder="Example: Garage reset. Need help sorting boxes, clearing space near the door, grouping donations, and sweeping accessible areas. No dump run needed. Please avoid paint cans and chemicals." value={form.areaResetNotes} onChange={(e) => update("areaResetNotes", e.target.value)} />
           </Field>
         </Section>
       )}
@@ -871,8 +997,8 @@ export function RequestForm() {
         </Section>
       )}
 
-      {(isHomeReset || isMoveOut) && (
-        <Section title="5. Home, pets, and access" description={isMoveOut ? "Clear move-in / move-out access notes help us quote accurately and avoid delays on service day." : "Clear access notes help us avoid delays and make sure the request is safe for everyone."}>
+      {(isHomeReset || isAreaReset || isMoveOut) && (
+        <Section title="5. Home, pets, and access" description={isMoveOut ? "Clear move-in / move-out access notes help us quote accurately and avoid delays on service day." : isAreaReset ? "Clear area-reset access notes help us quote accurately, plan supplies, and avoid unsafe conditions on service day." : "Clear access notes help us avoid delays and make sure the request is safe for everyone."}>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label={isMoveOut ? "Pets or pet history" : "Pets in home"}>
               <select className="input" value={form.pets} onChange={(e) => update("pets", e.target.value)}>
@@ -893,7 +1019,7 @@ export function RequestForm() {
               <textarea
                 className="input min-h-24"
                 required
-                placeholder={isMoveOut ? "Example: No pets now, but there was a dog before the home was emptied. Please pay extra attention to floors/baseboards." : "Example: Two friendly dogs will be crated upstairs. Cat may hide. Please do not let pets outside."}
+                placeholder={isMoveOut ? "Example: No pets now, but there was a dog before the home was emptied. Please pay extra attention to floors/baseboards." : isAreaReset ? "Example: Two dogs will be secured inside while the garage is being reset. Please do not open the side gate." : "Example: Two friendly dogs will be crated upstairs. Cat may hide. Please do not let pets outside."}
                 value={form.petDetails}
                 onChange={(e) => update("petDetails", e.target.value)}
               />
@@ -915,12 +1041,12 @@ export function RequestForm() {
       )}
 
       {serviceCategory !== "none" && (
-        <Section title="6. Optional photos" description={isMoveOut ? "Photos are strongly recommended for move-in / move-out cleaning so we can quote the kitchen, bathrooms, floors, appliances, and any buildup before checkout." : "Photos are optional, but they can help us understand the scope before we approve, quote, or schedule the request."}>
+        <Section title="6. Optional photos" description={isMoveOut ? "Photos are strongly recommended for move-in / move-out cleaning so we can quote the kitchen, bathrooms, floors, appliances, and any buildup before checkout." : isAreaReset ? "Photos are strongly recommended for Specific Area Resets so we can quote the area size, clutter level, access, shelving, disposal needs, and safety concerns before checkout." : "Photos are optional, but they can help us understand the scope before we approve, quote, or schedule the request."}>
           <PhotoUploadField
             photos={form.photoUploads}
             onChange={(photos) => update("photoUploads", photos)}
             label="Upload photos (optional)"
-            description={isMoveOut ? "Add up to 4 photos. Kitchen, bathrooms, floors, bathtub/shower, and any heavy buildup are the most helpful." : "Add up to 4 optional photos. Useful for before photos, rooms/areas involved, laundry amount, access notes, or anything that helps us quote and plan accurately."}
+            description={isMoveOut ? "Add up to 4 photos. Kitchen, bathrooms, floors, bathtub/shower, and any heavy buildup are the most helpful." : isAreaReset ? "Add up to 4 photos. Wide shots of the garage/area, floor space, shelves, piles, and anything you do not want touched are the most helpful." : "Add up to 4 optional photos. Useful for before photos, rooms/areas involved, laundry amount, access notes, or anything that helps us quote and plan accurately."}
           />
         </Section>
       )}
