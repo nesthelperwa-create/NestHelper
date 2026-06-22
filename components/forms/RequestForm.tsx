@@ -53,7 +53,7 @@ const defaultState = {
   areaResetSize: "",
   areaResetCondition: "Normal household clutter",
   areaResetGoals: [] as string[],
-  areaResetHauling: "No hauling or dump run requested",
+  areaResetHauling: "No disposal prep needed",
   areaResetNotes: "",
   squareFootage: "",
   bedrooms: "",
@@ -132,10 +132,11 @@ const areaResetGoalOptions = [
 ];
 
 const areaResetHaulingOptions = [
-  "No hauling or dump run requested",
+  "No disposal prep needed",
   "Customer will handle trash/disposal",
+  "Bag/box and stage trash for customer disposal",
   "Donation pickup prep only",
-  "May need a separate hauling quote",
+  "Sort into keep / donate / trash piles",
   "Not sure yet — please review",
 ];
 
@@ -752,9 +753,9 @@ export function RequestForm() {
       )}
 
       {isAreaReset && (
-        <Section title="4. Specific area reset scope" description="Specific Area Reset is quoted after review. Tell us which space needs help, what kind of sorting or cleanup is needed, and whether there are disposal, access, or safety concerns.">
+        <Section title="4. Specific area reset scope" description="Specific Area Reset is quoted after review. Tell us which space needs help, what kind of sorting or cleanup is needed, and whether there are trash/donation prep, access, or safety concerns.">
           <div className="rounded-3xl border border-nest-gold/20 bg-nest-cream p-5 text-sm leading-6 text-nest-ink/76">
-            <strong className="text-nest-teal">Good fit:</strong> garage reset, pantry reset, closet reset, playroom reset, laundry room reset, kitchen zone reset, entry/mudroom reset, or moving-prep organizing. <strong className="text-nest-teal">Not included unless separately approved:</strong> dump runs, heavy junk hauling, hazardous materials, paint/chemical disposal, pest or rodent cleanup, mold, biohazards, or unsafe heavy lifting.
+            <strong className="text-nest-teal">Good fit:</strong> garage reset, pantry reset, closet reset, playroom reset, laundry room reset, kitchen zone reset, entry/mudroom reset, or moving-prep organizing. <strong className="text-nest-teal">Not included:</strong> dump runs, junk hauling, hazardous materials, paint/chemical disposal, pest or rodent cleanup, mold, biohazards, or unsafe heavy lifting.
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Area to reset" required>
@@ -779,7 +780,7 @@ export function RequestForm() {
                 <option>Needs photos or walkthrough before quoting</option>
               </select>
             </Field>
-            <Field label="Disposal or hauling needs">
+            <Field label="Trash/donation prep needed?">
               <select className="input" value={form.areaResetHauling} onChange={(e) => update("areaResetHauling", e.target.value)}>
                 {areaResetHaulingOptions.map((option) => <option key={option}>{option}</option>)}
               </select>
@@ -803,7 +804,7 @@ export function RequestForm() {
             </div>
           </div>
           <Field label="Top priorities and safety notes" required>
-            <textarea className="input min-h-28" required placeholder="Example: Garage reset. Need help sorting boxes, clearing space near the door, grouping donations, and sweeping accessible areas. No dump run needed. Please avoid paint cans and chemicals." value={form.areaResetNotes} onChange={(e) => update("areaResetNotes", e.target.value)} />
+            <textarea className="input min-h-28" required placeholder="Example: Garage reset. Need help sorting boxes, clearing space near the door, grouping donations, and sweeping accessible areas. Customer will handle disposal. Please avoid paint cans and chemicals." value={form.areaResetNotes} onChange={(e) => update("areaResetNotes", e.target.value)} />
           </Field>
         </Section>
       )}

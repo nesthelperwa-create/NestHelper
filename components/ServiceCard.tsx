@@ -98,7 +98,7 @@ const serviceExtras: Record<string, ServiceExtra> = {
     extraDetails: [
       "Garage Reset can include sorting, organizing, sweeping accessible areas, and grouping keep/donate/trash piles",
       "Great for making room for storage, parking, strollers, tools, seasonal items, toys, or household systems",
-      "Photos help us quote clutter level, access, floor space, shelving, and any disposal needs before checkout",
+      "Photos help us quote clutter level, access, floor space, shelving, and any customer-arranged disposal prep before checkout",
     ],
     goodToKnow: ["Quote first", "Photos recommended", "No hazardous cleanup"],
   },
@@ -144,6 +144,7 @@ export function ServiceCard({ service, equalCollapsedHeight = false }: { service
   const featured = service.id === "family-reset-3hr";
   const isLaundry = service.id === "laundry-rescue";
   const isQuoteBased = service.standardPrice.toLowerCase().includes("quoted");
+  const quotePriceText = isQuoteBased ? service.standardPrice.replace(/quoted/i, "Quote") : service.standardPrice;
   const equalClosed = equalCollapsedHeight && !open;
   const collapsedHeightClass = equalCollapsedHeight ? "h-[670px] sm:h-[650px]" : "min-h-[610px] md:h-[650px]";
 
@@ -269,20 +270,33 @@ export function ServiceCard({ service, equalCollapsedHeight = false }: { service
         </div>
 
         <div className={`mt-5 shrink-0 overflow-hidden rounded-3xl border border-nest-gold/14 bg-gradient-to-br from-nest-cream via-white to-nest-mint/20 shadow-sm ${equalClosed ? "h-[8.75rem]" : ""}`}>
-          <div className={`grid gap-0 sm:grid-cols-[1fr_8.4rem] ${equalClosed ? "h-full" : "min-h-[8.4rem]"}`}>
-            <div className="flex flex-col justify-center p-4 sm:p-5">
+          <div className={`grid gap-0 sm:grid-cols-[minmax(0,1fr)_7.9rem] ${equalClosed ? "h-full" : "min-h-[8.4rem]"}`}>
+            <div className="flex min-w-0 flex-col justify-center p-4 sm:p-5">
               <div className="text-xs font-black uppercase tracking-[0.16em] text-nest-ink/55">{isQuoteBased ? "Pricing" : "Starting at"}</div>
-              <div className={`mt-1 break-words font-black leading-tight text-nest-teal ${isLaundry ? "text-[1.55rem] sm:text-[1.62rem]" : "text-3xl"}`}>
+              <div
+                className={`mt-1 max-w-full font-black leading-tight text-nest-teal ${
+                  isLaundry
+                    ? "text-[1.55rem] sm:text-[1.62rem]"
+                    : isQuoteBased
+                      ? "text-[1.28rem] leading-[1.05] sm:text-[1.38rem]"
+                      : "text-3xl"
+                }`}
+              >
                 {isLaundry ? (
                   <>
                     <span>$59 minimum</span>
                     <span className="block">+ $2.99/lb</span>
                   </>
+                ) : isQuoteBased ? (
+                  <>
+                    <span className="block">{quotePriceText.split(" after ")[0]}</span>
+                    <span className="block whitespace-nowrap">after review</span>
+                  </>
                 ) : (
                   service.standardPrice
                 )}
               </div>
-              <div className={`mt-2 font-bold text-nest-ink/60 ${isLaundry ? "text-[0.72rem] leading-4 sm:text-xs" : "text-sm"}`}>
+              <div className={`mt-2 font-bold text-nest-ink/60 ${isLaundry || isQuoteBased ? "text-[0.72rem] leading-4 sm:text-xs" : "text-sm"}`}>
                 {isQuoteBased ? "Reviewed before checkout" : "Helper-based launch pricing"}
               </div>
             </div>

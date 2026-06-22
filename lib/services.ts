@@ -94,14 +94,14 @@ export const services: Service[] = [
       "Sorting, organizing, light cleanup, and practical reset support",
       "Keep, donate, trash, and relocation piles when requested",
       "Sweeping or vacuuming accessible floors and wiping reachable surfaces when appropriate",
-      "Hauling, hazardous materials, pest/biohazard cleanup, and heavy lifting reviewed separately"
+      "Customer-arranged donation/trash prep, with dump runs, junk hauling, hazardous materials, pest/biohazard cleanup, and unsafe heavy lifting not included"
     ],
     standardPrice: "Quoted after review",
     priceNote: "Area size + condition reviewed",
     serviceTime: "Scope-based visit, usually 2–4+ hours",
     travelInfo: "Core Eastside/Northshore service area",
     image: "/assets/services/service-specific-area-reset.png",
-    note: "Specific Area Resets are reviewed before checkout. The area, size, photos, clutter level, sorting needs, access, hauling/disposal needs, and safety notes all affect the quote. Garage Reset requests are welcome, but hazardous materials, pest/biohazard cleanup, mold remediation, and heavy junk hauling are not included unless separately reviewed and approved."
+    note: "Specific Area Resets are reviewed before checkout. The area, size, photos, clutter level, sorting needs, access, customer-arranged trash/donation prep, and safety notes all affect the quote. Garage Reset requests are welcome, but NestHelper does not provide dump runs, junk hauling, hazardous material disposal, pest/biohazard cleanup, mold remediation, or unsafe heavy lifting."
   },
   {
     id: "move-out-cleaning",
