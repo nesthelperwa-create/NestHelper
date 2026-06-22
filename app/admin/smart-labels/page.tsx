@@ -16,6 +16,7 @@ import {
   QrCode,
   RotateCcw,
   Search,
+  Trash2,
   Undo2,
 } from "lucide-react";
 import AdminShell from "@/components/admin/AdminShell";
@@ -93,6 +94,12 @@ type GeneratedBatchResponse = {
   printPath?: string;
 };
 
+type DeleteBatchResponse = {
+  ok?: boolean;
+  error?: string;
+  message?: string;
+};
+
 function getString(value: unknown) {
   return typeof value === "string" ? value : "";
 }
@@ -168,6 +175,7 @@ export default function AdminSmartLabelsPage() {
   const [loadingBatches, setLoadingBatches] = useState(true);
   const [loadingLabels, setLoadingLabels] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [deletingBatchId, setDeletingBatchId] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [lastPrintPath, setLastPrintPath] = useState("");
@@ -366,6 +374,41 @@ export default function AdminSmartLabelsPage() {
     }
   }
 
+  async function removeBatchFromDashboard(batch: SmartLabelBatch) {
+    const labelCount = batch.quantity || batch.labelCount || (Array.isArray(batch.codes) ? batch.codes.length : 0);
+    const confirmed = window.confirm(
+      `Remove this QR sheet from the dashboard list?\n\n${batch.batchName || "Smart Label Sheet"}\n${labelCount || ""} labels/codes\n\nThis only removes the sheet/list from the dashboard. It does not delete the QR codes, active labels, reservations, photos, notes, or PIN controls. You can still manage any label by searching its printed QR code.`
+    );
+    if (!confirmed) return;
+
+    setDeletingBatchId(batch.id);
+    setError("");
+    setMessage("");
+
+    try {
+      const user = firebaseAuth.currentUser;
+      if (!user) throw new Error("Sign back in to admin before removing a label sheet.");
+      const token = await getIdToken(user, true);
+      const response = await fetch("/api/admin/smart-labels/delete-batch", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ batchId: batch.id }),
+      });
+      const result = (await response.json().catch(() => null)) as DeleteBatchResponse | null;
+      if (!response.ok || !result?.ok) throw new Error(result?.error || "Unable to remove this sheet from the dashboard.");
+
+      setMessage(result.message || "Removed this QR sheet from the dashboard list. QR codes still work and can still be managed by lookup.");
+      if (selectedBatchId === batch.id) setSelectedBatchId("");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to remove this sheet from the dashboard.");
+    } finally {
+      setDeletingBatchId("");
+    }
+  }
+
   function exportStickerOrderCsv() {
     const codes = getBatchCodes(selectedBatch, labels);
     const filename = `${safeCsvFilename(selectedBatch?.batchName || selectedBatch?.id || "nesthelper-sticker-order")}.csv`;
@@ -545,7 +588,7 @@ export default function AdminSmartLabelsPage() {
             <div className="flex items-center justify-between gap-3">
               <div>
                 <h3 className="text-2xl font-black text-[#075c58]">Sheets</h3>
-                <p className="mt-1 text-sm font-semibold text-slate-500">Pick a customer kit to manage labels.</p>
+                <p className="mt-1 text-sm font-semibold text-slate-500">Pick a kit to manage labels, or remove old sheets while keeping QR codes searchable.</p>
               </div>
               <span className="rounded-full bg-[#e9f4f1] px-3 py-1 text-xs font-black text-[#075c58]">{batches.length}</span>
             </div>
@@ -607,6 +650,14 @@ export default function AdminSmartLabelsPage() {
                       <Download size={16} /> Admin CSV
                     </button>
                   )}
+                  <button
+                    type="button"
+                    onClick={() => removeBatchFromDashboard(selectedBatch)}
+                    disabled={deletingBatchId === selectedBatch.id}
+                    className="inline-flex items-center gap-2 rounded-full border border-rose-200 px-4 py-2 text-sm font-black text-rose-700 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {deletingBatchId === selectedBatch.id ? <Loader2 className="animate-spin" size={16} /> : <Trash2 size={16} />} Remove from list
+                  </button>
                 </div>
               )}
             </div>
