@@ -51,8 +51,9 @@ const defaultState = {
   squareFootage: "",
   bedrooms: "",
   bathrooms: "",
-  occupancyStatus: "Empty / moved out",
-  moveOutCondition: "Normal move-out condition",
+  moveCleaningType: "",
+  occupancyStatus: "Empty / no furniture",
+  moveOutCondition: "Normal empty-home condition",
   moveOutFocus: [] as string[],
   moveOutAppliances: [] as string[],
   moveOutNotes: "",
@@ -294,7 +295,8 @@ function cleanForSelectedService(form: RequestFormState) {
   if (category === "moveOut") {
     return {
       ...base,
-      packageType: "Move-out cleaning",
+      packageType: "Move-In / Move-Out Cleaning",
+      moveCleaningType: form.moveCleaningType,
       homeType: form.homeType,
       squareFootage: form.squareFootage,
       bedrooms: form.bedrooms,
@@ -397,6 +399,7 @@ export function RequestForm() {
       squareFootage: nextCategory === "moveOut" ? prev.squareFootage : "",
       bedrooms: nextCategory === "moveOut" ? prev.bedrooms : "",
       bathrooms: nextCategory === "moveOut" ? prev.bathrooms : "",
+      moveCleaningType: nextCategory === "moveOut" ? prev.moveCleaningType : defaultState.moveCleaningType,
       occupancyStatus: nextCategory === "moveOut" ? prev.occupancyStatus : defaultState.occupancyStatus,
       moveOutCondition: nextCategory === "moveOut" ? prev.moveOutCondition : defaultState.moveOutCondition,
       moveOutFocus: nextCategory === "moveOut" ? prev.moveOutFocus : [],
@@ -601,7 +604,7 @@ export function RequestForm() {
       {serviceCategory === "none" && (
         <Section title="4. Package-specific questions" description="Choose a service above and this section will only show questions that match that package.">
           <div className="rounded-3xl border border-nest-gold/20 bg-nest-cream p-5 text-sm font-semibold leading-6 text-nest-ink/76">
-            Select 2-Hour Parent Reset, 3-Hour Family Reset, 4-Hour Helper Block, Move-Out Cleaning, Errand Helper, or Laundry Rescue to continue.
+            Select 2-Hour Parent Reset, 3-Hour Family Reset, 4-Hour Helper Block, Move-In / Move-Out Cleaning, Errand Helper, or Laundry Rescue to continue.
           </div>
         </Section>
       )}
@@ -680,9 +683,9 @@ export function RequestForm() {
       )}
 
       {isMoveOut && (
-        <Section title="4. Move-out cleaning scope" description="Move-out cleaning is quoted after review. Square footage, empty-home status, condition, photos, and priority areas help us give a clearer estimate before checkout.">
+        <Section title="4. Move-in / move-out cleaning scope" description="Move-in / move-out cleaning is quoted after review. Square footage, empty-home status, condition, photos, and priority areas help us give a clearer estimate before checkout.">
           <div className="rounded-3xl border border-nest-gold/20 bg-nest-cream p-5 text-sm leading-6 text-nest-ink/76">
-            <strong className="text-nest-teal">Good fit:</strong> empty or mostly empty homes, apartments, condos, move-outs, move-ins, and listing prep. <strong className="text-nest-teal">Quote first:</strong> heavy grease, hard-water staining, inside appliances, construction dust, excessive trash, or specialty restoration.
+            <strong className="text-nest-teal">Good fit:</strong> empty or mostly empty homes, apartments, condos, move-ins, move-outs, rental turnovers, and listing prep. <strong className="text-nest-teal">Quote first:</strong> heavy grease, hard-water staining, inside appliances, construction dust, excessive trash, or specialty restoration.
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Home type">
@@ -703,20 +706,30 @@ export function RequestForm() {
             <Field label="Bathrooms" required>
               <input className="input" required placeholder="Example: 2 bathrooms" value={form.bathrooms} onChange={(e) => update("bathrooms", e.target.value)} />
             </Field>
-            <Field label="Move-out status">
-              <select className="input" value={form.occupancyStatus} onChange={(e) => update("occupancyStatus", e.target.value)}>
-                <option>Empty / moved out</option>
-                <option>Mostly empty</option>
-                <option>Still furnished</option>
+            <Field label="Is this for move-in or move-out?" required>
+              <select className="input" required value={form.moveCleaningType} onChange={(e) => update("moveCleaningType", e.target.value)}>
+                <option value="">Choose move-in, move-out, or turnover</option>
                 <option>Move-in cleaning before belongings arrive</option>
+                <option>Move-out cleaning after belongings are removed</option>
+                <option>Empty home deep clean / not sure</option>
+                <option>Rental turnover</option>
                 <option>Listing / real estate prep</option>
+                <option>Other — I’ll explain below</option>
+              </select>
+            </Field>
+            <Field label="Home status">
+              <select className="input" value={form.occupancyStatus} onChange={(e) => update("occupancyStatus", e.target.value)}>
+                <option>Empty / no furniture</option>
+                <option>Mostly empty</option>
+                <option>Partially furnished</option>
+                <option>Still furnished</option>
                 <option>Other — I’ll explain below</option>
               </select>
             </Field>
             <Field label="Condition level">
               <select className="input" value={form.moveOutCondition} onChange={(e) => update("moveOutCondition", e.target.value)}>
-                <option>Light move-out condition</option>
-                <option>Normal move-out condition</option>
+                <option>Light empty-home condition</option>
+                <option>Normal empty-home condition</option>
                 <option>Kitchen or bathrooms need extra attention</option>
                 <option>Heavy buildup / grease / hard water</option>
                 <option>Needs photos or walkthrough before quoting</option>
@@ -733,7 +746,7 @@ export function RequestForm() {
             </Field>
           </div>
           <div>
-            <div className="label mb-3">Main move-out focus</div>
+            <div className="label mb-3">Main cleaning focus</div>
             <div className="grid gap-2 sm:grid-cols-2">
               {moveOutFocusOptions.map((item) => (
                 <CheckOption key={item} checked={form.moveOutFocus.includes(item)} onChange={(checked) => toggleList("moveOutFocus", item, checked)}>{item}</CheckOption>
@@ -749,7 +762,7 @@ export function RequestForm() {
             </div>
           </div>
           <Field label="Anything we should know before quoting?" required>
-            <textarea className="input min-h-28" required placeholder="Example: Empty 2 bed / 2 bath. Kitchen and bathtub need the most attention. Please quote non-toxic products if possible. Need completed before keys are returned." value={form.moveOutNotes} onChange={(e) => update("moveOutNotes", e.target.value)} />
+            <textarea className="input min-h-28" required placeholder="Example: Empty 2 bed / 2 bath. Move-in cleaning before furniture arrives. Kitchen, bathtub, and cabinets need the most attention. Please quote non-toxic products if possible." value={form.moveOutNotes} onChange={(e) => update("moveOutNotes", e.target.value)} />
           </Field>
         </Section>
       )}
@@ -859,7 +872,7 @@ export function RequestForm() {
       )}
 
       {(isHomeReset || isMoveOut) && (
-        <Section title="5. Home, pets, and access" description={isMoveOut ? "Clear move-out access notes help us quote accurately and avoid delays on service day." : "Clear access notes help us avoid delays and make sure the request is safe for everyone."}>
+        <Section title="5. Home, pets, and access" description={isMoveOut ? "Clear move-in / move-out access notes help us quote accurately and avoid delays on service day." : "Clear access notes help us avoid delays and make sure the request is safe for everyone."}>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label={isMoveOut ? "Pets or pet history" : "Pets in home"}>
               <select className="input" value={form.pets} onChange={(e) => update("pets", e.target.value)}>
@@ -880,7 +893,7 @@ export function RequestForm() {
               <textarea
                 className="input min-h-24"
                 required
-                placeholder={isMoveOut ? "Example: No pets now, but there was a dog before move-out. Please pay extra attention to floors/baseboards." : "Example: Two friendly dogs will be crated upstairs. Cat may hide. Please do not let pets outside."}
+                placeholder={isMoveOut ? "Example: No pets now, but there was a dog before the home was emptied. Please pay extra attention to floors/baseboards." : "Example: Two friendly dogs will be crated upstairs. Cat may hide. Please do not let pets outside."}
                 value={form.petDetails}
                 onChange={(e) => update("petDetails", e.target.value)}
               />
@@ -902,7 +915,7 @@ export function RequestForm() {
       )}
 
       {serviceCategory !== "none" && (
-        <Section title="6. Optional photos" description={isMoveOut ? "Photos are strongly recommended for move-out cleaning so we can quote the kitchen, bathrooms, floors, appliances, and any buildup before checkout." : "Photos are optional, but they can help us understand the scope before we approve, quote, or schedule the request."}>
+        <Section title="6. Optional photos" description={isMoveOut ? "Photos are strongly recommended for move-in / move-out cleaning so we can quote the kitchen, bathrooms, floors, appliances, and any buildup before checkout." : "Photos are optional, but they can help us understand the scope before we approve, quote, or schedule the request."}>
           <PhotoUploadField
             photos={form.photoUploads}
             onChange={(photos) => update("photoUploads", photos)}

@@ -86,9 +86,9 @@ export const services: Service[] = [
   },
   {
     id: "move-out-cleaning",
-    title: "Move-Out Cleaning",
-    shortTitle: "Move-Out Clean",
-    description: "Empty-home cleaning for move-outs, move-ins, rentals, and listing prep — quoted after review.",
+    title: "Move-In / Move-Out Cleaning",
+    shortTitle: "Move-In / Out Clean",
+    description: "Empty-home cleaning for move-ins, move-outs, rentals, and listing prep — quoted after review.",
     details: [
       "Empty or mostly empty home cleaning",
       "Kitchen and bathroom focus",
@@ -101,7 +101,7 @@ export const services: Service[] = [
     serviceTime: "Scope-based visit, usually 2–6+ hours",
     travelInfo: "Core Eastside/Northshore service area",
     image: "/assets/services/service-move-out-cleaning.png",
-    note: "Move-out cleaning is reviewed before checkout. Square footage, empty-home status, photos, kitchen/bathroom condition, appliance requests, access notes, and timing all affect the quote."
+    note: "Move-in / move-out cleaning is reviewed before checkout. Square footage, empty-home status, photos, kitchen/bathroom condition, appliance requests, access notes, and timing all affect the quote."
   },
   {
     id: "errand-helper",

@@ -104,24 +104,24 @@ const FAMILY_PRESETS = [
   },
   {
     id: "move-out-cleaning-reviewed",
-    label: "Move-Out Cleaning reviewed quote",
-    description: "Reviewed move-out cleaning quote based on square footage, bedrooms/bathrooms, empty-home status, condition, and priority areas.",
+    label: "Move-In / Move-Out Cleaning reviewed quote",
+    description: "Reviewed move-in / move-out cleaning quote based on square footage, bedrooms/bathrooms, empty-home status, condition, and priority areas.",
     unit: "flat",
     rate: "395",
     amount: "395",
   },
   {
     id: "move-out-cleaning-larger-scope",
-    label: "Move-Out Cleaning larger-scope quote",
-    description: "Higher-scope move-out cleaning quote for larger homes, extra kitchen/bathroom buildup, or added appliance/cabinet scope after review.",
+    label: "Move-In / Move-Out larger-scope quote",
+    description: "Higher-scope move-in / move-out cleaning quote for larger homes, extra kitchen/bathroom buildup, or added appliance/cabinet scope after review.",
     unit: "flat",
     rate: "495",
     amount: "495",
   },
   {
     id: "move-out-inside-appliance",
-    label: "Move-Out inside appliance add-on",
-    description: "Approved inside oven, refrigerator, or appliance cleaning add-on for move-out cleaning.",
+    label: "Move-In / Move-Out inside appliance add-on",
+    description: "Approved inside oven, refrigerator, or appliance cleaning add-on for move-in / move-out cleaning.",
     unit: "appliance",
     rate: "45",
     amount: "45",
@@ -280,7 +280,7 @@ function BuilderSpinner() {
 function getServiceLabel(item: AdminDoc) {
   const raw = String(item.service || item.selectedServiceTitle || item.packageType || "").toLowerCase();
   if (raw.includes("laundry")) return "Laundry Rescue";
-  if (raw.includes("move-out") || raw.includes("move out") || raw.includes("move-in") || raw.includes("move in")) return "Move-Out Cleaning";
+  if (raw.includes("move-out") || raw.includes("move out") || raw.includes("move-in") || raw.includes("move in")) return "Move-In / Move-Out Cleaning";
   if (raw.includes("errand")) return "Errand Helper";
   if (raw.includes("helper")) return "Helper Block";
   if (raw.includes("family")) return "Family Reset";
@@ -301,7 +301,7 @@ function getSuggestedPresetId(item: AdminDoc) {
 function getDefaultPaymentPlan(item: AdminDoc) {
   const raw = String(item.service || item.selectedServiceTitle || item.packageType || "").toLowerCase();
   if (raw.includes("laundry")) return "Laundry Rescue deposit";
-  if (raw.includes("move-out") || raw.includes("move out") || raw.includes("move-in") || raw.includes("move in")) return "One-time move-out cleaning";
+  if (raw.includes("move-out") || raw.includes("move out") || raw.includes("move-in") || raw.includes("move in")) return "One-time move-in / move-out cleaning";
   if (raw.includes("errand")) return "One-time errand helper";
   return "One-time family service";
 }

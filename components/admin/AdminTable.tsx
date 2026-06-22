@@ -190,7 +190,7 @@ const SERVICE_LOOKS: Record<string, { label: string; badge: string; row: string;
     dot: "bg-white ring-2 ring-violet-100",
   },
   "move-out-cleaning": {
-    label: "Move-Out Cleaning",
+    label: "Move-In / Move-Out Cleaning",
     badge: "border-cyan-800 bg-cyan-700 text-white shadow-sm shadow-cyan-900/25",
     row: "border-l-8 border-l-cyan-700 bg-cyan-50/50 hover:bg-cyan-100/80",
     dot: "bg-white ring-2 ring-cyan-100",
@@ -959,6 +959,14 @@ const SERVICE_REQUEST_CLEAN_KEYS = [
   "preferredTime",
   "urgency",
   "roomsOrAreas",
+  "moveCleaningType",
+  "occupancyStatus",
+  "squareFootage",
+  "bedrooms",
+  "bathrooms",
+  "moveOutCondition",
+  "moveOutFocusSummary",
+  "moveOutApplianceSummary",
   "requestDetails",
   "notes",
   "specialInstructions",
@@ -4302,7 +4310,7 @@ export default function AdminTable({
                           <input
                             value={customInitialTitle}
                             onChange={(e) => setCustomInitialTitle(e.target.value)}
-                            placeholder={selected.service === "laundry-rescue" ? "Laundry Rescue custom deposit" : selected.service === "commercial-reset" ? "Commercial Reset approved quote" : selected.service === "move-out-cleaning" ? "Move-Out Cleaning approved quote" : "Custom Parent Reset checkout"}
+                            placeholder={selected.service === "laundry-rescue" ? "Laundry Rescue custom deposit" : selected.service === "commercial-reset" ? "Commercial Reset approved quote" : selected.service === "move-out-cleaning" ? "Move-In / Move-Out Cleaning approved quote" : "Custom Parent Reset checkout"}
                             className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]"
                           />
                         </label>

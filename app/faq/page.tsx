@@ -5,23 +5,23 @@ import { siteConfig } from "@/lib/siteConfig";
 export const metadata: Metadata = {
   title: "Household Help FAQ: Home Reset, Laundry & Errands",
   description:
-    "Answers about NestHelper household help, home resets, move-out cleaning, laundry, errands, organizing, pricing, safety, and no-childcare service boundaries.",
+    "Answers about NestHelper household help, home resets, move-in / move-out cleaning, laundry, errands, organizing, pricing, safety, and no-childcare service boundaries.",
   alternates: {
     canonical: `${siteConfig.url}/faq`,
   },
   openGraph: {
     title: "Household Help FAQ | NestHelper",
     description:
-      "Learn how NestHelper household support, home reset help, move-out cleaning, laundry help, organizing, and errands work for busy families.",
+      "Learn how NestHelper household support, home reset help, move-in / move-out cleaning, laundry help, organizing, and errands work for busy families.",
     url: `${siteConfig.url}/faq`,
     images: [siteConfig.assets.og],
   },
 };
 
 const faqs = [
-  ["What does NestHelper help with?", "NestHelper gives busy families extra hands around the home with household support, home resets, move-out cleaning, laundry rescue, errands, organizing, and practical family support. We do not provide childcare, unsupervised babysitting, medical care, elder care, or emergency services."],
+  ["What does NestHelper help with?", "NestHelper gives busy families extra hands around the home with household support, home resets, move-in / move-out cleaning, laundry rescue, errands, organizing, and practical family support. We do not provide childcare, unsupervised babysitting, medical care, elder care, or emergency services."],
   ["Do you serve outside Bothell?", `Yes. NestHelper serves ${siteConfig.serviceArea}. If you are close by but unsure, submit a request and we will confirm availability before sending any payment link.`],
-  ["Can I request home reset help, move-out cleaning, laundry help, or errand help separately?", "Yes. You can request a full Parent Reset package or a more focused service such as Move-Out Cleaning, Laundry Rescue, approved errands, or light household catch-up support."],
+  ["Can I request home reset help, move-in / move-out cleaning, laundry help, or errand help separately?", "Yes. You can request a full Parent Reset package or a more focused service such as Move-In / Move-Out Cleaning, Laundry Rescue, approved errands, or light household catch-up support."],
   ["Is this childcare?", "No. NestHelper provides household support and Parent Reset services only. We do not provide childcare, unsupervised babysitting, medical care, elder care, or emergency services."],
   ["Why do you review requests before payment?", "We review location, scope, availability, safety, pets, access, and pricing first so customers are not charged for a job we cannot safely or reliably fulfill."],
   ["Why does NestHelper cost more than hiring someone from a local group?", "NestHelper is not trying to be the cheapest option or an open marketplace. Pricing reflects a managed service: request review, helper fit, clear scope, scheduling coordination, insured local service, secure payment, and follow-up after service."],

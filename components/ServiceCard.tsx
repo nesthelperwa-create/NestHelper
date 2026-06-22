@@ -30,7 +30,7 @@ const serviceStyles: Record<string, { eyebrow: string; accent: string; chip: str
     ring: "ring-violet-200/70",
   },
   "move-out-cleaning": {
-    eyebrow: "Move-out clean",
+    eyebrow: "Move-in / out clean",
     accent: "from-cyan-500/12 via-teal-100 to-white",
     chip: "bg-cyan-50 text-cyan-900 border-cyan-200",
     price: "bg-cyan-50 text-cyan-950",
@@ -87,7 +87,7 @@ const serviceExtras: Record<string, ServiceExtra> = {
     goodToKnow: ["Custom scope reviewed", "Half-day helper block", "Best for bigger lists"],
   },
   "move-out-cleaning": {
-    bestFor: "Empty or mostly empty homes that need a reviewed move-out, move-in, rental turnover, or listing-prep clean before keys are handed over.",
+    bestFor: "Empty or mostly empty homes that need a reviewed move-in, move-out, rental turnover, or listing-prep clean before keys are handed over.",
     extraDetails: [
       "Square footage, room count, photos, condition, and timing are reviewed before pricing",
       "Kitchen and bathrooms can be prioritized when they need the most attention",

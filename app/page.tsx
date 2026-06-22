@@ -24,14 +24,14 @@ import { siteConfig } from "@/lib/siteConfig";
 export const metadata: Metadata = {
   title: { absolute: "NestHelper | Household Help in Bothell, Woodinville & Eastside WA" },
   description:
-    "NestHelper provides household help, home resets, move-out cleaning, laundry catch-up, errands, and organizing in Bothell, Woodinville, and nearby Eastside areas.",
+    "NestHelper provides household help, home resets, move-in / move-out cleaning, laundry catch-up, errands, and organizing in Bothell, Woodinville, and nearby Eastside areas.",
   alternates: {
     canonical: siteConfig.url,
   },
   openGraph: {
     title: "NestHelper | Household Help in Bothell, Woodinville & Eastside WA",
     description:
-      "Local household support, home resets, move-out cleaning, laundry catch-up, errands, and organizing for busy Eastside/Northshore families. No childcare.",
+      "Local household support, home resets, move-in / move-out cleaning, laundry catch-up, errands, and organizing for busy Eastside/Northshore families. No childcare.",
     url: siteConfig.url,
     images: [siteConfig.assets.og],
   },
@@ -56,7 +56,7 @@ export default function HomePage() {
               Reset the home. Reclaim the day.
             </h1>
             <p className="mx-auto mt-5 max-w-2xl text-base font-semibold leading-7 text-nest-ink/74 sm:text-xl sm:leading-8">
-              Household help for busy families — local support for home resets, move-out cleaning, laundry rescue, errands, organizing, and extra hands around the house with clear packages, reviewed requests, limited openings, and follow-up. No childcare services.
+              Household help for busy families — local support for home resets, move-in / move-out cleaning, laundry rescue, errands, organizing, and extra hands around the house with clear packages, reviewed requests, limited openings, and follow-up. No childcare services.
             </p>
             <div className="mx-auto mt-7 flex max-w-sm flex-col justify-center gap-3 sm:max-w-none sm:flex-row">
               <ButtonLink href="/request">Request Help</ButtonLink>
@@ -112,7 +112,7 @@ export default function HomePage() {
             label="What NestHelper is"
             icon={<Heart size={15} />}
             title="Household help without the hiring headache."
-            description="NestHelper coordinates trusted household support for busy families — home resets, move-out cleaning, laundry catch-up, errands, organizing, and extra hands around the house — with reviewed requests, clear scope, insured support, and no childcare services."
+            description="NestHelper coordinates trusted household support for busy families — home resets, move-in / move-out cleaning, laundry catch-up, errands, organizing, and extra hands around the house — with reviewed requests, clear scope, insured support, and no childcare services."
           />
 
           <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -186,7 +186,7 @@ export default function HomePage() {
                 step="1"
                 icon={<ClipboardCheck size={31} />}
                 title="Tell us what you need"
-                text="Submit a request for home reset help, move-out cleaning, laundry rescue, errands, or family support."
+                text="Submit a request for home reset help, move-in / move-out cleaning, laundry rescue, errands, or family support."
               />
               <ProcessStepCard
                 step="2"
