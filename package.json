@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@sentry/nextjs": "^10.59.0",
     "@stripe/stripe-js": "latest",
     "@tailwindcss/postcss": "^4.3.0",
     "clsx": "latest",
