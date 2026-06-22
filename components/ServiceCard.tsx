@@ -312,15 +312,17 @@ export function ServiceCard({
       <div
         className={`flex flex-1 flex-col p-5 sm:p-6 ${equalClosed ? "pb-[10.25rem] sm:pb-[10.5rem]" : ""}`}
       >
-        <div className="flex items-start justify-between gap-4">
+        <div
+          className={`flex items-start justify-between gap-4 ${equalClosed ? "min-h-[8.75rem] sm:min-h-[9.25rem]" : ""}`}
+        >
           <div className="min-w-0">
             <h3
-              className={`text-2xl font-black leading-tight text-nest-teal ${open ? "" : "min-h-[3.1rem]"}`}
+              className={`text-2xl font-black leading-tight text-nest-teal ${open ? "" : equalClosed ? "min-h-[4.65rem]" : "min-h-[3.1rem]"}`}
             >
               {service.title}
             </h3>
             <p
-              className={`mt-2 text-sm font-semibold leading-6 text-nest-ink/68 ${open ? "" : "line-clamp-2 min-h-[3rem]"}`}
+              className={`mt-2 text-sm font-semibold leading-6 text-nest-ink/68 ${open ? "" : equalClosed ? "line-clamp-2 min-h-[3rem]" : "line-clamp-2 min-h-[3rem]"}`}
             >
               {service.description}
             </p>
@@ -344,10 +346,10 @@ export function ServiceCard({
         </div>
 
         <div
-          className={`mt-5 shrink-0 overflow-hidden rounded-3xl border border-nest-gold/14 bg-gradient-to-br from-nest-cream via-white to-nest-mint/20 shadow-sm ${equalClosed ? "h-[8.75rem]" : ""}`}
+          className={`mt-5 shrink-0 overflow-hidden rounded-3xl border border-nest-gold/14 bg-gradient-to-br from-nest-cream via-white to-nest-mint/20 shadow-sm ${equalClosed ? "h-[9.25rem]" : ""}`}
         >
           <div
-            className={`grid gap-0 sm:grid-cols-[minmax(0,1fr)_7.9rem] ${equalClosed ? "h-full" : "min-h-[8.4rem]"}`}
+            className={`grid gap-0 sm:grid-cols-[minmax(0,1fr)_7.35rem] ${equalClosed ? "h-full" : "min-h-[9.25rem]"}`}
           >
             <div className="flex min-w-0 flex-col justify-center p-4 sm:p-5">
               <div className="text-xs font-black uppercase tracking-[0.16em] text-nest-ink/55">
@@ -358,7 +360,7 @@ export function ServiceCard({
                   isLaundry
                     ? "text-[1.55rem] leading-tight sm:text-[1.62rem]"
                     : isQuoteBased
-                      ? "text-[1.7rem] leading-none sm:text-[1.85rem]"
+                      ? "text-[1.58rem] leading-none sm:text-[1.72rem]"
                       : "text-3xl leading-tight"
                 }`}
               >
@@ -370,7 +372,7 @@ export function ServiceCard({
                 ) : isQuoteBased ? (
                   <>
                     <span className="block whitespace-nowrap">Quote</span>
-                    <span className="mt-1.5 inline-flex w-fit rounded-full bg-white/80 px-2.5 py-1 text-[0.58rem] font-black uppercase leading-none tracking-[0.12em] text-nest-ink/58 shadow-sm sm:text-[0.62rem]">
+                    <span className="mt-1.5 inline-flex w-fit rounded-full bg-white/80 px-2.5 py-1 text-[0.55rem] font-black uppercase leading-none tracking-[0.1em] text-nest-ink/58 shadow-sm sm:text-[0.58rem]">
                       after review
                     </span>
                   </>
@@ -387,7 +389,7 @@ export function ServiceCard({
               </div>
             </div>
             <div
-              className={`flex min-h-[3.5rem] min-w-0 items-center justify-center break-words px-3 py-3 text-center text-[0.58rem] font-black uppercase leading-5 tracking-[0.075em] sm:text-[0.62rem] ${theme.price}`}
+              className={`flex h-full min-h-[3.5rem] min-w-0 items-center justify-center break-words px-3 py-3 text-center text-[0.56rem] font-black uppercase leading-5 tracking-[0.07em] sm:text-[0.6rem] ${theme.price}`}
             >
               {service.priceNote}
             </div>
