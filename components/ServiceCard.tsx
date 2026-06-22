@@ -190,8 +190,16 @@ export function ServiceCard({
   const isQuoteBased = service.standardPrice.toLowerCase().includes("quoted");
   const equalClosed = equalCollapsedHeight && !open;
   const collapsedHeightClass = equalCollapsedHeight
-    ? "h-[720px] sm:h-[710px]"
-    : "min-h-[640px] md:h-[670px]";
+    ? "h-full min-h-[620px]"
+    : "h-full min-h-[640px] md:min-h-[670px]";
+  const imageHeightClass = equalCollapsedHeight ? "h-32 sm:h-36" : "h-40 sm:h-44";
+  const cardPaddingClass = equalCollapsedHeight ? "p-4 sm:p-5" : "p-5 sm:p-6";
+  const closedTitleClass = equalCollapsedHeight
+    ? "min-h-[3.7rem] text-[1.28rem] sm:text-[1.34rem]"
+    : "min-h-[3.1rem] text-2xl";
+  const closedDescriptionClass = equalCollapsedHeight
+    ? "line-clamp-3 min-h-[4.45rem] text-[0.82rem] leading-[1.45rem] sm:text-[0.86rem]"
+    : "line-clamp-3 min-h-[4.5rem] text-sm leading-6";
 
   useEffect(() => {
     function handleOtherCard(event: Event) {
@@ -280,7 +288,7 @@ export function ServiceCard({
     <article
       ref={cardRef}
       onClick={handleCardClick}
-      className={`group relative flex cursor-pointer flex-col overflow-hidden rounded-[2rem] border bg-white/95 shadow-sm backdrop-blur transition duration-300 hover:-translate-y-1 hover:shadow-lift ${
+      className={`group relative flex h-full cursor-pointer flex-col overflow-hidden rounded-[2rem] border bg-white/95 shadow-sm backdrop-blur transition duration-300 hover:-translate-y-1 hover:shadow-lift ${
         open
           ? `border-nest-gold/35 ring-4 ${theme.ring}`
           : `${collapsedHeightClass} border-nest-gold/16`
@@ -293,13 +301,13 @@ export function ServiceCard({
       )}
 
       <div
-        className={`relative h-40 shrink-0 overflow-hidden bg-gradient-to-br sm:h-44 ${theme.accent}`}
+        className={`relative ${imageHeightClass} shrink-0 overflow-hidden bg-gradient-to-br ${theme.accent}`}
       >
         <Image
           src={service.image}
           alt={service.title}
           fill
-          className="object-contain p-5 opacity-100 transition duration-700 group-hover:scale-[1.03] sm:p-6"
+          className={`object-contain opacity-100 transition duration-700 group-hover:scale-[1.03] ${equalCollapsedHeight ? "p-4 sm:p-5" : "p-5 sm:p-6"}`}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-white/40 via-transparent to-white/0" />
         <div
@@ -310,19 +318,19 @@ export function ServiceCard({
       </div>
 
       <div
-        className={`flex flex-1 flex-col p-5 sm:p-6 ${equalClosed ? "pb-[10.25rem] sm:pb-[10.5rem]" : ""}`}
+        className={`flex flex-1 flex-col ${cardPaddingClass}`}
       >
         <div
-          className={`flex items-start justify-between gap-4 ${equalClosed ? "min-h-[10.25rem] sm:min-h-[10.75rem]" : ""}`}
+          className={`flex items-start justify-between gap-3 ${equalClosed ? "min-h-[8.7rem]" : ""}`}
         >
           <div className="min-w-0">
             <h3
-              className={`font-black leading-tight text-nest-teal ${equalClosed ? "text-[1.35rem] sm:text-[1.42rem]" : "text-2xl"} ${open ? "" : equalClosed ? "min-h-[4.4rem]" : "min-h-[3.1rem]"}`}
+              className={`break-words font-black leading-tight text-nest-teal ${open ? "text-2xl" : closedTitleClass}`}
             >
               {service.title}
             </h3>
             <p
-              className={`mt-2 text-sm font-semibold leading-6 text-nest-ink/68 ${open ? "" : equalClosed ? "line-clamp-3 min-h-[4.5rem]" : "line-clamp-3 min-h-[4.5rem]"}`}
+              className={`mt-2 font-semibold text-nest-ink/68 ${open ? "text-sm leading-6" : closedDescriptionClass}`}
             >
               {service.description}
             </p>
@@ -346,20 +354,26 @@ export function ServiceCard({
         </div>
 
         <div
-          className={`mt-5 shrink-0 overflow-hidden rounded-3xl border border-nest-gold/14 bg-gradient-to-br from-nest-cream via-white to-nest-mint/20 shadow-sm ${equalClosed ? "min-h-[10.5rem]" : ""}`}
+          className={`shrink-0 overflow-hidden rounded-3xl border border-nest-gold/14 bg-gradient-to-br from-nest-cream via-white to-nest-mint/20 shadow-sm ${equalClosed ? "mt-4 min-h-[9.3rem]" : "mt-5"}`}
         >
-          <div className={`flex h-full min-h-[10.5rem] flex-col ${equalClosed ? "justify-between" : ""}`}>
-            <div className="flex min-w-0 flex-1 flex-col justify-center p-4 text-center sm:p-5">
+          <div className={`flex h-full flex-col ${equalClosed ? "min-h-[9.3rem] justify-between" : "min-h-[10.5rem]"}`}>
+            <div className={`flex min-w-0 flex-1 flex-col justify-center text-center ${equalCollapsedHeight ? "p-3.5 sm:p-4" : "p-4 sm:p-5"}`}>
               <div className="text-xs font-black uppercase tracking-[0.16em] text-nest-ink/55">
                 {isQuoteBased ? "Pricing" : "Starting at"}
               </div>
               <div
                 className={`mt-1 max-w-full font-black text-nest-teal ${
                   isLaundry
-                    ? "text-[1.45rem] leading-tight sm:text-[1.55rem]"
+                    ? equalCollapsedHeight
+                      ? "text-[1.28rem] leading-tight sm:text-[1.38rem]"
+                      : "text-[1.45rem] leading-tight sm:text-[1.55rem]"
                     : isQuoteBased
-                      ? "text-[1.58rem] leading-none sm:text-[1.72rem]"
-                      : "text-3xl leading-tight"
+                      ? equalCollapsedHeight
+                        ? "text-[1.45rem] leading-none sm:text-[1.55rem]"
+                        : "text-[1.58rem] leading-none sm:text-[1.72rem]"
+                      : equalCollapsedHeight
+                        ? "text-[1.75rem] leading-tight"
+                        : "text-3xl leading-tight"
                 }`}
               >
                 {isLaundry ? (
@@ -387,7 +401,7 @@ export function ServiceCard({
               </div>
             </div>
             <div
-              className={`flex min-h-[3.35rem] min-w-0 items-center justify-center border-t border-white/70 px-4 py-3 text-center text-[0.64rem] font-black uppercase leading-4 tracking-[0.07em] sm:text-[0.68rem] ${theme.price}`}
+              className={`flex min-h-[3.1rem] min-w-0 items-center justify-center border-t border-white/70 px-3 py-2.5 text-center text-[0.58rem] font-black uppercase leading-4 tracking-[0.06em] sm:text-[0.62rem] ${theme.price}`}
             >
               <span className="max-w-full break-normal">{service.priceNote}</span>
             </div>
@@ -490,14 +504,14 @@ export function ServiceCard({
         </div>
 
         <div
-          className={`shrink-0 pt-5 ${equalClosed ? "absolute bottom-5 left-5 right-5 sm:bottom-6 sm:left-6 sm:right-6" : "mt-auto"}`}
+          className={`mt-auto shrink-0 ${equalClosed ? "pt-4" : "pt-5"}`}
         >
           <button
             type="button"
             onClick={toggleDetails}
             aria-expanded={open}
             aria-controls={detailsId}
-            className={`focus-ring mb-3 inline-flex w-full items-center justify-center gap-2 rounded-full border px-5 py-3 font-black shadow-sm transition hover:-translate-y-0.5 ${
+            className={`focus-ring mb-3 inline-flex w-full items-center justify-center gap-2 rounded-full border px-5 ${equalCollapsedHeight ? "py-2.5 text-sm" : "py-3"} font-black shadow-sm transition hover:-translate-y-0.5 ${
               open
                 ? "border-nest-teal bg-nest-teal text-white"
                 : "border-nest-teal/20 bg-white text-nest-teal hover:bg-nest-mint/25"
@@ -513,7 +527,7 @@ export function ServiceCard({
           <Link
             href={`/request?service=${service.id}`}
             onClick={(event) => event.stopPropagation()}
-            className="focus-ring group/link inline-flex w-full items-center justify-center gap-2 rounded-full bg-nest-teal px-5 py-3.5 font-black text-white shadow-soft transition hover:-translate-y-0.5 hover:bg-nest-teal2 hover:shadow-lift"
+            className={`focus-ring group/link inline-flex w-full items-center justify-center gap-2 rounded-full bg-nest-teal px-5 ${equalCollapsedHeight ? "py-3 text-sm" : "py-3.5"} font-black text-white shadow-soft transition hover:-translate-y-0.5 hover:bg-nest-teal2 hover:shadow-lift`}
           >
             Request This
             <ArrowRight
