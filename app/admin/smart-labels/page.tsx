@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 import AdminShell from "@/components/admin/AdminShell";
 import { firebaseAuth, firestoreDb } from "@/lib/firebaseClient";
-import { getSmartLabelQrImageUrl, getSmartLabelUrl } from "@/lib/smartLabels";
+import { getSmartLabelOrderCsvRows, getSmartLabelQrImageUrl, getSmartLabelUrl } from "@/lib/smartLabels";
 
 type SmartLabelBatch = {
   id: string;
@@ -30,7 +30,11 @@ type SmartLabelBatch = {
   customerEmail?: string;
   quantity?: number;
   labelCount?: number;
+  activeLabelCount?: number;
+  reservedLabelCount?: number;
   status?: string;
+  mode?: string;
+  csvOnly?: boolean;
   codes?: string[];
   printPath?: string;
   notes?: string;
@@ -67,7 +71,10 @@ type GeneratedBatchResponse = {
   batchId?: string;
   batchName?: string;
   quantity?: number;
+  labelCount?: number;
   codes?: string[];
+  mode?: string;
+  csvOnly?: boolean;
   printPath?: string;
 };
 
@@ -100,6 +107,19 @@ function hasLabelContent(label: SmartLabelAdmin) {
   return Boolean(label.labelName || label.locationName || label.location || label.itemsInside || label.notes || (Array.isArray(label.photos) && label.photos.length > 0));
 }
 
+function isCsvOnlyBatch(batch: SmartLabelBatch | null) {
+  return Boolean(batch?.csvOnly || batch?.mode === "csv-only" || batch?.status === "CSV Only");
+}
+
+function getBatchCodes(batch: SmartLabelBatch | null, fallbackLabels: SmartLabelAdmin[] = []) {
+  if (Array.isArray(batch?.codes) && batch.codes.length > 0) return batch.codes.map((code) => String(code));
+  return fallbackLabels.map((label) => getCode(label)).filter(Boolean);
+}
+
+function safeCsvFilename(value: string) {
+  return `${value || "nesthelper-smart-labels"}`.replace(/[^a-z0-9-]+/gi, "-").replace(/^-|-$/g, "").toLowerCase() || "nesthelper-smart-labels";
+}
+
 async function copyText(value: string) {
   try {
     await navigator.clipboard.writeText(value);
@@ -125,7 +145,7 @@ export default function AdminSmartLabelsPage() {
   const [customerName, setCustomerName] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
   const [notes, setNotes] = useState("Weather-resistant sticker set. Default no PIN unless customer turns one on.");
-  const [quantity, setQuantity] = useState("45");
+  const [quantity, setQuantity] = useState("10");
   const [batches, setBatches] = useState<SmartLabelBatch[]>([]);
   const [labels, setLabels] = useState<SmartLabelAdmin[]>([]);
   const [selectedBatchId, setSelectedBatchId] = useState("");
@@ -186,11 +206,14 @@ export default function AdminSmartLabelsPage() {
   }, [selectedBatchId]);
 
   const selectedBatch = batches.find((batch) => batch.id === selectedBatchId) || null;
+  const selectedBatchIsCsvOnly = isCsvOnlyBatch(selectedBatch);
   const quantityHelp = useMemo(() => {
-    const count = Number(quantity) || 45;
-    if (count < 30) return "Good for a sample or test sheet before ordering stickers.";
-    if (count > 45) return "Large internal batch. Sticker sheets usually work best at 30–45 labels.";
-    return "Ready for a weather-resistant sticker sheet order.";
+    const count = Number(quantity) || 10;
+    if (count === 500 || count === 1000) return "Sticker order CSV only. Codes are reserved, but they will not flood the active customer label list.";
+    if (count === 50) return "Largest active kit. Good when you want labels ready to assign or manage now.";
+    if (count === 30) return "Full setup size for garages, pantry systems, playrooms, moving boxes, and storage areas.";
+    if (count === 20) return "Standard setup size for organizing-heavy resets.";
+    return "Basic setup size. Up to 10 labels are included with qualifying resets.";
   }, [quantity]);
 
   const filteredLabels = useMemo(() => {
@@ -221,25 +244,31 @@ export default function AdminSmartLabelsPage() {
       const user = firebaseAuth.currentUser;
       if (!user) throw new Error("Sign back in to admin before generating labels.");
       const token = await getIdToken(user, true);
+      const csvOnlyRequest = quantity === "500" || quantity === "1000";
       const response = await fetch("/api/admin/smart-labels/generate-batch", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ batchName, customerName, customerEmail, notes, quantity }),
+        body: JSON.stringify({ batchName, customerName, customerEmail, notes, quantity, mode: csvOnlyRequest ? "csv-only" : "active" }),
       });
       const result = (await response.json().catch(() => null)) as GeneratedBatchResponse | null;
       if (!response.ok || !result?.ok) throw new Error(result?.error || "Unable to generate this label sheet.");
 
-      setMessage(`Generated ${result.quantity || quantity} unique Smart Labels.`);
-      setLastPrintPath(result.printPath || "");
+      if (result.csvOnly && Array.isArray(result.codes)) {
+        downloadCsv(`${safeCsvFilename(result.batchName || `nesthelper-sticker-order-${result.quantity || quantity}`)}.csv`, getSmartLabelOrderCsvRows(result.codes));
+        setMessage(`Created sticker order CSV with ${result.quantity || quantity} reserved Smart Label codes. Labels will activate when scanned or assigned.`);
+      } else {
+        setMessage(`Generated ${result.quantity || quantity} active Smart Labels.`);
+      }
+      setLastPrintPath(result.csvOnly ? "" : result.printPath || "");
       if (result.batchId) setSelectedBatchId(result.batchId);
       setBatchName("");
       setCustomerName("");
       setCustomerEmail("");
       setNotes("Weather-resistant sticker set. Default no PIN unless customer turns one on.");
-      setQuantity("45");
+      setQuantity("10");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to generate this label sheet.");
     } finally {
@@ -270,6 +299,12 @@ export default function AdminSmartLabelsPage() {
     }
   }
 
+  function exportStickerOrderCsv() {
+    const codes = getBatchCodes(selectedBatch, labels);
+    const filename = `${safeCsvFilename(selectedBatch?.batchName || selectedBatch?.id || "nesthelper-sticker-order")}.csv`;
+    downloadCsv(filename, getSmartLabelOrderCsvRows(codes));
+  }
+
   function exportSelectedCsv() {
     const rows = [
       ["Code", "URL", "Customer", "Sheet", "Label Name", "Location", "Items Inside", "Notes", "Photos", "PIN Enabled", "Status"],
@@ -287,8 +322,8 @@ export default function AdminSmartLabelsPage() {
         label.status || "Ready",
       ]),
     ];
-    const filename = `${(selectedBatch?.batchName || selectedBatch?.id || "nesthelper-smart-labels").replace(/[^a-z0-9-]+/gi, "-").replace(/^-|-$/g, "").toLowerCase()}.csv`;
-    downloadCsv(filename || "nesthelper-smart-labels.csv", rows);
+    const filename = `${safeCsvFilename(selectedBatch?.batchName || selectedBatch?.id || "nesthelper-smart-labels-admin")}-admin.csv`;
+    downloadCsv(filename || "nesthelper-smart-labels-admin.csv", rows);
   }
 
   return (
@@ -300,7 +335,7 @@ export default function AdminSmartLabelsPage() {
               <p className="text-sm font-black uppercase tracking-[0.26em] text-[#f1c96b]">Smart Labels</p>
               <h2 className="mt-2 text-4xl font-black tracking-tight sm:text-5xl">QR organization kits</h2>
               <p className="mt-4 max-w-2xl text-white/82">
-                Generate unique QR sticker sheets for resets, moving boxes, garage bins, closets, pantry zones, and seasonal storage. NestHelper can set up the labels during the job, then the family keeps ownership and updates them anytime.
+                Create active Smart Label kits for customers, or create larger sticker-order CSV files for the printer. Bulk CSV orders reserve the codes without filling the active dashboard.
               </p>
             </div>
             <div className="rounded-[1.6rem] border border-white/15 bg-white/10 p-5 backdrop-blur">
@@ -326,8 +361,8 @@ export default function AdminSmartLabelsPage() {
             <div className="flex items-start gap-3">
               <div className="rounded-2xl bg-[#e8f5ef] p-3 text-[#075c58]"><Plus size={22} /></div>
               <div>
-                <h3 className="text-2xl font-black text-[#075c58]">Generate a label sheet</h3>
-                <p className="mt-1 text-sm font-semibold leading-6 text-slate-600">Each sticker gets a unique page on your website. Families can scan, fill it out, add photos, and turn on a 4-digit PIN later.</p>
+                <h3 className="text-2xl font-black text-[#075c58]">Create Smart Labels</h3>
+                <p className="mt-1 text-sm font-semibold leading-6 text-slate-600">Use 10–50 for active customer labels. Use 500 or 1000 only when you need a sticker-company CSV for ordering inventory.</p>
               </div>
             </div>
 
@@ -347,13 +382,18 @@ export default function AdminSmartLabelsPage() {
                 </label>
               </div>
               <label className="grid gap-2">
-                <span className="text-sm font-black text-[#075c58]">Labels on this sheet</span>
+                <span className="text-sm font-black text-[#075c58]">Quantity / action</span>
                 <select className="input" value={quantity} onChange={(event) => setQuantity(event.target.value)}>
-                  <option value="30">30 labels</option>
-                  <option value="36">36 labels</option>
-                  <option value="45">45 labels</option>
-                  <option value="12">12 labels / test sheet</option>
-                  <option value="6">6 labels / sample</option>
+                  <optgroup label="Create active labels">
+                    <option value="10">10 active labels</option>
+                    <option value="20">20 active labels</option>
+                    <option value="30">30 active labels</option>
+                    <option value="50">50 active labels</option>
+                  </optgroup>
+                  <optgroup label="Sticker order CSV only">
+                    <option value="500">500 reserved codes / CSV only</option>
+                    <option value="1000">1000 reserved codes / CSV only</option>
+                  </optgroup>
                 </select>
                 <span className="text-xs font-bold text-slate-500">{quantityHelp}</span>
               </label>
@@ -365,7 +405,7 @@ export default function AdminSmartLabelsPage() {
 
             <div className="mt-5 flex flex-col gap-3 sm:flex-row">
               <button type="submit" disabled={busy} className="inline-flex items-center justify-center gap-2 rounded-full bg-[#075c58] px-5 py-3 text-sm font-bold text-white shadow-lg shadow-[#075c58]/20 transition hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-60">
-                {busy ? <Loader2 className="animate-spin" size={18} /> : <QrCode size={18} />} Generate QR labels
+                {busy ? <Loader2 className="animate-spin" size={18} /> : <QrCode size={18} />} {quantity === "500" || quantity === "1000" ? "Create order CSV" : "Generate QR labels"}
               </button>
               {lastPrintPath && (
                 <Link href={lastPrintPath} className="inline-flex items-center justify-center gap-2 rounded-full border border-[#075c58]/20 px-5 py-3 text-sm font-bold text-[#075c58] transition hover:bg-[#e8f5ef]">
@@ -378,13 +418,13 @@ export default function AdminSmartLabelsPage() {
           <div className="rounded-[2rem] border border-[#eadfc8] bg-white p-6 shadow-lg shadow-[#075c58]/5">
             <h3 className="text-2xl font-black text-[#075c58]">How this works</h3>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              <HowStep step="1" title="Generate unique codes" text="Every sticker points to its own record so different clients do not overlap." />
-              <HowStep step="2" title="Print or save PDF" text="Open the print sheet and send the PDF or HTML proof to the sticker company." />
+              <HowStep step="1" title="Choose the right action" text="Use 10, 20, 30, or 50 for active customer labels. Use 500 or 1000 for sticker-order CSV files only." />
+              <HowStep step="2" title="Order sticker inventory" text="Bulk CSVs include only URL and Label columns for the sticker company and reserve those codes." />
               <HowStep step="3" title="Use during resets" text="Scan each sticker and add bin, closet, room, item list, notes, and photos." />
-              <HowStep step="4" title="Give family ownership" text="Customers can keep updating labels and add a PIN only if they want privacy." />
+              <HowStep step="4" title="Keep the dashboard clean" text="CSV-only labels become active only after they are scanned or assigned, so the admin list stays usable." />
             </div>
             <div className="mt-4 rounded-3xl border border-amber-200 bg-amber-50 p-4 text-sm font-bold leading-6 text-amber-900">
-              Offer note: QR Smart Labels can be included free with qualifying resets. Charge only when NestHelper is doing setup, organizing, naming, notes/photos, or extra documentation for the family.
+              Offer note: include up to 10 Smart Labels with qualifying resets, and up to 30 when a larger organizing project needs them. Charge setup labor separately: $49 up to 10, $79 up to 20, $109 up to 30, then $2 for each extra standard label setup.
             </div>
           </div>
         </div>
@@ -407,6 +447,7 @@ export default function AdminSmartLabelsPage() {
               <div className="mt-5 max-h-[38rem] space-y-3 overflow-y-auto pr-1">
                 {batches.map((batch) => {
                   const codes = Array.isArray(batch.codes) ? batch.codes : [];
+                  const csvOnly = isCsvOnlyBatch(batch);
                   return (
                     <button
                       key={batch.id}
@@ -414,12 +455,16 @@ export default function AdminSmartLabelsPage() {
                       onClick={() => setSelectedBatchId(batch.id)}
                       className={`w-full rounded-3xl border p-4 text-left transition ${selectedBatchId === batch.id ? "border-[#075c58] bg-[#e9f4f1]" : "border-[#eadfc8] bg-white hover:bg-slate-50"}`}
                     >
-                      <p className="font-black text-[#075c58]">{batch.batchName || "Smart Label Sheet"}</p>
-                      <p className="mt-1 text-sm text-slate-600">{batch.customerName || "NestHelper Customer"}</p>
+                      <div className="flex items-start justify-between gap-3">
+                        <p className="font-black text-[#075c58]">{batch.batchName || "Smart Label Sheet"}</p>
+                        {csvOnly && <span className="shrink-0 rounded-full bg-amber-100 px-2.5 py-1 text-[0.62rem] font-black uppercase tracking-wide text-amber-800">CSV only</span>}
+                      </div>
+                      <p className="mt-1 text-sm text-slate-600">{csvOnly ? "Sticker inventory / reserved codes" : batch.customerName || "NestHelper Customer"}</p>
                       <div className="mt-3 flex flex-wrap gap-2 text-xs font-bold text-slate-500">
                         <span>{batch.quantity || batch.labelCount || codes.length || 0} labels</span>
                         <span>•</span>
                         <span>{getBatchDate(batch)}</span>
+                        {csvOnly && <><span>•</span><span>not active until scanned</span></>}
                       </div>
                       {codes.length > 0 && <p className="mt-2 truncate text-xs font-mono font-bold text-slate-400">{codes.slice(0, 4).join(" • ")}{codes.length > 4 ? " ..." : ""}</p>}
                     </button>
@@ -434,44 +479,81 @@ export default function AdminSmartLabelsPage() {
               <div>
                 <p className="text-xs font-black uppercase tracking-[0.2em] text-[#b98a2f]">Selected sheet</p>
                 <h3 className="mt-1 text-2xl font-black text-[#075c58]">{selectedBatch ? selectedBatch.batchName || "Smart Label Sheet" : "Choose a sheet"}</h3>
-                {selectedBatch && <p className="mt-1 text-sm text-slate-600">{selectedBatch.customerName || "NestHelper Customer"} · {selectedBatch.customerEmail || "No email saved"}</p>}
+                {selectedBatch && <p className="mt-1 text-sm text-slate-600">{selectedBatchIsCsvOnly ? "Sticker order CSV only · reserved codes become active when scanned" : `${selectedBatch.customerName || "NestHelper Customer"} · ${selectedBatch.customerEmail || "No email saved"}`}</p>}
               </div>
               {selectedBatch && (
                 <div className="flex flex-wrap gap-2">
-                  <Link href={selectedBatch.printPath || `/admin/smart-labels/print/${selectedBatch.id}`} className="inline-flex items-center gap-2 rounded-full bg-[#075c58] px-4 py-2 text-sm font-black text-white">
-                    <Printer size={16} /> Print labels
-                  </Link>
-                  <button type="button" onClick={exportSelectedCsv} className="inline-flex items-center gap-2 rounded-full border border-[#075c58]/20 px-4 py-2 text-sm font-black text-[#075c58]">
-                    <Download size={16} /> CSV
+                  {!selectedBatchIsCsvOnly && (
+                    <Link href={selectedBatch.printPath || `/admin/smart-labels/print/${selectedBatch.id}`} className="inline-flex items-center gap-2 rounded-full bg-[#075c58] px-4 py-2 text-sm font-black text-white">
+                      <Printer size={16} /> Print labels
+                    </Link>
+                  )}
+                  <button type="button" onClick={exportStickerOrderCsv} className="inline-flex items-center gap-2 rounded-full border border-[#075c58]/20 px-4 py-2 text-sm font-black text-[#075c58]">
+                    <Download size={16} /> Order CSV
                   </button>
+                  {!selectedBatchIsCsvOnly && (
+                    <button type="button" onClick={exportSelectedCsv} className="inline-flex items-center gap-2 rounded-full border border-[#075c58]/20 px-4 py-2 text-sm font-black text-[#075c58]">
+                      <Download size={16} /> Admin CSV
+                    </button>
+                  )}
                 </div>
               )}
             </div>
 
             {selectedBatch ? (
-              <>
-                <div className="mt-4 grid gap-3 sm:grid-cols-4">
-                  <SmartMetric title="Active" value={stats.activeCount} />
-                  <SmartMetric title="Filled out" value={stats.filledCount} tone="gold" />
-                  <SmartMetric title="PIN on" value={stats.pinCount} />
-                  <SmartMetric title="Photos" value={stats.photoCount} tone="plain" />
-                </div>
-
-                <label className="mt-4 flex items-center gap-3 rounded-3xl border border-[#eadfc8] bg-white px-4 py-3">
-                  <Search className="text-[#075c58]" size={20} />
-                  <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search codes, locations, items, notes..." className="min-w-0 flex-1 outline-none" />
-                </label>
-
-                <div className="mt-4 grid gap-3">
+              selectedBatchIsCsvOnly ? (
+                <div className="mt-4 rounded-3xl border border-amber-200 bg-amber-50 p-5 text-sm font-bold leading-6 text-amber-900">
+                  <p className="text-lg font-black text-[#075c58]">Sticker order CSV only</p>
+                  <p className="mt-2">This batch has {selectedBatch.quantity || selectedBatch.labelCount || getBatchCodes(selectedBatch).length} reserved Smart Label codes for ordering stickers. It does not create hundreds of active customer label cards in the dashboard.</p>
+                  <p className="mt-2">When one of these QR stickers is scanned, the label page activates automatically and becomes manageable like a normal Smart Label.</p>
+                  <button type="button" onClick={exportStickerOrderCsv} className="mt-4 inline-flex items-center gap-2 rounded-full bg-[#075c58] px-4 py-2 text-sm font-black text-white">
+                    <Download size={16} /> Download printer CSV
+                  </button>
                   {loadingLabels ? (
-                    <p className="rounded-3xl bg-[#fbf6ea] p-4 text-sm font-bold text-[#075c58]"><Loader2 className="mr-2 inline animate-spin" size={16} /> Loading labels...</p>
-                  ) : filteredLabels.length === 0 ? (
-                    <p className="rounded-3xl bg-slate-50 p-4 text-sm text-slate-600">No labels match this search.</p>
-                  ) : (
-                    filteredLabels.map((label) => <SmartLabelCard key={getCode(label)} label={label} onUpdate={updateLabel} onMessage={setMessage} />)
-                  )}
+                    <p className="mt-4 rounded-2xl bg-white/70 p-3 text-sm font-bold text-[#075c58]"><Loader2 className="mr-2 inline animate-spin" size={16} /> Checking activated labels...</p>
+                  ) : labels.length > 0 ? (
+                    <div className="mt-5 rounded-3xl border border-[#eadfc8] bg-white p-4 text-slate-700">
+                      <p className="font-black text-[#075c58]">Activated from this sticker order</p>
+                      <p className="mt-1 text-sm font-semibold text-slate-600">These reserved labels have already been scanned and are now active.</p>
+                      <label className="mt-4 flex items-center gap-3 rounded-3xl border border-[#eadfc8] bg-white px-4 py-3">
+                        <Search className="text-[#075c58]" size={20} />
+                        <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search activated codes, locations, items, notes..." className="min-w-0 flex-1 outline-none" />
+                      </label>
+                      <div className="mt-4 grid gap-3">
+                        {filteredLabels.length === 0 ? (
+                          <p className="rounded-3xl bg-slate-50 p-4 text-sm text-slate-600">No activated labels match this search.</p>
+                        ) : (
+                          filteredLabels.map((label) => <SmartLabelCard key={getCode(label)} label={label} onUpdate={updateLabel} onMessage={setMessage} />)
+                        )}
+                      </div>
+                    </div>
+                  ) : null}
                 </div>
-              </>
+              ) : (
+                <>
+                  <div className="mt-4 grid gap-3 sm:grid-cols-4">
+                    <SmartMetric title="Active" value={stats.activeCount} />
+                    <SmartMetric title="Filled out" value={stats.filledCount} tone="gold" />
+                    <SmartMetric title="PIN on" value={stats.pinCount} />
+                    <SmartMetric title="Photos" value={stats.photoCount} tone="plain" />
+                  </div>
+
+                  <label className="mt-4 flex items-center gap-3 rounded-3xl border border-[#eadfc8] bg-white px-4 py-3">
+                    <Search className="text-[#075c58]" size={20} />
+                    <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search codes, locations, items, notes..." className="min-w-0 flex-1 outline-none" />
+                  </label>
+
+                  <div className="mt-4 grid gap-3">
+                    {loadingLabels ? (
+                      <p className="rounded-3xl bg-[#fbf6ea] p-4 text-sm font-bold text-[#075c58]"><Loader2 className="mr-2 inline animate-spin" size={16} /> Loading labels...</p>
+                    ) : filteredLabels.length === 0 ? (
+                      <p className="rounded-3xl bg-slate-50 p-4 text-sm text-slate-600">No labels match this search.</p>
+                    ) : (
+                      filteredLabels.map((label) => <SmartLabelCard key={getCode(label)} label={label} onUpdate={updateLabel} onMessage={setMessage} />)
+                    )}
+                  </div>
+                </>
+              )
             ) : (
               <p className="mt-4 rounded-3xl bg-slate-50 p-5 text-sm font-semibold text-slate-600">Generate a sheet or choose an existing sheet to manage its labels.</p>
             )}

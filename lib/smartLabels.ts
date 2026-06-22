@@ -1,8 +1,12 @@
 import { siteConfig } from "@/lib/siteConfig";
 
+export const smartLabelActiveQuantities: readonly number[] = [10, 20, 30, 50];
+export const smartLabelStickerOrderQuantities: readonly number[] = [500, 1000];
+
 export const smartLabelLimits = {
-  maxQuantityPerBatch: 45,
-  defaultQuantity: 45,
+  maxQuantityPerBatch: 50,
+  maxStickerOrderQuantity: 1000,
+  defaultQuantity: 10,
   maxPhotos: 4,
   maxPhotoDataUrlLength: 190_000,
   maxLabelName: 80,
@@ -72,10 +76,25 @@ export function cleanOptionalEmail(value: unknown) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? email : "";
 }
 
-export function cleanSmartLabelQuantity(value: unknown) {
+export function parseSmartLabelQuantity(value: unknown) {
   const parsed = typeof value === "string" ? Number(value.replace(/[^0-9]/g, "")) : Number(value);
   if (!Number.isFinite(parsed)) return smartLabelLimits.defaultQuantity;
-  return Math.min(smartLabelLimits.maxQuantityPerBatch, Math.max(1, Math.round(parsed)));
+  return Math.max(1, Math.round(parsed));
+}
+
+export function cleanSmartLabelQuantity(value: unknown) {
+  const parsed = parseSmartLabelQuantity(value);
+  return Math.min(smartLabelLimits.maxQuantityPerBatch, Math.max(1, parsed));
+}
+
+export function getSmartLabelOrderCsvRows(codes: string[]) {
+  return [
+    ["URL", "Label"],
+    ...codes.map((code) => {
+      const cleanCode = normalizeSmartLabelCode(code);
+      return [getSmartLabelUrl(cleanCode), cleanCode];
+    }),
+  ];
 }
 
 export function cleanSmartLabelPhotos(value: unknown): SmartLabelPhoto[] {

@@ -82,14 +82,14 @@ export default function ServicesPage() {
               <p className="pill-label mx-auto w-fit lg:mx-0"><QrCode size={15} /> Smart Labels</p>
               <h2 className="mt-4 text-3xl font-black leading-tight text-nest-teal sm:text-4xl">Included labels. Optional setup help.</h2>
               <p className="mt-3 font-medium leading-7 text-nest-ink/70">
-                NestHelper Smart Labels are included at no extra cost with qualifying resets. Families can use them to keep bins, closets, shelves, moving boxes, seasonal items, and storage areas easier to maintain.
+                NestHelper Smart Labels are included at no extra cost with qualifying resets — up to 10 labels for standard qualifying resets and up to 30 labels when a larger organizing project needs them. Families can use them to keep bins, closets, shelves, moving boxes, seasonal items, and storage areas easier to maintain.
               </p>
               <p className="mt-3 font-medium leading-7 text-nest-ink/70">
                 Want us to set them up for you? Add Smart Label Setup and we’ll place the labels, scan them, name each bin or area, document what’s inside, add notes/photos, and show the family how to keep everything updated after we leave.
               </p>
             </div>
             <div className="grid gap-3 sm:grid-cols-3">
-              <SmartLabelFeature icon={<Tags size={19} />} title="Labels included" text="QR Smart Labels come free with qualifying resets." />
+              <SmartLabelFeature icon={<Tags size={19} />} title="Labels included" text="Up to 10 included, with up to 30 for larger organizing projects." />
               <SmartLabelFeature icon={<KeyRound size={19} />} title="Optional PIN" text="Default is no PIN. Add a 4-digit PIN for private labels." />
               <SmartLabelFeature icon={<ShieldCheck size={19} />} title="Family-owned" text="Use them yourself, or ask NestHelper to set them up." />
             </div>
@@ -98,17 +98,17 @@ export default function ServicesPage() {
             <div className="rounded-3xl border border-nest-gold/16 bg-white/78 p-4">
               <p className="text-xs font-black uppercase tracking-[0.16em] text-nest-gold">Smart Labels</p>
               <p className="mt-1 text-lg font-black text-nest-teal">Included free</p>
-              <p className="mt-1">Use the stickers yourself at no extra cost with qualifying resets.</p>
+              <p className="mt-1">Use up to 10 yourself with qualifying resets, or up to 30 for larger organizing projects.</p>
             </div>
             <div className="rounded-3xl border border-nest-gold/16 bg-white/78 p-4">
               <p className="text-xs font-black uppercase tracking-[0.16em] text-nest-gold">Setup add-on</p>
-              <p className="mt-1 text-lg font-black text-nest-teal">Starts at $49</p>
-              <p className="mt-1">We place, scan, name, and document labels during approved reset work.</p>
+              <p className="mt-1 text-lg font-black text-nest-teal">$49 / $79 / $109</p>
+              <p className="mt-1">Setup for up to 10, 20, or 30 labels during approved reset work.</p>
             </div>
             <div className="rounded-3xl border border-nest-gold/16 bg-white/78 p-4">
-              <p className="text-xs font-black uppercase tracking-[0.16em] text-nest-gold">Full setup</p>
-              <p className="mt-1 text-lg font-black text-nest-teal">Starts at $79</p>
-              <p className="mt-1">Best for garages, storage, moving boxes, pantries, and playrooms.</p>
+              <p className="text-xs font-black uppercase tracking-[0.16em] text-nest-gold">Extra labels</p>
+              <p className="mt-1 text-lg font-black text-nest-teal">$2 each after 30</p>
+              <p className="mt-1">Detailed inventory or heavy photo documentation can still be quoted.</p>
             </div>
           </div>
         </div>

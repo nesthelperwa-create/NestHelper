@@ -151,25 +151,41 @@ const FAMILY_PRESETS = [
     amount: "449",
   },
   {
-    id: "smart-label-setup",
-    label: "Smart Label Setup",
+    id: "smart-label-setup-10",
+    label: "Smart Label Setup — up to 10 labels",
     description: "Optional Smart Label Setup add-on. NestHelper places labels, scans them, names bins/areas, documents what is inside, adds notes/photos as appropriate, and shows the family how to keep labels updated.",
     unit: "flat",
     rate: "49",
     amount: "49",
   },
   {
-    id: "full-smart-label-setup",
-    label: "Full Smart Label Setup",
-    description: "Larger-space Smart Label Setup for garages, storage areas, moving boxes, pantry systems, playrooms, or multi-zone spaces. Additional documentation/setup can be quoted as needed.",
+    id: "smart-label-setup-20",
+    label: "Standard Smart Label Setup — up to 20 labels",
+    description: "Standard Smart Label Setup for organizing-heavy resets with up to 20 labels.",
     unit: "flat",
     rate: "79",
     amount: "79",
   },
   {
+    id: "smart-label-setup-30",
+    label: "Full Smart Label Setup — up to 30 labels",
+    description: "Larger-space Smart Label Setup for garages, storage areas, moving boxes, pantry systems, playrooms, or multi-zone spaces with up to 30 labels.",
+    unit: "flat",
+    rate: "109",
+    amount: "109",
+  },
+  {
+    id: "smart-label-extra-label",
+    label: "Additional Smart Label setup",
+    description: "Standard Smart Label setup after the first 30 labels.",
+    unit: "label",
+    rate: "2",
+    amount: "2",
+  },
+  {
     id: "smart-label-extra-documentation",
-    label: "Additional Smart Label documentation / setup",
-    description: "Quoted Smart Label documentation or setup beyond the starter add-on.",
+    label: "Detailed Smart Label inventory / documentation",
+    description: "Quoted Smart Label inventory, heavy photo documentation, garage inventory, or moving-box documentation beyond standard setup.",
     unit: "flat",
     rate: "0",
     amount: "0",
@@ -511,12 +527,16 @@ function createDefaultLinesFromRequest(item: AdminDoc): FamilyLineItem[] {
 
   const smartLabelInterest = String(item.smartLabelSetupInterest || "").toLowerCase();
   const smartLabelNotes = getString(item.smartLabelSetupNotes);
-  if (smartLabelInterest.includes("full smart label setup")) {
-    lines.push(createLineFromPreset("full-smart-label-setup", { note: smartLabelNotes }));
+  if (smartLabelInterest.includes("up to 30") || smartLabelInterest.includes("full smart label setup")) {
+    lines.push(createLineFromPreset("smart-label-setup-30", { note: smartLabelNotes }));
+  } else if (smartLabelInterest.includes("up to 20") || smartLabelInterest.includes("standard smart label setup")) {
+    lines.push(createLineFromPreset("smart-label-setup-20", { note: smartLabelNotes }));
+  } else if (smartLabelInterest.includes("extra label") || smartLabelInterest.includes("$2")) {
+    lines.push(createLineFromPreset("smart-label-extra-label", { quantity: "1", note: smartLabelNotes || "Enter the number of extra labels after the first 30." }));
   } else if (smartLabelInterest.includes("smart label setup") && !smartLabelInterest.includes("no smart label setup")) {
-    lines.push(createLineFromPreset("smart-label-setup", { note: smartLabelNotes }));
+    lines.push(createLineFromPreset("smart-label-setup-10", { note: smartLabelNotes }));
   } else if (smartLabelInterest.includes("additional") || smartLabelInterest.includes("quote") || smartLabelInterest.includes("recommend")) {
-    lines.push(createLineFromPreset("smart-label-extra-documentation", { note: smartLabelNotes || "Review Smart Label documentation/setup before charging." }));
+    lines.push(createLineFromPreset("smart-label-extra-documentation", { note: smartLabelNotes || "Review detailed Smart Label inventory/documentation before charging." }));
   }
 
   return lines;
@@ -1061,7 +1081,10 @@ export default function FamilyPaymentBreakdownBuilder({
                         <option>Laundry Rescue deposit</option>
                         <option>Laundry final balance</option>
                         <option>Custom approved family payment</option>
-                        <option>Smart Label Setup add-on</option>
+                        <option>Smart Label Setup — up to 10 labels</option>
+                        <option>Standard Smart Label Setup — up to 20 labels</option>
+                        <option>Full Smart Label Setup — up to 30 labels</option>
+                        <option>Additional Smart Label setup</option>
                         <option>Refund / credit record</option>
                       </select>
                     </label>

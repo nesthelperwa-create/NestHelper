@@ -3,6 +3,7 @@ import { FieldValue } from "firebase-admin/firestore";
 import { getFirebaseAdminDb } from "@/lib/firebaseAdmin";
 import {
   cleanSmartLabelFields,
+  getSmartLabelUrl,
   isFourDigitPin,
   normalizeSmartLabelCode,
   serializeSmartLabel,
@@ -30,8 +31,63 @@ async function getCodeFromContext(context: RouteContext) {
 async function getLabel(code: string) {
   const db = getFirebaseAdminDb();
   const snap = await db.collection("smartLabels").doc(code).get();
-  if (!snap.exists) return null;
+  if (!snap.exists) return activateReservedLabel(code);
   return { ref: snap.ref, data: snap.data() || {} };
+}
+
+async function activateReservedLabel(code: string) {
+  const db = getFirebaseAdminDb();
+  const labelRef = db.collection("smartLabels").doc(code);
+  const reservationRef = db.collection("smartLabelReservations").doc(code);
+
+  const labelData = await db.runTransaction(async (transaction) => {
+    const existingLabel = await transaction.get(labelRef);
+    if (existingLabel.exists) return existingLabel.data() || {};
+
+    const reservation = await transaction.get(reservationRef);
+    if (!reservation.exists) return null;
+
+    const reservationData = reservation.data() || {};
+    const now = FieldValue.serverTimestamp();
+    const labelUrl = typeof reservationData.labelUrl === "string" && reservationData.labelUrl ? reservationData.labelUrl : getSmartLabelUrl(code);
+    const newLabelData = {
+      code,
+      batchId: reservationData.batchId || "",
+      batchName: reservationData.batchName || "Sticker Order Labels",
+      customerName: "",
+      customerEmail: "",
+      labelUrl,
+      publicUrl: typeof reservationData.publicUrl === "string" && reservationData.publicUrl ? reservationData.publicUrl : labelUrl,
+      sequence: reservationData.sequence || 0,
+      labelIndex: reservationData.labelIndex || 0,
+      status: "Ready",
+      ownerMode: "customer-owned",
+      pinEnabled: false,
+      pinHash: "",
+      labelName: "",
+      locationName: "",
+      itemsInside: "",
+      notes: "",
+      photos: [],
+      activatedFromReservation: true,
+      lastEditedBy: "first-scan-activation",
+      createdAt: now,
+      createdAtIso: new Date().toISOString(),
+      updatedAt: now,
+    };
+
+    transaction.set(labelRef, newLabelData);
+    transaction.update(reservationRef, {
+      status: "Activated",
+      activatedAt: now,
+      updatedAt: now,
+    });
+
+    return newLabelData;
+  });
+
+  if (!labelData) return null;
+  return { ref: labelRef, data: labelData };
 }
 
 export async function GET(_request: Request, context: RouteContext) {

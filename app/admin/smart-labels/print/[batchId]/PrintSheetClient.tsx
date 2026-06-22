@@ -97,9 +97,9 @@ export default function SmartLabelPrintSheet({ batchId }: { batchId: string }) {
   const labelCount = labels.length || batch?.quantity || batch?.labelCount || 0;
 
   const printHint = useMemo(() => {
-    if (labelCount >= 40) return "45-label sheet style. Save as PDF for your sticker company or print one test page first.";
-    if (labelCount >= 30) return "30+ labels. Good for one family reset sheet.";
-    return "Sample/test sheet. Generate 30–45 labels for vendor production.";
+    if (labelCount >= 40) return "Larger active kit. Save as PDF for your sticker company or print one test page first.";
+    if (labelCount >= 30) return "Full active setup size for larger organizing projects.";
+    return "Active customer kit. Use 500 or 1000 CSV-only from the dashboard for large sticker orders.";
   }, [labelCount]);
 
   return (

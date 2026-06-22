@@ -153,9 +153,11 @@ const recurringResetOptions = [
 const smartLabelSetupOptions = [
   "No Smart Label Setup add-on",
   "Use included Smart Labels ourselves",
-  "Smart Label Setup — starts at $49",
-  "Full Smart Label Setup — starts at $79",
-  "Quote additional Smart Label documentation/setup",
+  "Smart Label Setup — up to 10 labels ($49)",
+  "Standard Smart Label Setup — up to 20 labels ($79)",
+  "Full Smart Label Setup — up to 30 labels ($109)",
+  "Additional Smart Label setup — $2 per extra label",
+  "Quote detailed Smart Label inventory/setup",
   "Not sure — please recommend after review",
 ];
 
@@ -1022,7 +1024,7 @@ export function RequestForm() {
       {smartLabelsAvailable && (
         <Section title="Optional Smart Label Setup" description="Smart Labels are included at no extra cost with qualifying resets. Choose setup only if you want NestHelper to place, scan, name, document, and walk you through keeping them updated.">
           <div className="rounded-3xl border border-nest-gold/20 bg-nest-cream p-5 text-sm leading-6 text-nest-ink/76">
-            <strong className="text-nest-teal">Labels included:</strong> families can use the QR stickers themselves at no extra cost. <strong className="text-nest-teal">Setup add-on:</strong> starts at $49. Full Smart Label Setup starts at $79 for larger spaces like garages, storage areas, moving boxes, pantry systems, and playrooms. Additional documentation/setup can be quoted as needed.
+            <strong className="text-nest-teal">Labels included:</strong> up to 10 Smart Labels with qualifying resets, and up to 30 when a larger organizing project needs them. <strong className="text-nest-teal">Setup add-on:</strong> $49 for up to 10 labels, $79 for up to 20, $109 for up to 30, then $2 per extra standard label setup. Detailed inventory or heavy photo documentation can be quoted.
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Smart Label preference">
