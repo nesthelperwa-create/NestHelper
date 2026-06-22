@@ -126,7 +126,7 @@ export default function ServicesPage() {
                 These are structured helper visits for busy families who need dishes, toys, surfaces, folding, organizing, and priority catch-up tasks handled in a focused block of time.
               </p>
             </div>
-            <div className="grid auto-rows-fr items-stretch gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid items-start gap-6 md:grid-cols-2 lg:grid-cols-3">
               {quickPackageServices.map((service) => <ServiceCard key={service.id} service={service} equalCollapsedHeight />)}
             </div>
           </section>
@@ -139,7 +139,7 @@ export default function ServicesPage() {
                 These requests are reviewed around scope, access, safety, product preferences, photos, and timing so you get the right plan before checkout.
               </p>
             </div>
-            <div className="grid auto-rows-fr items-stretch gap-6 md:grid-cols-2 xl:grid-cols-4">
+            <div className="grid items-start gap-6 md:grid-cols-2 xl:grid-cols-4">
               {specialtyServices.map((service) => <ServiceCard key={service.id} service={service} equalCollapsedHeight />)}
             </div>
           </section>
