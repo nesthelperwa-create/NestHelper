@@ -23,7 +23,12 @@ export const metadata: Metadata = {
   },
 };
 
+const quickPackageIds = new Set(["parent-reset-2hr", "family-reset-3hr", "helper-block-4hr"]);
+
 export default function ServicesPage() {
+  const quickPackageServices = services.filter((service) => quickPackageIds.has(service.id));
+  const specialtyServices = services.filter((service) => !quickPackageIds.has(service.id));
+
   return (
     <>
       <PageHero
@@ -41,25 +46,66 @@ export default function ServicesPage() {
           </p>
         </div>
 
-        <div className="mb-10 grid gap-6 lg:grid-cols-[0.95fr_1.05fr] lg:items-end">
-          <div className="text-center lg:text-left">
-            <p className="pill-label mx-auto w-fit lg:mx-0"><Sparkles size={15} /> Household Help Packages</p>
-            <h2 className="text-balance mt-4 text-3xl font-black leading-tight text-nest-teal sm:text-5xl">Household help, home reset support, garage and area resets, move-in / move-out cleaning, laundry help, organizing, and errands when the house feels like too much.</h2>
-          </div>
-          <div className="pro-card rounded-[2rem] p-6">
-            <h3 className="text-xl font-black text-nest-teal">Simple at first glance. Details when you need them.</h3>
-            <p className="mt-3 font-medium leading-7 text-nest-ink/70">
-              Each card shows the essentials first. Open a package to see what is included, then request the one that fits your family best. NestHelper keeps the scope focused on reviewed home help, garage and area resets, move-in / move-out cleaning, laundry, errands, organizing, and reset tasks — not childcare or babysitting.
+        <div className="mb-10 grid gap-5 lg:grid-cols-[0.82fr_1.18fr] lg:items-stretch">
+          <div className="rounded-[2.5rem] border border-nest-gold/18 bg-gradient-to-br from-white via-nest-cream to-nest-mint/25 p-6 text-center shadow-soft sm:p-8 lg:text-left">
+            <p className="pill-label mx-auto w-fit lg:mx-0"><Sparkles size={15} /> Home Reset Services</p>
+            <h2 className="text-balance mt-4 text-3xl font-black leading-tight text-nest-teal sm:text-4xl lg:text-5xl">Choose the reset your home needs.</h2>
+            <p className="mx-auto mt-4 max-w-3xl text-base font-semibold leading-7 text-nest-ink/70 sm:text-lg lg:mx-0">
+              Start with a parent reset package, or request a custom review for move-in / move-out cleaning, garage resets, laundry help, errands, and specific areas that need attention.
             </p>
+            <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row lg:justify-start">
+              <ButtonLink href="/request">Request Help</ButtonLink>
+              <ButtonLink href="/request?service=specific-area-reset" variant="secondary">Start a Custom Reset</ButtonLink>
+            </div>
+          </div>
+
+          <div className="pro-card rounded-[2.5rem] p-6 sm:p-8">
+            <h3 className="text-2xl font-black text-nest-teal">Not sure what to choose?</h3>
+            <div className="mt-5 grid gap-3">
+              {[
+                { title: "Need everyday relief?", text: "Choose a 2, 3, or 4-hour reset package." },
+                { title: "Need one space fixed?", text: "Choose Specific Area Reset for a garage, pantry, closet, playroom, or laundry room." },
+                { title: "Moving in or out?", text: "Choose Move-In / Move-Out Cleaning so we can review square footage, condition, photos, and timing." },
+              ].map((item) => (
+                <div key={item.title} className="rounded-3xl border border-nest-gold/14 bg-white/82 p-4 shadow-sm">
+                  <p className="font-black text-nest-teal">{item.title}</p>
+                  <p className="mt-1 text-sm font-semibold leading-6 text-nest-ink/68">{item.text}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
         <div className="mb-5 rounded-3xl border border-nest-gold/16 bg-white/80 p-4 text-sm font-bold text-nest-ink/65 shadow-sm sm:px-5">
-          Tap or click a card to open details. Opening another package closes the previous one.
+          Tap or click a card to open details. If you are unsure, start with the closest option and add notes in the request form.
         </div>
 
-        <div className="grid items-start gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {services.map((service) => <ServiceCard key={service.id} service={service} equalCollapsedHeight />)}
+        <div className="space-y-10">
+          <section aria-labelledby="quick-help-packages">
+            <div className="mb-5 flex flex-col gap-2 text-center sm:text-left">
+              <p className="pill-label mx-auto w-fit sm:mx-0"><Sparkles size={15} /> Quick Help Packages</p>
+              <h3 id="quick-help-packages" className="text-2xl font-black text-nest-teal sm:text-3xl">Start here for everyday home reset help.</h3>
+              <p className="max-w-3xl font-semibold leading-7 text-nest-ink/68">
+                These are structured helper visits for busy families who need dishes, toys, surfaces, folding, organizing, and priority catch-up tasks handled in a focused block of time.
+              </p>
+            </div>
+            <div className="grid items-start gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {quickPackageServices.map((service) => <ServiceCard key={service.id} service={service} equalCollapsedHeight />)}
+            </div>
+          </section>
+
+          <section aria-labelledby="specific-reset-support">
+            <div className="mb-5 flex flex-col gap-2 text-center sm:text-left">
+              <p className="pill-label mx-auto w-fit sm:mx-0"><Sparkles size={15} /> Specific Resets & Support</p>
+              <h3 id="specific-reset-support" className="text-2xl font-black text-nest-teal sm:text-3xl">For garages, moving, laundry, errands, and one-off areas.</h3>
+              <p className="max-w-3xl font-semibold leading-7 text-nest-ink/68">
+                These requests are reviewed around scope, access, safety, product preferences, photos, and timing so you get the right plan before checkout.
+              </p>
+            </div>
+            <div className="grid items-start gap-6 md:grid-cols-2 lg:grid-cols-4">
+              {specialtyServices.map((service) => <ServiceCard key={service.id} service={service} equalCollapsedHeight />)}
+            </div>
+          </section>
         </div>
 
         <div className="mt-10 rounded-[2.5rem] border border-nest-gold/18 bg-gradient-to-br from-white via-nest-cream to-nest-mint/25 p-7 shadow-soft sm:p-8">
