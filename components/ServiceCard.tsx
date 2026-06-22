@@ -4,10 +4,21 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import type { MouseEvent } from "react";
-import { ArrowRight, CheckCircle2, ChevronDown, Clock, Info, MapPin, Star } from "lucide-react";
+import {
+  ArrowRight,
+  CheckCircle2,
+  ChevronDown,
+  Clock,
+  Info,
+  MapPin,
+  Star,
+} from "lucide-react";
 import type { Service } from "@/lib/services";
 
-const serviceStyles: Record<string, { eyebrow: string; accent: string; chip: string; price: string; ring: string }> = {
+const serviceStyles: Record<
+  string,
+  { eyebrow: string; accent: string; chip: string; price: string; ring: string }
+> = {
   "parent-reset-2hr": {
     eyebrow: "Home reset",
     accent: "from-emerald-500/12 via-nest-mint/30 to-white",
@@ -67,34 +78,50 @@ type ServiceExtra = {
 
 const serviceExtras: Record<string, ServiceExtra> = {
   "parent-reset-2hr": {
-    bestFor: "A fast reset when the house is not dirty enough for a deep clean, but the daily pile-up is making the day feel heavier.",
+    bestFor:
+      "A fast reset when the house is not dirty enough for a deep clean, but the daily pile-up is making the day feel heavier.",
     extraDetails: [
       "Best for one or two priority areas instead of the whole home",
       "Great after busy mornings, dinner chaos, playtime, or a rough week",
       "You can leave a short checklist so the helper focuses on what matters most",
     ],
-    goodToKnow: ["Not childcare", "Light reset, not deep cleaning", "Reviewed before checkout"],
+    goodToKnow: [
+      "Not childcare",
+      "Light reset, not deep cleaning",
+      "Reviewed before checkout",
+    ],
   },
   "family-reset-3hr": {
-    bestFor: "A stronger catch-up visit for families who need more than a quick tidy, especially when laundry, toys, dishes, and entry areas all need attention.",
+    bestFor:
+      "A stronger catch-up visit for families who need more than a quick tidy, especially when laundry, toys, dishes, and entry areas all need attention.",
     extraDetails: [
       "More room for folding, sorting, and putting everyday items back in place",
       "Good for pantry, entryway, kids area, or main living space resets",
       "Works well when you want a prioritized checklist handled in one visit",
     ],
-    goodToKnow: ["Most popular reset size", "Flexible task order", "Reviewed before checkout"],
+    goodToKnow: [
+      "Most popular reset size",
+      "Flexible task order",
+      "Reviewed before checkout",
+    ],
   },
   "helper-block-4hr": {
-    bestFor: "A bigger block for households that need real catch-up time, multi-area support, or a custom approved helper list.",
+    bestFor:
+      "A bigger block for households that need real catch-up time, multi-area support, or a custom approved helper list.",
     extraDetails: [
       "Helpful before guests, after trips, during busy work weeks, or when routines fall behind",
       "Can combine light home reset tasks with folding, organizing, or approved pickup help",
       "Better for families who want fewer limits and more time to work through a checklist",
     ],
-    goodToKnow: ["Custom scope reviewed", "Half-day helper block", "Best for bigger lists"],
+    goodToKnow: [
+      "Custom scope reviewed",
+      "Half-day helper block",
+      "Best for bigger lists",
+    ],
   },
   "specific-area-reset": {
-    bestFor: "One focused space that needs a real reset — like a garage, pantry, closet, playroom, laundry room, entry, kitchen zone, or moving-prep area.",
+    bestFor:
+      "One focused space that needs a real reset — like a garage, pantry, closet, playroom, laundry room, entry, kitchen zone, or moving-prep area.",
     extraDetails: [
       "Garage Reset can include sorting, organizing, sweeping accessible areas, and grouping keep/donate/trash piles",
       "Great for making room for storage, parking, strollers, tools, seasonal items, toys, or household systems",
@@ -103,7 +130,8 @@ const serviceExtras: Record<string, ServiceExtra> = {
     goodToKnow: ["Quote first", "Photos recommended", "No hazardous cleanup"],
   },
   "move-out-cleaning": {
-    bestFor: "Empty or mostly empty homes that need a reviewed move-in, move-out, rental turnover, or listing-prep clean before keys are handed over.",
+    bestFor:
+      "Empty or mostly empty homes that need a reviewed move-in, move-out, rental turnover, or listing-prep clean before keys are handed over.",
     extraDetails: [
       "Square footage, room count, photos, condition, and timing are reviewed before pricing",
       "Kitchen and bathrooms can be prioritized when they need the most attention",
@@ -112,28 +140,44 @@ const serviceExtras: Record<string, ServiceExtra> = {
     goodToKnow: ["Quote first", "Photos recommended", "Empty-home focused"],
   },
   "errand-helper": {
-    bestFor: "Local family logistics when the errands are simple, safe, and approved ahead of time, but you do not have the time to run them yourself.",
+    bestFor:
+      "Local family logistics when the errands are simple, safe, and approved ahead of time, but you do not have the time to run them yourself.",
     extraDetails: [
       "Can help with groceries, returns, local pickups, drop-offs, and simple supply runs",
       "Extra stops, long routes, parking, and special handling are reviewed before checkout",
       "You can add instructions for receipts, substitutions, timing, and drop-off preferences",
     ],
-    goodToKnow: ["No unsafe requests", "Mileage included", "Longer routes quoted"],
+    goodToKnow: [
+      "No unsafe requests",
+      "Mileage included",
+      "Longer routes quoted",
+    ],
   },
   "laundry-rescue": {
-    bestFor: "Laundry catch-up when the baskets are taking over and you want pickup, wash/fold coordination, and clean return delivery handled for you.",
+    bestFor:
+      "Laundry catch-up when the baskets are taking over and you want pickup, wash/fold coordination, and clean return delivery handled for you.",
     extraDetails: [
       "Laundry is dry-weighed at pickup so pricing is clear before final balance",
       "Clean clothes may be returned in reusable NestHelper bags or totes",
       "Add-ons can cover fragrance-free detergent, sensitive skin detergent, low heat, hang dry, or rush return when available",
     ],
-    goodToKnow: ["Deposit credited", "Reusable bag return", "Bulky items quoted"],
+    goodToKnow: [
+      "Deposit credited",
+      "Reusable bag return",
+      "Bulky items quoted",
+    ],
   },
 };
 
 type CardOpenEvent = CustomEvent<{ id: string }>;
 
-export function ServiceCard({ service, equalCollapsedHeight = false }: { service: Service; equalCollapsedHeight?: boolean }) {
+export function ServiceCard({
+  service,
+  equalCollapsedHeight = false,
+}: {
+  service: Service;
+  equalCollapsedHeight?: boolean;
+}) {
   const [open, setOpen] = useState(false);
   const cardRef = useRef<HTMLElement | null>(null);
   const returnScrollYRef = useRef<number | null>(null);
@@ -144,9 +188,10 @@ export function ServiceCard({ service, equalCollapsedHeight = false }: { service
   const featured = service.id === "family-reset-3hr";
   const isLaundry = service.id === "laundry-rescue";
   const isQuoteBased = service.standardPrice.toLowerCase().includes("quoted");
-  const quotePriceText = isQuoteBased ? service.standardPrice.replace(/quoted/i, "Quote") : service.standardPrice;
   const equalClosed = equalCollapsedHeight && !open;
-  const collapsedHeightClass = equalCollapsedHeight ? "h-[670px] sm:h-[650px]" : "min-h-[610px] md:h-[650px]";
+  const collapsedHeightClass = equalCollapsedHeight
+    ? "h-[670px] sm:h-[650px]"
+    : "min-h-[610px] md:h-[650px]";
 
   useEffect(() => {
     function handleOtherCard(event: Event) {
@@ -158,7 +203,10 @@ export function ServiceCard({ service, equalCollapsedHeight = false }: { service
 
     window.addEventListener("nesthelper-service-card-open", handleOtherCard);
     return () => {
-      window.removeEventListener("nesthelper-service-card-open", handleOtherCard);
+      window.removeEventListener(
+        "nesthelper-service-card-open",
+        handleOtherCard,
+      );
       if (returnTimerRef.current) window.clearTimeout(returnTimerRef.current);
     };
   }, [service.id]);
@@ -166,7 +214,8 @@ export function ServiceCard({ service, equalCollapsedHeight = false }: { service
   function rememberReturnPosition() {
     if (typeof window === "undefined" || !cardRef.current) return;
     const headerOffset = window.innerWidth < 768 ? 88 : 110;
-    const cardTop = cardRef.current.getBoundingClientRect().top + window.scrollY;
+    const cardTop =
+      cardRef.current.getBoundingClientRect().top + window.scrollY;
     returnScrollYRef.current = Math.max(0, cardTop - headerOffset);
   }
 
@@ -193,7 +242,11 @@ export function ServiceCard({ service, equalCollapsedHeight = false }: { service
       const nextOpen = !currentOpen;
       if (nextOpen) {
         rememberReturnPosition();
-        window.dispatchEvent(new CustomEvent("nesthelper-service-card-open", { detail: { id: service.id } }));
+        window.dispatchEvent(
+          new CustomEvent("nesthelper-service-card-open", {
+            detail: { id: service.id },
+          }),
+        );
       } else {
         returnToCardStart();
       }
@@ -215,7 +268,11 @@ export function ServiceCard({ service, equalCollapsedHeight = false }: { service
     }
 
     rememberReturnPosition();
-    window.dispatchEvent(new CustomEvent("nesthelper-service-card-open", { detail: { id: service.id } }));
+    window.dispatchEvent(
+      new CustomEvent("nesthelper-service-card-open", {
+        detail: { id: service.id },
+      }),
+    );
     setOpen(true);
   }
 
@@ -224,7 +281,9 @@ export function ServiceCard({ service, equalCollapsedHeight = false }: { service
       ref={cardRef}
       onClick={handleCardClick}
       className={`group relative flex cursor-pointer flex-col overflow-hidden rounded-[2rem] border bg-white/95 shadow-sm backdrop-blur transition duration-300 hover:-translate-y-1 hover:shadow-lift ${
-        open ? `border-nest-gold/35 ring-4 ${theme.ring}` : `${collapsedHeightClass} border-nest-gold/16`
+        open
+          ? `border-nest-gold/35 ring-4 ${theme.ring}`
+          : `${collapsedHeightClass} border-nest-gold/16`
       }`}
     >
       {featured && (
@@ -233,7 +292,9 @@ export function ServiceCard({ service, equalCollapsedHeight = false }: { service
         </div>
       )}
 
-      <div className={`relative h-40 shrink-0 overflow-hidden bg-gradient-to-br sm:h-44 ${theme.accent}`}>
+      <div
+        className={`relative h-40 shrink-0 overflow-hidden bg-gradient-to-br sm:h-44 ${theme.accent}`}
+      >
         <Image
           src={service.image}
           alt={service.title}
@@ -241,16 +302,26 @@ export function ServiceCard({ service, equalCollapsedHeight = false }: { service
           className="object-contain p-5 opacity-100 transition duration-700 group-hover:scale-[1.03] sm:p-6"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-white/40 via-transparent to-white/0" />
-        <div className={`absolute left-4 top-4 max-w-[72%] rounded-full border px-3 py-1.5 text-[0.68rem] font-black uppercase leading-tight tracking-[0.12em] shadow-sm ${theme.chip}`}>
+        <div
+          className={`absolute left-4 top-4 max-w-[72%] rounded-full border px-3 py-1.5 text-[0.68rem] font-black uppercase leading-tight tracking-[0.12em] shadow-sm ${theme.chip}`}
+        >
           {theme.eyebrow}
         </div>
       </div>
 
-      <div className={`flex flex-1 flex-col p-5 sm:p-6 ${equalClosed ? "pb-[10.25rem] sm:pb-[10.5rem]" : ""}`}>
+      <div
+        className={`flex flex-1 flex-col p-5 sm:p-6 ${equalClosed ? "pb-[10.25rem] sm:pb-[10.5rem]" : ""}`}
+      >
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
-            <h3 className={`text-2xl font-black leading-tight text-nest-teal ${open ? "" : "min-h-[3.1rem]"}`}>{service.title}</h3>
-            <p className={`mt-2 text-sm font-semibold leading-6 text-nest-ink/68 ${open ? "" : "line-clamp-2 min-h-[3rem]"}`}>
+            <h3
+              className={`text-2xl font-black leading-tight text-nest-teal ${open ? "" : "min-h-[3.1rem]"}`}
+            >
+              {service.title}
+            </h3>
+            <p
+              className={`mt-2 text-sm font-semibold leading-6 text-nest-ink/68 ${open ? "" : "line-clamp-2 min-h-[3rem]"}`}
+            >
               {service.description}
             </p>
           </div>
@@ -265,21 +336,30 @@ export function ServiceCard({ service, equalCollapsedHeight = false }: { service
                 : "border-nest-gold/18 bg-nest-cream text-nest-teal hover:border-nest-gold/55 hover:bg-white"
             }`}
           >
-            <ChevronDown size={18} className={`transition ${open ? "rotate-180" : ""}`} />
+            <ChevronDown
+              size={18}
+              className={`transition ${open ? "rotate-180" : ""}`}
+            />
           </button>
         </div>
 
-        <div className={`mt-5 shrink-0 overflow-hidden rounded-3xl border border-nest-gold/14 bg-gradient-to-br from-nest-cream via-white to-nest-mint/20 shadow-sm ${equalClosed ? "h-[8.75rem]" : ""}`}>
-          <div className={`grid gap-0 sm:grid-cols-[minmax(0,1fr)_7.9rem] ${equalClosed ? "h-full" : "min-h-[8.4rem]"}`}>
+        <div
+          className={`mt-5 shrink-0 overflow-hidden rounded-3xl border border-nest-gold/14 bg-gradient-to-br from-nest-cream via-white to-nest-mint/20 shadow-sm ${equalClosed ? "h-[8.75rem]" : ""}`}
+        >
+          <div
+            className={`grid gap-0 sm:grid-cols-[minmax(0,1fr)_7.9rem] ${equalClosed ? "h-full" : "min-h-[8.4rem]"}`}
+          >
             <div className="flex min-w-0 flex-col justify-center p-4 sm:p-5">
-              <div className="text-xs font-black uppercase tracking-[0.16em] text-nest-ink/55">{isQuoteBased ? "Pricing" : "Starting at"}</div>
+              <div className="text-xs font-black uppercase tracking-[0.16em] text-nest-ink/55">
+                {isQuoteBased ? "Pricing" : "Starting at"}
+              </div>
               <div
-                className={`mt-1 max-w-full font-black leading-tight text-nest-teal ${
+                className={`mt-1 max-w-full font-black text-nest-teal ${
                   isLaundry
-                    ? "text-[1.55rem] sm:text-[1.62rem]"
+                    ? "text-[1.55rem] leading-tight sm:text-[1.62rem]"
                     : isQuoteBased
-                      ? "text-[1.28rem] leading-[1.05] sm:text-[1.38rem]"
-                      : "text-3xl"
+                      ? "text-[1.7rem] leading-none sm:text-[1.85rem]"
+                      : "text-3xl leading-tight"
                 }`}
               >
                 {isLaundry ? (
@@ -289,18 +369,26 @@ export function ServiceCard({ service, equalCollapsedHeight = false }: { service
                   </>
                 ) : isQuoteBased ? (
                   <>
-                    <span className="block">{quotePriceText.split(" after ")[0]}</span>
-                    <span className="block whitespace-nowrap">after review</span>
+                    <span className="block whitespace-nowrap">Quote</span>
+                    <span className="mt-1.5 inline-flex w-fit rounded-full bg-white/80 px-2.5 py-1 text-[0.58rem] font-black uppercase leading-none tracking-[0.12em] text-nest-ink/58 shadow-sm sm:text-[0.62rem]">
+                      after review
+                    </span>
                   </>
                 ) : (
                   service.standardPrice
                 )}
               </div>
-              <div className={`mt-2 font-bold text-nest-ink/60 ${isLaundry || isQuoteBased ? "text-[0.72rem] leading-4 sm:text-xs" : "text-sm"}`}>
-                {isQuoteBased ? "Reviewed before checkout" : "Helper-based launch pricing"}
+              <div
+                className={`mt-2 font-bold text-nest-ink/60 ${isLaundry || isQuoteBased ? "text-[0.72rem] leading-4 sm:text-xs" : "text-sm"}`}
+              >
+                {isQuoteBased
+                  ? "Reviewed before checkout"
+                  : "Helper-based launch pricing"}
               </div>
             </div>
-            <div className={`flex min-h-[3.5rem] items-center justify-center px-3 py-3 text-center text-[0.58rem] font-black uppercase leading-5 tracking-[0.075em] sm:text-[0.62rem] ${theme.price}`}>
+            <div
+              className={`flex min-h-[3.5rem] min-w-0 items-center justify-center break-words px-3 py-3 text-center text-[0.58rem] font-black uppercase leading-5 tracking-[0.075em] sm:text-[0.62rem] ${theme.price}`}
+            >
               {service.priceNote}
             </div>
           </div>
@@ -317,21 +405,27 @@ export function ServiceCard({ service, equalCollapsedHeight = false }: { service
                   <h4 className="flex items-center gap-2 font-black text-nest-teal">
                     <Info size={17} /> Best for
                   </h4>
-                  <p className="mt-3 text-sm font-semibold leading-6 text-nest-ink/72">{extra.bestFor}</p>
+                  <p className="mt-3 text-sm font-semibold leading-6 text-nest-ink/72">
+                    {extra.bestFor}
+                  </p>
                 </div>
               )}
 
               <div className="rounded-3xl border border-nest-gold/12 bg-white p-5 shadow-sm">
-                <h4 className="font-black text-nest-teal">What may fit in this visit</h4>
+                <h4 className="font-black text-nest-teal">
+                  What may fit in this visit
+                </h4>
                 <ul className="mt-3 grid gap-2.5 text-sm text-nest-ink/76">
-                  {[...service.details, ...(extra?.extraDetails || [])].map((detail) => (
-                    <li key={detail} className="flex gap-2">
-                      <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-nest-mint/45 text-nest-teal">
-                        <CheckCircle2 size={15} />
-                      </span>
-                      <span>{detail}</span>
-                    </li>
-                  ))}
+                  {[...service.details, ...(extra?.extraDetails || [])].map(
+                    (detail) => (
+                      <li key={detail} className="flex gap-2">
+                        <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-nest-mint/45 text-nest-teal">
+                          <CheckCircle2 size={15} />
+                        </span>
+                        <span>{detail}</span>
+                      </li>
+                    ),
+                  )}
                 </ul>
               </div>
 
@@ -339,21 +433,32 @@ export function ServiceCard({ service, equalCollapsedHeight = false }: { service
                 <h4 className="font-black text-nest-teal">Good to know</h4>
                 <div className="mt-3 grid gap-2 text-sm font-bold text-nest-ink/72">
                   <div className="flex gap-2">
-                    <Clock className="mt-0.5 shrink-0 text-nest-teal" size={17} />
+                    <Clock
+                      className="mt-0.5 shrink-0 text-nest-teal"
+                      size={17}
+                    />
                     <span>{service.serviceTime}</span>
                   </div>
                   {service.travelInfo && (
                     <div className="flex gap-2">
-                      <MapPin className="mt-0.5 shrink-0 text-nest-teal" size={17} />
+                      <MapPin
+                        className="mt-0.5 shrink-0 text-nest-teal"
+                        size={17}
+                      />
                       <span>{service.travelInfo}</span>
                     </div>
                   )}
                   {service.recurringRates?.length ? (
                     <div className="mt-3 rounded-2xl border border-nest-gold/16 bg-white p-3 text-xs leading-5 text-nest-ink/70">
-                      <p className="font-black text-nest-teal">Recurring rates after first visit</p>
+                      <p className="font-black text-nest-teal">
+                        Recurring rates after first visit
+                      </p>
                       <div className="mt-2 grid gap-1">
                         {service.recurringRates.map((rate) => (
-                          <span key={rate.cadence} className="flex justify-between gap-3 font-black">
+                          <span
+                            key={rate.cadence}
+                            className="flex justify-between gap-3 font-black"
+                          >
                             <span>{rate.cadence}</span>
                             <span>{rate.price}</span>
                           </span>
@@ -365,7 +470,10 @@ export function ServiceCard({ service, equalCollapsedHeight = false }: { service
                 {extra?.goodToKnow?.length ? (
                   <div className="mt-4 flex flex-wrap gap-2">
                     {extra.goodToKnow.map((item) => (
-                      <span key={item} className="rounded-full border border-nest-gold/20 bg-white px-3 py-1.5 text-xs font-black text-nest-teal">
+                      <span
+                        key={item}
+                        className="rounded-full border border-nest-gold/20 bg-white px-3 py-1.5 text-xs font-black text-nest-teal"
+                      >
                         {item}
                       </span>
                     ))}
@@ -381,7 +489,9 @@ export function ServiceCard({ service, equalCollapsedHeight = false }: { service
           </div>
         </div>
 
-        <div className={`shrink-0 pt-5 ${equalClosed ? "absolute bottom-5 left-5 right-5 sm:bottom-6 sm:left-6 sm:right-6" : "mt-auto"}`}>
+        <div
+          className={`shrink-0 pt-5 ${equalClosed ? "absolute bottom-5 left-5 right-5 sm:bottom-6 sm:left-6 sm:right-6" : "mt-auto"}`}
+        >
           <button
             type="button"
             onClick={toggleDetails}
@@ -394,7 +504,10 @@ export function ServiceCard({ service, equalCollapsedHeight = false }: { service
             }`}
           >
             {open ? "Hide details" : "View package details"}
-            <ChevronDown size={18} className={`transition ${open ? "rotate-180" : ""}`} />
+            <ChevronDown
+              size={18}
+              className={`transition ${open ? "rotate-180" : ""}`}
+            />
           </button>
 
           <Link
@@ -403,7 +516,10 @@ export function ServiceCard({ service, equalCollapsedHeight = false }: { service
             className="focus-ring group/link inline-flex w-full items-center justify-center gap-2 rounded-full bg-nest-teal px-5 py-3.5 font-black text-white shadow-soft transition hover:-translate-y-0.5 hover:bg-nest-teal2 hover:shadow-lift"
           >
             Request This
-            <ArrowRight size={18} className="transition group-hover/link:translate-x-0.5" />
+            <ArrowRight
+              size={18}
+              className="transition group-hover/link:translate-x-0.5"
+            />
           </Link>
         </div>
       </div>
