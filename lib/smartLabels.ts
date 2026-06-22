@@ -56,6 +56,30 @@ export function normalizeSmartLabelCode(value: unknown) {
   return value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 16);
 }
 
+export function extractSmartLabelCode(value: unknown) {
+  if (typeof value !== "string") return "";
+  const raw = value.trim();
+  if (!raw) return "";
+
+  const labelPathMatch = raw.match(/\/(?:labels|smart-labels)\/([A-Za-z0-9-]+)/i);
+  if (labelPathMatch?.[1]) return normalizeSmartLabelCode(labelPathMatch[1]);
+
+  try {
+    const parsed = new URL(raw);
+    const parts = parsed.pathname.split("/").map((part) => decodeURIComponent(part)).filter(Boolean);
+    const labelsIndex = parts.findIndex((part) => ["labels", "smart-labels"].includes(part.toLowerCase()));
+    if (labelsIndex >= 0 && parts[labelsIndex + 1]) return normalizeSmartLabelCode(parts[labelsIndex + 1]);
+    const queryCode = parsed.searchParams.get("code") || parsed.searchParams.get("label") || parsed.searchParams.get("qr");
+    if (queryCode) return normalizeSmartLabelCode(queryCode);
+    if (parts.length) return normalizeSmartLabelCode(parts[parts.length - 1]);
+  } catch {
+    // Not a URL. Fall through to plain-code cleanup.
+  }
+
+  const cleaned = raw.replace(/^code[:#]?/i, "").replace(/^label[:#]?/i, "").trim();
+  return normalizeSmartLabelCode(cleaned);
+}
+
 export function getSmartLabelUrl(code: string, baseUrl = getBaseSiteUrl()) {
   return `${baseUrl.replace(/\/$/, "")}/labels/${encodeURIComponent(normalizeSmartLabelCode(code))}`;
 }

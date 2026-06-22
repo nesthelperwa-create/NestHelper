@@ -43,6 +43,8 @@ type SmartLabelBatch = {
   updatedAt?: { toDate?: () => Date; seconds?: number };
 };
 
+type SmartLabelAction = "resetPin" | "archive" | "restore" | "activate";
+
 type SmartLabelAdmin = {
   id: string;
   code?: string;
@@ -62,7 +64,20 @@ type SmartLabelAdmin = {
   photos?: unknown[];
   pinEnabled?: boolean;
   status?: string;
+  mode?: string;
+  reservedOnly?: boolean;
   updatedAt?: { toDate?: () => Date; seconds?: number };
+  updatedAtIso?: string;
+  createdAtIso?: string;
+};
+
+type LookupLabelResponse = {
+  ok?: boolean;
+  error?: string;
+  message?: string;
+  code?: string;
+  reservedOnly?: boolean;
+  label?: SmartLabelAdmin;
 };
 
 type GeneratedBatchResponse = {
@@ -98,7 +113,7 @@ function getBatchDate(batch: SmartLabelBatch) {
 }
 
 function getUpdatedDate(label: SmartLabelAdmin) {
-  const date = label.updatedAt?.toDate?.() || (typeof label.updatedAt?.seconds === "number" ? new Date(label.updatedAt.seconds * 1000) : null);
+  const date = label.updatedAt?.toDate?.() || (typeof label.updatedAt?.seconds === "number" ? new Date(label.updatedAt.seconds * 1000) : null) || (label.updatedAtIso ? new Date(label.updatedAtIso) : null);
   if (!date || Number.isNaN(date.getTime())) return "";
   return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
 }
@@ -156,6 +171,10 @@ export default function AdminSmartLabelsPage() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [lastPrintPath, setLastPrintPath] = useState("");
+  const [lookupInput, setLookupInput] = useState("");
+  const [lookupLabel, setLookupLabel] = useState<SmartLabelAdmin | null>(null);
+  const [lookupMessage, setLookupMessage] = useState("");
+  const [lookupBusy, setLookupBusy] = useState(false);
 
   useEffect(() => {
     const q = query(collection(firestoreDb, "smartLabelBatches"), orderBy("createdAt", "desc"), limit(50));
@@ -276,7 +295,52 @@ export default function AdminSmartLabelsPage() {
     }
   }
 
-  async function updateLabel(code: string, action: "resetPin" | "archive" | "restore") {
+  async function lookupSmartLabel(rawQuery: string, options: { silent?: boolean } = {}) {
+    const queryText = rawQuery.trim();
+    if (!queryText) {
+      setLookupMessage("Enter the code printed under the QR label or paste the full QR link.");
+      setLookupLabel(null);
+      return;
+    }
+
+    if (!options.silent) {
+      setLookupBusy(true);
+      setLookupMessage("");
+      setError("");
+      setMessage("");
+    }
+
+    try {
+      const user = firebaseAuth.currentUser;
+      if (!user) throw new Error("Sign back in to admin before looking up labels.");
+      const token = await getIdToken(user, true);
+      const response = await fetch("/api/admin/smart-labels/lookup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ query: queryText }),
+      });
+      const result = (await response.json().catch(() => null)) as LookupLabelResponse | null;
+      if (!response.ok || !result?.ok || !result.label) throw new Error(result?.error || "Unable to find this label.");
+
+      setLookupLabel(result.label);
+      setLookupMessage(result.message || (result.reservedOnly ? "Reserved sticker-order code found." : `Active label found: ${getCode(result.label)}.`));
+    } catch (err) {
+      setLookupLabel(null);
+      setLookupMessage(err instanceof Error ? err.message : "Unable to look up this label.");
+    } finally {
+      if (!options.silent) setLookupBusy(false);
+    }
+  }
+
+  async function handleLookup(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    await lookupSmartLabel(lookupInput);
+  }
+
+  async function updateLabel(code: string, action: SmartLabelAction) {
     setError("");
     setMessage("");
     try {
@@ -294,6 +358,9 @@ export default function AdminSmartLabelsPage() {
       const result = (await response.json().catch(() => null)) as { ok?: boolean; error?: string; message?: string } | null;
       if (!response.ok || !result?.ok) throw new Error(result?.error || "Unable to update this label.");
       setMessage(result.message || "Label updated.");
+      if (lookupLabel && getCode(lookupLabel) === code) {
+        await lookupSmartLabel(code, { silent: true });
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to update this label.");
     }
@@ -425,6 +492,50 @@ export default function AdminSmartLabelsPage() {
             </div>
             <div className="mt-4 rounded-3xl border border-amber-200 bg-amber-50 p-4 text-sm font-bold leading-6 text-amber-900">
               Offer note: include up to 10 Smart Labels with qualifying resets, and up to 30 when a larger organizing project needs them. Charge setup labor separately: $49 up to 10, $79 up to 20, $109 up to 30, then $2 for each extra standard label setup.
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-[2rem] border border-[#eadfc8] bg-white p-6 shadow-lg shadow-[#075c58]/5">
+          <div className="grid gap-5 lg:grid-cols-[0.82fr_1.18fr] lg:items-start">
+            <div>
+              <div className="flex items-start gap-3">
+                <div className="rounded-2xl bg-[#e8f5ef] p-3 text-[#075c58]"><Search size={22} /></div>
+                <div>
+                  <h3 className="text-2xl font-black text-[#075c58]">Find one label by QR/code</h3>
+                  <p className="mt-1 text-sm font-semibold leading-6 text-slate-600">Use this for bulk sticker orders so you do not need a long active list. Enter the printed code or paste the full QR link to reset PINs, open the label, copy the URL, archive, or restore.</p>
+                </div>
+              </div>
+              <form onSubmit={handleLookup} className="mt-5 grid gap-3 sm:grid-cols-[1fr_auto]">
+                <input
+                  className="input"
+                  value={lookupInput}
+                  onChange={(event) => setLookupInput(event.target.value)}
+                  placeholder="Example: ABC1234 or https://www.nesthelperwa.com/labels/ABC1234"
+                />
+                <button type="submit" disabled={lookupBusy} className="inline-flex items-center justify-center gap-2 rounded-full bg-[#075c58] px-5 py-3 text-sm font-bold text-white shadow-lg shadow-[#075c58]/20 transition hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-60">
+                  {lookupBusy ? <Loader2 className="animate-spin" size={18} /> : <Search size={18} />} Find label
+                </button>
+              </form>
+              <p className="mt-3 text-xs font-bold leading-5 text-slate-500">Tip: for 500/1000 sticker orders, the dashboard stays clean. Look up only the label you need by entering its code.</p>
+              {lookupMessage && (
+                <p className={`mt-4 rounded-3xl border p-4 text-sm font-bold leading-6 ${lookupLabel ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-amber-200 bg-amber-50 text-amber-900"}`}>
+                  {lookupMessage}
+                </p>
+              )}
+            </div>
+            <div>
+              {lookupLabel ? (
+                <SmartLabelCard label={lookupLabel} onUpdate={updateLabel} onMessage={setMessage} lookupMode />
+              ) : (
+                <div className="grid min-h-[13rem] place-items-center rounded-3xl border border-dashed border-[#eadfc8] bg-[#fbf6ea] p-6 text-center">
+                  <div>
+                    <QrCode className="mx-auto text-[#075c58]" size={34} />
+                    <p className="mt-3 font-black text-[#075c58]">No label selected</p>
+                    <p className="mt-1 text-sm font-semibold leading-6 text-slate-600">Find a label above to manage it without scrolling through a sheet.</p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -564,13 +675,14 @@ export default function AdminSmartLabelsPage() {
   );
 }
 
-function SmartLabelCard({ label, onUpdate, onMessage }: { label: SmartLabelAdmin; onUpdate: (code: string, action: "resetPin" | "archive" | "restore") => void; onMessage: (value: string) => void }) {
+function SmartLabelCard({ label, onUpdate, onMessage, lookupMode = false }: { label: SmartLabelAdmin; onUpdate: (code: string, action: SmartLabelAction) => void; onMessage: (value: string) => void; lookupMode?: boolean }) {
   const code = getCode(label);
   const url = getLabelUrl(label);
   const status = label.status || "Ready";
+  const reservedOnly = Boolean(label.reservedOnly || status === "Reserved");
   const archived = status === "Archived";
-  const name = label.labelName || (hasLabelContent(label) ? "Untitled label" : "Blank label");
-  const location = label.locationName || label.location || "No location yet";
+  const name = reservedOnly ? "Reserved sticker code" : label.labelName || (hasLabelContent(label) ? "Untitled label" : "Blank label");
+  const location = reservedOnly ? label.batchName || "Sticker order CSV only" : label.locationName || label.location || "No location yet";
   const photoCount = Array.isArray(label.photos) ? label.photos.length : 0;
 
   return (
@@ -579,6 +691,7 @@ function SmartLabelCard({ label, onUpdate, onMessage }: { label: SmartLabelAdmin
         <img src={getSmartLabelQrImageUrl(url, 220)} alt={`QR code for ${code}`} className="h-20 w-20 rounded-2xl border border-slate-200 bg-white p-1" />
         <div className="sm:mt-2 sm:text-center">
           <p className="font-mono text-xs font-black text-[#075c58]">{code}</p>
+          {lookupMode && <p className="mt-1 inline-flex rounded-full bg-[#fff6df] px-2 py-0.5 text-[0.68rem] font-black text-[#8a641a]">Lookup</p>}
           {label.pinEnabled && <p className="mt-1 inline-flex rounded-full bg-[#e9f4f1] px-2 py-0.5 text-[0.68rem] font-black text-[#075c58]">PIN</p>}
         </div>
       </div>
@@ -587,7 +700,7 @@ function SmartLabelCard({ label, onUpdate, onMessage }: { label: SmartLabelAdmin
           <div className="min-w-0">
             <p className="truncate text-lg font-black text-[#075c58]">{name}</p>
             <p className="mt-1 truncate text-sm text-slate-600">{location}</p>
-            <p className="mt-1 max-h-12 overflow-hidden text-sm text-slate-500">{label.itemsInside || "Not filled out yet."}</p>
+            <p className="mt-1 max-h-12 overflow-hidden text-sm text-slate-500">{reservedOnly ? "Reserved for printed sticker inventory. Activate it when you are ready to manage this label." : label.itemsInside || "Not filled out yet."}</p>
             <div className="mt-2 flex flex-wrap gap-2 text-xs font-bold text-slate-500">
               {photoCount > 0 && <span>{photoCount} photo{photoCount === 1 ? "" : "s"}</span>}
               {getUpdatedDate(label) && <span>Updated {getUpdatedDate(label)}</span>}
@@ -602,19 +715,27 @@ function SmartLabelCard({ label, onUpdate, onMessage }: { label: SmartLabelAdmin
           <button type="button" onClick={async () => onMessage(await copyText(url) ? "Label link copied." : "Could not copy label link.")} className="inline-flex items-center gap-1 rounded-full border border-[#075c58]/20 px-3 py-1.5 text-xs font-black text-[#075c58]">
             <Copy size={14} /> Copy URL
           </button>
-          {label.pinEnabled && (
-            <button type="button" onClick={() => onUpdate(code, "resetPin")} className="inline-flex items-center gap-1 rounded-full border border-[#075c58]/20 px-3 py-1.5 text-xs font-black text-[#075c58]">
-              <RotateCcw size={14} /> Reset PIN
-            </button>
-          )}
-          {archived ? (
-            <button type="button" onClick={() => onUpdate(code, "restore")} className="inline-flex items-center gap-1 rounded-full border border-emerald-200 px-3 py-1.5 text-xs font-black text-emerald-700">
-              <Undo2 size={14} /> Restore
+          {reservedOnly ? (
+            <button type="button" onClick={() => onUpdate(code, "activate")} className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-black text-emerald-700">
+              <Plus size={14} /> Activate label
             </button>
           ) : (
-            <button type="button" onClick={() => onUpdate(code, "archive")} className="inline-flex items-center gap-1 rounded-full border border-rose-200 px-3 py-1.5 text-xs font-black text-rose-700">
-              <Archive size={14} /> Archive
-            </button>
+            <>
+              {label.pinEnabled && (
+                <button type="button" onClick={() => onUpdate(code, "resetPin")} className="inline-flex items-center gap-1 rounded-full border border-[#075c58]/20 px-3 py-1.5 text-xs font-black text-[#075c58]">
+                  <RotateCcw size={14} /> Reset PIN
+                </button>
+              )}
+              {archived ? (
+                <button type="button" onClick={() => onUpdate(code, "restore")} className="inline-flex items-center gap-1 rounded-full border border-emerald-200 px-3 py-1.5 text-xs font-black text-emerald-700">
+                  <Undo2 size={14} /> Restore
+                </button>
+              ) : (
+                <button type="button" onClick={() => onUpdate(code, "archive")} className="inline-flex items-center gap-1 rounded-full border border-rose-200 px-3 py-1.5 text-xs font-black text-rose-700">
+                  <Archive size={14} /> Archive
+                </button>
+              )}
+            </>
           )}
         </div>
       </div>
