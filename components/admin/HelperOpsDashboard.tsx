@@ -36,6 +36,17 @@ type HelperOpsDraft = {
 
 const DEFAULT_MILEAGE_RATE = "0.725";
 const PAYROLL_STATUSES = ["Not ready", "Helper assigned", "Submitted by helper", "Needs review", "Approved for payroll", "Exported to QuickBooks", "Paid", "Hold"];
+const STATUS_FILTER_OPTIONS = [
+  { value: "Active", label: "Active" },
+  { value: "Assigned", label: "Assigned" },
+  { value: "Submitted", label: "Submitted" },
+  { value: "Approved for payroll", label: "Approved for payroll" },
+  { value: "Excluded", label: "Canceled / test" },
+  { value: "All", label: "All records" },
+];
+
+const EXCLUDED_REQUEST_TERMS = ["canceled", "cancelled", "archived", "rejected", "declined", "inactive", "deleted", "test"];
+const REQUEST_STATUS_FIELDS = ["status", "requestStatus", "adminStatus", "queueStatus", "stage", "lifecycleStatus"];
 
 function getDateObject(value: unknown) {
   if (!value) return null;
@@ -226,9 +237,50 @@ function sortedHelpersForRequest(item: AdminRecord, helperList: HelperRecord[]) 
   });
 }
 
+function getRequestStatusBag(item: AdminRecord) {
+  return REQUEST_STATUS_FIELDS
+    .map((field) => getString(item[field]))
+    .filter(Boolean)
+    .join(" | ")
+    .toLowerCase()
+    .replace(/[\s_-]+/g, " ")
+    .trim();
+}
+
+function statusBagHasTerm(statusBag: string, term: string) {
+  if (!statusBag) return false;
+  const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(`(^|[^a-z0-9])${escaped}([^a-z0-9]|$)`, "i").test(statusBag);
+}
+
+function isRequestExcludedFromOps(item: AdminRecord) {
+  const statusBag = getRequestStatusBag(item);
+  const hasExcludedStatus = EXCLUDED_REQUEST_TERMS.some((term) => statusBagHasTerm(statusBag, term));
+  return Boolean(
+    hasExcludedStatus ||
+      item.isTest ||
+      item.testMode ||
+      item.isDeleted ||
+      item.deleted ||
+      item.deletedAt ||
+      item.archivedAt
+  );
+}
+
+function getRequestExclusionLabel(item: AdminRecord) {
+  const statusBag = getRequestStatusBag(item);
+  if (item.isTest || item.testMode || statusBagHasTerm(statusBag, "test")) return "Test record";
+  if (item.deleted || item.isDeleted || item.deletedAt || statusBagHasTerm(statusBag, "deleted")) return "Deleted";
+  if (item.archivedAt || statusBagHasTerm(statusBag, "archived")) return "Archived";
+  if (statusBagHasTerm(statusBag, "canceled") || statusBagHasTerm(statusBag, "cancelled")) return "Canceled";
+  if (statusBagHasTerm(statusBag, "rejected")) return "Rejected";
+  if (statusBagHasTerm(statusBag, "declined")) return "Declined";
+  if (statusBagHasTerm(statusBag, "inactive")) return "Inactive";
+  return "Excluded";
+}
+
 function isActiveRequest(item: AdminRecord) {
-  const status = getString(item.status).toLowerCase();
-  return !["canceled", "cancelled", "declined", "archived"].includes(status);
+  return !isRequestExcludedFromOps(item);
 }
 
 function isApprovedHelper(item: HelperRecord) {
@@ -405,23 +457,38 @@ export default function HelperOpsDashboard() {
   }, []);
 
   const approvedHelpers = useMemo(() => helpers.filter(isApprovedHelper), [helpers]);
-  const requestChoices = useMemo(() => requests.filter((item) => isActiveRequest(item) && getAddress(item)), [requests]);
+  const payrollEligibleRequests = useMemo(() => requests.filter(isActiveRequest), [requests]);
+  const requestChoices = useMemo(() => payrollEligibleRequests.filter((item) => getAddress(item)), [payrollEligibleRequests]);
 
   const filteredRequests = useMemo(() => {
     const q = queryText.trim().toLowerCase();
     return requests.filter((item) => {
-      if (statusFilter === "Active" && !isActiveRequest(item)) return false;
-      if (statusFilter === "Assigned" && !item.assignedHelperId) return false;
-      if (statusFilter === "Submitted" && !item.helperWorkLogSubmittedAt) return false;
-      if (statusFilter === "Approved for payroll" && getString(item.helperOpsPayrollStatus) !== "Approved for payroll") return false;
+      const isExcluded = isRequestExcludedFromOps(item);
+      if (statusFilter === "Active" && isExcluded) return false;
+      if (statusFilter === "Assigned" && (isExcluded || !item.assignedHelperId)) return false;
+      if (statusFilter === "Submitted" && (isExcluded || !item.helperWorkLogSubmittedAt)) return false;
+      if (statusFilter === "Approved for payroll" && (isExcluded || getString(item.helperOpsPayrollStatus) !== "Approved for payroll")) return false;
+      if (statusFilter === "Excluded" && !isExcluded) return false;
       if (helperFilter !== "All" && item.assignedHelperId !== helperFilter) return false;
       if (!q) return true;
-      return [getName(item), getServiceLabel(item), getCityZip(item), getString(item.assignedHelperName), getString(item.status)].join(" ").toLowerCase().includes(q);
+      return [
+        getName(item),
+        getServiceLabel(item),
+        getCityZip(item),
+        getString(item.assignedHelperName),
+        getString(item.status),
+        getString(item.requestStatus),
+        getString(item.adminStatus),
+      ]
+        .join(" ")
+        .toLowerCase()
+        .includes(q);
     });
   }, [requests, statusFilter, helperFilter, queryText]);
 
-  const pendingReview = requests.filter((item) => item.helperWorkLogSubmittedAt && getString(item.helperOpsPayrollStatus) !== "Approved for payroll" && getString(item.helperOpsPayrollStatus) !== "Paid");
-  const approvedForPayroll = requests.filter((item) => getString(item.helperOpsPayrollStatus) === "Approved for payroll");
+  const pendingReview = payrollEligibleRequests.filter((item) => item.helperWorkLogSubmittedAt && getString(item.helperOpsPayrollStatus) !== "Approved for payroll" && getString(item.helperOpsPayrollStatus) !== "Paid");
+  const approvedForPayroll = payrollEligibleRequests.filter((item) => getString(item.helperOpsPayrollStatus) === "Approved for payroll");
+  const assignedJobCount = payrollEligibleRequests.filter((item) => item.assignedHelperId).length;
   const estimatedPayroll = approvedForPayroll.reduce((sum, item) => sum + payrollCost(item).total, 0);
 
   function updateDraft(id: string, field: keyof HelperOpsDraft, value: string) {
@@ -474,8 +541,12 @@ export default function HelperOpsDashboard() {
     }
   }
 
-  async function saveHelperOps(item: AdminRecord, options: { createHelperLink?: boolean; approveForPayroll?: boolean } = {}) {
-    const draft = drafts[item.id] || draftFromRecord(item);
+  async function saveHelperOps(item: AdminRecord, options: { createHelperLink?: boolean; approveForPayroll?: boolean } = {}, overrideDraft?: HelperOpsDraft) {
+    if (options.approveForPayroll && isRequestExcludedFromOps(item)) {
+      alert("Canceled, archived, rejected, inactive, deleted, and test records are excluded from payroll approval and exports. Clear the payroll values instead.");
+      return;
+    }
+    const draft = overrideDraft || drafts[item.id] || draftFromRecord(item);
     const helper = approvedHelpers.find((entry) => entry.id === draft.assignedHelperId);
     const mileageFromRequest = draft.mileageFromMode === "request" ? getRequest(draft.mileageFromRequestId) : undefined;
     const mileageToRequest = draft.mileageToMode === "request" ? getRequest(draft.mileageToRequestId || item.id) || item : undefined;
@@ -493,12 +564,12 @@ export default function HelperOpsDashboard() {
         createHelperLink: Boolean(options.createHelperLink),
         approveForPayroll: Boolean(options.approveForPayroll),
         assignedHelperId: draft.assignedHelperId,
-        assignedHelperName: helper ? getHelperName(helper) : getString(item.assignedHelperName),
-        assignedHelperEmail: helper ? getString(helper.email) : getString(item.assignedHelperEmail),
-        assignedHelperPhone: helper ? getString(helper.phone) : getString(item.assignedHelperPhone),
-        assignedHelperSource: helper ? getString(helper.sourceCollection) : getString(item.assignedHelperSource),
-        assignedHelperApplicationId: helper ? getString(helper.sourceDocId) : getString(item.assignedHelperApplicationId),
-        assignedHelperType: helper ? getHelperRosterType(helper) : getString(item.assignedHelperType),
+        assignedHelperName: helper ? getHelperName(helper) : draft.assignedHelperId ? getString(item.assignedHelperName) : "",
+        assignedHelperEmail: helper ? getString(helper.email) : draft.assignedHelperId ? getString(item.assignedHelperEmail) : "",
+        assignedHelperPhone: helper ? getString(helper.phone) : draft.assignedHelperId ? getString(item.assignedHelperPhone) : "",
+        assignedHelperSource: helper ? getString(helper.sourceCollection) : draft.assignedHelperId ? getString(item.assignedHelperSource) : "",
+        assignedHelperApplicationId: helper ? getString(helper.sourceDocId) : draft.assignedHelperId ? getString(item.assignedHelperApplicationId) : "",
+        assignedHelperType: helper ? getHelperRosterType(helper) : draft.assignedHelperId ? getString(item.assignedHelperType) : "",
         scheduledDate: draft.scheduledDate,
         scheduledStartTime: draft.scheduledStartTime,
         scheduledEndTime: draft.scheduledEndTime,
@@ -538,6 +609,32 @@ export default function HelperOpsDashboard() {
       setSaveState((prev) => ({ ...prev, [item.id]: "error" }));
       alert(error instanceof Error ? error.message : "Unable to save helper ops.");
     }
+  }
+
+  async function clearPayrollValues(item: AdminRecord) {
+    const draft = drafts[item.id] || draftFromRecord(item);
+    const confirmed = window.confirm("Clear helper assignment, approved hours, approved miles, expense reimbursement, and payroll status for this record? This is useful for canceled/test jobs that should not show in payroll.");
+    if (!confirmed) return;
+    const clearedDraft: HelperOpsDraft = {
+      ...draft,
+      assignedHelperId: "",
+      helperHourlyRate: "",
+      mileageFromMode: "request",
+      mileageFromRequestId: "",
+      customMileageFromAddress: "",
+      mileageToMode: "request",
+      mileageToRequestId: item.id,
+      customMileageToAddress: "",
+      estimatedMiles: "0",
+      estimatedDurationMinutes: "",
+      mileageEstimateSource: "No reimbursable mileage",
+      approvedHours: "0",
+      approvedMiles: "0",
+      approvedExpenseReimbursement: "0",
+      payrollStatus: "Not ready",
+    };
+    setDrafts((prev) => ({ ...prev, [item.id]: clearedDraft }));
+    await saveHelperOps(item, {}, clearedDraft);
   }
 
   function exportPayrollSummary() {
@@ -622,7 +719,7 @@ export default function HelperOpsDashboard() {
         </div>
         <div className="rounded-[1.5rem] border border-[#eadfc8] bg-white p-4 shadow-sm">
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Assigned jobs</p>
-          <p className="mt-2 text-3xl font-bold text-[#075c58]">{requests.filter((item) => item.assignedHelperId).length}</p>
+          <p className="mt-2 text-3xl font-bold text-[#075c58]">{assignedJobCount}</p>
         </div>
         <div className="rounded-[1.5rem] border border-[#eadfc8] bg-white p-4 shadow-sm">
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Needs review</p>
@@ -648,7 +745,7 @@ export default function HelperOpsDashboard() {
           </button>
         </div>
         <p className="mt-3 text-xs leading-relaxed text-slate-500">
-          Mileage export uses the admin-approved site-to-site estimate, not helper-entered miles. QuickBooks remains your official payroll/tax system; NestHelper keeps job context, approval, and backup records.
+          Mileage export uses the admin-approved site-to-site estimate, not helper-entered miles. Canceled, archived, rejected, inactive, deleted, and test records are excluded from all payroll/export totals. QuickBooks remains your official payroll/tax system; NestHelper keeps job context, approval, and backup records.
         </p>
       </details>
 
@@ -662,7 +759,12 @@ export default function HelperOpsDashboard() {
         <p className="mt-1">Helper Ops only lists applications marked as Approved Helper, Approved Partner, Trial Job Approved, Backup List, or Backup Partner. New, reviewing, rejected, inactive, and archived applicants stay out of assignment dropdowns.</p>
       </div>
 
-      <div className="grid gap-3 rounded-[1.5rem] border border-[#eadfc8] bg-white p-4 shadow-sm md:grid-cols-[1fr_180px_220px]">
+      <div className="rounded-[1.5rem] border border-rose-100 bg-rose-50 p-4 text-sm leading-relaxed text-rose-900">
+        <p className="font-bold">Canceled/test payroll safety</p>
+        <p className="mt-1">Canceled, archived, rejected, inactive, deleted, and test records are hidden from active Helper Ops totals and QuickBooks exports. Use the status filter below to view them when needed, then use Clear payroll values to remove old test assignments or approvals.</p>
+      </div>
+
+      <div className="grid gap-3 rounded-[1.5rem] border border-[#eadfc8] bg-white p-4 shadow-sm md:grid-cols-[1fr_200px_220px]">
         <input
           value={queryText}
           onChange={(event) => setQueryText(event.target.value)}
@@ -670,7 +772,7 @@ export default function HelperOpsDashboard() {
           className="rounded-2xl border border-[#eadfc8] px-4 py-3 text-sm outline-none focus:border-[#075c58]"
         />
         <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="rounded-2xl border border-[#eadfc8] px-4 py-3 text-sm font-semibold text-slate-700 outline-none focus:border-[#075c58]">
-          {['Active', 'Assigned', 'Submitted', 'Approved for payroll', 'All'].map((item) => <option key={item}>{item}</option>)}
+          {STATUS_FILTER_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
         </select>
         <select value={helperFilter} onChange={(event) => setHelperFilter(event.target.value)} className="rounded-2xl border border-[#eadfc8] px-4 py-3 text-sm font-semibold text-slate-700 outline-none focus:border-[#075c58]">
           <option value="All">All helpers</option>
@@ -690,6 +792,8 @@ export default function HelperOpsDashboard() {
           const state = saveState[item.id] || "idle";
           const estimate = estimateState[item.id] || "idle";
           const cost = payrollCost(item);
+          const isExcluded = isRequestExcludedFromOps(item);
+          const exclusionLabel = isExcluded ? getRequestExclusionLabel(item) : "";
           const helperEntryUrl = getString(item.helperOpsEntryUrl);
           const reportedAt = item.helperWorkLogSubmittedAt;
           const fromRequest = draft.mileageFromMode === "request" ? getRequest(draft.mileageFromRequestId) : undefined;
@@ -709,6 +813,7 @@ export default function HelperOpsDashboard() {
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="rounded-full bg-[#e9f4f1] px-3 py-1 text-xs font-bold uppercase tracking-[0.16em] text-[#075c58]">{getServiceLabel(item)}</span>
                     <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">{getString(item.status) || 'No status'}</span>
+                    {isExcluded && <span className="rounded-full bg-rose-100 px-3 py-1 text-xs font-bold text-rose-800">{exclusionLabel} • excluded from payroll/export</span>}
                     {reportedAt && <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-800">Helper submitted</span>}
                   </div>
                   <h3 className="mt-2 text-xl font-bold text-[#075c58]">{getName(item)}</h3>
@@ -938,7 +1043,15 @@ export default function HelperOpsDashboard() {
                 <button onClick={() => saveHelperOps(item, { createHelperLink: true })} className="rounded-full border border-[#075c58]/25 bg-white px-5 py-3 text-sm font-bold text-[#075c58] transition hover:bg-[#e9f4f1]">
                   Create/copy helper entry link
                 </button>
-                <button onClick={() => saveHelperOps(item, { approveForPayroll: true })} className="rounded-full border border-emerald-600 bg-emerald-50 px-5 py-3 text-sm font-bold text-emerald-800 transition hover:bg-emerald-100">
+                <button onClick={() => clearPayrollValues(item)} className="rounded-full border border-rose-200 bg-rose-50 px-5 py-3 text-sm font-bold text-rose-800 transition hover:bg-rose-100">
+                  Clear payroll values
+                </button>
+                <button
+                  onClick={() => saveHelperOps(item, { approveForPayroll: true })}
+                  disabled={isExcluded}
+                  title={isExcluded ? "Canceled/test/inactive records are excluded from payroll approval." : undefined}
+                  className={`rounded-full border border-emerald-600 bg-emerald-50 px-5 py-3 text-sm font-bold text-emerald-800 transition hover:bg-emerald-100 ${isExcluded ? "cursor-not-allowed opacity-50" : ""}`}
+                >
                   Approve for payroll
                 </button>
                 {helperEntryUrl && (

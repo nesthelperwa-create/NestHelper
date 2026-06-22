@@ -42,6 +42,8 @@ type Body = {
 };
 
 const PAYROLL_STATUSES = new Set(["Not ready", "Helper assigned", "Submitted by helper", "Needs review", "Approved for payroll", "Exported to QuickBooks", "Paid", "Hold"]);
+const EXCLUDED_REQUEST_TERMS = ["canceled", "cancelled", "archived", "rejected", "declined", "inactive", "deleted", "test"];
+const REQUEST_STATUS_FIELDS = ["status", "requestStatus", "adminStatus", "queueStatus", "stage", "lifecycleStatus"];
 
 function cleanText(value: unknown, max = 500) {
   return typeof value === "string" ? value.trim().slice(0, max) : "";
@@ -64,6 +66,36 @@ function cleanNumber(value: unknown, max = 100000) {
   if (!Number.isFinite(next)) return 0;
   if (next < 0) return 0;
   return Math.min(next, max);
+}
+
+function getRecordStatusBag(record: Record<string, unknown>) {
+  return REQUEST_STATUS_FIELDS
+    .map((field) => cleanText(record[field], 120))
+    .filter(Boolean)
+    .join(" | ")
+    .toLowerCase()
+    .replace(/[\s_-]+/g, " ")
+    .trim();
+}
+
+function statusBagHasTerm(statusBag: string, term: string) {
+  if (!statusBag) return false;
+  const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(`(^|[^a-z0-9])${escaped}([^a-z0-9]|$)`, "i").test(statusBag);
+}
+
+function isRequestExcludedFromPayroll(record: Record<string, unknown>) {
+  const statusBag = getRecordStatusBag(record);
+  const hasExcludedStatus = EXCLUDED_REQUEST_TERMS.some((term) => statusBagHasTerm(statusBag, term));
+  return Boolean(
+    hasExcludedStatus ||
+      record.isTest ||
+      record.testMode ||
+      record.isDeleted ||
+      record.deleted ||
+      record.deletedAt ||
+      record.archivedAt
+  );
 }
 
 function buildOrigin(request: Request) {
@@ -97,6 +129,7 @@ export async function POST(request: Request) {
     if (!snap.exists) return NextResponse.json({ ok: false, error: "Service request not found." }, { status: 404 });
 
     const existing = snap.data() || {};
+    const excludedFromPayroll = isRequestExcludedFromPayroll(existing);
     const assignedHelperId = cleanText(body.assignedHelperId, 160);
     const payrollStatus = PAYROLL_STATUSES.has(cleanText(body.payrollStatus, 80)) ? cleanText(body.payrollStatus, 80) : assignedHelperId ? "Helper assigned" : "Not ready";
     const approvedHours = cleanNumber(body.approvedHours, 24);
@@ -138,7 +171,8 @@ export async function POST(request: Request) {
       helperOpsApprovedHours: approvedHours,
       helperOpsApprovedMiles: approvedMiles,
       helperOpsApprovedExpenseReimbursement: approvedExpenseReimbursement,
-      helperOpsPayrollStatus: body.approveForPayroll ? "Approved for payroll" : payrollStatus,
+      helperOpsPayrollStatus: excludedFromPayroll ? "Not ready" : body.approveForPayroll ? "Approved for payroll" : payrollStatus,
+      helperOpsExcludedFromPayroll: excludedFromPayroll,
       helperOpsApprovedLaborAmount: approvedHours * cleanNumber(body.hourlyRate, 500),
       helperOpsApprovedMileageAmount: approvedMiles * mileageRate,
       helperOpsApprovedPayrollAmount: approvedHours * cleanNumber(body.hourlyRate, 500) + approvedMiles * mileageRate + approvedExpenseReimbursement,
@@ -154,7 +188,7 @@ export async function POST(request: Request) {
       updatePayload.helperOpsLinkCreatedAt = existing.helperOpsLinkCreatedAt || FieldValue.serverTimestamp();
     }
 
-    if (body.approveForPayroll) {
+    if (body.approveForPayroll && !excludedFromPayroll) {
       updatePayload.helperOpsApprovedAt = FieldValue.serverTimestamp();
       updatePayload.helperOpsApprovedBy = decoded.email || "admin";
     }
