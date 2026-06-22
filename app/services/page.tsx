@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import { Building2, CheckCircle2, ClipboardCheck, CreditCard, Mail, Scale, ShieldCheck, Sparkles, SprayCan } from "lucide-react";
+import { Building2, CheckCircle2, ClipboardCheck, CreditCard, KeyRound, Mail, QrCode, Scale, ShieldCheck, Sparkles, SprayCan, Tags } from "lucide-react";
 import { PageHero } from "@/components/PageHero";
 import { ServiceCard } from "@/components/ServiceCard";
 import { ButtonLink } from "@/components/ui/ButtonLink";
@@ -74,6 +74,26 @@ export default function ServicesPage() {
               ))}
             </div>
           </div>
+        </div>
+
+        <div className="mb-10 rounded-[2.5rem] border border-nest-gold/18 bg-gradient-to-br from-white via-nest-cream to-nest-mint/25 p-7 shadow-soft sm:p-8">
+          <div className="grid gap-6 lg:grid-cols-[0.82fr_1.18fr] lg:items-center">
+            <div className="text-center lg:text-left">
+              <p className="pill-label mx-auto w-fit lg:mx-0"><QrCode size={15} /> Smart Labels</p>
+              <h2 className="mt-4 text-3xl font-black leading-tight text-nest-teal sm:text-4xl">QR labels for bins, closets, garages, and resets.</h2>
+              <p className="mt-3 font-medium leading-7 text-nest-ink/70">
+                When available, NestHelper can set up customer-owned QR labels during organizing or reset visits. Families can scan a sticker to update the label name, location, item list, notes, and small photos after we leave.
+              </p>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <SmartLabelFeature icon={<Tags size={19} />} title="Customer-owned" text="You keep the stickers and can update them anytime." />
+              <SmartLabelFeature icon={<KeyRound size={19} />} title="Optional PIN" text="Default is no PIN. Add a 4-digit PIN for private labels." />
+              <SmartLabelFeature icon={<ShieldCheck size={19} />} title="Reset friendly" text="Great for seasonal bins, toys, pantry items, moving boxes, and garages." />
+            </div>
+          </div>
+          <p className="mt-5 rounded-3xl border border-nest-gold/16 bg-white/78 p-4 text-sm font-bold leading-6 text-nest-ink/64">
+            Smart Labels are being built as an optional add-on because ongoing label details and photos use NestHelper website storage.
+          </p>
         </div>
 
         <div className="mb-5 rounded-3xl border border-nest-gold/16 bg-white/80 p-4 text-sm font-bold text-nest-ink/65 shadow-sm sm:px-5">
@@ -226,6 +246,16 @@ export default function ServicesPage() {
         </div>
       </section>
     </>
+  );
+}
+
+function SmartLabelFeature({ icon, title, text }: { icon: ReactNode; title: string; text: string }) {
+  return (
+    <div className="rounded-[1.6rem] border border-nest-gold/14 bg-white p-5 text-center shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+      <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-nest-mint/35 text-nest-teal">{icon}</div>
+      <h3 className="font-black text-nest-teal">{title}</h3>
+      <p className="mt-2 text-sm font-semibold leading-6 text-nest-ink/64">{text}</p>
+    </div>
   );
 }
 

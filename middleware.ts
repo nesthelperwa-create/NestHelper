@@ -15,7 +15,7 @@ export function middleware(request: NextRequest) {
     response.headers.set("Cache-Control", "no-store, max-age=0");
   }
 
-  if (pathname === "/checkout" || pathname === "/referrals/share" || pathname.startsWith("/helper/job/")) {
+  if (pathname === "/checkout" || pathname === "/referrals/share" || pathname.startsWith("/helper/job/") || pathname.startsWith("/labels/")) {
     response.headers.set("X-Robots-Tag", "noindex, nofollow, noarchive, nosnippet");
     response.headers.set("Cache-Control", "private, no-store, max-age=0, must-revalidate");
   }
@@ -24,5 +24,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/api/:path*", "/checkout", "/referrals/share", "/helper/job/:path*"],
+  matcher: ["/admin/:path*", "/api/:path*", "/checkout", "/referrals/share", "/helper/job/:path*", "/labels/:path*"],
 };

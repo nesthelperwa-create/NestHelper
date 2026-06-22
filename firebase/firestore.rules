@@ -51,6 +51,17 @@ service cloud.firestore {
       allow read, update, delete: if isAdmin();
     }
 
+
+    match /smartLabelBatches/{docId} {
+      allow create: if false; // generated through admin API route only
+      allow read, update, delete: if isAdmin();
+    }
+
+    match /smartLabels/{docId} {
+      allow create: if false; // generated through admin API route only
+      allow read, update, delete: if isAdmin();
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }
