@@ -44,6 +44,8 @@ const defaultState = {
   parkingAccess: "",
   supplyPreference: "NestHelper brings standard supplies",
   recurringResetInterest: "One-time reset for now",
+  smartLabelSetupInterest: "No Smart Label Setup add-on",
+  smartLabelSetupNotes: "",
   homePriorities: [] as string[],
   homeAreas: [] as string[],
   requestDetails: "",
@@ -125,7 +127,7 @@ const areaResetGoalOptions = [
   "Sweep or vacuum accessible floor",
   "Wipe reachable surfaces",
   "Clear space for parking or storage",
-  "Set up zones or labels",
+  "Set up zones or Smart Labels",
   "Light trash bagging",
   "Donation pickup prep only",
   "I’m not sure — help me prioritize",
@@ -146,6 +148,15 @@ const recurringResetOptions = [
   "Interested in every-2-weeks recurring resets after the first visit",
   "Interested in monthly support when openings allow",
   "Not sure yet — please help me decide",
+];
+
+const smartLabelSetupOptions = [
+  "No Smart Label Setup add-on",
+  "Use included Smart Labels ourselves",
+  "Smart Label Setup — starts at $49",
+  "Full Smart Label Setup — starts at $79",
+  "Quote additional Smart Label documentation/setup",
+  "Not sure — please recommend after review",
 ];
 
 const howFoundUsOptions = [
@@ -218,6 +229,9 @@ function isReferralEligibleService(serviceId: string) {
   return ["parent-reset-2hr", "family-reset-3hr", "helper-block-4hr", "errand-helper", "laundry-rescue"].includes(serviceId);
 }
 
+function isSmartLabelEligibleCategory(category: string) {
+  return ["home", "areaReset", "moveOut"].includes(category);
+}
 
 function hasLikelyStreetAddress(address: string) {
   return /\d/.test(address) && /[a-zA-Z]/.test(address) && address.trim().length >= 5;
@@ -311,6 +325,10 @@ function cleanForSelectedService(form: RequestFormState) {
       photoUploadCount: form.photoUploads.length,
       photoUploadSummary: photoUploadSummary(form.photoUploads),
       photoUploads: form.photoUploads,
+    } : {}),
+    ...(isSmartLabelEligibleCategory(category) ? {
+      smartLabelSetupInterest: form.smartLabelSetupInterest,
+      smartLabelSetupNotes: form.smartLabelSetupNotes,
     } : {}),
     requestedAt: new Date().toISOString(),
   };
@@ -429,6 +447,7 @@ export function RequestForm() {
   const isMoveOut = serviceCategory === "moveOut";
   const isErrand = serviceCategory === "errand";
   const isLaundry = serviceCategory === "laundry";
+  const smartLabelsAvailable = isSmartLabelEligibleCategory(serviceCategory);
   const wholeHomeSelected = form.homeAreas.includes(WHOLE_HOME_OPTION);
   const homeScopeWarning = isHomeReset ? getHomeScopeWarning(form.service, form.homeAreas) : "";
   const petDetailsRequired = (isHomeReset || isAreaReset || isMoveOut) && form.pets !== "No pets" && form.pets !== "No pets now, but pets lived here before";
@@ -466,6 +485,8 @@ export function RequestForm() {
       petDetails: isHomeLike ? prev.petDetails : "",
       supplyPreference: isHomeLike ? prev.supplyPreference : defaultState.supplyPreference,
       recurringResetInterest: nextCategory === "home" ? prev.recurringResetInterest : defaultState.recurringResetInterest,
+      smartLabelSetupInterest: isSmartLabelEligibleCategory(nextCategory) ? prev.smartLabelSetupInterest : defaultState.smartLabelSetupInterest,
+      smartLabelSetupNotes: isSmartLabelEligibleCategory(nextCategory) ? prev.smartLabelSetupNotes : "",
       squareFootage: nextCategory === "moveOut" ? prev.squareFootage : "",
       bedrooms: nextCategory === "moveOut" ? prev.bedrooms : "",
       bathrooms: nextCategory === "moveOut" ? prev.bathrooms : "",
@@ -995,6 +1016,24 @@ export function RequestForm() {
               </span>
             </span>
           </label>
+        </Section>
+      )}
+
+      {smartLabelsAvailable && (
+        <Section title="Optional Smart Label Setup" description="Smart Labels are included at no extra cost with qualifying resets. Choose setup only if you want NestHelper to place, scan, name, document, and walk you through keeping them updated.">
+          <div className="rounded-3xl border border-nest-gold/20 bg-nest-cream p-5 text-sm leading-6 text-nest-ink/76">
+            <strong className="text-nest-teal">Labels included:</strong> families can use the QR stickers themselves at no extra cost. <strong className="text-nest-teal">Setup add-on:</strong> starts at $49. Full Smart Label Setup starts at $79 for larger spaces like garages, storage areas, moving boxes, pantry systems, and playrooms. Additional documentation/setup can be quoted as needed.
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Smart Label preference">
+              <select className="input" value={form.smartLabelSetupInterest} onChange={(e) => update("smartLabelSetupInterest", e.target.value)}>
+                {smartLabelSetupOptions.map((option) => <option key={option}>{option}</option>)}
+              </select>
+            </Field>
+            <Field label="Label notes (optional)">
+              <input className="input" placeholder="Example: label garage bins, pantry shelves, moving boxes, or toy storage" value={form.smartLabelSetupNotes} onChange={(e) => update("smartLabelSetupNotes", e.target.value)} />
+            </Field>
+          </div>
         </Section>
       )}
 

@@ -384,7 +384,7 @@ export default function AdminSmartLabelsPage() {
               <HowStep step="4" title="Give family ownership" text="Customers can keep updating labels and add a PIN only if they want privacy." />
             </div>
             <div className="mt-4 rounded-3xl border border-amber-200 bg-amber-50 p-4 text-sm font-bold leading-6 text-amber-900">
-              Storage note: label text and compressed photos are stored on the NestHelper website, so this can become a paid Smart Labels add-on once usage grows.
+              Offer note: QR Smart Labels can be included free with qualifying resets. Charge only when NestHelper is doing setup, organizing, naming, notes/photos, or extra documentation for the family.
             </div>
           </div>
         </div>

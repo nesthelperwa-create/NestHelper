@@ -151,6 +151,30 @@ const FAMILY_PRESETS = [
     amount: "449",
   },
   {
+    id: "smart-label-setup",
+    label: "Smart Label Setup",
+    description: "Optional Smart Label Setup add-on. NestHelper places labels, scans them, names bins/areas, documents what is inside, adds notes/photos as appropriate, and shows the family how to keep labels updated.",
+    unit: "flat",
+    rate: "49",
+    amount: "49",
+  },
+  {
+    id: "full-smart-label-setup",
+    label: "Full Smart Label Setup",
+    description: "Larger-space Smart Label Setup for garages, storage areas, moving boxes, pantry systems, playrooms, or multi-zone spaces. Additional documentation/setup can be quoted as needed.",
+    unit: "flat",
+    rate: "79",
+    amount: "79",
+  },
+  {
+    id: "smart-label-extra-documentation",
+    label: "Additional Smart Label documentation / setup",
+    description: "Quoted Smart Label documentation or setup beyond the starter add-on.",
+    unit: "flat",
+    rate: "0",
+    amount: "0",
+  },
+  {
     id: "errand-helper-standard",
     label: "Errand Helper",
     description: "Errand Helper base visit. Extra distance, complex stops, reimbursements, or wait time can be added separately after review.",
@@ -483,6 +507,16 @@ function createDefaultLinesFromRequest(item: AdminDoc): FamilyLineItem[] {
     if (stops.toLowerCase().includes("multiple")) {
       lines.push(createLineFromPreset("errand-extra-stop", { amount: "0", quantity: "0", note: "Review the stop count before charging extra stops." }));
     }
+  }
+
+  const smartLabelInterest = String(item.smartLabelSetupInterest || "").toLowerCase();
+  const smartLabelNotes = getString(item.smartLabelSetupNotes);
+  if (smartLabelInterest.includes("full smart label setup")) {
+    lines.push(createLineFromPreset("full-smart-label-setup", { note: smartLabelNotes }));
+  } else if (smartLabelInterest.includes("smart label setup") && !smartLabelInterest.includes("no smart label setup")) {
+    lines.push(createLineFromPreset("smart-label-setup", { note: smartLabelNotes }));
+  } else if (smartLabelInterest.includes("additional") || smartLabelInterest.includes("quote") || smartLabelInterest.includes("recommend")) {
+    lines.push(createLineFromPreset("smart-label-extra-documentation", { note: smartLabelNotes || "Review Smart Label documentation/setup before charging." }));
   }
 
   return lines;
@@ -1027,6 +1061,7 @@ export default function FamilyPaymentBreakdownBuilder({
                         <option>Laundry Rescue deposit</option>
                         <option>Laundry final balance</option>
                         <option>Custom approved family payment</option>
+                        <option>Smart Label Setup add-on</option>
                         <option>Refund / credit record</option>
                       </select>
                     </label>

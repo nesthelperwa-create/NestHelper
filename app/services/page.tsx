@@ -80,20 +80,37 @@ export default function ServicesPage() {
           <div className="grid gap-6 lg:grid-cols-[0.82fr_1.18fr] lg:items-center">
             <div className="text-center lg:text-left">
               <p className="pill-label mx-auto w-fit lg:mx-0"><QrCode size={15} /> Smart Labels</p>
-              <h2 className="mt-4 text-3xl font-black leading-tight text-nest-teal sm:text-4xl">QR labels for bins, closets, garages, and resets.</h2>
+              <h2 className="mt-4 text-3xl font-black leading-tight text-nest-teal sm:text-4xl">Included labels. Optional setup help.</h2>
               <p className="mt-3 font-medium leading-7 text-nest-ink/70">
-                When available, NestHelper can set up customer-owned QR labels during organizing or reset visits. Families can scan a sticker to update the label name, location, item list, notes, and small photos after we leave.
+                NestHelper Smart Labels are included at no extra cost with qualifying resets. Families can use them to keep bins, closets, shelves, moving boxes, seasonal items, and storage areas easier to maintain.
+              </p>
+              <p className="mt-3 font-medium leading-7 text-nest-ink/70">
+                Want us to set them up for you? Add Smart Label Setup and we’ll place the labels, scan them, name each bin or area, document what’s inside, add notes/photos, and show the family how to keep everything updated after we leave.
               </p>
             </div>
             <div className="grid gap-3 sm:grid-cols-3">
-              <SmartLabelFeature icon={<Tags size={19} />} title="Customer-owned" text="You keep the stickers and can update them anytime." />
+              <SmartLabelFeature icon={<Tags size={19} />} title="Labels included" text="QR Smart Labels come free with qualifying resets." />
               <SmartLabelFeature icon={<KeyRound size={19} />} title="Optional PIN" text="Default is no PIN. Add a 4-digit PIN for private labels." />
-              <SmartLabelFeature icon={<ShieldCheck size={19} />} title="Reset friendly" text="Great for seasonal bins, toys, pantry items, moving boxes, and garages." />
+              <SmartLabelFeature icon={<ShieldCheck size={19} />} title="Family-owned" text="Use them yourself, or ask NestHelper to set them up." />
             </div>
           </div>
-          <p className="mt-5 rounded-3xl border border-nest-gold/16 bg-white/78 p-4 text-sm font-bold leading-6 text-nest-ink/64">
-            Smart Labels are being built as an optional add-on because ongoing label details and photos use NestHelper website storage.
-          </p>
+          <div className="mt-5 grid gap-3 text-sm font-bold leading-6 text-nest-ink/70 md:grid-cols-3">
+            <div className="rounded-3xl border border-nest-gold/16 bg-white/78 p-4">
+              <p className="text-xs font-black uppercase tracking-[0.16em] text-nest-gold">Smart Labels</p>
+              <p className="mt-1 text-lg font-black text-nest-teal">Included free</p>
+              <p className="mt-1">Use the stickers yourself at no extra cost with qualifying resets.</p>
+            </div>
+            <div className="rounded-3xl border border-nest-gold/16 bg-white/78 p-4">
+              <p className="text-xs font-black uppercase tracking-[0.16em] text-nest-gold">Setup add-on</p>
+              <p className="mt-1 text-lg font-black text-nest-teal">Starts at $49</p>
+              <p className="mt-1">We place, scan, name, and document labels during approved reset work.</p>
+            </div>
+            <div className="rounded-3xl border border-nest-gold/16 bg-white/78 p-4">
+              <p className="text-xs font-black uppercase tracking-[0.16em] text-nest-gold">Full setup</p>
+              <p className="mt-1 text-lg font-black text-nest-teal">Starts at $79</p>
+              <p className="mt-1">Best for garages, storage, moving boxes, pantries, and playrooms.</p>
+            </div>
+          </div>
         </div>
 
         <div className="mb-5 rounded-3xl border border-nest-gold/16 bg-white/80 p-4 text-sm font-bold text-nest-ink/65 shadow-sm sm:px-5">
