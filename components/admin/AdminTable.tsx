@@ -13,6 +13,14 @@ type CustomerCredit = { id: string; status?: string; amount?: number; remainingA
 type CheckoutMode = "standard" | "custom";
 type ApplicationDocument = { id?: string; label?: string; originalName?: string; contentType?: string; size?: number; storagePath?: string; uploadedAtIso?: string };
 type OnboardingChecklist = Record<string, boolean>;
+type StatusEmailOutcome = {
+  delivery: string;
+  message: string;
+  attemptedAt?: string;
+  recipient?: string;
+  providerId?: string;
+  error?: string;
+};
 
 const APPLICATION_CHECKLIST_ITEMS = [
   { key: "applicationReviewed", label: "Application reviewed" },
@@ -157,13 +165,15 @@ function getLaundryDefaultDepositCredit(item: AdminDoc | null, mode: CheckoutMod
 }
 
 function shouldNotifyByDefault(status: string) {
-  return ["Approved", "Scheduled", "Declined", "Follow-Up Needed", "Needs Info", "Canceled", "Cancelled"].includes(status);
+  return ["Quote Sent", "Quote Approved", "Approved", "Scheduled", "Declined", "Follow-Up Needed", "Needs Info", "Canceled", "Cancelled"].includes(status);
 }
 
 function getStatusNotePlaceholder(status: string) {
   if (status === "Declined") return "Example: Sorry, we are not servicing that area yet, or this request is outside our current service scope.";
   if (status === "Scheduled") return "Example: You are scheduled for Tuesday between 10am-12pm. Please have parking/access details ready.";
   if (status === "Follow-Up Needed" || status === "Needs Info") return "Example: Can you confirm parking, pets, access instructions, and which rooms/tasks matter most?";
+  if (status === "Quote Sent") return "Example: Here is your quote and available appointment time. Please reply to approve before we send the invoice.";
+  if (status === "Quote Approved") return "Example: Thank you for approving the quote. We’ll send the secure invoice/payment link next.";
   if (status === "Approved") return "Example: Your request looks like a good fit. We’ll send the secure checkout link next.";
   if (status === "Canceled" || status === "Cancelled") return "Example: This request has been canceled. Reply if this was unexpected.";
   return "Optional note to include in the customer email.";
@@ -182,6 +192,8 @@ function getStatusEmailDeliveryStyles(delivery: string) {
   if (normalized === "sent") return "border-emerald-200 bg-emerald-50 text-emerald-800";
   if (normalized === "failed") return "border-red-200 bg-red-50 text-red-800";
   if (normalized === "skipped") return "border-amber-200 bg-amber-50 text-amber-800";
+  if (normalized === "pending") return "border-blue-200 bg-blue-50 text-blue-800";
+  if (normalized === "not requested") return "border-slate-200 bg-slate-50 text-slate-700";
   return "border-slate-200 bg-slate-50 text-slate-700";
 }
 
@@ -190,6 +202,7 @@ function getStatusEmailDeliveryLabel(delivery: string) {
   if (normalized === "sent") return "Email sent";
   if (normalized === "failed") return "Email failed";
   if (normalized === "skipped") return "Email skipped";
+  if (normalized === "pending") return "Email pending";
   if (normalized === "not requested") return "Email not requested";
   return delivery || "No email logged";
 }
@@ -653,7 +666,7 @@ function StatusEmailDeliveryCard({ item }: { item: AdminDoc }) {
   const delivery = getStatusEmailDelivery(item);
   const attemptedAt = item.lastStatusEmailAttemptedAt || item.lastStatusEmailSentAt;
   const status = String(item.lastStatusEmailStatus || "").trim();
-  const recipient = String(item.lastStatusEmailRecipient || item.email || "").trim();
+  const recipient = String(item.lastStatusEmailRecipient || item.email || item.customerEmail || "").trim();
   const providerId = String(item.lastStatusEmailProviderId || "").trim();
   const error = String(item.lastStatusEmailError || "").trim();
 
@@ -661,9 +674,12 @@ function StatusEmailDeliveryCard({ item }: { item: AdminDoc }) {
     <div className="mt-4 rounded-2xl border border-[#eadfc8] bg-[#fbf6ea] p-4">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Customer email delivery</p>
+          <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Last customer status email</p>
           <p className="mt-1 text-sm font-bold text-slate-700">
-            {delivery ? "Last status email attempt is saved on this request." : "No customer status email has been logged for this request yet."}
+            {delivery ? "Saved delivery result for the last customer status email." : "No customer status email is logged yet. Older emails sent before this feature may not show here."}
+          </p>
+          <p className="mt-1 text-xs font-semibold text-slate-500">
+            “Email sent” means Resend accepted the email. It does not prove the customer opened it.
           </p>
         </div>
         <span className={`w-fit rounded-full border px-3 py-1 text-xs font-black ${getStatusEmailDeliveryStyles(delivery)}`}>
@@ -677,6 +693,34 @@ function StatusEmailDeliveryCard({ item }: { item: AdminDoc }) {
           {recipient && <div className="break-all"><span className="font-black text-slate-700">To:</span> {recipient}</div>}
           {providerId && <div className="break-all"><span className="font-black text-slate-700">Resend ID:</span> {providerId}</div>}
           {error && <div className="text-red-700 sm:col-span-2 lg:col-span-4"><span className="font-black">Issue:</span> {error}</div>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function StatusEmailOutcomeCard({ outcome }: { outcome: StatusEmailOutcome | null }) {
+  if (!outcome) return null;
+  const delivery = outcome.delivery || "Not requested";
+  const showMeta = outcome.attemptedAt || outcome.recipient || outcome.providerId || outcome.error;
+
+  return (
+    <div className={`mt-4 rounded-2xl border p-4 ${getStatusEmailDeliveryStyles(delivery)}`}>
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <p className="text-xs font-black uppercase tracking-[0.16em]">Email result from this update</p>
+          <p className="mt-1 text-sm font-black">{outcome.message}</p>
+        </div>
+        <span className="w-fit rounded-full border border-current bg-white/60 px-3 py-1 text-xs font-black">
+          {getStatusEmailDeliveryLabel(delivery)}
+        </span>
+      </div>
+      {showMeta && (
+        <div className="mt-3 grid gap-2 text-xs font-semibold sm:grid-cols-2 lg:grid-cols-4">
+          {outcome.attemptedAt && <div><span className="font-black">Attempted:</span> {formatDate(outcome.attemptedAt)}</div>}
+          {outcome.recipient && <div className="break-all"><span className="font-black">To:</span> {outcome.recipient}</div>}
+          {outcome.providerId && <div className="break-all"><span className="font-black">Resend ID:</span> {outcome.providerId}</div>}
+          {outcome.error && <div className="break-words sm:col-span-2 lg:col-span-4"><span className="font-black">Issue:</span> {outcome.error}</div>}
         </div>
       )}
     </div>
@@ -2175,6 +2219,7 @@ export default function AdminTable({
   const [statusMessage, setStatusMessage] = useState("");
   const [statusWarning, setStatusWarning] = useState("");
   const [statusError, setStatusError] = useState("");
+  const [statusEmailOutcome, setStatusEmailOutcome] = useState<StatusEmailOutcome | null>(null);
   const [laundryDryWeightLbs, setLaundryDryWeightLbs] = useState("");
   const [laundryRatePerLb, setLaundryRatePerLb] = useState("2.99");
   const [laundryAddOnsAmount, setLaundryAddOnsAmount] = useState("0");
@@ -2262,6 +2307,7 @@ export default function AdminTable({
     setStatusMessage("");
     setStatusWarning("");
     setStatusError("");
+    setStatusEmailOutcome(null);
     setLaundryDryWeightLbs(selected?.laundryDryWeightLbs ? String(selected.laundryDryWeightLbs) : "");
     setLaundryRatePerLb(selected?.laundryRatePerLb ? String(selected.laundryRatePerLb) : "2.99");
     setLaundryAddOnsAmount(selected?.laundryAddOnsAmount ? String(selected.laundryAddOnsAmount) : "0");
@@ -2429,7 +2475,19 @@ export default function AdminTable({
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok || !data.ok) throw new Error(data.error || "Unable to update status.");
-    return data as { ok: boolean; emailSent?: boolean; emailSkipped?: boolean; emailError?: string; emailDelivery?: string; emailProviderId?: string; referralRewardEmailSent?: boolean; referralRewardEmailError?: string };
+    return data as {
+      ok: boolean;
+      emailSent?: boolean;
+      emailSkipped?: boolean;
+      emailError?: string;
+      emailDelivery?: string;
+      emailMessage?: string;
+      emailProviderId?: string;
+      emailAttemptedAt?: string;
+      emailRecipient?: string;
+      referralRewardEmailSent?: boolean;
+      referralRewardEmailError?: string;
+    };
   }
 
   async function submitStatusUpdate() {
@@ -2439,26 +2497,47 @@ export default function AdminTable({
     setStatusMessage("");
     setStatusWarning("");
     setStatusError("");
+    setStatusEmailOutcome(null);
 
     try {
       const data = await updateStatus(selected, statusValue, { notifyCustomer, customerNote: statusNote });
-      const attemptedAtIso = new Date().toISOString();
-      setSelected((prev) => {
-        if (!prev) return prev;
-        if (!notifyCustomer) return { ...prev, status: statusValue };
-        return {
-          ...prev,
-          status: statusValue,
-          lastStatusEmailAttemptedAt: attemptedAtIso,
-          lastStatusEmailDelivery: data.emailDelivery || (data.emailSent ? "Sent" : data.emailSkipped ? "Skipped" : data.emailError ? "Failed" : "Not requested"),
-          lastStatusEmailStatus: statusValue,
-          lastStatusEmailNote: statusNote,
-          lastStatusEmailRecipient: prev.email || "",
-          lastStatusEmailProviderId: data.emailProviderId || prev.lastStatusEmailProviderId || "",
-          lastStatusEmailSentAt: data.emailSent ? attemptedAtIso : prev.lastStatusEmailSentAt,
-          lastStatusEmailError: data.emailError || "",
-        };
+      const attemptedAtIso = data.emailAttemptedAt || new Date().toISOString();
+      const emailDelivery = data.emailDelivery || (data.emailSent ? "Sent" : data.emailSkipped ? "Skipped" : data.emailError ? "Failed" : notifyCustomer ? "Failed" : "Not requested");
+      const emailRecipient = data.emailRecipient || selected.email || selected.customerEmail || "";
+      const emailMessage =
+        data.emailMessage ||
+        (emailDelivery === "Sent"
+          ? "Customer email was accepted by Resend and logged on the request."
+          : emailDelivery === "Skipped"
+            ? data.emailError || "Customer email was skipped. Check the customer email address and Resend setup."
+            : emailDelivery === "Failed"
+              ? data.emailError || "Customer email failed to send."
+              : "No customer email was requested because the notification box was not checked.");
+
+      const emailFieldUpdates = notifyCustomer
+        ? {
+            lastStatusEmailAttemptedAt: attemptedAtIso,
+            lastStatusEmailDelivery: emailDelivery,
+            lastStatusEmailStatus: statusValue,
+            lastStatusEmailNote: statusNote,
+            lastStatusEmailRecipient: emailRecipient,
+            lastStatusEmailProviderId: data.emailProviderId || "",
+            lastStatusEmailSentAt: data.emailSent ? attemptedAtIso : selected.lastStatusEmailSentAt,
+            lastStatusEmailError: emailDelivery === "Sent" ? "" : data.emailError || emailMessage,
+          }
+        : {};
+
+      setStatusEmailOutcome({
+        delivery: emailDelivery,
+        message: emailMessage,
+        attemptedAt: notifyCustomer ? attemptedAtIso : undefined,
+        recipient: notifyCustomer ? emailRecipient : undefined,
+        providerId: data.emailProviderId || undefined,
+        error: data.emailError || undefined,
       });
+
+      setSelected((prev) => (prev ? { ...prev, status: statusValue, ...emailFieldUpdates } : prev));
+      setItems((prev) => prev.map((item) => (item.id === selected.id ? { ...item, status: statusValue, ...emailFieldUpdates } : item)));
 
       if (data.referralRewardEmailSent) {
         setReferralMessage("Referral reward/credit email was automatically sent to the original referring family.");
@@ -2466,14 +2545,14 @@ export default function AdminTable({
         setReferralError(data.referralRewardEmailError);
       }
 
-      if (notifyCustomer && data.emailSent) {
-        setStatusMessage("Status updated. Customer email was accepted by Resend and logged on the request.");
-      } else if (notifyCustomer && data.emailSkipped) {
-        setStatusWarning(data.emailError || "Status updated, but the customer email was skipped. Check the customer email address and Resend setup.");
-      } else if (notifyCustomer && data.emailError) {
-        setStatusError(data.emailError);
+      if (notifyCustomer && emailDelivery === "Sent") {
+        setStatusMessage(`Status updated. ✅ ${emailMessage}`);
+      } else if (notifyCustomer && emailDelivery === "Skipped") {
+        setStatusWarning(`Status updated, but no customer email was sent. ${emailMessage}`);
+      } else if (notifyCustomer && emailDelivery === "Failed") {
+        setStatusError(emailMessage);
       } else {
-        setStatusMessage("Status updated. No customer email was sent.");
+        setStatusMessage("Status updated only. Customer email was not requested because the notification box was not checked.");
       }
     } catch (error) {
       setStatusError(error instanceof Error ? error.message : "Unable to update status.");
@@ -3910,7 +3989,10 @@ export default function AdminTable({
                       onChange={(e) => setNotifyCustomer(e.target.checked)}
                       className="h-5 w-5 rounded border-[#075c58] accent-[#075c58]"
                     />
-                    Send customer email notification
+                    <span className="grid gap-1">
+                      <span>Send customer email notification</span>
+                      <span className="text-xs font-semibold text-slate-500">Shows Sent / Failed / Skipped after you save.</span>
+                    </span>
                   </label>
                 </div>
 
@@ -3926,6 +4008,7 @@ export default function AdminTable({
                 </label>
 
                 <StatusEmailDeliveryCard item={selected} />
+                <StatusEmailOutcomeCard outcome={statusEmailOutcome} />
 
                 <div className="mt-4 flex flex-wrap gap-3">
                   <button

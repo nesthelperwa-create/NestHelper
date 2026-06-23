@@ -25,6 +25,16 @@ function getString(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
 }
 
+function getCustomerEmail(data: Record<string, unknown>) {
+  return (
+    getString(data.email) ||
+    getString(data.customerEmail) ||
+    getString(data.emailAddress) ||
+    getString(data.contactEmail) ||
+    getString(data.customer_email)
+  );
+}
+
 function getServiceTitle(data: Record<string, unknown>) {
   const serviceId = getString(data.service);
   return getString(data.selectedServiceTitle) || services.find((item) => item.id === serviceId)?.title || serviceId || "NestHelper service";
@@ -66,19 +76,24 @@ export async function POST(request: Request) {
     const data = docSnap.data() || {};
     const updatePayload: Record<string, unknown> = {
       status,
-      adminNotes: notes || "",
       updatedAt: FieldValue.serverTimestamp(),
       updatedBy: decoded.email,
     };
+    if (typeof notes === "string") updatePayload.adminNotes = notes;
 
     let emailSent = false;
     let emailSkipped = false;
     let emailError = "";
     let emailDelivery = notifyCustomer ? "Pending" : "Not requested";
     let emailProviderId = "";
+    let emailMessage = notifyCustomer ? "Customer email has not finished yet." : "No customer email was requested because the notification box was not checked.";
+    let emailRecipient = "";
+    let emailAttemptedAt = "";
 
     if (notifyCustomer) {
-      const email = getString(data.email);
+      const email = getCustomerEmail(data);
+      emailRecipient = email;
+      emailAttemptedAt = new Date().toISOString();
       const outgoingNote = customerNote || notes || "";
       updatePayload.lastStatusEmailAttemptedAt = FieldValue.serverTimestamp();
       updatePayload.lastStatusEmailStatus = status;
@@ -89,8 +104,10 @@ export async function POST(request: Request) {
         emailSkipped = true;
         emailDelivery = "Skipped";
         emailError = "No customer email is available for this record.";
+        emailMessage = emailError;
         updatePayload.lastStatusEmailDelivery = emailDelivery;
         updatePayload.lastStatusEmailError = emailError;
+        updatePayload.lastStatusEmailProviderId = FieldValue.delete();
       } else {
         try {
           const serviceId = getString(data.service);
@@ -111,8 +128,10 @@ export async function POST(request: Request) {
             emailSkipped = true;
             emailDelivery = "Skipped";
             emailError = "Customer email was skipped because the email service or customer address is missing.";
+            emailMessage = emailError;
             updatePayload.lastStatusEmailDelivery = emailDelivery;
             updatePayload.lastStatusEmailError = emailError;
+            updatePayload.lastStatusEmailProviderId = FieldValue.delete();
           } else {
             const providerError = getEmailResultError(emailResult);
             if (providerError) throw new Error(providerError);
@@ -120,6 +139,7 @@ export async function POST(request: Request) {
             emailProviderId = getString(emailResult?.data?.id) || getString(emailResult?.id);
             emailSent = true;
             emailDelivery = "Sent";
+            emailMessage = "Customer email was accepted by Resend and logged on the request.";
             updatePayload.lastStatusEmailSentAt = FieldValue.serverTimestamp();
             updatePayload.lastStatusEmailDelivery = emailDelivery;
             updatePayload.lastStatusEmailProviderId = emailProviderId;
@@ -129,8 +149,10 @@ export async function POST(request: Request) {
           console.error("Status update email failed", error);
           emailDelivery = "Failed";
           emailError = error instanceof Error && error.message ? `Status updated, but the customer email failed to send: ${error.message}` : "Status updated, but the customer email failed to send.";
+          emailMessage = emailError;
           updatePayload.lastStatusEmailDelivery = emailDelivery;
           updatePayload.lastStatusEmailError = emailError;
+          updatePayload.lastStatusEmailProviderId = FieldValue.delete();
         }
       }
     }
@@ -206,7 +228,19 @@ export async function POST(request: Request) {
       }
     }
 
-    return NextResponse.json({ ok: true, emailSent, emailSkipped, emailError, emailDelivery, emailProviderId, referralRewardEmailSent, referralRewardEmailError });
+    return NextResponse.json({
+      ok: true,
+      emailSent,
+      emailSkipped,
+      emailError,
+      emailDelivery,
+      emailMessage,
+      emailProviderId,
+      emailAttemptedAt,
+      emailRecipient,
+      referralRewardEmailSent,
+      referralRewardEmailError,
+    });
   } catch (error) {
     console.error(error);
     return NextResponse.json({ ok: false, error: "Unable to update status." }, { status: 500 });
