@@ -263,7 +263,63 @@ function getReferralStatusText(item: AdminDoc | null | undefined) {
 }
 
 function getAdminPaymentText(item: AdminDoc | null | undefined) {
-  return String(`${item?.paymentStatus || ""} ${item?.laundryPaymentStatus || ""} ${item?.familyInvoiceStatus || ""} ${item?.invoiceStatus || ""} ${item?.checkoutStatus || ""} ${item?.status || ""}`).toLowerCase();
+  return String([
+    item?.paymentStatus,
+    item?.laundryPaymentStatus,
+    item?.familyPaymentStatus,
+    item?.familyInvoiceStatus,
+    item?.invoiceStatus,
+    item?.checkoutStatus,
+    item?.additionalPaymentStatus,
+    item?.commercialInvoiceStatus,
+    item?.laundryFinalInvoiceStatus,
+    item?.checkoutUrl ? "checkout link ready" : "",
+    item?.familyInvoiceUrl ? "family invoice link ready" : "",
+    item?.commercialInvoiceUrl ? "commercial invoice link ready" : "",
+    item?.additionalPaymentCheckoutUrl ? "additional payment link ready" : "",
+    item?.laundryFinalCheckoutUrl ? "laundry final invoice link ready" : "",
+  ].filter(Boolean).join(" ")).toLowerCase();
+}
+
+function getAdminStatusText(item: AdminDoc | null | undefined) {
+  return String(item?.status || "").trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+function isQuoteSentAdminStatus(status: string) {
+  return status === "quote sent";
+}
+
+function isQuoteDraftAdminStatus(status: string) {
+  return status === "quoted" || status === "quote drafted";
+}
+
+function isPaymentRequestSentAdminStatus(status: string) {
+  return [
+    "checkout sent",
+    "deposit checkout sent",
+    "invoice sent",
+    "invoice link sent",
+    "final invoice sent",
+    "final balance sent",
+    "additional payment sent",
+    "payment link sent",
+  ].includes(status);
+}
+
+function isPaymentRequestSentText(paymentText: string) {
+  return Boolean(paymentText) && (
+    paymentText.includes("checkout sent") ||
+    paymentText.includes("deposit checkout sent") ||
+    paymentText.includes("invoice sent") ||
+    paymentText.includes("invoice link sent") ||
+    paymentText.includes("final invoice sent") ||
+    paymentText.includes("final balance sent") ||
+    paymentText.includes("additional payment sent") ||
+    paymentText.includes("payment link sent") ||
+    paymentText.includes("checkout link ready") ||
+    paymentText.includes("invoice link ready") ||
+    paymentText.includes("payment link ready")
+  );
 }
 
 function isClosedAdminStatus(item: AdminDoc | null | undefined) {
@@ -272,16 +328,16 @@ function isClosedAdminStatus(item: AdminDoc | null | undefined) {
 }
 
 function getAdminQueueKey(item: AdminDoc | null | undefined) {
-  const status = String(item?.status || "").trim().toLowerCase();
+  const status = getAdminStatusText(item);
   const paymentText = getAdminPaymentText(item);
   if (status === "completed") return "completed";
   if (["canceled", "cancelled", "declined", "not eligible", "archived"].includes(status)) return "closed";
   if (!status || ["new", "needs info", "follow-up needed", "pending review", "reviewing", "requested"].includes(status) || status.includes("review") || status.includes("follow")) return "needs-review";
-  if (paymentText.includes("sent") || paymentText.includes("checkout") || paymentText.includes("invoice")) {
-    if (!paymentText.includes("paid")) return "payment";
-  }
-  if (paymentText.includes("paid") || status.includes("scheduled") || status.includes("assigned")) return "paid-scheduled";
-  if (status.includes("approved") || status.includes("quote")) return "needs-payment";
+  if (paymentText.includes("paid") || status.includes("paid") || status.includes("scheduled") || status.includes("assigned")) return "paid-scheduled";
+  if (isPaymentRequestSentAdminStatus(status) || isPaymentRequestSentText(paymentText)) return "payment";
+  if (isQuoteSentAdminStatus(status)) return "quote-sent";
+  if (status.includes("approved") || status === "final invoice created") return "needs-payment";
+  if (isQuoteDraftAdminStatus(status)) return "needs-review";
   return "active";
 }
 
@@ -293,8 +349,9 @@ const ADMIN_QUEUE_OPTIONS = [
   { key: "all", label: "All records", helper: "Everything", accent: "bg-[#075c58] text-white border-[#075c58]" },
   { key: "active", label: "Active queue", helper: "Open work", accent: "bg-white text-[#075c58] border-[#eadfc8]" },
   { key: "needs-review", label: "Needs review", helper: "New/follow-up", accent: "bg-amber-100 text-amber-900 border-amber-300" },
-  { key: "needs-payment", label: "Needs payment", helper: "Approved/quote", accent: "bg-blue-100 text-blue-900 border-blue-300" },
-  { key: "payment", label: "Payment sent", helper: "Waiting to pay", accent: "bg-violet-100 text-violet-900 border-violet-300" },
+  { key: "quote-sent", label: "Quote sent", helper: "Waiting approval", accent: "bg-indigo-100 text-indigo-900 border-indigo-300" },
+  { key: "needs-payment", label: "Ready to invoice", helper: "Approved quote", accent: "bg-blue-100 text-blue-900 border-blue-300" },
+  { key: "payment", label: "Invoice / checkout sent", helper: "Waiting payment", accent: "bg-violet-100 text-violet-900 border-violet-300" },
   { key: "paid-scheduled", label: "Paid / scheduled", helper: "Ready to serve", accent: "bg-emerald-100 text-emerald-900 border-emerald-300" },
   { key: "completed", label: "Completed", helper: "Done", accent: "bg-slate-100 text-slate-800 border-slate-300" },
   { key: "closed", label: "Closed", helper: "Canceled/declined", accent: "bg-rose-100 text-rose-900 border-rose-300" },
@@ -2193,7 +2250,7 @@ export default function AdminTable({
   const dropdownStatuses = availableStatuses;
 
   const queueCounts = useMemo(() => {
-    const counts: Record<string, number> = { active: 0, "needs-review": 0, "needs-payment": 0, payment: 0, "paid-scheduled": 0, completed: 0, closed: 0, all: items.length };
+    const counts: Record<string, number> = { active: 0, "needs-review": 0, "quote-sent": 0, "needs-payment": 0, payment: 0, "paid-scheduled": 0, completed: 0, closed: 0, all: items.length };
     items.forEach((item) => {
       const key = getAdminQueueKey(item);
       counts[key] = (counts[key] || 0) + 1;
@@ -3068,7 +3125,7 @@ export default function AdminTable({
                 <button type="button" onClick={() => setQueueFilter("all")} className={getAdminActionClass("quiet")}>Show all records</button>
               )}
             </div>
-            <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4 xl:grid-cols-8">
+            <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-9">
               {ADMIN_QUEUE_OPTIONS.map((option) => {
                 const active = queueFilter === option.key;
                 return (
@@ -3723,7 +3780,7 @@ export default function AdminTable({
                     <p className="text-xs font-black uppercase tracking-[0.2em] text-[#b98a2f]">Status + customer update</p>
                     <h4 className="mt-1 text-xl font-black text-[#075c58]">Update the request and choose whether to notify the customer</h4>
                     <p className="mt-2 text-sm leading-6 text-slate-700">
-                      Use the table dropdown for quick internal updates. Use this section when the customer should get a clear NestHelper email.
+                      Use <span className="font-black text-[#075c58]">Quote Sent</span> for quote emails. Use checkout/invoice statuses only after a real Stripe payment link or invoice is created.
                     </p>
                   </div>
                   <StatusBadge status={statusValue} />
@@ -3777,7 +3834,7 @@ export default function AdminTable({
                     {statusBusy ? <><ActionSpinner /> Updating...</> : notifyCustomer ? "Update status + notify customer" : "Update status only"}
                   </button>
                   <p className="max-w-xl text-xs leading-5 text-slate-500">
-                    Payment link emails and payment received emails are handled separately. This button is for manual updates like Declined, Scheduled, Canceled, or Needs Info.
+                    Quote emails can be sent here by choosing Quote Sent. Payment link, invoice, and payment received emails are handled separately by the payment/invoice buttons.
                   </p>
                 </div>
 

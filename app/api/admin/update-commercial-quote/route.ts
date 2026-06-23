@@ -59,7 +59,7 @@ function isCommercialRequest(data: Record<string, unknown>) {
 
 function getMappedRequestStatus(quoteStatus: string) {
   const normalized = quoteStatus.trim().toLowerCase();
-  if (normalized === "quote drafted" || normalized === "quoted") return "Quoted";
+  if (normalized === "quote drafted" || normalized === "quoted") return "Quote Drafted";
   if (normalized === "quote sent") return "Quote Sent";
   if (normalized === "quote approved") return "Quote Approved";
   if (normalized === "initial paid") return "Deposit Paid";

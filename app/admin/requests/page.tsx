@@ -19,7 +19,7 @@ export default function AdminRequestsPage() {
           { key: "promoCode", label: "Promo" },
           { key: "incomingReferralCode", label: "Referral" },
         ]}
-        statuses={["New", "Reviewed", "Quoted", "Quote Sent", "Quote Approved", "Approved", "Checkout Sent", "Deposit Checkout Sent", "Deposit Paid", "Deposit Paid - Final Pending", "Final Invoice Created", "Final Invoice Sent", "Final Auto-Charge Processing", "Final Auto-Charge Failed", "Final Balance Paid", "Paid", "Fully Paid", "Additional Payment Sent", "Additional Paid", "Scheduled", "Completed", "Declined", "Needs Info", "Follow-Up Needed", "Canceled"]}
+        statuses={["New", "Reviewed", "Quote Drafted", "Quote Sent", "Quote Approved", "Approved", "Checkout Sent", "Deposit Checkout Sent", "Deposit Paid", "Deposit Paid - Final Pending", "Final Invoice Created", "Final Invoice Sent", "Final Auto-Charge Processing", "Final Auto-Charge Failed", "Final Balance Paid", "Paid", "Fully Paid", "Additional Payment Sent", "Additional Paid", "Scheduled", "Completed", "Declined", "Needs Info", "Follow-Up Needed", "Canceled"]}
         enablePaymentActions
       />
     </AdminShell>

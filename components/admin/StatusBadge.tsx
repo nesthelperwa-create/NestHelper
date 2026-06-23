@@ -3,6 +3,7 @@ const STATUS_STYLES: Record<string, string> = {
   Reviewed: "bg-sky-100 text-sky-800 border-sky-200",
   Reviewing: "bg-sky-100 text-sky-800 border-sky-200",
   Quoted: "bg-cyan-100 text-cyan-800 border-cyan-200",
+  "Quote Drafted": "bg-cyan-100 text-cyan-800 border-cyan-200",
   "Quote Sent": "bg-indigo-100 text-indigo-800 border-indigo-200",
   "Quote Approved": "bg-emerald-100 text-emerald-800 border-emerald-200",
   Approved: "bg-emerald-100 text-emerald-800 border-emerald-200",

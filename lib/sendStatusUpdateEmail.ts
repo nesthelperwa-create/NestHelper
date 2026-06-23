@@ -72,6 +72,35 @@ function getStatusContent(status: string) {
     };
   }
 
+  if (normalized === "quote sent") {
+    return {
+      subject: "NestHelper quote for your request",
+      eyebrow: "Quote sent",
+      title: "Your NestHelper quote is ready for review.",
+      intro:
+        "Thank you for reaching out. We reviewed your request and prepared the quote details below. This is not a payment request yet.",
+      nextSteps: [
+        "Review the quote and any note from NestHelper below.",
+        "Reply to this email with approval, questions, or any changes needed.",
+        "Once the quote is approved, NestHelper can send the secure Stripe invoice or checkout link.",
+      ],
+    };
+  }
+
+  if (normalized === "quote approved") {
+    return {
+      subject: "Your NestHelper quote was approved for next steps",
+      eyebrow: "Quote approved",
+      title: "Your NestHelper quote is approved for next steps.",
+      intro:
+        "Your quote has been marked approved. NestHelper will follow up with the secure invoice or checkout link before the visit is fully confirmed.",
+      nextSteps: [
+        "Watch for a secure NestHelper invoice or checkout link.",
+        "Your visit is not fully confirmed until payment and final scheduling details are complete.",
+      ],
+    };
+  }
+
   if (normalized === "approved") {
     return {
       subject: "Your NestHelper request was approved for next steps",
