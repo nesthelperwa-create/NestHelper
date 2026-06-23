@@ -74,35 +74,62 @@ export async function POST(request: Request) {
     let emailSent = false;
     let emailSkipped = false;
     let emailError = "";
+    let emailDelivery = notifyCustomer ? "Pending" : "Not requested";
+    let emailProviderId = "";
 
     if (notifyCustomer) {
       const email = getString(data.email);
+      const outgoingNote = customerNote || notes || "";
+      updatePayload.lastStatusEmailAttemptedAt = FieldValue.serverTimestamp();
+      updatePayload.lastStatusEmailStatus = status;
+      updatePayload.lastStatusEmailNote = outgoingNote;
+      updatePayload.lastStatusEmailRecipient = email || "";
 
       if (!email) {
         emailSkipped = true;
+        emailDelivery = "Skipped";
         emailError = "No customer email is available for this record.";
+        updatePayload.lastStatusEmailDelivery = emailDelivery;
+        updatePayload.lastStatusEmailError = emailError;
       } else {
         try {
           const serviceId = getString(data.service);
-          await sendStatusUpdateEmail({
+          const emailResult = await sendStatusUpdateEmail({
             to: email,
             customerName: getString(data.fullName) || getString(data.name),
             requestId: id,
             serviceTitle: getServiceTitle(data),
             status,
-            note: customerNote || notes || "",
+            note: outgoingNote,
             preferredDate: getString(data.preferredDate),
             preferredWindow: getString(data.preferredWindow),
             city: getString(data.city),
             replyToEmail: serviceId === "laundry-rescue" ? emailAliases.laundry : serviceId === "commercial-reset" ? emailAliases.commercial : emailAliases.booking,
-          });
-          emailSent = true;
-          updatePayload.lastStatusEmailSentAt = FieldValue.serverTimestamp();
-          updatePayload.lastStatusEmailStatus = status;
-          updatePayload.lastStatusEmailNote = customerNote || notes || "";
+          }) as any;
+
+          if (emailResult?.skipped) {
+            emailSkipped = true;
+            emailDelivery = "Skipped";
+            emailError = "Customer email was skipped because the email service or customer address is missing.";
+            updatePayload.lastStatusEmailDelivery = emailDelivery;
+            updatePayload.lastStatusEmailError = emailError;
+          } else {
+            const providerError = getEmailResultError(emailResult);
+            if (providerError) throw new Error(providerError);
+
+            emailProviderId = getString(emailResult?.data?.id) || getString(emailResult?.id);
+            emailSent = true;
+            emailDelivery = "Sent";
+            updatePayload.lastStatusEmailSentAt = FieldValue.serverTimestamp();
+            updatePayload.lastStatusEmailDelivery = emailDelivery;
+            updatePayload.lastStatusEmailProviderId = emailProviderId;
+            updatePayload.lastStatusEmailError = FieldValue.delete();
+          }
         } catch (error) {
           console.error("Status update email failed", error);
-          emailError = "Status updated, but the customer email failed to send.";
+          emailDelivery = "Failed";
+          emailError = error instanceof Error && error.message ? `Status updated, but the customer email failed to send: ${error.message}` : "Status updated, but the customer email failed to send.";
+          updatePayload.lastStatusEmailDelivery = emailDelivery;
           updatePayload.lastStatusEmailError = emailError;
         }
       }
@@ -179,7 +206,7 @@ export async function POST(request: Request) {
       }
     }
 
-    return NextResponse.json({ ok: true, emailSent, emailSkipped, emailError, referralRewardEmailSent, referralRewardEmailError });
+    return NextResponse.json({ ok: true, emailSent, emailSkipped, emailError, emailDelivery, emailProviderId, referralRewardEmailSent, referralRewardEmailError });
   } catch (error) {
     console.error(error);
     return NextResponse.json({ ok: false, error: "Unable to update status." }, { status: 500 });
