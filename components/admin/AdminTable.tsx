@@ -209,26 +209,20 @@ function getStatusEmailDeliveryLabel(delivery: string) {
 
 
 const SERVICE_LOOKS: Record<string, { label: string; badge: string; row: string; dot: string }> = {
-  "parent-reset-2hr": {
-    label: "Parent Reset",
-    badge: "border-emerald-700 bg-emerald-600 text-white shadow-sm shadow-emerald-900/25",
-    row: "border-l-8 border-l-emerald-600 bg-emerald-50/40 hover:bg-emerald-100/80",
-    dot: "bg-white ring-2 ring-emerald-100",
-  },
   "family-reset-3hr": {
     label: "Parent Reset Plan",
     badge: "border-blue-700 bg-blue-600 text-white shadow-sm shadow-blue-900/25",
     row: "border-l-8 border-l-blue-600 bg-blue-50/40 hover:bg-blue-100/80",
     dot: "bg-white ring-2 ring-blue-100",
   },
-  "helper-block-4hr": {
-    label: "Helper Block",
-    badge: "border-violet-700 bg-violet-600 text-white shadow-sm shadow-violet-900/25",
-    row: "border-l-8 border-l-violet-600 bg-violet-50/40 hover:bg-violet-100/80",
-    dot: "bg-white ring-2 ring-violet-100",
+  "whole-home-reset": {
+    label: "Whole Home Cleaning",
+    badge: "border-emerald-700 bg-emerald-600 text-white shadow-sm shadow-emerald-900/25",
+    row: "border-l-8 border-l-emerald-600 bg-emerald-50/40 hover:bg-emerald-100/80",
+    dot: "bg-white ring-2 ring-emerald-100",
   },
   "specific-area-reset": {
-    label: "Area Reset",
+    label: "Specific Area(s) Reset",
     badge: "border-lime-800 bg-lime-700 text-white shadow-sm shadow-lime-900/25",
     row: "border-l-8 border-l-lime-700 bg-lime-50/50 hover:bg-lime-100/80",
     dot: "bg-white ring-2 ring-lime-100",
@@ -253,9 +247,9 @@ const SERVICE_LOOKS: Record<string, { label: string; badge: string; row: string;
   },
   "commercial-reset": {
     label: "Commercial Reset",
-    badge: "border-cyan-800 bg-cyan-700 text-white shadow-sm shadow-cyan-900/25",
-    row: "border-l-8 border-l-cyan-700 bg-cyan-50/50 hover:bg-cyan-100/80",
-    dot: "bg-white ring-2 ring-cyan-100",
+    badge: "border-slate-700 bg-slate-700 text-white shadow-sm shadow-slate-900/25",
+    row: "border-l-8 border-l-slate-600 bg-slate-50/60 hover:bg-slate-100/90",
+    dot: "bg-white ring-2 ring-slate-100",
   },
 };
 
@@ -269,10 +263,9 @@ const DEFAULT_SERVICE_LOOK = {
 function getServiceKey(item: AdminDoc | null | undefined) {
   const raw = String(item?.service || item?.selectedServiceTitle || item?.packageType || item?.requestType || "").toLowerCase();
   if (raw.includes("commercial")) return "commercial-reset";
-  if (raw.includes("family-reset") || raw.includes("family reset") || raw.includes("parent reset plan") || raw.includes("3-hour")) return "family-reset-3hr";
-  if (raw.includes("parent-reset") || raw.includes("parent reset") || raw.includes("2-hour")) return "parent-reset-2hr";
-  if (raw.includes("helper-block") || raw.includes("helper block") || raw.includes("4-hour")) return "helper-block-4hr";
-  if (raw.includes("specific-area-reset") || raw.includes("specific area") || raw.includes("area reset") || raw.includes("garage reset")) return "specific-area-reset";
+  if (raw.includes("whole-home-reset") || raw.includes("whole home cleaning") || raw.includes("whole home reset") || raw.includes("entire home")) return "whole-home-reset";
+  if (raw.includes("family-reset") || raw.includes("family reset") || raw.includes("parent reset plan") || raw.includes("parent-reset") || raw.includes("parent reset") || raw.includes("helper-block") || raw.includes("helper block") || raw.includes("2-hour") || raw.includes("3-hour") || raw.includes("4-hour")) return "family-reset-3hr";
+  if (raw.includes("specific-area-reset") || raw.includes("specific area") || raw.includes("area reset") || raw.includes("a la carte") || raw.includes("garage reset")) return "specific-area-reset";
   if (raw.includes("move-out") || raw.includes("move out") || raw.includes("move-in") || raw.includes("move in")) return "move-out-cleaning";
   if (raw.includes("errand")) return "errand-helper";
   if (raw.includes("laundry")) return "laundry-rescue";
@@ -289,7 +282,7 @@ function isCommercialRequest(item: AdminDoc | null | undefined) {
 }
 
 function isFamilyReferralEligibleRequest(item: AdminDoc | null | undefined) {
-  return ["parent-reset-2hr", "family-reset-3hr", "helper-block-4hr", "errand-helper", "laundry-rescue"].includes(getServiceKey(item));
+  return ["family-reset-3hr", "whole-home-reset", "specific-area-reset", "move-out-cleaning", "errand-helper", "laundry-rescue"].includes(getServiceKey(item));
 }
 
 function isCompletedRequest(item: AdminDoc | null | undefined) {
@@ -1782,6 +1775,8 @@ function getBookkeepingExportFilename(title: string, reportName: string) {
 }
 
 function getCleanServiceLabel(item: AdminDoc) {
+  const key = getServiceKey(item);
+  if (key && SERVICE_LOOKS[key]) return SERVICE_LOOKS[key].label;
   return String(item.selectedServiceTitle || item.packageType || item.service || getServiceLook(item).label || "Service");
 }
 
@@ -4609,7 +4604,7 @@ export default function AdminTable({
                           <input
                             value={customInitialTitle}
                             onChange={(e) => setCustomInitialTitle(e.target.value)}
-                            placeholder={selected.service === "laundry-rescue" ? "Laundry Rescue custom deposit" : selected.service === "commercial-reset" ? "Commercial Reset approved quote" : selected.service === "move-out-cleaning" ? "Move-In / Move-Out Cleaning approved quote" : selected.service === "specific-area-reset" ? "Specific Area(s) Reset approved quote" : selected.service === "whole-home-reset" ? "Whole Home Cleaning approved quote" : selected.service === "family-reset-3hr" ? "Parent Reset Plan checkout" : "Custom Parent Reset checkout"}
+                            placeholder={getServiceKey(selected) === "laundry-rescue" ? "Laundry Rescue custom deposit" : getServiceKey(selected) === "commercial-reset" ? "Commercial Reset approved quote" : getServiceKey(selected) === "move-out-cleaning" ? "Move-In / Move-Out Cleaning approved quote" : getServiceKey(selected) === "specific-area-reset" ? "Specific Area(s) Reset approved quote" : getServiceKey(selected) === "whole-home-reset" ? "Whole Home Cleaning approved quote" : getServiceKey(selected) === "family-reset-3hr" ? "Parent Reset Plan checkout" : "Custom checkout"}
                             className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]"
                           />
                         </label>
