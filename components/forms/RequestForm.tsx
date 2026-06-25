@@ -44,8 +44,6 @@ const defaultState = {
   parkingAccess: "",
   supplyPreference: "NestHelper brings standard supplies",
   recurringResetInterest: "One-time reset for now",
-  smartLabelSetupInterest: "No Smart Label Setup add-on",
-  smartLabelSetupNotes: "",
   homePriorities: [] as string[],
   homeAreas: [] as string[],
   requestDetails: "",
@@ -55,7 +53,7 @@ const defaultState = {
   areaResetSize: "",
   areaResetCondition: "Normal household clutter",
   areaResetGoals: [] as string[],
-  areaResetHauling: "No disposal prep needed",
+  areaResetHauling: "No hauling or dump run requested",
   areaResetNotes: "",
   squareFootage: "",
   bedrooms: "",
@@ -127,18 +125,17 @@ const areaResetGoalOptions = [
   "Sweep or vacuum accessible floor",
   "Wipe reachable surfaces",
   "Clear space for parking or storage",
-  "Set up zones or Smart Labels",
+  "Set up zones or labels",
   "Light trash bagging",
   "Donation pickup prep only",
   "I’m not sure — help me prioritize",
 ];
 
 const areaResetHaulingOptions = [
-  "No disposal prep needed",
+  "No hauling or dump run requested",
   "Customer will handle trash/disposal",
-  "Bag/box and stage trash for customer disposal",
   "Donation pickup prep only",
-  "Sort into keep / donate / trash piles",
+  "May need a separate hauling quote",
   "Not sure yet — please review",
 ];
 
@@ -148,17 +145,6 @@ const recurringResetOptions = [
   "Interested in every-2-weeks recurring resets after the first visit",
   "Interested in monthly support when openings allow",
   "Not sure yet — please help me decide",
-];
-
-const smartLabelSetupOptions = [
-  "No Smart Label Setup add-on",
-  "Use included Smart Labels ourselves",
-  "Smart Label Setup — up to 10 labels ($49)",
-  "Standard Smart Label Setup — up to 20 labels ($79)",
-  "Full Smart Label Setup — up to 30 labels ($109)",
-  "Additional Smart Label setup — $2 per extra label",
-  "Quote detailed Smart Label inventory/setup",
-  "Not sure — please recommend after review",
 ];
 
 const howFoundUsOptions = [
@@ -231,9 +217,6 @@ function isReferralEligibleService(serviceId: string) {
   return ["parent-reset-2hr", "family-reset-3hr", "helper-block-4hr", "errand-helper", "laundry-rescue"].includes(serviceId);
 }
 
-function isSmartLabelEligibleCategory(category: string) {
-  return ["home", "areaReset", "moveOut"].includes(category);
-}
 
 function hasLikelyStreetAddress(address: string) {
   return /\d/.test(address) && /[a-zA-Z]/.test(address) && address.trim().length >= 5;
@@ -327,10 +310,6 @@ function cleanForSelectedService(form: RequestFormState) {
       photoUploadCount: form.photoUploads.length,
       photoUploadSummary: photoUploadSummary(form.photoUploads),
       photoUploads: form.photoUploads,
-    } : {}),
-    ...(isSmartLabelEligibleCategory(category) ? {
-      smartLabelSetupInterest: form.smartLabelSetupInterest,
-      smartLabelSetupNotes: form.smartLabelSetupNotes,
     } : {}),
     requestedAt: new Date().toISOString(),
   };
@@ -449,7 +428,6 @@ export function RequestForm() {
   const isMoveOut = serviceCategory === "moveOut";
   const isErrand = serviceCategory === "errand";
   const isLaundry = serviceCategory === "laundry";
-  const smartLabelsAvailable = isSmartLabelEligibleCategory(serviceCategory);
   const wholeHomeSelected = form.homeAreas.includes(WHOLE_HOME_OPTION);
   const homeScopeWarning = isHomeReset ? getHomeScopeWarning(form.service, form.homeAreas) : "";
   const petDetailsRequired = (isHomeReset || isAreaReset || isMoveOut) && form.pets !== "No pets" && form.pets !== "No pets now, but pets lived here before";
@@ -487,8 +465,6 @@ export function RequestForm() {
       petDetails: isHomeLike ? prev.petDetails : "",
       supplyPreference: isHomeLike ? prev.supplyPreference : defaultState.supplyPreference,
       recurringResetInterest: nextCategory === "home" ? prev.recurringResetInterest : defaultState.recurringResetInterest,
-      smartLabelSetupInterest: isSmartLabelEligibleCategory(nextCategory) ? prev.smartLabelSetupInterest : defaultState.smartLabelSetupInterest,
-      smartLabelSetupNotes: isSmartLabelEligibleCategory(nextCategory) ? prev.smartLabelSetupNotes : "",
       squareFootage: nextCategory === "moveOut" ? prev.squareFootage : "",
       bedrooms: nextCategory === "moveOut" ? prev.bedrooms : "",
       bathrooms: nextCategory === "moveOut" ? prev.bathrooms : "",
@@ -776,9 +752,9 @@ export function RequestForm() {
       )}
 
       {isAreaReset && (
-        <Section title="4. Specific area reset scope" description="Specific Area Reset is quoted after review. Tell us which space needs help, what kind of sorting or cleanup is needed, and whether there are trash/donation prep, access, or safety concerns.">
+        <Section title="4. Specific area reset scope" description="Specific Area Reset is quoted after review. Tell us which space needs help, what kind of sorting or cleanup is needed, and whether there are disposal, access, or safety concerns.">
           <div className="rounded-3xl border border-nest-gold/20 bg-nest-cream p-5 text-sm leading-6 text-nest-ink/76">
-            <strong className="text-nest-teal">Good fit:</strong> garage reset, pantry reset, closet reset, playroom reset, laundry room reset, kitchen zone reset, entry/mudroom reset, or moving-prep organizing. <strong className="text-nest-teal">Not included:</strong> dump runs, junk hauling, hazardous materials, paint/chemical disposal, pest or rodent cleanup, mold, biohazards, or unsafe heavy lifting.
+            <strong className="text-nest-teal">Good fit:</strong> garage reset, pantry reset, closet reset, playroom reset, laundry room reset, kitchen zone reset, entry/mudroom reset, or moving-prep organizing. <strong className="text-nest-teal">Not included unless separately approved:</strong> dump runs, heavy junk hauling, hazardous materials, paint/chemical disposal, pest or rodent cleanup, mold, biohazards, or unsafe heavy lifting.
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Area to reset" required>
@@ -803,7 +779,7 @@ export function RequestForm() {
                 <option>Needs photos or walkthrough before quoting</option>
               </select>
             </Field>
-            <Field label="Trash/donation prep needed?">
+            <Field label="Disposal or hauling needs">
               <select className="input" value={form.areaResetHauling} onChange={(e) => update("areaResetHauling", e.target.value)}>
                 {areaResetHaulingOptions.map((option) => <option key={option}>{option}</option>)}
               </select>
@@ -827,7 +803,7 @@ export function RequestForm() {
             </div>
           </div>
           <Field label="Top priorities and safety notes" required>
-            <textarea className="input min-h-28" required placeholder="Example: Garage reset. Need help sorting boxes, clearing space near the door, grouping donations, and sweeping accessible areas. Customer will handle disposal. Please avoid paint cans and chemicals." value={form.areaResetNotes} onChange={(e) => update("areaResetNotes", e.target.value)} />
+            <textarea className="input min-h-28" required placeholder="Example: Garage reset. Need help sorting boxes, clearing space near the door, grouping donations, and sweeping accessible areas. No dump run needed. Please avoid paint cans and chemicals." value={form.areaResetNotes} onChange={(e) => update("areaResetNotes", e.target.value)} />
           </Field>
         </Section>
       )}
@@ -1018,24 +994,6 @@ export function RequestForm() {
               </span>
             </span>
           </label>
-        </Section>
-      )}
-
-      {smartLabelsAvailable && (
-        <Section title="Optional Smart Label Setup" description="Smart Labels are included at no extra cost with qualifying resets. Choose setup only if you want NestHelper to place, scan, name, document, and walk you through keeping them updated.">
-          <div className="rounded-3xl border border-nest-gold/20 bg-nest-cream p-5 text-sm leading-6 text-nest-ink/76">
-            <strong className="text-nest-teal">Labels included:</strong> up to 10 Smart Labels with qualifying resets, and up to 30 when a larger organizing project needs them. <strong className="text-nest-teal">Setup add-on:</strong> $49 for up to 10 labels, $79 for up to 20, $109 for up to 30, then $2 per extra standard label setup. Detailed inventory or heavy photo documentation can be quoted.
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Smart Label preference">
-              <select className="input" value={form.smartLabelSetupInterest} onChange={(e) => update("smartLabelSetupInterest", e.target.value)}>
-                {smartLabelSetupOptions.map((option) => <option key={option}>{option}</option>)}
-              </select>
-            </Field>
-            <Field label="Label notes (optional)">
-              <input className="input" placeholder="Example: label garage bins, pantry shelves, moving boxes, or toy storage" value={form.smartLabelSetupNotes} onChange={(e) => update("smartLabelSetupNotes", e.target.value)} />
-            </Field>
-          </div>
         </Section>
       )}
 

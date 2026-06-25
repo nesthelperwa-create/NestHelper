@@ -86,6 +86,18 @@ const serviceRequestAllowedFields = [
   "smartLabelSetupNotes",
   "homePriorities",
   "homeAreas",
+  "areaResetArea",
+  "areaResetOtherArea",
+  "areaResetAdditionalAreas",
+  "areaResetAdditionalAreaSummary",
+  "areaResetOtherAdditionalArea",
+  "areaResetCleaningType",
+  "areaResetBathroomCount",
+  "areaResetSize",
+  "areaResetCondition",
+  "areaResetGoals",
+  "areaResetGoalSummary",
+  "areaResetHauling",
   "requestDetails",
   "roomsAreas",
   "errandType",
@@ -257,6 +269,16 @@ const maxSubmissionsByCollection: Record<SubmissionCollection, number> = {
 
 const textLimits: Record<string, number> = {
   requestDetails: 1800,
+  areaResetArea: 180,
+  areaResetOtherArea: 500,
+  areaResetAdditionalAreaSummary: 700,
+  areaResetOtherAdditionalArea: 500,
+  areaResetCleaningType: 220,
+  areaResetBathroomCount: 140,
+  areaResetSize: 500,
+  areaResetCondition: 220,
+  areaResetGoalSummary: 900,
+  areaResetHauling: 220,
   petDetails: 1200,
   specialNotes: 1800,
   rentalTurnoverNotes: 1200,
@@ -434,6 +456,30 @@ function validateRequired(collection: SubmissionCollection, payload: Record<stri
     } else {
       requireText("fullName", "full name");
       requireText("city", "city");
+
+      if (trimText(payload.service) === "specific-area-reset") {
+        requireText("areaResetArea", "primary area");
+        requireText("areaResetCleaningType", "cleaning / reset type");
+        requireText("areaResetSize", "area size or count");
+        requireText("requestDetails", "top priorities and safety notes");
+
+        const primaryArea = trimText(payload.areaResetArea, 220).toLowerCase();
+        const additionalAreas = Array.isArray(payload.areaResetAdditionalAreas)
+          ? (payload.areaResetAdditionalAreas as unknown[]).map((item) => trimText(item, 220).toLowerCase())
+          : [];
+
+        if (primaryArea.includes("other") && !trimText(payload.areaResetOtherArea)) {
+          missing.push("other primary area");
+        }
+
+        if (additionalAreas.some((item) => item.includes("other")) && !trimText(payload.areaResetOtherAdditionalArea)) {
+          missing.push("other add-on area");
+        }
+
+        if ((primaryArea.includes("bathroom") || additionalAreas.some((item) => item.includes("bathroom"))) && !trimText(payload.areaResetBathroomCount)) {
+          missing.push("bathroom count");
+        }
+      }
     }
   }
 

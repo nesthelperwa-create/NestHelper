@@ -13,14 +13,6 @@ type CustomerCredit = { id: string; status?: string; amount?: number; remainingA
 type CheckoutMode = "standard" | "custom";
 type ApplicationDocument = { id?: string; label?: string; originalName?: string; contentType?: string; size?: number; storagePath?: string; uploadedAtIso?: string };
 type OnboardingChecklist = Record<string, boolean>;
-type StatusEmailOutcome = {
-  delivery: string;
-  message: string;
-  attemptedAt?: string;
-  recipient?: string;
-  providerId?: string;
-  error?: string;
-};
 
 const APPLICATION_CHECKLIST_ITEMS = [
   { key: "applicationReviewed", label: "Application reviewed" },
@@ -165,46 +157,16 @@ function getLaundryDefaultDepositCredit(item: AdminDoc | null, mode: CheckoutMod
 }
 
 function shouldNotifyByDefault(status: string) {
-  return ["Quote Sent", "Quote Approved", "Approved", "Scheduled", "Declined", "Follow-Up Needed", "Needs Info", "Canceled", "Cancelled"].includes(status);
+  return ["Approved", "Scheduled", "Declined", "Follow-Up Needed", "Needs Info", "Canceled", "Cancelled"].includes(status);
 }
 
 function getStatusNotePlaceholder(status: string) {
   if (status === "Declined") return "Example: Sorry, we are not servicing that area yet, or this request is outside our current service scope.";
   if (status === "Scheduled") return "Example: You are scheduled for Tuesday between 10am-12pm. Please have parking/access details ready.";
   if (status === "Follow-Up Needed" || status === "Needs Info") return "Example: Can you confirm parking, pets, access instructions, and which rooms/tasks matter most?";
-  if (status === "Quote Sent") return "Example: Here is your quote and available appointment time. Please reply to approve before we send the invoice.";
-  if (status === "Quote Approved") return "Example: Thank you for approving the quote. We’ll send the secure invoice/payment link next.";
   if (status === "Approved") return "Example: Your request looks like a good fit. We’ll send the secure checkout link next.";
   if (status === "Canceled" || status === "Cancelled") return "Example: This request has been canceled. Reply if this was unexpected.";
   return "Optional note to include in the customer email.";
-}
-
-function getStatusEmailDelivery(item: AdminDoc | null | undefined) {
-  const explicit = String(item?.lastStatusEmailDelivery || "").trim();
-  if (explicit) return explicit;
-  if (item?.lastStatusEmailSentAt) return "Sent";
-  if (item?.lastStatusEmailError) return "Failed";
-  return "";
-}
-
-function getStatusEmailDeliveryStyles(delivery: string) {
-  const normalized = delivery.toLowerCase();
-  if (normalized === "sent") return "border-emerald-200 bg-emerald-50 text-emerald-800";
-  if (normalized === "failed") return "border-red-200 bg-red-50 text-red-800";
-  if (normalized === "skipped") return "border-amber-200 bg-amber-50 text-amber-800";
-  if (normalized === "pending") return "border-blue-200 bg-blue-50 text-blue-800";
-  if (normalized === "not requested") return "border-slate-200 bg-slate-50 text-slate-700";
-  return "border-slate-200 bg-slate-50 text-slate-700";
-}
-
-function getStatusEmailDeliveryLabel(delivery: string) {
-  const normalized = delivery.toLowerCase();
-  if (normalized === "sent") return "Email sent";
-  if (normalized === "failed") return "Email failed";
-  if (normalized === "skipped") return "Email skipped";
-  if (normalized === "pending") return "Email pending";
-  if (normalized === "not requested") return "Email not requested";
-  return delivery || "No email logged";
 }
 
 
@@ -301,63 +263,7 @@ function getReferralStatusText(item: AdminDoc | null | undefined) {
 }
 
 function getAdminPaymentText(item: AdminDoc | null | undefined) {
-  return String([
-    item?.paymentStatus,
-    item?.laundryPaymentStatus,
-    item?.familyPaymentStatus,
-    item?.familyInvoiceStatus,
-    item?.invoiceStatus,
-    item?.checkoutStatus,
-    item?.additionalPaymentStatus,
-    item?.commercialInvoiceStatus,
-    item?.laundryFinalInvoiceStatus,
-    item?.checkoutUrl ? "checkout link ready" : "",
-    item?.familyInvoiceUrl ? "family invoice link ready" : "",
-    item?.commercialInvoiceUrl ? "commercial invoice link ready" : "",
-    item?.additionalPaymentCheckoutUrl ? "additional payment link ready" : "",
-    item?.laundryFinalCheckoutUrl ? "laundry final invoice link ready" : "",
-  ].filter(Boolean).join(" ")).toLowerCase();
-}
-
-function getAdminStatusText(item: AdminDoc | null | undefined) {
-  return String(item?.status || "").trim().toLowerCase().replace(/\s+/g, " ");
-}
-
-function isQuoteSentAdminStatus(status: string) {
-  return status === "quote sent";
-}
-
-function isQuoteDraftAdminStatus(status: string) {
-  return status === "quoted" || status === "quote drafted";
-}
-
-function isPaymentRequestSentAdminStatus(status: string) {
-  return [
-    "checkout sent",
-    "deposit checkout sent",
-    "invoice sent",
-    "invoice link sent",
-    "final invoice sent",
-    "final balance sent",
-    "additional payment sent",
-    "payment link sent",
-  ].includes(status);
-}
-
-function isPaymentRequestSentText(paymentText: string) {
-  return Boolean(paymentText) && (
-    paymentText.includes("checkout sent") ||
-    paymentText.includes("deposit checkout sent") ||
-    paymentText.includes("invoice sent") ||
-    paymentText.includes("invoice link sent") ||
-    paymentText.includes("final invoice sent") ||
-    paymentText.includes("final balance sent") ||
-    paymentText.includes("additional payment sent") ||
-    paymentText.includes("payment link sent") ||
-    paymentText.includes("checkout link ready") ||
-    paymentText.includes("invoice link ready") ||
-    paymentText.includes("payment link ready")
-  );
+  return String(`${item?.paymentStatus || ""} ${item?.laundryPaymentStatus || ""} ${item?.familyInvoiceStatus || ""} ${item?.invoiceStatus || ""} ${item?.checkoutStatus || ""} ${item?.status || ""}`).toLowerCase();
 }
 
 function isClosedAdminStatus(item: AdminDoc | null | undefined) {
@@ -366,16 +272,16 @@ function isClosedAdminStatus(item: AdminDoc | null | undefined) {
 }
 
 function getAdminQueueKey(item: AdminDoc | null | undefined) {
-  const status = getAdminStatusText(item);
+  const status = String(item?.status || "").trim().toLowerCase();
   const paymentText = getAdminPaymentText(item);
   if (status === "completed") return "completed";
   if (["canceled", "cancelled", "declined", "not eligible", "archived"].includes(status)) return "closed";
   if (!status || ["new", "needs info", "follow-up needed", "pending review", "reviewing", "requested"].includes(status) || status.includes("review") || status.includes("follow")) return "needs-review";
-  if (paymentText.includes("paid") || status.includes("paid") || status.includes("scheduled") || status.includes("assigned")) return "paid-scheduled";
-  if (isPaymentRequestSentAdminStatus(status) || isPaymentRequestSentText(paymentText)) return "payment";
-  if (isQuoteSentAdminStatus(status)) return "quote-sent";
-  if (status.includes("approved") || status === "final invoice created") return "needs-payment";
-  if (isQuoteDraftAdminStatus(status)) return "needs-review";
+  if (paymentText.includes("sent") || paymentText.includes("checkout") || paymentText.includes("invoice")) {
+    if (!paymentText.includes("paid")) return "payment";
+  }
+  if (paymentText.includes("paid") || status.includes("scheduled") || status.includes("assigned")) return "paid-scheduled";
+  if (status.includes("approved") || status.includes("quote")) return "needs-payment";
   return "active";
 }
 
@@ -387,9 +293,8 @@ const ADMIN_QUEUE_OPTIONS = [
   { key: "all", label: "All records", helper: "Everything", accent: "bg-[#075c58] text-white border-[#075c58]" },
   { key: "active", label: "Active queue", helper: "Open work", accent: "bg-white text-[#075c58] border-[#eadfc8]" },
   { key: "needs-review", label: "Needs review", helper: "New/follow-up", accent: "bg-amber-100 text-amber-900 border-amber-300" },
-  { key: "quote-sent", label: "Quote sent", helper: "Waiting approval", accent: "bg-indigo-100 text-indigo-900 border-indigo-300" },
-  { key: "needs-payment", label: "Ready to invoice", helper: "Approved quote", accent: "bg-blue-100 text-blue-900 border-blue-300" },
-  { key: "payment", label: "Invoice / checkout sent", helper: "Waiting payment", accent: "bg-violet-100 text-violet-900 border-violet-300" },
+  { key: "needs-payment", label: "Needs payment", helper: "Approved/quote", accent: "bg-blue-100 text-blue-900 border-blue-300" },
+  { key: "payment", label: "Payment sent", helper: "Waiting to pay", accent: "bg-violet-100 text-violet-900 border-violet-300" },
   { key: "paid-scheduled", label: "Paid / scheduled", helper: "Ready to serve", accent: "bg-emerald-100 text-emerald-900 border-emerald-300" },
   { key: "completed", label: "Completed", helper: "Done", accent: "bg-slate-100 text-slate-800 border-slate-300" },
   { key: "closed", label: "Closed", helper: "Canceled/declined", accent: "bg-rose-100 text-rose-900 border-rose-300" },
@@ -621,11 +526,10 @@ function ActionSpinner() {
   return <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" aria-hidden="true" />;
 }
 
-function AdminActionFeedback({ busy, activeAction, messages, warnings = [], errors }: { busy: boolean; activeAction: string; messages: string[]; warnings?: string[]; errors: string[] }) {
+function AdminActionFeedback({ busy, activeAction, messages, errors }: { busy: boolean; activeAction: string; messages: string[]; errors: string[] }) {
   const cleanMessages = messages.filter(Boolean);
-  const cleanWarnings = warnings.filter(Boolean);
   const cleanErrors = errors.filter(Boolean);
-  if (!busy && !cleanMessages.length && !cleanWarnings.length && !cleanErrors.length) return null;
+  if (!busy && !cleanMessages.length && !cleanErrors.length) return null;
 
   return (
     <div className="rounded-3xl border border-[#eadfc8] bg-[#fbf6ea] p-4 shadow-sm" role="status" aria-live="polite">
@@ -633,7 +537,7 @@ function AdminActionFeedback({ busy, activeAction, messages, warnings = [], erro
         <div>
           <p className="text-xs font-black uppercase tracking-[0.18em] text-[#b98a2f]">Action feedback</p>
           <p className="mt-1 text-sm font-bold text-slate-700">
-            {busy ? activeAction || "Working on the selected action..." : cleanErrors.length ? "Review the error below before continuing." : cleanWarnings.length ? "Review the warning below before continuing." : "Last action completed."}
+            {busy ? activeAction || "Working on the selected action..." : cleanErrors.length ? "Review the message below before continuing." : "Last action completed."}
           </p>
         </div>
         {busy && <span className="inline-flex w-fit items-center gap-2 rounded-full bg-white px-3 py-1 text-xs font-black text-[#075c58] ring-1 ring-[#eadfc8]"><ActionSpinner /> Processing</span>}
@@ -641,88 +545,9 @@ function AdminActionFeedback({ busy, activeAction, messages, warnings = [], erro
       {cleanMessages.map((message, index) => (
         <p key={`message-${index}`} className="mt-2 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">{message}</p>
       ))}
-      {cleanWarnings.map((warning, index) => (
-        <p key={`warning-${index}`} className="mt-2 rounded-2xl bg-amber-50 px-4 py-3 text-sm font-bold text-amber-800">{warning}</p>
-      ))}
       {cleanErrors.map((error, index) => (
         <p key={`error-${index}`} className="mt-2 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{error}</p>
       ))}
-    </div>
-  );
-}
-
-
-function StatusEmailMiniBadge({ item }: { item: AdminDoc }) {
-  const delivery = getStatusEmailDelivery(item);
-  if (!delivery) return null;
-  return (
-    <span className={`inline-flex w-fit items-center rounded-full border px-2.5 py-1 text-[10px] font-black uppercase tracking-wide ${getStatusEmailDeliveryStyles(delivery)}`}>
-      {getStatusEmailDeliveryLabel(delivery)}
-    </span>
-  );
-}
-
-function StatusEmailDeliveryCard({ item }: { item: AdminDoc }) {
-  const delivery = getStatusEmailDelivery(item);
-  const attemptedAt = item.lastStatusEmailAttemptedAt || item.lastStatusEmailSentAt;
-  const status = String(item.lastStatusEmailStatus || "").trim();
-  const recipient = String(item.lastStatusEmailRecipient || item.email || item.customerEmail || "").trim();
-  const providerId = String(item.lastStatusEmailProviderId || "").trim();
-  const error = String(item.lastStatusEmailError || "").trim();
-
-  return (
-    <div className="mt-4 rounded-2xl border border-[#eadfc8] bg-[#fbf6ea] p-4">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Last customer status email</p>
-          <p className="mt-1 text-sm font-bold text-slate-700">
-            {delivery ? "Saved delivery result for the last customer status email." : "No customer status email is logged yet. Older emails sent before this feature may not show here."}
-          </p>
-          <p className="mt-1 text-xs font-semibold text-slate-500">
-            “Email sent” means Resend accepted the email. It does not prove the customer opened it.
-          </p>
-        </div>
-        <span className={`w-fit rounded-full border px-3 py-1 text-xs font-black ${getStatusEmailDeliveryStyles(delivery)}`}>
-          {getStatusEmailDeliveryLabel(delivery)}
-        </span>
-      </div>
-      {(attemptedAt || status || recipient || providerId || error) && (
-        <div className="mt-3 grid gap-2 text-xs font-semibold text-slate-600 sm:grid-cols-2 lg:grid-cols-4">
-          {attemptedAt && <div><span className="font-black text-slate-700">Attempted:</span> {formatDate(attemptedAt)}</div>}
-          {status && <div><span className="font-black text-slate-700">Status:</span> {status}</div>}
-          {recipient && <div className="break-all"><span className="font-black text-slate-700">To:</span> {recipient}</div>}
-          {providerId && <div className="break-all"><span className="font-black text-slate-700">Resend ID:</span> {providerId}</div>}
-          {error && <div className="text-red-700 sm:col-span-2 lg:col-span-4"><span className="font-black">Issue:</span> {error}</div>}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function StatusEmailOutcomeCard({ outcome }: { outcome: StatusEmailOutcome | null }) {
-  if (!outcome) return null;
-  const delivery = outcome.delivery || "Not requested";
-  const showMeta = outcome.attemptedAt || outcome.recipient || outcome.providerId || outcome.error;
-
-  return (
-    <div className={`mt-4 rounded-2xl border p-4 ${getStatusEmailDeliveryStyles(delivery)}`}>
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <p className="text-xs font-black uppercase tracking-[0.16em]">Email result from this update</p>
-          <p className="mt-1 text-sm font-black">{outcome.message}</p>
-        </div>
-        <span className="w-fit rounded-full border border-current bg-white/60 px-3 py-1 text-xs font-black">
-          {getStatusEmailDeliveryLabel(delivery)}
-        </span>
-      </div>
-      {showMeta && (
-        <div className="mt-3 grid gap-2 text-xs font-semibold sm:grid-cols-2 lg:grid-cols-4">
-          {outcome.attemptedAt && <div><span className="font-black">Attempted:</span> {formatDate(outcome.attemptedAt)}</div>}
-          {outcome.recipient && <div className="break-all"><span className="font-black">To:</span> {outcome.recipient}</div>}
-          {outcome.providerId && <div className="break-all"><span className="font-black">Resend ID:</span> {outcome.providerId}</div>}
-          {outcome.error && <div className="break-words sm:col-span-2 lg:col-span-4"><span className="font-black">Issue:</span> {outcome.error}</div>}
-        </div>
-      )}
     </div>
   );
 }
@@ -929,8 +754,6 @@ const DETAIL_FIELD_LABELS: Record<string, string> = {
   preferredTime: "Preferred time",
   roomsOrAreas: "Rooms / areas",
   requestDetails: "Request details",
-  smartLabelSetupInterest: "Smart Label Setup",
-  smartLabelSetupNotes: "Smart Label notes",
   notes: "Notes",
   specialInstructions: "Special instructions",
   promoCode: "Promo",
@@ -960,7 +783,7 @@ const DETAIL_FIELD_LABELS: Record<string, string> = {
 
 const DETAIL_FIELD_ORDER: Record<string, string[]> = {
   serviceRequests: [
-    "fullName", "service", "phone", "email", "howFoundUs", "howFoundUsDetails", "campaignSource", "campaignName", "address", "city", "state", "zip", "zipCode", "preferredDate", "preferredTime", "roomsOrAreas", "requestDetails", "smartLabelSetupInterest", "smartLabelSetupNotes", "notes", "specialInstructions", "promoCode", "incomingReferralCode",
+    "fullName", "service", "phone", "email", "howFoundUs", "howFoundUsDetails", "campaignSource", "campaignName", "address", "city", "state", "zip", "zipCode", "preferredDate", "preferredTime", "roomsOrAreas", "requestDetails", "notes", "specialInstructions", "promoCode", "incomingReferralCode",
   ],
   helperApplications: [
     "fullName", "phone", "email", "city", "howFoundUs", "howFoundUsDetails", "campaignSource", "campaignName", "state", "zip", "availability", "services", "transportation", "travelRadius", "experienceLevel", "comfortLevel", "notWillingToDo", "applicationDocumentCount",
@@ -1152,8 +975,6 @@ const SERVICE_REQUEST_CLEAN_KEYS = [
   "moveOutFocusSummary",
   "moveOutApplianceSummary",
   "requestDetails",
-  "smartLabelSetupInterest",
-  "smartLabelSetupNotes",
   "notes",
   "specialInstructions",
   "howFoundUs",
@@ -1394,8 +1215,6 @@ function getCleanRequestedServiceSection(collectionName: string, item: AdminDoc)
   entries.push(makeExportEntry("urgency", item.urgency, "Urgency"));
   entries.push(makeExportEntry("roomsOrAreas", item.roomsOrAreas, "Rooms / areas"));
   entries.push(makeExportEntry("requestDetails", item.requestDetails, "Request details"));
-  entries.push(makeExportEntry("smartLabelSetupInterest", item.smartLabelSetupInterest, "Smart Label Setup"));
-  entries.push(makeExportEntry("smartLabelSetupNotes", item.smartLabelSetupNotes, "Smart Label notes"));
   entries.push(makeExportEntry("notes", item.notes, "Notes"));
   entries.push(makeExportEntry("specialInstructions", item.specialInstructions, "Special instructions"));
   return { title: "Service details", entries: entries.filter((entry): entry is AdminExportEntry => Boolean(entry)) };
@@ -2217,9 +2036,7 @@ export default function AdminTable({
   const [notifyCustomer, setNotifyCustomer] = useState(false);
   const [statusBusy, setStatusBusy] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
-  const [statusWarning, setStatusWarning] = useState("");
   const [statusError, setStatusError] = useState("");
-  const [statusEmailOutcome, setStatusEmailOutcome] = useState<StatusEmailOutcome | null>(null);
   const [laundryDryWeightLbs, setLaundryDryWeightLbs] = useState("");
   const [laundryRatePerLb, setLaundryRatePerLb] = useState("2.99");
   const [laundryAddOnsAmount, setLaundryAddOnsAmount] = useState("0");
@@ -2305,9 +2122,7 @@ export default function AdminTable({
     setStatusNote("");
     setNotifyCustomer(shouldNotifyByDefault(nextStatus));
     setStatusMessage("");
-    setStatusWarning("");
     setStatusError("");
-    setStatusEmailOutcome(null);
     setLaundryDryWeightLbs(selected?.laundryDryWeightLbs ? String(selected.laundryDryWeightLbs) : "");
     setLaundryRatePerLb(selected?.laundryRatePerLb ? String(selected.laundryRatePerLb) : "2.99");
     setLaundryAddOnsAmount(selected?.laundryAddOnsAmount ? String(selected.laundryAddOnsAmount) : "0");
@@ -2372,7 +2187,7 @@ export default function AdminTable({
   const dropdownStatuses = availableStatuses;
 
   const queueCounts = useMemo(() => {
-    const counts: Record<string, number> = { active: 0, "needs-review": 0, "quote-sent": 0, "needs-payment": 0, payment: 0, "paid-scheduled": 0, completed: 0, closed: 0, all: items.length };
+    const counts: Record<string, number> = { active: 0, "needs-review": 0, "needs-payment": 0, payment: 0, "paid-scheduled": 0, completed: 0, closed: 0, all: items.length };
     items.forEach((item) => {
       const key = getAdminQueueKey(item);
       counts[key] = (counts[key] || 0) + 1;
@@ -2475,19 +2290,7 @@ export default function AdminTable({
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok || !data.ok) throw new Error(data.error || "Unable to update status.");
-    return data as {
-      ok: boolean;
-      emailSent?: boolean;
-      emailSkipped?: boolean;
-      emailError?: string;
-      emailDelivery?: string;
-      emailMessage?: string;
-      emailProviderId?: string;
-      emailAttemptedAt?: string;
-      emailRecipient?: string;
-      referralRewardEmailSent?: boolean;
-      referralRewardEmailError?: string;
-    };
+    return data as { ok: boolean; emailSent?: boolean; emailSkipped?: boolean; emailError?: string; referralRewardEmailSent?: boolean; referralRewardEmailError?: string };
   }
 
   async function submitStatusUpdate() {
@@ -2495,49 +2298,11 @@ export default function AdminTable({
     setStatusBusy(true);
     setActiveAction(`Updating status to ${statusValue}...`);
     setStatusMessage("");
-    setStatusWarning("");
     setStatusError("");
-    setStatusEmailOutcome(null);
 
     try {
       const data = await updateStatus(selected, statusValue, { notifyCustomer, customerNote: statusNote });
-      const attemptedAtIso = data.emailAttemptedAt || new Date().toISOString();
-      const emailDelivery = data.emailDelivery || (data.emailSent ? "Sent" : data.emailSkipped ? "Skipped" : data.emailError ? "Failed" : notifyCustomer ? "Failed" : "Not requested");
-      const emailRecipient = data.emailRecipient || selected.email || selected.customerEmail || "";
-      const emailMessage =
-        data.emailMessage ||
-        (emailDelivery === "Sent"
-          ? "Customer email was accepted by Resend and logged on the request."
-          : emailDelivery === "Skipped"
-            ? data.emailError || "Customer email was skipped. Check the customer email address and Resend setup."
-            : emailDelivery === "Failed"
-              ? data.emailError || "Customer email failed to send."
-              : "No customer email was requested because the notification box was not checked.");
-
-      const emailFieldUpdates = notifyCustomer
-        ? {
-            lastStatusEmailAttemptedAt: attemptedAtIso,
-            lastStatusEmailDelivery: emailDelivery,
-            lastStatusEmailStatus: statusValue,
-            lastStatusEmailNote: statusNote,
-            lastStatusEmailRecipient: emailRecipient,
-            lastStatusEmailProviderId: data.emailProviderId || "",
-            lastStatusEmailSentAt: data.emailSent ? attemptedAtIso : selected.lastStatusEmailSentAt,
-            lastStatusEmailError: emailDelivery === "Sent" ? "" : data.emailError || emailMessage,
-          }
-        : {};
-
-      setStatusEmailOutcome({
-        delivery: emailDelivery,
-        message: emailMessage,
-        attemptedAt: notifyCustomer ? attemptedAtIso : undefined,
-        recipient: notifyCustomer ? emailRecipient : undefined,
-        providerId: data.emailProviderId || undefined,
-        error: data.emailError || undefined,
-      });
-
-      setSelected((prev) => (prev ? { ...prev, status: statusValue, ...emailFieldUpdates } : prev));
-      setItems((prev) => prev.map((item) => (item.id === selected.id ? { ...item, status: statusValue, ...emailFieldUpdates } : item)));
+      setSelected((prev) => (prev ? { ...prev, status: statusValue, lastStatusEmailNote: notifyCustomer ? statusNote : prev.lastStatusEmailNote } : prev));
 
       if (data.referralRewardEmailSent) {
         setReferralMessage("Referral reward/credit email was automatically sent to the original referring family.");
@@ -2545,14 +2310,14 @@ export default function AdminTable({
         setReferralError(data.referralRewardEmailError);
       }
 
-      if (notifyCustomer && emailDelivery === "Sent") {
-        setStatusMessage(`Status updated. ✅ ${emailMessage}`);
-      } else if (notifyCustomer && emailDelivery === "Skipped") {
-        setStatusWarning(`Status updated, but no customer email was sent. ${emailMessage}`);
-      } else if (notifyCustomer && emailDelivery === "Failed") {
-        setStatusError(emailMessage);
+      if (notifyCustomer && data.emailSent) {
+        setStatusMessage("Status updated and customer email sent.");
+      } else if (notifyCustomer && data.emailSkipped) {
+        setStatusMessage(data.emailError || "Status updated, but no customer email was available.");
+      } else if (notifyCustomer && data.emailError) {
+        setStatusMessage(data.emailError);
       } else {
-        setStatusMessage("Status updated only. Customer email was not requested because the notification box was not checked.");
+        setStatusMessage("Status updated. No customer email was sent.");
       }
     } catch (error) {
       setStatusError(error instanceof Error ? error.message : "Unable to update status.");
@@ -3297,7 +3062,7 @@ export default function AdminTable({
                 <button type="button" onClick={() => setQueueFilter("all")} className={getAdminActionClass("quiet")}>Show all records</button>
               )}
             </div>
-            <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-9">
+            <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4 xl:grid-cols-8">
               {ADMIN_QUEUE_OPTIONS.map((option) => {
                 const active = queueFilter === option.key;
                 return (
@@ -3394,7 +3159,6 @@ export default function AdminTable({
         busy={anyActionBusy}
         activeAction={activeAction}
         messages={[statusMessage, checkoutMessage, commercialInvoiceMessage, commercialQuoteEmailMessage, familyInvoiceMessage, laundryFinalMessage, additionalPaymentMessage, commercialQuoteMessage, referralMessage, applicantEmailMessage]}
-        warnings={[statusWarning]}
         errors={[statusError, checkoutError, commercialInvoiceError, commercialQuoteEmailError, familyInvoiceError, laundryFinalError, additionalPaymentError, commercialQuoteError, referralError, applicantEmailError]}
       />
 
@@ -3562,10 +3326,7 @@ export default function AdminTable({
                   <p className="mt-1 text-xs font-bold text-slate-600">{getRecordContactLine(item)}</p>
                 </div>
               </div>
-              <div className="flex shrink-0 flex-col items-end gap-2">
-                <StatusBadge status={item.status} />
-                <StatusEmailMiniBadge item={item} />
-              </div>
+              <StatusBadge status={item.status} />
             </div>
             <div className="mt-3 grid gap-2 text-xs font-bold text-slate-700">
               {columns.slice(0, 4).map((col) => (
@@ -3588,7 +3349,6 @@ export default function AdminTable({
                   setStatusBusy(true);
                   setActiveAction(`Updating ${getRecordDisplayName(item)} to ${next}...`);
                   setStatusMessage("");
-                  setStatusWarning("");
                   setStatusError("");
                   try {
                     await updateStatus(item, next);
@@ -3635,7 +3395,6 @@ export default function AdminTable({
                   <td className="sticky right-0 z-10 min-w-[190px] bg-white/95 px-3 py-4 align-top shadow-[-10px_0_18px_rgba(0,0,0,0.04)] backdrop-blur">
                     <div className="grid min-w-[170px] gap-2">
                       <button onClick={() => setSelected(item)} className="w-full whitespace-nowrap rounded-full bg-[#075c58] px-3 py-2 text-xs font-black text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-[#064b48] focus:outline-none focus:ring-4 focus:ring-[#075c58]/20">Open details</button>
-                      <StatusEmailMiniBadge item={item} />
                       <select
                         value={item.status || "New"}
                         onChange={async (e) => {
@@ -3643,7 +3402,6 @@ export default function AdminTable({
                           setStatusBusy(true);
                           setActiveAction(`Updating ${getServiceLook(item).label} status to ${next}...`);
                           setStatusMessage("");
-                          setStatusWarning("");
                           setStatusError("");
                           try {
                             await updateStatus(item, next);
@@ -3740,7 +3498,6 @@ export default function AdminTable({
                 busy={anyActionBusy}
                 activeAction={activeAction}
                 messages={[statusMessage, checkoutMessage, commercialInvoiceMessage, commercialQuoteEmailMessage, familyInvoiceMessage, laundryFinalMessage, additionalPaymentMessage, commercialQuoteMessage, referralMessage, applicationOnboardingMessage, applicantEmailMessage]}
-                warnings={[statusWarning]}
                 errors={[statusError, checkoutError, commercialInvoiceError, commercialQuoteEmailError, familyInvoiceError, laundryFinalError, additionalPaymentError, commercialQuoteError, referralError, applicationOnboardingError, applicantEmailError, documentOpenError]}
               />
               <details className="rounded-3xl border border-[#eadfc8] bg-white p-4 shadow-sm">
@@ -3960,7 +3717,7 @@ export default function AdminTable({
                     <p className="text-xs font-black uppercase tracking-[0.2em] text-[#b98a2f]">Status + customer update</p>
                     <h4 className="mt-1 text-xl font-black text-[#075c58]">Update the request and choose whether to notify the customer</h4>
                     <p className="mt-2 text-sm leading-6 text-slate-700">
-                      Use <span className="font-black text-[#075c58]">Quote Sent</span> for quote emails. Use checkout/invoice statuses only after a real Stripe payment link or invoice is created.
+                      Use the table dropdown for quick internal updates. Use this section when the customer should get a clear NestHelper email.
                     </p>
                   </div>
                   <StatusBadge status={statusValue} />
@@ -3989,10 +3746,7 @@ export default function AdminTable({
                       onChange={(e) => setNotifyCustomer(e.target.checked)}
                       className="h-5 w-5 rounded border-[#075c58] accent-[#075c58]"
                     />
-                    <span className="grid gap-1">
-                      <span>Send customer email notification</span>
-                      <span className="text-xs font-semibold text-slate-500">Shows Sent / Failed / Skipped after you save.</span>
-                    </span>
+                    Send customer email notification
                   </label>
                 </div>
 
@@ -4007,9 +3761,6 @@ export default function AdminTable({
                   />
                 </label>
 
-                <StatusEmailDeliveryCard item={selected} />
-                <StatusEmailOutcomeCard outcome={statusEmailOutcome} />
-
                 <div className="mt-4 flex flex-wrap gap-3">
                   <button
                     type="button"
@@ -4020,12 +3771,11 @@ export default function AdminTable({
                     {statusBusy ? <><ActionSpinner /> Updating...</> : notifyCustomer ? "Update status + notify customer" : "Update status only"}
                   </button>
                   <p className="max-w-xl text-xs leading-5 text-slate-500">
-                    Quote emails can be sent here by choosing Quote Sent. Payment link, invoice, and payment received emails are handled separately by the payment/invoice buttons.
+                    Payment link emails and payment received emails are handled separately. This button is for manual updates like Declined, Scheduled, Canceled, or Needs Info.
                   </p>
                 </div>
 
                 {statusMessage && <p className="mt-3 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">{statusMessage}</p>}
-                {statusWarning && <p className="mt-3 rounded-2xl bg-amber-50 px-4 py-3 text-sm font-bold text-amber-800">{statusWarning}</p>}
                 {statusError && <p className="mt-3 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{statusError}</p>}
               </div>
             )}
