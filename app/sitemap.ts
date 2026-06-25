@@ -20,7 +20,7 @@ const staticRoutes = [
 ];
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const lastModified = new Date("2026-06-17T00:00:00.000Z");
+  const lastModified = new Date("2026-06-25T00:00:00.000Z");
 
   return [
     ...staticRoutes.map((route) => ({
