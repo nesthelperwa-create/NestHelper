@@ -53,7 +53,7 @@ export default function ServicesPage() {
               Choose Parent Reset Plan for busy-parent room resets, Whole Home Cleaning for the entire home, Specific Area(s) Reset for selected rooms, or Move-In / Move-Out Cleaning for empty or mostly empty homes. You can also request laundry help or errands.
             </p>
             <p className="mx-auto mt-5 max-w-3xl text-sm font-black leading-6 text-nest-teal sm:text-base lg:mx-0">
-              Click the matching service guide on the right to jump to that service card below.
+              Click a service guide to jump to the matching service card below.
             </p>
           </div>
 
