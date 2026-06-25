@@ -1462,6 +1462,181 @@ function getCleanLaundrySection(item: AdminDoc): AdminExportSection {
   return { title: "Laundry details", entries };
 }
 
+
+const QUOTE_PROMPT_FIELD_KEYS = [
+  "fullName",
+  "name",
+  "phone",
+  "email",
+  "service",
+  "selectedServiceTitle",
+  "packageType",
+  "address",
+  "serviceAddress",
+  "serviceAddressLine1",
+  "serviceAddressLine2",
+  "city",
+  "serviceCity",
+  "state",
+  "serviceState",
+  "zip",
+  "serviceZip",
+  "zipCode",
+  "preferredDate",
+  "preferredWindow",
+  "preferredTime",
+  "alternateDate",
+  "urgency",
+  "homeType",
+  "squareFootage",
+  "bedrooms",
+  "bathrooms",
+  "bathroomCount",
+  "roomsAreas",
+  "roomsOrAreas",
+  "homeAreas",
+  "homePriorities",
+  "wholeHomeVisitType",
+  "wholeHomeRecurringCadence",
+  "wholeHomeCondition",
+  "wholeHomeAddOnSummary",
+  "wholeHomeAddOns",
+  "wholeHomeOtherAddOn",
+  "areaResetRoomSummary",
+  "areaResetRooms",
+  "areaResetOtherRoom",
+  "areaResetCleaningType",
+  "areaResetRepeatSupport",
+  "areaResetBathroomCount",
+  "areaResetSize",
+  "areaResetCondition",
+  "areaResetAddOnSummary",
+  "areaResetAddOns",
+  "areaResetOtherAddOn",
+  "areaResetHauling",
+  "moveCleaningType",
+  "occupancyStatus",
+  "moveOutCondition",
+  "moveOutFocusSummary",
+  "moveOutFocus",
+  "moveOutApplianceSummary",
+  "moveOutAppliances",
+  "laundryBagEstimate",
+  "laundryPickupSpot",
+  "laundryTypes",
+  "detergent",
+  "dryPreference",
+  "laundryAddOns",
+  "smartLabelSetupInterest",
+  "smartLabelEstimatedCount",
+  "smartLabelSetupNotes",
+  "requestDetails",
+  "notes",
+  "specialInstructions",
+  "promoCode",
+  "incomingReferralCode",
+  "howFoundUs",
+  "howFoundUsDetails",
+] as const;
+
+function getQuotePromptFieldLines(item: AdminDoc) {
+  const seen = new Set<string>();
+  return QUOTE_PROMPT_FIELD_KEYS
+    .filter((key) => {
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return item[key] !== undefined && item[key] !== null && item[key] !== "";
+    })
+    .map((key) => {
+      const value = exportValueToText(key, item[key]);
+      if (!value || value === "—" || value === "Saved in admin dashboard") return "";
+      return `${DETAIL_FIELD_LABELS[key] || humanizeKey(key)}: ${value}`;
+    })
+    .filter(Boolean);
+}
+
+function getQuotePromptServiceGuidance(item: AdminDoc) {
+  const key = getServiceKey(item);
+  if (key === "family-reset-3hr") return "Parent Reset Plan = flat 3-hour busy-parent room reset for organizing selected family spaces, light cleaning, and child-safe disinfecting. It is not childcare and not a full-home cleaning.";
+  if (key === "whole-home-reset") return "Whole Home Cleaning = entire home cleaning, first-time deep cleans, and weekly/bi-weekly/monthly full-home maintenance.";
+  if (key === "specific-area-reset") return "Specific Area(s) Reset = selected rooms or focused areas only, with optional repeat area support. Not intended as full-home maintenance.";
+  if (key === "move-out-cleaning") return "Move-In / Move-Out Cleaning = empty or mostly empty homes before moving in, after moving out, before listing/renting, or turnover-style cleaning.";
+  if (key === "laundry-rescue") return "Laundry Rescue = pickup/drop-off laundry support, folding, reset help, or catching up on laundry.";
+  if (key === "errand-helper") return "Errand Helper = simple local errands, approved pickups/drop-offs, and family support tasks.";
+  if (key === "commercial-reset") return "Commercial Reset = small office, studio, church, salon, daycare common area, real estate, rental, or other non-family service request.";
+  return "Use the submitted request details to choose the best NestHelper service fit.";
+}
+
+function buildQuotePrompt(item: AdminDoc) {
+  const serviceLabel = getServiceLook(item).label;
+  const address = getCleanAddress(item);
+  const photos = getPhotoUploads(item);
+  const fieldLines = getQuotePromptFieldLines(item);
+  const addressLine = address ? [`Address / service area:\n${address}`] : [];
+  const photoLine = [`Uploaded photos: ${photos.length ? `${photos.length} photo${photos.length === 1 ? "" : "s"} available in the dashboard` : "No photos uploaded / not shown"}`];
+  const submittedAt = formatDate(item.createdAt);
+
+  return [
+    "Create a NestHelper quote recommendation from this service request.",
+    "",
+    "NestHelper quote rules:",
+    "- Do not auto-send anything. Draft for Leo/Gen to review.",
+    "- Identify the best service fit and whether the customer selected the right service.",
+    "- Suggest an estimated time/helper plan and a fair quote or quote range.",
+    "- Flag anything that needs clarification before quoting.",
+    "- Include a short customer reply message that is warm, simple, and professional.",
+    "- Do not promise availability, exact final price, or completion of unlimited scope.",
+    "- Keep the customer-facing wording simple and avoid cleaning-industry jargon.",
+    "",
+    "Current service/pricing guidance:",
+    "- Parent Reset Plan starts at $199 for a flat 3-hour parent reset.",
+    "- Whole Home Cleaning, Specific Area(s) Reset, and Move-In / Move-Out Cleaning are quoted after review based on size, condition, scope, add-ons, and photos.",
+    "- Errand Helper starts at $119.",
+    "- Laundry Rescue starts at a $59 minimum plus $2.99/lb.",
+    "- Smart Label setup pricing: Starter setup up to 10 labels is $49, Standard setup up to 20 labels is $79, Full setup up to 30 labels is $109. Larger setups or detailed inventory can be quoted after review.",
+    "",
+    "Selected service guidance:",
+    getQuotePromptServiceGuidance(item),
+    "",
+    "Requested service:",
+    `Service shown in dashboard: ${serviceLabel}`,
+    `Submitted: ${submittedAt}`,
+    ...addressLine,
+    ...photoLine,
+    "",
+    "Submitted customer details:",
+    fieldLines.length ? fieldLines.join("\n") : "No detailed fields were found on this request.",
+    "",
+    "Please return:",
+    "1. Best service fit",
+    "2. Suggested quote/range and why",
+    "3. Estimated time/helper count",
+    "4. Add-ons or exclusions to mention",
+    "5. Questions to clarify before final quote, if any",
+    "6. Short message I can send the customer",
+  ].join("\n");
+}
+
+async function copyPlainTextToClipboard(text: string) {
+  if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(text);
+    return;
+  }
+  if (typeof document === "undefined") throw new Error("Clipboard is not available in this browser.");
+  const textarea = document.createElement("textarea");
+  textarea.value = text;
+  textarea.setAttribute("readonly", "true");
+  textarea.style.position = "fixed";
+  textarea.style.left = "-9999px";
+  textarea.style.top = "0";
+  document.body.appendChild(textarea);
+  textarea.focus();
+  textarea.select();
+  const copied = document.execCommand("copy");
+  document.body.removeChild(textarea);
+  if (!copied) throw new Error("Clipboard copy was blocked by the browser.");
+}
+
 function getPaymentBreakdown(item: AdminDoc) {
   const raw = item.familyPaymentBreakdown;
   if (raw && typeof raw === "object" && !Array.isArray(raw)) return raw as Record<string, any>;
@@ -2314,6 +2489,8 @@ export default function AdminTable({
   const [applicantEmailError, setApplicantEmailError] = useState("");
   const [busyDocumentPath, setBusyDocumentPath] = useState("");
   const [documentOpenError, setDocumentOpenError] = useState("");
+  const [quotePromptMessage, setQuotePromptMessage] = useState("");
+  const [quotePromptError, setQuotePromptError] = useState("");
   const [activeAction, setActiveAction] = useState("");
 
   useEffect(() => {
@@ -2397,6 +2574,8 @@ export default function AdminTable({
     setApplicantEmailMessage("");
     setApplicantEmailError("");
     setDocumentOpenError("");
+    setQuotePromptMessage("");
+    setQuotePromptError("");
     setActiveAction("");
   }, [selected?.id]);
 
@@ -2769,6 +2948,18 @@ export default function AdminTable({
   async function copyReferralLink(text: string) {
     await navigator.clipboard.writeText(text);
     setReferralMessage("Referral link copied.");
+  }
+
+  async function copyQuotePromptForSelected() {
+    if (!selected) return;
+    setQuotePromptMessage("");
+    setQuotePromptError("");
+    try {
+      await copyPlainTextToClipboard(buildQuotePrompt(selected));
+      setQuotePromptMessage("Quote prompt copied. Paste it into ChatGPT to generate the quote recommendation.");
+    } catch (error) {
+      setQuotePromptError(error instanceof Error ? error.message : "Unable to copy the quote prompt.");
+    }
   }
 
   async function createReferralLink(sendEmail = true, forceNew = false) {
@@ -3787,10 +3978,23 @@ export default function AdminTable({
               <AdminActionFeedback
                 busy={anyActionBusy}
                 activeAction={activeAction}
-                messages={[statusMessage, checkoutMessage, commercialInvoiceMessage, commercialQuoteEmailMessage, familyInvoiceMessage, laundryFinalMessage, additionalPaymentMessage, commercialQuoteMessage, referralMessage, applicationOnboardingMessage, applicantEmailMessage]}
+                messages={[quotePromptMessage, statusMessage, checkoutMessage, commercialInvoiceMessage, commercialQuoteEmailMessage, familyInvoiceMessage, laundryFinalMessage, additionalPaymentMessage, commercialQuoteMessage, referralMessage, applicationOnboardingMessage, applicantEmailMessage]}
                 warnings={[statusWarning]}
-                errors={[statusError, checkoutError, commercialInvoiceError, commercialQuoteEmailError, familyInvoiceError, laundryFinalError, additionalPaymentError, commercialQuoteError, referralError, applicationOnboardingError, applicantEmailError, documentOpenError]}
+                errors={[quotePromptError, statusError, checkoutError, commercialInvoiceError, commercialQuoteEmailError, familyInvoiceError, laundryFinalError, additionalPaymentError, commercialQuoteError, referralError, applicationOnboardingError, applicantEmailError, documentOpenError]}
               />
+              {collectionName === "serviceRequests" && (
+                <div className="rounded-3xl border border-[#eadfc8] bg-[#fbf6ea] p-4 shadow-sm">
+                  <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                    <div>
+                      <p className="text-xs font-black uppercase tracking-[0.18em] text-[#b98a2f]">Quote helper</p>
+                      <p className="mt-1 text-sm font-bold leading-6 text-slate-700">
+                        Copies this request into a ChatGPT-ready prompt so you can paste it into another tab and get a quote recommendation without retyping the details.
+                      </p>
+                    </div>
+                    <button type="button" onClick={copyQuotePromptForSelected} className={getAdminActionClass("secondary")}>Copy quote prompt</button>
+                  </div>
+                </div>
+              )}
               <details className="rounded-3xl border border-[#eadfc8] bg-white p-4 shadow-sm">
                 <summary className="cursor-pointer text-sm font-black text-[#075c58]">Print / download this record</summary>
                 <div className="mt-3 flex flex-col gap-2 sm:flex-row">
