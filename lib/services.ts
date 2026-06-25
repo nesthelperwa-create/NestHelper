@@ -86,7 +86,7 @@ export const services: Service[] = [
   },
   {
     id: "specific-area-reset",
-    title: "Specific Area Reset",
+    title: "Specific Area(s) Reset",
     shortTitle: "Area Reset",
     description: "Focused help for specific rooms or zones — kitchen, bathroom(s), garage, pantry, closet, playroom, laundry room, or other areas — with optional detailed cleaning add-ons quoted after review.",
     details: [
@@ -101,7 +101,7 @@ export const services: Service[] = [
     serviceTime: "Scope-based visit, usually 2–4+ hours",
     travelInfo: "Core Eastside/Northshore service area",
     image: "/assets/services/service-specific-area-reset.png",
-    note: "Specific Area Resets are reviewed before checkout. The selected rooms, cleaning type, detailed add-ons, size/count, photos, buildup or clutter level, access, product preferences, customer-arranged trash/donation prep, and safety notes all affect the quote. Kitchen + Bath Reset requests fit here. NestHelper does not provide dump runs, junk hauling, hazardous material disposal, pest/biohazard cleanup, mold remediation, or unsafe heavy lifting."
+    note: "Specific Area(s) Resets are reviewed before checkout. The selected rooms, cleaning type, detailed add-ons, size/count, photos, buildup or clutter level, access, product preferences, customer-arranged trash/donation prep, and safety notes all affect the quote. Kitchen + Bath Reset requests fit here. NestHelper does not provide dump runs, junk hauling, hazardous material disposal, pest/biohazard cleanup, mold remediation, or unsafe heavy lifting."
   },
   {
     id: "move-out-cleaning",

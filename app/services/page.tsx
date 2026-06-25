@@ -64,7 +64,7 @@ export default function ServicesPage() {
             <div className="mt-5 grid gap-3">
               {[
                 { title: "Need everyday relief?", text: "Choose a 2, 3, or 4-hour reset package." },
-                { title: "Need focused rooms cleaned?", text: "Choose Specific Area Reset for kitchen, bathroom(s), garage, pantry, closet, playroom, laundry room, or another room — then add detail items like interior fridge, interior oven, inside cabinets, shower buildup, floors, or organizing." },
+                { title: "Need focused rooms cleaned?", text: "Choose Specific Area(s) Reset for kitchen, bathroom(s), garage, pantry, closet, playroom, laundry room, or another room — then add detail items like interior fridge, interior oven, inside cabinets, shower buildup, floors, or organizing." },
                 { title: "Moving in or out?", text: "Choose Move-In / Move-Out Cleaning so we can review square footage, condition, photos, and timing." },
               ].map((item) => (
                 <div key={item.title} className="rounded-3xl border border-nest-gold/14 bg-white/82 p-4 shadow-sm">
@@ -82,7 +82,7 @@ export default function ServicesPage() {
               <p className="pill-label mx-auto w-fit lg:mx-0"><QrCode size={15} /> Smart Labels</p>
               <h2 className="mt-4 text-3xl font-black leading-tight text-nest-teal sm:text-4xl">Included labels. Optional setup help.</h2>
               <p className="mt-3 font-medium leading-7 text-nest-ink/70">
-                NestHelper Smart Labels are included at no extra cost with qualifying resets — up to 10 labels for standard qualifying resets and up to 30 labels when a larger organizing project needs them. Families can use them to keep bins, closets, shelves, moving boxes, seasonal items, and storage areas easier to maintain.
+                NestHelper Smart Labels are customer-owned QR stickers included at no extra cost with qualifying resets — up to 10 labels for standard qualifying resets and up to 30 labels when a larger organizing project needs them. Families can use them to keep bins, closets, shelves, moving boxes, seasonal items, and storage areas easier to maintain.
               </p>
               <p className="mt-3 font-medium leading-7 text-nest-ink/70">
                 Want us to set them up for you? Add Smart Label Setup and we’ll place the labels, scan them, name each bin or area, document what’s inside, add notes/photos, and show the family how to keep everything updated after we leave.

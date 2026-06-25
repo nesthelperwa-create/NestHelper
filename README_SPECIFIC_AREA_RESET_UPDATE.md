@@ -1,6 +1,6 @@
 # NestHelper Specific Room / Add-On Reset Update
 
-This replaces the awkward single “primary area” dropdown with a clearer Specific Area Reset flow. Customers now choose the room(s) first, then choose the cleaning/reset type and optional detail add-ons.
+This replaces the awkward single “primary area” dropdown with a clearer Specific Area(s) Reset flow. Customers now choose the room(s) first, then choose the cleaning/reset type and optional detail add-ons.
 
 ## What changed
 
@@ -29,3 +29,8 @@ This replaces the awkward single “primary area” dropdown with a clearer Spec
 - Renamed **How soon do you need help?** to **Scheduling preference** so it no longer conflicts with a requested date that may be weeks or months out.
 - Renamed **Preferred date** to **Requested date** in the form, admin details, export, and customer confirmation email.
 - Updated scheduling options to support ASAP, flexible around the requested date, date-important, planning ahead, and recurring requests.
+## Latest small wording fixes
+
+- Renamed the service/category display to **Specific Area(s) Reset** because customers can choose more than one room or area.
+- Added a short Smart Labels explanation on the request form: they are simple QR stickers for bins, shelves, closets, boxes, and storage areas so families can scan and update what belongs there.
+

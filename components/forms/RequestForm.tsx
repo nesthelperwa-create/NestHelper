@@ -396,7 +396,7 @@ function cleanForSelectedService(form: RequestFormState) {
 
     return {
       ...base,
-      packageType: "Specific Area Reset",
+      packageType: "Specific Area(s) Reset",
       areaResetRooms: selectedRooms,
       areaResetRoomSummary: roomSummary,
       areaResetOtherRoom: form.areaResetOtherRoom,
@@ -616,7 +616,7 @@ export function RequestForm() {
 
     if (serviceCategory === "areaReset" && !form.areaResetRooms.length) {
       setStatus("error");
-      setMessage("Please select at least one room or area for the Specific Area Reset.");
+      setMessage("Please select at least one room or area for the Specific Area(s) Reset.");
       return;
     }
 
@@ -770,7 +770,7 @@ export function RequestForm() {
       {serviceCategory === "none" && (
         <Section title="4. Package-specific questions" description="Choose a service above and this section will only show questions that match that package.">
           <div className="rounded-3xl border border-nest-gold/20 bg-nest-cream p-5 text-sm font-semibold leading-6 text-nest-ink/76">
-            Select 2-Hour Parent Reset, 3-Hour Family Reset, 4-Hour Helper Block, Specific Area Reset, Move-In / Move-Out Cleaning, Errand Helper, or Laundry Rescue to continue.
+            Select 2-Hour Parent Reset, 3-Hour Family Reset, 4-Hour Helper Block, Specific Area(s) Reset, Move-In / Move-Out Cleaning, Errand Helper, or Laundry Rescue to continue.
           </div>
         </Section>
       )}
@@ -919,6 +919,7 @@ export function RequestForm() {
               ))}
             </div>
             <p className="mt-2 text-xs font-bold text-nest-ink/55">These help us quote correctly. Some items, like interior fridge, interior oven, inside cabinets, or heavy buildup, may affect the price and time needed.</p>
+            <p className="mt-1 text-xs font-bold text-nest-ink/55">Smart Labels are simple QR stickers for bins, shelves, closets, boxes, and storage areas so your family can scan and update what belongs there.</p>
           </div>
 
           {form.areaResetAddOns.includes("Other — I’ll explain below") && (
@@ -1123,9 +1124,9 @@ export function RequestForm() {
       )}
 
       {smartLabelsAvailable && (
-        <Section title="Optional Smart Label Setup" description="Smart Labels are included at no extra cost with qualifying resets. Choose setup only if you want NestHelper to place, scan, name, document, and walk you through keeping them updated.">
+        <Section title="Optional Smart Label Setup" description="Smart Labels are simple QR stickers for bins, shelves, closets, boxes, and storage areas. They are included at no extra cost with qualifying resets; choose setup only if you want NestHelper to place, scan, name, document, and walk you through keeping them updated.">
           <div className="rounded-3xl border border-nest-gold/20 bg-nest-cream p-5 text-sm leading-6 text-nest-ink/76">
-            <strong className="text-nest-teal">Labels included:</strong> up to 10 Smart Labels with qualifying resets, and up to 30 when a larger organizing project needs them. <strong className="text-nest-teal">Setup add-on:</strong> $49 for up to 10 labels, $79 for up to 20, $109 for up to 30, then $2 per extra standard label setup. Detailed inventory or heavy photo documentation can be quoted.
+            <strong className="text-nest-teal">What they are:</strong> QR stickers your family can scan to see or update the label name, location, contents, notes, and small photos. <strong className="text-nest-teal">Labels included:</strong> up to 10 Smart Labels with qualifying resets, and up to 30 when a larger organizing project needs them. <strong className="text-nest-teal">Setup add-on:</strong> $49 for up to 10 labels, $79 for up to 20, $109 for up to 30, then $2 per extra standard label setup. Detailed inventory or heavy photo documentation can be quoted.
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Smart Label preference">
@@ -1184,7 +1185,7 @@ export function RequestForm() {
       )}
 
       {serviceCategory !== "none" && (
-        <Section title="6. Optional photos" description={isMoveOut ? "Photos are strongly recommended for move-in / move-out cleaning so we can quote the kitchen, bathrooms, floors, appliances, and any buildup before checkout." : isAreaReset ? "Photos are strongly recommended for Specific Area Resets so we can quote the selected rooms, cleaning level, clutter level, access, surfaces, buildup, and safety concerns before checkout." : "Photos are optional, but they can help us understand the scope before we approve, quote, or schedule the request."}>
+        <Section title="6. Optional photos" description={isMoveOut ? "Photos are strongly recommended for move-in / move-out cleaning so we can quote the kitchen, bathrooms, floors, appliances, and any buildup before checkout." : isAreaReset ? "Photos are strongly recommended for Specific Area(s) Resets so we can quote the selected rooms, cleaning level, clutter level, access, surfaces, buildup, and safety concerns before checkout." : "Photos are optional, but they can help us understand the scope before we approve, quote, or schedule the request."}>
           <PhotoUploadField
             photos={form.photoUploads}
             onChange={(photos) => update("photoUploads", photos)}
