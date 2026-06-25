@@ -16,7 +16,7 @@ const serviceStyles: Record<string, { eyebrow: string; accent: string; chip: str
     ring: "ring-emerald-200/70",
   },
   "family-reset-3hr": {
-    eyebrow: "Family catch-up",
+    eyebrow: "Parent reset plan",
     accent: "from-blue-500/12 via-sky-100 to-white",
     chip: "bg-blue-50 text-blue-800 border-blue-200",
     price: "bg-blue-50 text-blue-900",
@@ -83,13 +83,13 @@ const serviceExtras: Record<string, ServiceExtra> = {
     goodToKnow: ["Not childcare", "Light reset, not deep cleaning", "Reviewed before checkout"],
   },
   "family-reset-3hr": {
-    bestFor: "A stronger catch-up visit for families who need more than a quick tidy, especially when laundry, toys, dishes, and entry areas all need attention.",
+    bestFor: "Busy parents who need a 3-hour reset for family spaces like playrooms, kids rooms, living areas, pantry, entryway, or laundry areas — with organizing, light cleaning, and child-safe disinfecting.",
     extraDetails: [
-      "More room for folding, sorting, and putting everyday items back in place",
-      "Good for pantry, entryway, kids area, or main living space resets",
-      "Works well when you want a prioritized checklist handled in one visit",
+      "Designed for selected family spaces, not the entire home",
+      "Great for toys, clutter, daily pile-ups, surfaces, shelves, and accessible floors",
+      "Includes child-safe disinfecting of high-touch areas when requested",
     ],
-    goodToKnow: ["Most popular reset size", "Flexible task order", "Reviewed before checkout"],
+    goodToKnow: ["3-hour parent reset", "Organize + light clean", "No childcare"],
   },
   "helper-block-4hr": {
     bestFor: "A bigger block for households that need real catch-up time, multi-area support, or a custom approved helper list.",
@@ -161,7 +161,7 @@ export function ServiceCard({ service, equalCollapsedHeight = false }: { service
   const isLaundry = service.id === "laundry-rescue";
   const isQuoteBased = service.standardPrice.toLowerCase().includes("quoted");
   const equalClosed = equalCollapsedHeight && !open;
-  const collapsedHeightClass = equalCollapsedHeight ? "min-h-[640px] sm:min-h-[620px]" : "min-h-[630px]";
+  const collapsedHeightClass = equalCollapsedHeight ? "min-h-[660px] sm:min-h-[640px]" : "min-h-[630px]";
 
   useEffect(() => {
     function handleOtherCard(event: Event) {
@@ -245,7 +245,7 @@ export function ServiceCard({ service, equalCollapsedHeight = false }: { service
     <article
       ref={cardRef}
       onClick={handleCardClick}
-      className={`group relative flex cursor-pointer flex-col overflow-visible rounded-[2rem] border bg-white/95 shadow-sm backdrop-blur transition duration-300 hover:-translate-y-1 hover:shadow-lift ${
+      className={`group relative flex h-full cursor-pointer flex-col overflow-visible rounded-[2rem] border bg-white/95 shadow-sm backdrop-blur transition duration-300 hover:-translate-y-1 hover:shadow-lift ${
         open ? `border-nest-gold/35 ring-4 ${theme.ring}` : `${collapsedHeightClass} border-nest-gold/16`
       }`}
     >

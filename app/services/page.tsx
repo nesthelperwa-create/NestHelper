@@ -23,7 +23,7 @@ export const metadata: Metadata = {
   },
 };
 
-const hiddenLegacyPackageIds = new Set(["parent-reset-2hr", "family-reset-3hr", "helper-block-4hr"]);
+const hiddenLegacyPackageIds = new Set(["parent-reset-2hr", "helper-block-4hr"]);
 
 export default function ServicesPage() {
   const specialtyServices = services.filter((service) => !hiddenLegacyPackageIds.has(service.id));
@@ -47,10 +47,10 @@ export default function ServicesPage() {
 
         <div className="mb-10 grid gap-5 lg:grid-cols-[0.82fr_1.18fr] lg:items-stretch">
           <div className="rounded-[2.5rem] border border-nest-gold/18 bg-gradient-to-br from-white via-nest-cream to-nest-mint/25 p-6 text-center shadow-soft sm:p-8 lg:text-left">
-            <p className="pill-label mx-auto w-fit lg:mx-0"><Sparkles size={15} /> Home Reset Services</p>
+            <p className="pill-label mx-auto w-fit lg:mx-0"><Sparkles size={15} /> Home Cleaning & Reset Services</p>
             <h2 className="text-balance mt-4 text-3xl font-black leading-tight text-nest-teal sm:text-4xl lg:text-5xl">Choose the help your home needs.</h2>
             <p className="mx-auto mt-4 max-w-3xl text-base font-semibold leading-7 text-nest-ink/70 sm:text-lg lg:mx-0">
-              Choose Whole Home Cleaning for the entire home, Specific Area(s) Reset for selected rooms, or Move-In / Move-Out Cleaning for empty or mostly empty homes. You can also request laundry help or errands.
+              Choose Parent Reset Plan for busy-parent room resets, Whole Home Cleaning for the entire home, Specific Area(s) Reset for selected rooms, or Move-In / Move-Out Cleaning for empty or mostly empty homes. You can also request laundry help or errands.
             </p>
             <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row lg:justify-start">
               <ButtonLink href="/request#request-form">Request Help</ButtonLink>
@@ -61,6 +61,7 @@ export default function ServicesPage() {
             <h3 className="text-2xl font-black text-nest-teal">Not sure what to choose?</h3>
             <div className="mt-5 grid gap-3">
               {[
+                { title: "Parent Reset Plan", label: "Busy-parent room reset", text: "Choose this for a 3-hour reset of playrooms, kids rooms, living areas, pantry, entry, or other family spaces with organizing, light cleaning, and child-safe disinfecting.", icon: <Sparkles size={16} />, badge: "bg-blue-50 text-blue-800 border-blue-200" },
                 { title: "Whole Home Cleaning", label: "Entire home", text: "Choose this for full-home cleaning, first-time deep cleans, and weekly, bi-weekly, or monthly maintenance.", icon: <Home size={16} />, badge: "bg-emerald-50 text-emerald-900 border-emerald-200" },
                 { title: "Specific Area(s) Reset", label: "Selected rooms", text: "Choose this for kitchen, bathroom(s), bedrooms, playroom, pantry, fridge, oven, laundry area, garage, or a few rooms — not the entire home.", icon: <Grid3X3 size={16} />, badge: "bg-lime-50 text-lime-900 border-lime-200" },
                 { title: "Move-In / Move-Out Cleaning", label: "Empty home", text: "Choose this for empty or mostly empty homes before moving in, after moving out, or before listing/renting.", icon: <Truck size={16} />, badge: "bg-cyan-50 text-cyan-900 border-cyan-200" },
@@ -127,12 +128,12 @@ export default function ServicesPage() {
           <section aria-labelledby="specific-reset-support">
             <div className="mb-5 flex flex-col gap-2 text-center sm:text-left">
               <p className="pill-label mx-auto w-fit sm:mx-0"><Sparkles size={15} /> Home Cleaning & Support</p>
-              <h3 id="specific-reset-support" className="text-2xl font-black text-nest-teal sm:text-3xl">For whole-home cleaning, selected areas, moving, laundry, and errands.</h3>
+              <h3 id="specific-reset-support" className="text-2xl font-black text-nest-teal sm:text-3xl">For parent resets, whole-home cleaning, selected areas, moving, laundry, and errands.</h3>
               <p className="max-w-3xl font-semibold leading-7 text-nest-ink/68">
-                Whole Home Cleaning is for the entire home. Specific Area(s) Reset is for selected rooms. Move-In / Move-Out Cleaning is for empty or mostly empty homes.
+                Parent Reset Plan is for a 3-hour organizing + light cleaning reset in family spaces. Whole Home Cleaning is for the entire home. Specific Area(s) Reset is for selected rooms. Move-In / Move-Out Cleaning is for empty or mostly empty homes.
               </p>
             </div>
-            <div className="grid items-start gap-6 md:grid-cols-2 xl:grid-cols-3">
+            <div className="grid items-stretch gap-6 md:grid-cols-2 xl:grid-cols-3">
               {specialtyServices.map((service) => <ServiceCard key={service.id} service={service} equalCollapsedHeight />)}
             </div>
           </section>

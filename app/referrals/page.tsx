@@ -95,7 +95,7 @@ export default async function ReferralsPage({ searchParams }: ReferralsPageProps
                 <RewardCard
                   eyebrow="Your referred family gets"
                   amount="$25 off"
-                  text="an eligible Parent Reset, Family Reset, Helper Block, or Errand Helper service."
+                  text="an eligible Parent Reset Plan, Whole Home Cleaning, Errand Helper, or Laundry Rescue service."
                 />
                 <RewardCard
                   eyebrow="You get"

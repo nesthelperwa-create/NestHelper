@@ -40,8 +40,8 @@ const FAMILY_PRESETS = [
   },
   {
     id: "family-reset-standard",
-    label: "3-Hour Family Reset",
-    description: "One-time 3-hour Family Reset package based on the customer request.",
+    label: "Parent Reset Plan",
+    description: "One-time 3-hour parent reset for organizing selected family spaces, light cleaning, and child-safe disinfecting.",
     unit: "flat",
     rate: "199",
     amount: "199",
@@ -72,16 +72,16 @@ const FAMILY_PRESETS = [
   },
   {
     id: "family-reset-biweekly",
-    label: "Family Reset recurring — every 2 weeks",
-    description: "Recurring 3-hour Family Reset rate after the first completed standard visit. Intended for consistent scope and schedule.",
+    label: "Parent Reset Plan repeat support — every 2 weeks",
+    description: "Repeat 3-hour Parent Reset Plan support after the first completed standard visit. Intended for consistent selected-room scope and schedule.",
     unit: "visit",
     rate: "189",
     amount: "189",
   },
   {
     id: "family-reset-weekly",
-    label: "Family Reset recurring — weekly",
-    description: "Weekly 3-hour Family Reset rate after the first completed standard visit. Intended for consistent scope and schedule.",
+    label: "Parent Reset Plan repeat support — weekly",
+    description: "Weekly 3-hour Parent Reset Plan support after the first completed standard visit. Intended for consistent selected-room scope and schedule.",
     unit: "visit",
     rate: "179",
     amount: "179",
@@ -325,7 +325,7 @@ function getServiceLabel(item: AdminDoc) {
   if (raw.includes("move-out") || raw.includes("move out") || raw.includes("move-in") || raw.includes("move in")) return "Move-In / Move-Out Cleaning";
   if (raw.includes("errand")) return "Errand Helper";
   if (raw.includes("helper")) return "Helper Block";
-  if (raw.includes("family")) return "Family Reset";
+  if (raw.includes("family") || raw.includes("parent reset plan")) return "Parent Reset Plan";
   if (raw.includes("parent")) return "Parent Reset";
   return getString(item.selectedServiceTitle) || "NestHelper family service";
 }
@@ -339,7 +339,7 @@ function getSuggestedPresetId(item: AdminDoc) {
   if (raw.includes("move-out") || raw.includes("move out") || raw.includes("move-in") || raw.includes("move in")) return "move-out-cleaning-reviewed";
   if (raw.includes("errand")) return "errand-helper-standard";
   if (raw.includes("helper")) return "helper-block-standard";
-  if (raw.includes("family")) return "family-reset-standard";
+  if (raw.includes("family") || raw.includes("parent reset plan")) return "family-reset-standard";
   return "parent-reset-standard";
 }
 
@@ -350,6 +350,7 @@ function getDefaultPaymentPlan(item: AdminDoc) {
   if (raw.includes("specific-area-reset") || raw.includes("specific area") || raw.includes("area reset") || raw.includes("garage reset")) return "One-time specific area reset";
   if (raw.includes("move-out") || raw.includes("move out") || raw.includes("move-in") || raw.includes("move in")) return "One-time move-in / move-out cleaning";
   if (raw.includes("errand")) return "One-time errand helper";
+  if (raw.includes("family") || raw.includes("parent reset plan")) return "Parent Reset Plan";
   return "One-time family service";
 }
 
@@ -357,7 +358,7 @@ function getRecommendedRecurringPresetId(item: AdminDoc, cadence = "Every 2 week
   const raw = String(item.service || item.selectedServiceTitle || item.packageType || "").toLowerCase();
   const weekly = cadence.toLowerCase().includes("weekly");
   if (raw.includes("helper")) return weekly ? "helper-block-weekly" : "helper-block-biweekly";
-  if (raw.includes("family")) return weekly ? "family-reset-weekly" : "family-reset-biweekly";
+  if (raw.includes("family") || raw.includes("parent reset plan")) return weekly ? "family-reset-weekly" : "family-reset-biweekly";
   return weekly ? "parent-reset-weekly" : "parent-reset-biweekly";
 }
 

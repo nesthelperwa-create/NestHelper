@@ -68,7 +68,7 @@ const SERVICE_ERRANDS = "Errands / pickup and drop-off";
 
 const helperServiceOptions = [
   "Parent Reset / home reset support",
-  "Family Reset / deeper reset visits",
+  "Parent Reset Plan / deeper family-space reset visits",
   "Laundry folding and put-away",
   SERVICE_ERRANDS,
   "Light organizing",

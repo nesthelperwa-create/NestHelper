@@ -40,26 +40,27 @@ export const services: Service[] = [
   },
   {
     id: "family-reset-3hr",
-    title: "3-Hour Family Reset",
-    shortTitle: "Family Reset",
-    description: "A deeper household catch-up for families who need more breathing room.",
+    title: "Parent Reset Plan",
+    shortTitle: "Parent Reset",
+    description: "A 3-hour room reset for busy parents who need organizing, light cleaning, and child-safe disinfecting in the spaces their family uses most.",
     details: [
-      "Everything in Parent Reset",
-      "More time for laundry/folding",
-      "Pantry, entry, or kids area reset",
-      "Light household support",
-      "Priority checklist help"
+      "3-hour parent-focused room reset",
+      "Playroom, kids room, living area, pantry, entry, or laundry area help",
+      "Organizing, sorting, and putting everyday items back in place",
+      "Light cleaning of reachable surfaces and accessible floors",
+      "Child-safe disinfecting for high-touch family areas"
     ],
     standardPrice: "$199",
-    priceNote: "Flat 3-hour visit",
-    serviceTime: "3 hours of in-home help",
+    priceNote: "Flat 3-hour parent reset",
+    serviceTime: "3 hours of reset help",
     travelInfo: "Core Eastside service area",
     image: "/assets/services/service-family-reset.png",
     stripeStandardEnv: "STRIPE_PRICE_FAMILY_RESET_STANDARD",
     recurringRates: [
       { cadence: "Every 2 weeks", price: "$189/visit" },
       { cadence: "Weekly", price: "$179/visit" }
-    ]
+    ],
+    note: "Parent Reset Plan is for organizing selected family spaces with light cleaning and child-safe disinfecting. It is not childcare, a full-home cleaning plan, or a move-in / move-out clean."
   },
   {
     id: "helper-block-4hr",

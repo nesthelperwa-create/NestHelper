@@ -39,6 +39,8 @@ export const metadata: Metadata = {
 
 
 export default function HomePage() {
+  const publicHomeServices = services.filter((service) => !["parent-reset-2hr", "helper-block-4hr"].includes(service.id));
+
   return (
     <>
       <section className="relative isolate overflow-hidden px-4 pb-10 pt-7 sm:px-6 sm:py-12 lg:px-8 lg:py-16">
@@ -56,7 +58,7 @@ export default function HomePage() {
               Reset the home. Reclaim the day.
             </h1>
             <p className="mx-auto mt-5 max-w-2xl text-base font-semibold leading-7 text-nest-ink/74 sm:text-xl sm:leading-8">
-              Household help for busy families — local support for home resets, garage and area resets, move-in / move-out cleaning, laundry rescue, errands, organizing, and extra hands around the house with clear packages, reviewed requests, limited openings, and follow-up. No childcare services.
+              Household help for busy families — parent room resets, whole-home cleaning, focused area resets, move-in / move-out cleaning, laundry rescue, errands, organizing, and extra hands around the house with clear packages, reviewed requests, limited openings, and follow-up. No childcare services.
             </p>
             <div className="mx-auto mt-7 flex max-w-sm flex-col justify-center gap-3 sm:max-w-none sm:flex-row">
               <ButtonLink href="/request">Request Help</ButtonLink>
@@ -112,11 +114,11 @@ export default function HomePage() {
             label="What NestHelper is"
             icon={<Heart size={15} />}
             title="Household help without the hiring headache."
-            description="NestHelper coordinates trusted household support for busy families — home resets, garage and area resets, move-in / move-out cleaning, laundry catch-up, errands, organizing, and extra hands around the house — with reviewed requests, clear scope, insured support, and no childcare services."
+            description="NestHelper coordinates trusted household support for busy families — Parent Reset Plan visits, whole-home cleaning, focused area resets, move-in / move-out cleaning, laundry catch-up, errands, organizing, and extra hands around the house — with reviewed requests, clear scope, insured support, and no childcare services."
           />
 
           <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            <InfoCard icon={<Home size={20} />} title="Home reset help" text="Kitchen resets, tidying support, garage or area resets, light household catch-up, and practical help when the day gets away from you." />
+            <InfoCard icon={<Home size={20} />} title="Parent reset help" text="Playroom, kids room, pantry, entry, and family-space resets with organizing, light cleaning, and child-safe disinfecting when the day gets away from you." />
             <InfoCard icon={<Sparkles size={20} />} title="Laundry rescue" text="Pickup, dry weigh-in, wash/fold coordination, return delivery, and clear reusable bag expectations." />
             <InfoCard icon={<ClipboardCheck size={20} />} title="Errands and family support" text="Approved errands, pickups, returns, and household support with a reviewed scope before payment." />
             <InfoCard icon={<MessageCircle size={20} />} title="One request, less chaos" text="NestHelper helps coordinate the details so families are not stuck managing every message, scope question, and next step alone." />
@@ -130,11 +132,11 @@ export default function HomePage() {
             <p className="pill-label mx-auto w-fit"><Star size={15} /> Services</p>
             <h2 className="text-balance mt-4 text-3xl font-black leading-tight text-nest-teal sm:text-5xl">Extra hands for busy parents.</h2>
             <p className="mx-auto mt-5 max-w-3xl text-base font-medium leading-7 text-nest-ink/70 sm:text-lg sm:leading-8">
-              Choose a package, submit the details, and NestHelper reviews the request before payment. Pricing reflects a managed service: clear scope, coordination, insured support, and follow-up — not just someone showing up for an hour.
+              Choose the type of help you need, submit the details, and NestHelper reviews the request before payment. Pricing reflects a managed service: clear scope, coordination, insured support, and follow-up — not just someone showing up for an hour.
             </p>
           </div>
-          <div className="mt-10 grid items-start gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {services.map((service) => <ServiceCard key={service.id} service={service} />)}
+          <div className="mt-10 grid items-stretch gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {publicHomeServices.map((service) => <ServiceCard key={service.id} service={service} equalCollapsedHeight />)}
           </div>
         </div>
       </AnimatedSection>
@@ -186,7 +188,7 @@ export default function HomePage() {
                 step="1"
                 icon={<ClipboardCheck size={31} />}
                 title="Tell us what you need"
-                text="Submit a request for home reset help, move-in / move-out cleaning, laundry rescue, errands, or family support."
+                text="Submit a request for a parent reset, whole-home cleaning, selected area reset, move-in / move-out cleaning, laundry rescue, errands, or family support."
               />
               <ProcessStepCard
                 step="2"

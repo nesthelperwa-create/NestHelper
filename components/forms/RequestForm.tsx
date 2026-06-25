@@ -105,7 +105,9 @@ const priorityOptions = [
   "Dishes / counters / surfaces",
   "Toy or living area tidy",
   "Laundry folding / put-away",
-  "Pantry, entry, or kids area reset",
+  "Playroom, kids room, or family area reset",
+  "Pantry, entry, or laundry area reset",
+  "Child-safe disinfecting of high-touch surfaces",
   "Trash / quick pickup",
   "I am not sure — help me prioritize",
 ];
@@ -142,7 +144,9 @@ const homeAreaOptions = [
   "Kitchen",
   "Living room",
   "Playroom / toys",
+  "Nursery / kids room",
   "Bedrooms",
+  "Pantry",
   "Bathrooms",
   "Laundry area",
   "Entryway / mudroom",
@@ -350,9 +354,9 @@ const areaResetHaulingOptions = [
 
 const recurringResetOptions = [
   "One-time reset for now",
-  "Interested in weekly recurring resets after the first visit",
-  "Interested in every-2-weeks recurring resets after the first visit",
-  "Interested in monthly support when openings allow",
+  "Interested in weekly repeat parent reset support after the first visit",
+  "Interested in every-2-weeks repeat parent reset support after the first visit",
+  "Interested in monthly parent reset support when openings allow",
   "Not sure yet — please help me decide",
 ];
 
@@ -478,7 +482,7 @@ function getHomeScopeWarning(serviceId: string, areas: string[]) {
   const individualAreaCount = areas.filter((area) => area !== WHOLE_HOME_OPTION).length;
 
   if (serviceId === "parent-reset-2hr" && wholeHomeSelected) {
-    return "A 2-Hour Parent Reset is best for a few priority areas, not a full-home reset. If you choose whole home, we’ll focus on the highest-impact items first. A 3-Hour Family Reset or 4-Hour Helper Block may be a better fit for more rooms.";
+    return "A Parent Reset Plan is best for selected family spaces, not a full-home cleaning. If you need the entire home cleaned, Whole Home Cleaning is the better fit.";
   }
 
   if (serviceId === "parent-reset-2hr" && individualAreaCount > 3) {
@@ -486,15 +490,15 @@ function getHomeScopeWarning(serviceId: string, areas: string[]) {
   }
 
   if (serviceId === "family-reset-3hr" && wholeHomeSelected) {
-    return "A 3-Hour Family Reset can cover more ground, but whole-home requests are still handled by priority. We’ll review your notes before confirming what can reasonably fit.";
+    return "A Parent Reset Plan is a 3-hour organizing and light-cleaning visit for selected family spaces. If you need the entire home cleaned, choose Whole Home Cleaning.";
   }
 
   if (serviceId === "family-reset-3hr" && individualAreaCount > 5) {
-    return "You selected a lot of areas for a 3-hour visit. We’ll review the scope and may recommend a 4-Hour Helper Block or follow-up visit if needed.";
+    return "You selected a lot of areas for a 3-hour Parent Reset Plan. We’ll review the scope and may recommend narrowing priorities or scheduling follow-up support if needed.";
   }
 
   if (serviceId === "helper-block-4hr" && wholeHomeSelected) {
-    return "A 4-Hour Helper Block gives more flexibility, but whole-home requests are still completed by priority and scope review, not guaranteed room-by-room completion.";
+    return "Large custom helper blocks are reviewed by scope, priority, and availability before checkout.";
   }
 
   return "";
@@ -731,7 +735,7 @@ export function RequestForm() {
   const [status, setStatus] = useState<Status>("idle");
   const [message, setMessage] = useState("");
 
-  const publicRequestServices = useMemo(() => services.filter((service) => !["parent-reset-2hr", "family-reset-3hr", "helper-block-4hr"].includes(service.id)), []);
+  const publicRequestServices = useMemo(() => services.filter((service) => !["parent-reset-2hr", "helper-block-4hr"].includes(service.id)), []);
   const selectedService = useMemo(() => services.find((service) => service.id === form.service), [form.service]);
   const serviceCategory = getServiceCategory(form.service);
   const isHomeReset = serviceCategory === "home";
@@ -740,6 +744,7 @@ export function RequestForm() {
   const isErrand = serviceCategory === "errand";
   const isLaundry = serviceCategory === "laundry";
   const isWholeHomeReset = form.service === "whole-home-reset";
+  const isParentResetPlan = form.service === "family-reset-3hr";
   const smartLabelsAvailable = isSmartLabelEligibleCategory(serviceCategory) && !isWholeHomeReset;
   const wholeHomeSelected = form.homeAreas.includes(WHOLE_HOME_OPTION);
   const homeScopeWarning = isHomeReset ? getHomeScopeWarning(form.service, form.homeAreas) : "";
@@ -1062,10 +1067,12 @@ export function RequestForm() {
 
       {isHomeReset && (
         <Section
-          title={isWholeHomeReset ? "4. Whole home cleaning scope" : "4. Home reset focus"}
+          title={isWholeHomeReset ? "4. Whole home cleaning scope" : isParentResetPlan ? "4. Parent Reset Plan focus" : "4. Home reset focus"}
           description={isWholeHomeReset
             ? "Choose this for full-home cleaning, including first-time deep cleans and ongoing maintenance."
-            : "Choose what needs attention. We review your package, time block, notes, and photos before confirming what can reasonably fit."}
+            : isParentResetPlan
+              ? "Choose the family spaces that need organizing, light cleaning, and child-safe disinfecting during the 3-hour parent reset."
+              : "Choose what needs attention. We review your package, time block, notes, and photos before confirming what can reasonably fit."}
         >
           {isWholeHomeReset ? (
             <>
@@ -1181,7 +1188,7 @@ export function RequestForm() {
                   ))}
                 </select>
                 <p className="mt-2 text-sm font-semibold leading-6 text-nest-ink/62">
-                  First resets stay at standard pricing. Recurring rates may be offered after the first completed visit when schedule, scope, service area, and helper fit are consistent.
+                  First visits stay at standard pricing. Repeat support may be offered after the first completed visit when schedule, scope, service area, and helper fit are consistent.
                 </p>
               </Field>
               <div>
@@ -1195,7 +1202,7 @@ export function RequestForm() {
               <div>
                 <div className="label mb-2">Where should we focus first?</div>
                 <p className="mb-3 text-sm leading-6 text-nest-ink/65">
-                  Choose the areas you’d like help with. If you choose whole home, we’ll help prioritize instead of promising every room can be completed in one visit.
+                  Choose the family spaces you’d like help with. Parent Reset Plan is best for selected rooms or areas; if you choose whole home, we’ll help prioritize instead of promising every room can be completed in one visit.
                 </p>
                 <div className="grid gap-2 sm:grid-cols-2">
                   {homeAreaOptions.map((item) => {
@@ -1214,13 +1221,13 @@ export function RequestForm() {
                 </div>
                 {wholeHomeSelected && (
                   <ScopeNotice>
-                    Whole home requests are handled as a priority walkthrough. Tell us the top 2–3 things that would make the biggest difference, and we’ll review the right time block before checkout.
+                    Whole-home requests do not usually fit a Parent Reset Plan. Tell us the top 2–3 priorities, and we’ll review whether Parent Reset Plan or Whole Home Cleaning is the better fit before checkout.
                   </ScopeNotice>
                 )}
                 {homeScopeWarning && <ScopeNotice tone="warning">{homeScopeWarning}</ScopeNotice>}
               </div>
               <Field label={wholeHomeSelected ? "Top 2–3 must-do priorities for this visit" : "Top priorities for this visit"} required>
-                <textarea className="input min-h-28" required placeholder="Example: If time runs short, please handle kitchen counters, dishes, toy pickup in the living room, and the laundry pile first." value={form.requestDetails} onChange={(e) => update("requestDetails", e.target.value)} />
+                <textarea className="input min-h-28" required placeholder="Example: Please reset the playroom and kids room first, organize toys into bins, wipe reachable surfaces, disinfect high-touch areas with child-safe products, and fold the laundry pile if there is time." value={form.requestDetails} onChange={(e) => update("requestDetails", e.target.value)} />
               </Field>
             </>
           )}
