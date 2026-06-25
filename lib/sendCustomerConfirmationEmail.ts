@@ -63,6 +63,8 @@ function getConfirmationContent(collection: SubmissionCollection, payload: Recor
         "Rooms / areas": formatValue(payload.areaResetRoomSummary || payload.roomsAreas),
         "Cleaning / reset type": formatValue(payload.areaResetCleaningType),
         "Cleaning add-ons": formatValue(payload.areaResetAddOnSummary),
+        "Smart Label help": formatValue(payload.smartLabelSetupInterest),
+        "Estimated Smart Labels": formatValue(payload.smartLabelEstimatedCount),
         "Requested date": formatValue(payload.preferredDate),
         "Scheduling preference": formatValue(payload.urgency),
         "Preferred time window": formatValue(payload.preferredWindow),

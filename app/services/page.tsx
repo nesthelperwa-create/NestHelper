@@ -82,10 +82,10 @@ export default function ServicesPage() {
               <p className="pill-label mx-auto w-fit lg:mx-0"><QrCode size={15} /> Smart Labels</p>
               <h2 className="mt-4 text-3xl font-black leading-tight text-nest-teal sm:text-4xl">Included labels. Optional setup help.</h2>
               <p className="mt-3 font-medium leading-7 text-nest-ink/70">
-                NestHelper Smart Labels are customer-owned QR stickers included at no extra cost with qualifying resets — up to 10 labels for standard qualifying resets and up to 30 labels when a larger organizing project needs them. Families can use them to keep bins, closets, shelves, moving boxes, seasonal items, and storage areas easier to maintain.
+                NestHelper Smart Labels are customer-owned QR stickers that may be included with qualifying resets. Families can use them to keep bins, closets, shelves, moving boxes, seasonal items, and storage areas easier to maintain.
               </p>
               <p className="mt-3 font-medium leading-7 text-nest-ink/70">
-                Want us to set them up for you? Add Smart Label Setup and we’ll place the labels, scan them, name each bin or area, document what’s inside, add notes/photos, and show the family how to keep everything updated after we leave.
+                Want us to set them up for you? Choose Smart Label setup help and we’ll quote it based on the number of labels or storage spots, how much organizing/documenting is needed, and whether you want notes or photos added.
               </p>
             </div>
             <div className="grid gap-3 sm:grid-cols-3">

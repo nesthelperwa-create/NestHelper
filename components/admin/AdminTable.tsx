@@ -953,7 +953,8 @@ const DETAIL_FIELD_LABELS: Record<string, string> = {
   areaResetGoalSummary: "Area focus",
   areaResetHauling: "Trash/donation prep",
   requestDetails: "Request details",
-  smartLabelSetupInterest: "Smart Label Setup",
+  smartLabelSetupInterest: "Smart Label help",
+  smartLabelEstimatedCount: "Estimated Smart Labels / spots",
   smartLabelSetupNotes: "Smart Label notes",
   notes: "Notes",
   specialInstructions: "Special instructions",
@@ -984,7 +985,7 @@ const DETAIL_FIELD_LABELS: Record<string, string> = {
 
 const DETAIL_FIELD_ORDER: Record<string, string[]> = {
   serviceRequests: [
-    "fullName", "selectedServiceTitle", "service", "packageType", "phone", "email", "howFoundUs", "howFoundUsDetails", "campaignSource", "campaignName", "address", "city", "state", "zip", "zipCode", "preferredDate", "preferredWindow", "preferredTime", "alternateDate", "urgency", "roomsAreas", "roomsOrAreas", "areaResetRoomSummary", "areaResetRooms", "areaResetOtherRoom", "areaResetCleaningType", "areaResetAddOnSummary", "areaResetAddOns", "areaResetOtherAddOn", "areaResetArea", "areaResetOtherArea", "areaResetAdditionalAreaSummary", "areaResetAdditionalAreas", "areaResetOtherAdditionalArea", "areaResetBathroomCount", "areaResetSize", "areaResetCondition", "areaResetGoalSummary", "areaResetGoals", "areaResetHauling", "requestDetails", "smartLabelSetupInterest", "smartLabelSetupNotes", "notes", "specialInstructions", "promoCode", "incomingReferralCode",
+    "fullName", "selectedServiceTitle", "service", "packageType", "phone", "email", "howFoundUs", "howFoundUsDetails", "campaignSource", "campaignName", "address", "city", "state", "zip", "zipCode", "preferredDate", "preferredWindow", "preferredTime", "alternateDate", "urgency", "roomsAreas", "roomsOrAreas", "areaResetRoomSummary", "areaResetRooms", "areaResetOtherRoom", "areaResetCleaningType", "areaResetAddOnSummary", "areaResetAddOns", "areaResetOtherAddOn", "areaResetArea", "areaResetOtherArea", "areaResetAdditionalAreaSummary", "areaResetAdditionalAreas", "areaResetOtherAdditionalArea", "areaResetBathroomCount", "areaResetSize", "areaResetCondition", "areaResetGoalSummary", "areaResetGoals", "areaResetHauling", "requestDetails", "smartLabelSetupInterest", "smartLabelEstimatedCount", "smartLabelSetupNotes", "notes", "specialInstructions", "promoCode", "incomingReferralCode",
   ],
   helperApplications: [
     "fullName", "phone", "email", "city", "howFoundUs", "howFoundUsDetails", "campaignSource", "campaignName", "state", "zip", "availability", "services", "transportation", "travelRadius", "experienceLevel", "comfortLevel", "notWillingToDo", "applicationDocumentCount",
@@ -1177,6 +1178,7 @@ const SERVICE_REQUEST_CLEAN_KEYS = [
   "moveOutApplianceSummary",
   "requestDetails",
   "smartLabelSetupInterest",
+  "smartLabelEstimatedCount",
   "smartLabelSetupNotes",
   "notes",
   "specialInstructions",
@@ -1418,7 +1420,8 @@ function getCleanRequestedServiceSection(collectionName: string, item: AdminDoc)
   entries.push(makeExportEntry("urgency", item.urgency, "Scheduling preference"));
   entries.push(makeExportEntry("roomsOrAreas", item.roomsOrAreas, "Rooms / areas"));
   entries.push(makeExportEntry("requestDetails", item.requestDetails, "Request details"));
-  entries.push(makeExportEntry("smartLabelSetupInterest", item.smartLabelSetupInterest, "Smart Label Setup"));
+  entries.push(makeExportEntry("smartLabelSetupInterest", item.smartLabelSetupInterest, "Smart Label help"));
+  entries.push(makeExportEntry("smartLabelEstimatedCount", item.smartLabelEstimatedCount, "Estimated Smart Labels / spots"));
   entries.push(makeExportEntry("smartLabelSetupNotes", item.smartLabelSetupNotes, "Smart Label notes"));
   entries.push(makeExportEntry("notes", item.notes, "Notes"));
   entries.push(makeExportEntry("specialInstructions", item.specialInstructions, "Special instructions"));

@@ -44,7 +44,8 @@ const defaultState = {
   parkingAccess: "",
   supplyPreference: "NestHelper brings standard supplies",
   recurringResetInterest: "One-time reset for now",
-  smartLabelSetupInterest: "No Smart Label Setup add-on",
+  smartLabelSetupInterest: "No Smart Labels needed",
+  smartLabelEstimatedCount: "Not sure",
   smartLabelSetupNotes: "",
   homePriorities: [] as string[],
   homeAreas: [] as string[],
@@ -186,14 +187,18 @@ const recurringResetOptions = [
 ];
 
 const smartLabelSetupOptions = [
-  "No Smart Label Setup add-on",
-  "Use included Smart Labels ourselves",
-  "Smart Label Setup — up to 10 labels ($49)",
-  "Standard Smart Label Setup — up to 20 labels ($79)",
-  "Full Smart Label Setup — up to 30 labels ($109)",
-  "Additional Smart Label setup — $2 per extra label",
-  "Quote detailed Smart Label inventory/setup",
-  "Not sure — please recommend after review",
+  "No Smart Labels needed",
+  "Free starter labels only — we’ll leave them with you",
+  "Help me set up Smart Labels during the reset",
+  "Not sure — recommend after review",
+];
+
+const smartLabelEstimatedCountOptions = [
+  "Not sure",
+  "1–10 labels / storage spots",
+  "11–20 labels / storage spots",
+  "21–30 labels / storage spots",
+  "31+ labels / quote after review",
 ];
 
 const howFoundUsOptions = [
@@ -365,6 +370,7 @@ function cleanForSelectedService(form: RequestFormState) {
     } : {}),
     ...(isSmartLabelEligibleCategory(category) ? {
       smartLabelSetupInterest: form.smartLabelSetupInterest,
+      smartLabelEstimatedCount: form.smartLabelEstimatedCount,
       smartLabelSetupNotes: form.smartLabelSetupNotes,
     } : {}),
     requestedAt: new Date().toISOString(),
@@ -554,6 +560,7 @@ export function RequestForm() {
       supplyPreference: isHomeLike ? prev.supplyPreference : defaultState.supplyPreference,
       recurringResetInterest: nextCategory === "home" ? prev.recurringResetInterest : defaultState.recurringResetInterest,
       smartLabelSetupInterest: isSmartLabelEligibleCategory(nextCategory) ? prev.smartLabelSetupInterest : defaultState.smartLabelSetupInterest,
+      smartLabelEstimatedCount: isSmartLabelEligibleCategory(nextCategory) ? prev.smartLabelEstimatedCount : defaultState.smartLabelEstimatedCount,
       smartLabelSetupNotes: isSmartLabelEligibleCategory(nextCategory) ? prev.smartLabelSetupNotes : "",
       squareFootage: nextCategory === "moveOut" ? prev.squareFootage : "",
       bedrooms: nextCategory === "moveOut" ? prev.bedrooms : "",
@@ -1124,18 +1131,23 @@ export function RequestForm() {
       )}
 
       {smartLabelsAvailable && (
-        <Section title="Optional Smart Label Setup" description="Smart Labels are simple QR stickers for bins, shelves, closets, boxes, and storage areas. They are included at no extra cost with qualifying resets; choose setup only if you want NestHelper to place, scan, name, document, and walk you through keeping them updated.">
+        <Section title="Optional Smart Label Setup" description="Smart Labels are simple QR stickers for bins, shelves, closets, boxes, and storage areas. Choose whether you want starter labels only or setup help during the reset. Setup is quoted after review based on the number of labels, storage spots, organizing needs, and documentation needed.">
           <div className="rounded-3xl border border-nest-gold/20 bg-nest-cream p-5 text-sm leading-6 text-nest-ink/76">
-            <strong className="text-nest-teal">What they are:</strong> QR stickers your family can scan to see or update the label name, location, contents, notes, and small photos. <strong className="text-nest-teal">Labels included:</strong> up to 10 Smart Labels with qualifying resets, and up to 30 when a larger organizing project needs them. <strong className="text-nest-teal">Setup add-on:</strong> $49 for up to 10 labels, $79 for up to 20, $109 for up to 30, then $2 per extra standard label setup. Detailed inventory or heavy photo documentation can be quoted.
+            <strong className="text-nest-teal">What they are:</strong> QR stickers your family can scan to see or update the label name, location, contents, notes, and small photos. <strong className="text-nest-teal">Labels included:</strong> starter labels may be included with qualifying resets. <strong className="text-nest-teal">Setup help:</strong> choose setup only if you want NestHelper to place, scan, name, document, and walk you through keeping them updated. Larger setups, extra labels, and detailed inventory can be included in your quote after review.
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Smart Label preference">
+            <Field label="Would you like Smart Label help?">
               <select className="input" value={form.smartLabelSetupInterest} onChange={(e) => update("smartLabelSetupInterest", e.target.value)}>
                 {smartLabelSetupOptions.map((option) => <option key={option}>{option}</option>)}
               </select>
             </Field>
+            <Field label="Estimated label count / storage spots">
+              <select className="input" value={form.smartLabelEstimatedCount} onChange={(e) => update("smartLabelEstimatedCount", e.target.value)}>
+                {smartLabelEstimatedCountOptions.map((option) => <option key={option}>{option}</option>)}
+              </select>
+            </Field>
             <Field label="Label notes (optional)">
-              <input className="input" placeholder="Example: label garage bins, pantry shelves, moving boxes, or toy storage" value={form.smartLabelSetupNotes} onChange={(e) => update("smartLabelSetupNotes", e.target.value)} />
+              <input className="input" placeholder="Example: pantry shelves, garage bins, kids clothes, moving boxes, toy storage" value={form.smartLabelSetupNotes} onChange={(e) => update("smartLabelSetupNotes", e.target.value)} />
             </Field>
           </div>
         </Section>

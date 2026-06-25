@@ -34,3 +34,11 @@ This replaces the awkward single “primary area” dropdown with a clearer Spec
 - Renamed the service/category display to **Specific Area(s) Reset** because customers can choose more than one room or area.
 - Added a short Smart Labels explanation on the request form: they are simple QR stickers for bins, shelves, closets, boxes, and storage areas so families can scan and update what belongs there.
 
+## Smart Label dropdown cleanup
+
+- Replaced the confusing Smart Label package-price dropdown with two simpler customer questions:
+  - Would you like Smart Label help?
+  - Estimated label count / storage spots
+- Removed the customer-facing `$2 per extra label` option from the dropdown so customers do not confuse extra labels with setup labor.
+- Added `smartLabelEstimatedCount` to the request payload, admin details, export/print flow, form security allowlist, and customer confirmation email summary.
+- Updated Smart Label public wording so setup is quoted after review based on label count, storage spots, organizing needs, and documentation/photos needed.
