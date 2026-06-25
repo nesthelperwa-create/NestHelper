@@ -136,7 +136,7 @@ export default function HomePage() {
             </p>
           </div>
           <div className="mt-10 grid items-start gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {publicHomeServices.map((service) => <ServiceCard key={service.id} service={service} />)}
+            {publicHomeServices.map((service) => <ServiceCard key={service.id} service={service} equalCollapsedHeight />)}
           </div>
         </div>
       </AnimatedSection>

@@ -134,7 +134,7 @@ export default function ServicesPage() {
               </p>
             </div>
             <div className="grid items-start gap-6 md:grid-cols-2 xl:grid-cols-3">
-              {specialtyServices.map((service) => <ServiceCard key={service.id} service={service} />)}
+              {specialtyServices.map((service) => <ServiceCard key={service.id} service={service} equalCollapsedHeight />)}
             </div>
           </section>
         </div>
