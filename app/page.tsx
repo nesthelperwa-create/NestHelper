@@ -135,8 +135,8 @@ export default function HomePage() {
               Choose the type of help you need, submit the details, and NestHelper reviews the request before payment. Pricing reflects a managed service: clear scope, coordination, insured support, and follow-up — not just someone showing up for an hour.
             </p>
           </div>
-          <div className="mt-10 grid items-stretch gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {publicHomeServices.map((service) => <ServiceCard key={service.id} service={service} equalCollapsedHeight />)}
+          <div className="mt-10 grid items-start gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {publicHomeServices.map((service) => <ServiceCard key={service.id} service={service} />)}
           </div>
         </div>
       </AnimatedSection>

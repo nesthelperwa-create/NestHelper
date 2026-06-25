@@ -133,8 +133,8 @@ export default function ServicesPage() {
                 Parent Reset Plan is for a 3-hour organizing + light cleaning reset in family spaces. Whole Home Cleaning is for the entire home. Specific Area(s) Reset is for selected rooms. Move-In / Move-Out Cleaning is for empty or mostly empty homes.
               </p>
             </div>
-            <div className="grid items-stretch gap-6 md:grid-cols-2 xl:grid-cols-3">
-              {specialtyServices.map((service) => <ServiceCard key={service.id} service={service} equalCollapsedHeight />)}
+            <div className="grid items-start gap-6 md:grid-cols-2 xl:grid-cols-3">
+              {specialtyServices.map((service) => <ServiceCard key={service.id} service={service} />)}
             </div>
           </section>
         </div>

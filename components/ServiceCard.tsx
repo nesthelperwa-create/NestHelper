@@ -149,7 +149,7 @@ const serviceExtras: Record<string, ServiceExtra> = {
 
 type CardOpenEvent = CustomEvent<{ id: string }>;
 
-export function ServiceCard({ service, equalCollapsedHeight = false }: { service: Service; equalCollapsedHeight?: boolean }) {
+export function ServiceCard({ service }: { service: Service }) {
   const [open, setOpen] = useState(false);
   const cardRef = useRef<HTMLElement | null>(null);
   const returnScrollYRef = useRef<number | null>(null);
@@ -160,8 +160,6 @@ export function ServiceCard({ service, equalCollapsedHeight = false }: { service
   const featured = service.id === "whole-home-reset";
   const isLaundry = service.id === "laundry-rescue";
   const isQuoteBased = service.standardPrice.toLowerCase().includes("quoted");
-  const equalClosed = equalCollapsedHeight && !open;
-  const collapsedHeightClass = equalCollapsedHeight ? "min-h-[660px] sm:min-h-[640px]" : "min-h-[630px]";
 
   useEffect(() => {
     function handleOtherCard(event: Event) {
@@ -245,8 +243,8 @@ export function ServiceCard({ service, equalCollapsedHeight = false }: { service
     <article
       ref={cardRef}
       onClick={handleCardClick}
-      className={`group relative flex h-full cursor-pointer flex-col overflow-visible rounded-[2rem] border bg-white/95 shadow-sm backdrop-blur transition duration-300 hover:-translate-y-1 hover:shadow-lift ${
-        open ? `border-nest-gold/35 ring-4 ${theme.ring}` : `${collapsedHeightClass} border-nest-gold/16`
+      className={`group relative flex cursor-pointer flex-col self-start overflow-visible rounded-[2rem] border bg-white/95 shadow-sm backdrop-blur transition duration-300 hover:-translate-y-1 hover:shadow-lift ${
+        open ? `border-nest-gold/35 ring-4 ${theme.ring}` : "border-nest-gold/16"
       }`}
     >
       {featured && (
@@ -291,8 +289,8 @@ export function ServiceCard({ service, equalCollapsedHeight = false }: { service
           </button>
         </div>
 
-        <div className={`mt-5 shrink-0 overflow-hidden rounded-3xl border border-nest-gold/14 bg-gradient-to-br from-nest-cream via-white to-nest-mint/20 shadow-sm ${equalClosed ? "min-h-[8.75rem]" : ""}`}>
-          <div className={`grid gap-0 sm:grid-cols-[minmax(0,1fr)_9rem] ${equalClosed ? "min-h-[8.75rem]" : "min-h-[8.4rem]"}`}>
+        <div className="mt-5 shrink-0 overflow-hidden rounded-3xl border border-nest-gold/14 bg-gradient-to-br from-nest-cream via-white to-nest-mint/20 shadow-sm">
+          <div className="grid gap-0 sm:grid-cols-[minmax(0,1fr)_9rem]">
             <div className="flex flex-col justify-center p-4 sm:p-5">
               <div className="text-xs font-black uppercase tracking-[0.16em] text-nest-ink/55">{isQuoteBased ? "Pricing" : "Starting at"}</div>
               <div className={`mt-1 break-words font-black leading-tight text-nest-teal ${isLaundry ? "text-[1.55rem] sm:text-[1.62rem]" : "text-2xl sm:text-3xl"}`}>
