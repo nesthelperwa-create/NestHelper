@@ -5,7 +5,7 @@ import { siteConfig } from "@/lib/siteConfig";
 export const metadata: Metadata = {
   title: "Household Help FAQ: Home Reset, Laundry & Errands",
   description:
-    "Answers about NestHelper household help, home resets, kitchen and bath resets, garage and area resets, move-in / move-out cleaning, laundry, errands, organizing, pricing, safety, and no-childcare service boundaries.",
+    "Answers about NestHelper household help, home resets, whole-home cleaning, kitchen and bath resets, garage and area resets, move-in / move-out cleaning, laundry, errands, organizing, pricing, safety, and no-childcare service boundaries.",
   alternates: {
     canonical: `${siteConfig.url}/faq`,
   },
@@ -19,9 +19,9 @@ export const metadata: Metadata = {
 };
 
 const faqs = [
-  ["What does NestHelper help with?", "NestHelper gives busy families extra hands around the home with household support, home resets, kitchen and bath resets, garage and area resets, move-in / move-out cleaning, laundry rescue, errands, organizing, and practical family support. We do not provide childcare, unsupervised babysitting, medical care, elder care, or emergency services."],
+  ["What does NestHelper help with?", "NestHelper gives busy families extra hands around the home with household support, home resets, whole-home cleaning, kitchen and bath resets, garage and area resets, move-in / move-out cleaning, laundry rescue, errands, organizing, and practical family support. We do not provide childcare, unsupervised babysitting, medical care, elder care, or emergency services."],
   ["Do you serve outside Bothell?", `Yes. NestHelper serves ${siteConfig.serviceArea}. If you are close by but unsure, submit a request and we will confirm availability before sending any payment link.`],
-  ["Can I request home reset help, specific area(s) resets, move-in / move-out cleaning, laundry help, or errand help separately?", "Yes. You can request a full Parent Reset package or a more focused service such as Specific Area(s) Reset for kitchen, bathroom(s), garage, pantry, closet, playroom, laundry room, or another room/zone, with optional detail add-ons like interior fridge, interior oven, inside cabinets, shower buildup, floors, or organizing. Move-In / Move-Out Cleaning, Laundry Rescue, approved errands, and light household catch-up support can also be requested separately."],
+  ["Can I request home reset help, whole-home cleaning, specific area(s) resets, move-in / move-out cleaning, laundry help, or errand help separately?", "Yes. You can request a Parent Reset package, Whole Home Reset for regular full-home cleaning, or a more focused service such as Specific Area(s) Reset for kitchen, bathroom(s), garage, pantry, closet, playroom, laundry room, or another room/zone, with optional detail add-ons like interior fridge, interior oven, inside cabinets, shower buildup, floors, or organizing. Move-In / Move-Out Cleaning, Laundry Rescue, approved errands, and light household catch-up support can also be requested separately."],
   ["What are NestHelper Smart Labels?", "Smart Labels are customer-owned QR stickers that may be included with qualifying resets. Families can use them for bins, closets, shelves, moving boxes, seasonal items, garages, storage areas, pantries, and playrooms. A family can scan a label to update the name, location, items inside, notes, and small photos. Labels start with no PIN by default, and the family can add an optional 4-digit PIN later for privacy."],
   ["What is Smart Label Setup?", "Smart Label Setup is an optional add-on when you want NestHelper to do more than leave starter labels with you. Setup is quoted after review based on how many labels or storage spots you need, how much organizing/documenting is involved, and whether you want notes or photos added. Larger inventories, garage setups, or moving-box documentation can be quoted after review."],
   ["Is this childcare?", "No. NestHelper provides household support and Parent Reset services only. We do not provide childcare, unsupervised babysitting, medical care, elder care, or emergency services."],

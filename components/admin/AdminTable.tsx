@@ -221,6 +221,12 @@ const SERVICE_LOOKS: Record<string, { label: string; badge: string; row: string;
     row: "border-l-8 border-l-blue-600 bg-blue-50/40 hover:bg-blue-100/80",
     dot: "bg-white ring-2 ring-blue-100",
   },
+  "whole-home-reset": {
+    label: "Whole Home Reset",
+    badge: "border-teal-800 bg-teal-700 text-white shadow-sm shadow-teal-900/25",
+    row: "border-l-8 border-l-teal-700 bg-teal-50/50 hover:bg-teal-100/80",
+    dot: "bg-white ring-2 ring-teal-100",
+  },
   "helper-block-4hr": {
     label: "Helper Block",
     badge: "border-violet-700 bg-violet-600 text-white shadow-sm shadow-violet-900/25",
@@ -271,6 +277,7 @@ function getServiceKey(item: AdminDoc | null | undefined) {
   if (raw.includes("commercial")) return "commercial-reset";
   if (raw.includes("parent-reset") || raw.includes("parent reset") || raw.includes("2-hour")) return "parent-reset-2hr";
   if (raw.includes("family-reset") || raw.includes("family reset") || raw.includes("3-hour")) return "family-reset-3hr";
+  if (raw.includes("whole-home-reset") || raw.includes("whole home") || raw.includes("whole-home") || raw.includes("regular cleaning")) return "whole-home-reset";
   if (raw.includes("helper-block") || raw.includes("helper block") || raw.includes("4-hour")) return "helper-block-4hr";
   if (raw.includes("specific-area-reset") || raw.includes("specific area") || raw.includes("area reset") || raw.includes("garage reset")) return "specific-area-reset";
   if (raw.includes("move-out") || raw.includes("move out") || raw.includes("move-in") || raw.includes("move in")) return "move-out-cleaning";
@@ -289,7 +296,7 @@ function isCommercialRequest(item: AdminDoc | null | undefined) {
 }
 
 function isFamilyReferralEligibleRequest(item: AdminDoc | null | undefined) {
-  return ["parent-reset-2hr", "family-reset-3hr", "helper-block-4hr", "errand-helper", "laundry-rescue"].includes(getServiceKey(item));
+  return ["parent-reset-2hr", "family-reset-3hr", "helper-block-4hr", "whole-home-reset", "errand-helper", "laundry-rescue"].includes(getServiceKey(item));
 }
 
 function isCompletedRequest(item: AdminDoc | null | undefined) {
@@ -934,6 +941,14 @@ const DETAIL_FIELD_LABELS: Record<string, string> = {
   preferredWindow: "Preferred window",
   alternateDate: "Alternate date",
   urgency: "Scheduling preference",
+  wholeHomeCleaningType: "Whole-home cleaning type",
+  wholeHomeCondition: "Whole-home condition",
+  wholeHomeAddOns: "Whole-home add-ons",
+  wholeHomeAddOnSummary: "Whole-home add-ons",
+  wholeHomeOtherAddOn: "Other whole-home add-on",
+  squareFootage: "Square footage",
+  bedrooms: "Bedrooms",
+  bathrooms: "Bathrooms",
   areaResetRooms: "Rooms / areas",
   areaResetRoomSummary: "Rooms / areas",
   areaResetOtherRoom: "Other room / area",
@@ -985,7 +1000,7 @@ const DETAIL_FIELD_LABELS: Record<string, string> = {
 
 const DETAIL_FIELD_ORDER: Record<string, string[]> = {
   serviceRequests: [
-    "fullName", "selectedServiceTitle", "service", "packageType", "phone", "email", "howFoundUs", "howFoundUsDetails", "campaignSource", "campaignName", "address", "city", "state", "zip", "zipCode", "preferredDate", "preferredWindow", "preferredTime", "alternateDate", "urgency", "roomsAreas", "roomsOrAreas", "areaResetRoomSummary", "areaResetRooms", "areaResetOtherRoom", "areaResetCleaningType", "areaResetAddOnSummary", "areaResetAddOns", "areaResetOtherAddOn", "areaResetArea", "areaResetOtherArea", "areaResetAdditionalAreaSummary", "areaResetAdditionalAreas", "areaResetOtherAdditionalArea", "areaResetBathroomCount", "areaResetSize", "areaResetCondition", "areaResetGoalSummary", "areaResetGoals", "areaResetHauling", "requestDetails", "smartLabelSetupInterest", "smartLabelEstimatedCount", "smartLabelSetupNotes", "notes", "specialInstructions", "promoCode", "incomingReferralCode",
+    "fullName", "selectedServiceTitle", "service", "packageType", "phone", "email", "howFoundUs", "howFoundUsDetails", "campaignSource", "campaignName", "address", "city", "state", "zip", "zipCode", "preferredDate", "preferredWindow", "preferredTime", "alternateDate", "urgency", "roomsAreas", "roomsOrAreas", "squareFootage", "bedrooms", "bathrooms", "wholeHomeCleaningType", "wholeHomeCondition", "wholeHomeAddOnSummary", "wholeHomeAddOns", "wholeHomeOtherAddOn", "areaResetRoomSummary", "areaResetRooms", "areaResetOtherRoom", "areaResetCleaningType", "areaResetAddOnSummary", "areaResetAddOns", "areaResetOtherAddOn", "areaResetArea", "areaResetOtherArea", "areaResetAdditionalAreaSummary", "areaResetAdditionalAreas", "areaResetOtherAdditionalArea", "areaResetBathroomCount", "areaResetSize", "areaResetCondition", "areaResetGoalSummary", "areaResetGoals", "areaResetHauling", "requestDetails", "smartLabelSetupInterest", "smartLabelEstimatedCount", "smartLabelSetupNotes", "notes", "specialInstructions", "promoCode", "incomingReferralCode",
   ],
   helperApplications: [
     "fullName", "phone", "email", "city", "howFoundUs", "howFoundUsDetails", "campaignSource", "campaignName", "state", "zip", "availability", "services", "transportation", "travelRadius", "experienceLevel", "comfortLevel", "notWillingToDo", "applicationDocumentCount",
@@ -1882,7 +1897,7 @@ function getPaidDateForBookkeeping(item: AdminDoc) {
 
 function getTaxableLabel(item: AdminDoc) {
   const serviceKey = getServiceKey(item);
-  if (serviceKey === "laundry-rescue" || serviceKey === "commercial-reset" || serviceKey === "move-out-cleaning" || serviceKey === "specific-area-reset") return "Taxable / verify in Stripe + WA DOR";
+  if (serviceKey === "laundry-rescue" || serviceKey === "commercial-reset" || serviceKey === "move-out-cleaning" || serviceKey === "specific-area-reset" || serviceKey === "whole-home-reset") return "Taxable / verify in Stripe + WA DOR";
   if (getSalesTaxCollected(item) > 0) return "Tax collected";
   return "Likely non-taxable / verify";
 }
@@ -1892,6 +1907,7 @@ function getBoCategoryNote(item: AdminDoc) {
   if (serviceKey === "commercial-reset") return "Commercial cleaning / verify WA B&O classification";
   if (serviceKey === "laundry-rescue") return "Laundry service / verify WA B&O classification";
   if (serviceKey === "move-out-cleaning") return "Residential cleaning / verify WA B&O classification";
+  if (serviceKey === "whole-home-reset") return "Residential cleaning / verify WA B&O classification";
   if (serviceKey === "specific-area-reset") return "Residential organizing/cleaning / verify WA B&O classification";
   return "Household/family service / verify WA B&O classification";
 }
@@ -4595,7 +4611,7 @@ export default function AdminTable({
                           <input
                             value={customInitialTitle}
                             onChange={(e) => setCustomInitialTitle(e.target.value)}
-                            placeholder={selected.service === "laundry-rescue" ? "Laundry Rescue custom deposit" : selected.service === "commercial-reset" ? "Commercial Reset approved quote" : selected.service === "move-out-cleaning" ? "Move-In / Move-Out Cleaning approved quote" : selected.service === "specific-area-reset" ? "Specific Area(s) Reset approved quote" : "Custom Parent Reset checkout"}
+                            placeholder={selected.service === "laundry-rescue" ? "Laundry Rescue custom deposit" : selected.service === "commercial-reset" ? "Commercial Reset approved quote" : selected.service === "move-out-cleaning" ? "Move-In / Move-Out Cleaning approved quote" : selected.service === "specific-area-reset" ? "Specific Area(s) Reset approved quote" : selected.service === "whole-home-reset" ? "Whole Home Reset approved quote" : "Custom Parent Reset checkout"}
                             className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]"
                           />
                         </label>

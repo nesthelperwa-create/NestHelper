@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Request Household Help, Area Resets & Move-In / Move-Out Cleaning | NestHelper",
     description:
-      "Tell NestHelper what kind of home help, kitchen and bath reset, area reset, or move-in / move-out cleaning you need. We review service area, timing, scope, square footage when needed, safety notes, and pricing before payment.",
+      "Tell NestHelper what kind of home help, whole-home cleaning, kitchen and bath reset, area reset, or move-in / move-out cleaning you need. We review service area, timing, scope, home size when needed, safety notes, and pricing before payment.",
     url: `${siteConfig.url}/request`,
     images: [siteConfig.assets.og],
   },
@@ -33,7 +33,7 @@ export default function RequestPage() {
             Request household help.
           </h1>
           <p className="mx-auto mt-4 max-w-3xl text-sm font-semibold leading-6 text-nest-ink/72 sm:text-base sm:leading-7">
-            Submit the details first. No payment is due today. NestHelper reviews service area, timing, scope, square footage when needed, pets, access, safety notes, and pricing before sending a secure payment link.
+            Submit the details first. No payment is due today. NestHelper reviews service area, timing, scope, home size when needed, pets, access, safety notes, and pricing before sending a secure payment link.
           </p>
           <div className="mx-auto mt-6 flex max-w-sm flex-col justify-center gap-3 sm:max-w-none sm:flex-row">
             <ButtonLink href="#request-form">Start the request</ButtonLink>

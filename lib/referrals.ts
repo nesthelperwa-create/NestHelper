@@ -28,6 +28,7 @@ export const FAMILY_REFERRAL_ELIGIBLE_SERVICES = new Set([
   "parent-reset-2hr",
   "family-reset-3hr",
   "helper-block-4hr",
+  "whole-home-reset",
   "errand-helper",
   "laundry-rescue",
 ]);
@@ -78,6 +79,7 @@ export function getFamilyReferralServiceKey(serviceId: unknown, fallback?: unkno
   if (raw.includes("parent-reset") || raw.includes("parent reset") || raw.includes("2-hour")) return "parent-reset-2hr";
   if (raw.includes("family-reset") || raw.includes("family reset") || raw.includes("3-hour")) return "family-reset-3hr";
   if (raw.includes("helper-block") || raw.includes("helper block") || raw.includes("4-hour")) return "helper-block-4hr";
+  if (raw.includes("whole-home-reset") || raw.includes("whole home") || raw.includes("whole-home") || raw.includes("regular cleaning")) return "whole-home-reset";
   if (raw.includes("errand")) return "errand-helper";
   if (raw.includes("laundry")) return "laundry-rescue";
   return getString(serviceId);
@@ -103,6 +105,7 @@ export function getReferralServiceTitle(serviceId: unknown, fallback?: unknown) 
   if (service === "parent-reset-2hr") return "2-Hour Parent Reset";
   if (service === "family-reset-3hr") return "3-Hour Family Reset";
   if (service === "helper-block-4hr") return "4-Hour Helper Block";
+  if (service === "whole-home-reset") return "Whole Home Reset";
   if (service === "laundry-rescue") return "Laundry Rescue";
   if (service === "errand-helper") return "Errand Helper";
   if (service === "commercial-reset") return "Commercial Reset";

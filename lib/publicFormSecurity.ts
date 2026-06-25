@@ -87,6 +87,12 @@ const serviceRequestAllowedFields = [
   "smartLabelSetupNotes",
   "homePriorities",
   "homeAreas",
+  "wholeHomeCleaningType",
+  "wholeHomeCondition",
+  "wholeHomeAddOns",
+  "wholeHomeAddOnSummary",
+  "wholeHomeOtherAddOn",
+  "bedrooms",
   "areaResetRooms",
   "areaResetRoomSummary",
   "areaResetOtherRoom",
@@ -468,6 +474,22 @@ function validateRequired(collection: SubmissionCollection, payload: Record<stri
     } else {
       requireText("fullName", "full name");
       requireText("city", "city");
+
+      if (trimText(payload.service) === "whole-home-reset") {
+        requireText("squareFootage", "approximate square footage");
+        requireText("bedrooms", "bedroom count");
+        requireText("bathrooms", "bathroom count");
+        requireText("wholeHomeCleaningType", "whole-home cleaning type");
+        requireText("requestDetails", "top priorities and safety notes");
+
+        const selectedAddOns = Array.isArray(payload.wholeHomeAddOns)
+          ? (payload.wholeHomeAddOns as unknown[]).map((item) => trimText(item, 220).toLowerCase())
+          : [];
+
+        if (selectedAddOns.some((item) => item.includes("other")) && !trimText(payload.wholeHomeOtherAddOn)) {
+          missing.push("other whole-home add-on or focus item");
+        }
+      }
 
       if (trimText(payload.service) === "specific-area-reset") {
         requireArray("areaResetRooms", "room or area");

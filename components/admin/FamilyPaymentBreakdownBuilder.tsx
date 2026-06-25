@@ -103,6 +103,22 @@ const FAMILY_PRESETS = [
     amount: "259",
   },
   {
+    id: "whole-home-reset-reviewed",
+    label: "Whole Home Reset reviewed quote",
+    description: "Reviewed whole-home cleaning quote based on square footage, bedroom/bathroom count, condition, pets, access, optional detail add-ons, and photos.",
+    unit: "flat",
+    rate: "349",
+    amount: "349",
+  },
+  {
+    id: "whole-home-reset-larger-scope",
+    label: "Whole Home Reset larger-scope quote",
+    description: "Higher-scope whole-home cleaning quote for larger homes, first-visit deep cleaning, extra bathrooms, pet hair focus, or approved detail add-ons after review.",
+    unit: "flat",
+    rate: "449",
+    amount: "449",
+  },
+  {
     id: "move-out-cleaning-reviewed",
     label: "Move-In / Move-Out Cleaning reviewed quote",
     description: "Reviewed move-in / move-out cleaning quote based on square footage, bedrooms/bathrooms, empty-home status, condition, and priority areas.",
@@ -149,46 +165,6 @@ const FAMILY_PRESETS = [
     unit: "flat",
     rate: "449",
     amount: "449",
-  },
-  {
-    id: "smart-label-setup-10",
-    label: "Smart Label Setup — up to 10 labels",
-    description: "Optional Smart Label Setup add-on. NestHelper places labels, scans them, names bins/areas, documents what is inside, adds notes/photos as appropriate, and shows the family how to keep labels updated.",
-    unit: "flat",
-    rate: "49",
-    amount: "49",
-  },
-  {
-    id: "smart-label-setup-20",
-    label: "Standard Smart Label Setup — up to 20 labels",
-    description: "Standard Smart Label Setup for organizing-heavy resets with up to 20 labels.",
-    unit: "flat",
-    rate: "79",
-    amount: "79",
-  },
-  {
-    id: "smart-label-setup-30",
-    label: "Full Smart Label Setup — up to 30 labels",
-    description: "Larger-space Smart Label Setup for garages, storage areas, moving boxes, pantry systems, playrooms, or multi-zone spaces with up to 30 labels.",
-    unit: "flat",
-    rate: "109",
-    amount: "109",
-  },
-  {
-    id: "smart-label-extra-label",
-    label: "Additional Smart Label setup",
-    description: "Standard Smart Label setup after the first 30 labels.",
-    unit: "label",
-    rate: "2",
-    amount: "2",
-  },
-  {
-    id: "smart-label-extra-documentation",
-    label: "Detailed Smart Label inventory / documentation",
-    description: "Quoted Smart Label inventory, heavy photo documentation, garage inventory, or moving-box documentation beyond standard setup.",
-    unit: "flat",
-    rate: "0",
-    amount: "0",
   },
   {
     id: "errand-helper-standard",
@@ -344,6 +320,7 @@ function BuilderSpinner() {
 function getServiceLabel(item: AdminDoc) {
   const raw = String(item.service || item.selectedServiceTitle || item.packageType || "").toLowerCase();
   if (raw.includes("laundry")) return "Laundry Rescue";
+  if (raw.includes("whole-home-reset") || raw.includes("whole home") || raw.includes("whole-home") || raw.includes("regular cleaning")) return "Whole Home Reset";
   if (raw.includes("specific-area-reset") || raw.includes("specific area") || raw.includes("area reset") || raw.includes("garage reset")) return "Specific Area Reset";
   if (raw.includes("move-out") || raw.includes("move out") || raw.includes("move-in") || raw.includes("move in")) return "Move-In / Move-Out Cleaning";
   if (raw.includes("errand")) return "Errand Helper";
@@ -356,6 +333,7 @@ function getServiceLabel(item: AdminDoc) {
 function getSuggestedPresetId(item: AdminDoc) {
   const raw = String(item.service || item.selectedServiceTitle || item.packageType || "").toLowerCase();
   if (raw.includes("laundry")) return "laundry-deposit-standard";
+  if (raw.includes("whole-home-reset") || raw.includes("whole home") || raw.includes("whole-home") || raw.includes("regular cleaning")) return "whole-home-reset-reviewed";
   if (raw.includes("garage reset") || raw.includes("arearesetarea: garage")) return "garage-reset-reviewed";
   if (raw.includes("specific-area-reset") || raw.includes("specific area") || raw.includes("area reset")) return "specific-area-reset-reviewed";
   if (raw.includes("move-out") || raw.includes("move out") || raw.includes("move-in") || raw.includes("move in")) return "move-out-cleaning-reviewed";
@@ -368,6 +346,7 @@ function getSuggestedPresetId(item: AdminDoc) {
 function getDefaultPaymentPlan(item: AdminDoc) {
   const raw = String(item.service || item.selectedServiceTitle || item.packageType || "").toLowerCase();
   if (raw.includes("laundry")) return "Laundry Rescue deposit";
+  if (raw.includes("whole-home-reset") || raw.includes("whole home") || raw.includes("whole-home") || raw.includes("regular cleaning")) return "One-time whole home reset";
   if (raw.includes("specific-area-reset") || raw.includes("specific area") || raw.includes("area reset") || raw.includes("garage reset")) return "One-time specific area reset";
   if (raw.includes("move-out") || raw.includes("move out") || raw.includes("move-in") || raw.includes("move in")) return "One-time move-in / move-out cleaning";
   if (raw.includes("errand")) return "One-time errand helper";
@@ -523,20 +502,6 @@ function createDefaultLinesFromRequest(item: AdminDoc): FamilyLineItem[] {
     if (stops.toLowerCase().includes("multiple")) {
       lines.push(createLineFromPreset("errand-extra-stop", { amount: "0", quantity: "0", note: "Review the stop count before charging extra stops." }));
     }
-  }
-
-  const smartLabelInterest = String(item.smartLabelSetupInterest || "").toLowerCase();
-  const smartLabelNotes = getString(item.smartLabelSetupNotes);
-  if (smartLabelInterest.includes("up to 30") || smartLabelInterest.includes("full smart label setup")) {
-    lines.push(createLineFromPreset("smart-label-setup-30", { note: smartLabelNotes }));
-  } else if (smartLabelInterest.includes("up to 20") || smartLabelInterest.includes("standard smart label setup")) {
-    lines.push(createLineFromPreset("smart-label-setup-20", { note: smartLabelNotes }));
-  } else if (smartLabelInterest.includes("extra label") || smartLabelInterest.includes("$2")) {
-    lines.push(createLineFromPreset("smart-label-extra-label", { quantity: "1", note: smartLabelNotes || "Enter the number of extra labels after the first 30." }));
-  } else if (smartLabelInterest.includes("smart label setup") && !smartLabelInterest.includes("no smart label setup")) {
-    lines.push(createLineFromPreset("smart-label-setup-10", { note: smartLabelNotes }));
-  } else if (smartLabelInterest.includes("additional") || smartLabelInterest.includes("quote") || smartLabelInterest.includes("recommend")) {
-    lines.push(createLineFromPreset("smart-label-extra-documentation", { note: smartLabelNotes || "Review detailed Smart Label inventory/documentation before charging." }));
   }
 
   return lines;
@@ -1081,10 +1046,6 @@ export default function FamilyPaymentBreakdownBuilder({
                         <option>Laundry Rescue deposit</option>
                         <option>Laundry final balance</option>
                         <option>Custom approved family payment</option>
-                        <option>Smart Label Setup — up to 10 labels</option>
-                        <option>Standard Smart Label Setup — up to 20 labels</option>
-                        <option>Full Smart Label Setup — up to 30 labels</option>
-                        <option>Additional Smart Label setup</option>
                         <option>Refund / credit record</option>
                       </select>
                     </label>

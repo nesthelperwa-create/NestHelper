@@ -84,6 +84,26 @@ export const services: Service[] = [
       { cadence: "Weekly", price: "$259/visit" }
     ]
   },
+
+  {
+    id: "whole-home-reset",
+    title: "Whole Home Reset",
+    shortTitle: "Whole Home",
+    description: "Regular whole-home cleaning for families who need the main rooms cleaned in one visit — quoted after review.",
+    details: [
+      "Standard full-home cleaning for main living areas, kitchen, bathrooms, bedrooms, and reachable surfaces",
+      "Good fit for regular cleaning, first-visit cleaning, or recurring maintenance after review",
+      "Home size, bedroom/bath count, condition, pets, access, and photos help us quote accurately",
+      "Optional detail add-ons like interior fridge, interior oven, baseboards, pet hair focus, or linens can be requested",
+      "Best when the goal is the whole home, not just one room or specific area"
+    ],
+    standardPrice: "Quoted after review",
+    priceNote: "Size + condition reviewed",
+    serviceTime: "Scope-based visit, usually 3–6+ hours",
+    travelInfo: "Core Eastside/Northshore service area",
+    image: "/assets/services/service-family-reset.png",
+    note: "Whole Home Reset requests are reviewed before checkout. Square footage, bedroom/bathroom count, cleaning level, condition, pets, access, optional detail add-ons, photos, and scheduling all affect the quote. Recurring maintenance can be discussed after the first approved visit."
+  },
   {
     id: "specific-area-reset",
     title: "Specific Area(s) Reset",

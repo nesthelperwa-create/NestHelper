@@ -23,7 +23,7 @@ export const metadata: Metadata = {
   },
 };
 
-const quickPackageIds = new Set(["parent-reset-2hr", "family-reset-3hr", "helper-block-4hr"]);
+const quickPackageIds = new Set(["parent-reset-2hr", "family-reset-3hr", "helper-block-4hr", "whole-home-reset"]);
 
 export default function ServicesPage() {
   const quickPackageServices = services.filter((service) => quickPackageIds.has(service.id));
@@ -51,7 +51,7 @@ export default function ServicesPage() {
             <p className="pill-label mx-auto w-fit lg:mx-0"><Sparkles size={15} /> Home Reset Services</p>
             <h2 className="text-balance mt-4 text-3xl font-black leading-tight text-nest-teal sm:text-4xl lg:text-5xl">Choose the reset your home needs.</h2>
             <p className="mx-auto mt-4 max-w-3xl text-base font-semibold leading-7 text-nest-ink/70 sm:text-lg lg:mx-0">
-              Start with a parent reset package, or request a custom review for kitchen + bath cleaning, move-in / move-out cleaning, garage resets, laundry help, errands, and specific areas that need attention.
+              Start with a parent reset package, choose Whole Home Reset for regular full-home cleaning, or request a custom review for kitchen + bath cleaning, move-in / move-out cleaning, garage resets, laundry help, errands, and specific areas that need attention.
             </p>
             <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row lg:justify-start">
               <ButtonLink href="/request">Request Help</ButtonLink>
@@ -64,6 +64,7 @@ export default function ServicesPage() {
             <div className="mt-5 grid gap-3">
               {[
                 { title: "Need everyday relief?", text: "Choose a 2, 3, or 4-hour reset package." },
+                { title: "Need regular whole-home cleaning?", text: "Choose Whole Home Reset when the goal is standard cleaning for the entire home instead of one specific room or area." },
                 { title: "Need focused rooms cleaned?", text: "Choose Specific Area(s) Reset for kitchen, bathroom(s), garage, pantry, closet, playroom, laundry room, or another room — then add detail items like interior fridge, interior oven, inside cabinets, shower buildup, floors, or organizing." },
                 { title: "Moving in or out?", text: "Choose Move-In / Move-Out Cleaning so we can review square footage, condition, photos, and timing." },
               ].map((item) => (
@@ -123,10 +124,10 @@ export default function ServicesPage() {
               <p className="pill-label mx-auto w-fit sm:mx-0"><Sparkles size={15} /> Quick Help Packages</p>
               <h3 id="quick-help-packages" className="text-2xl font-black text-nest-teal sm:text-3xl">Start here for everyday home reset help.</h3>
               <p className="max-w-3xl font-semibold leading-7 text-nest-ink/68">
-                These are structured helper visits for busy families who need dishes, toys, surfaces, folding, organizing, and priority catch-up tasks handled in a focused block of time.
+                These are structured helper visits and whole-home cleaning requests for busy families who need dishes, toys, surfaces, folding, organizing, regular cleaning, and priority catch-up tasks handled with clear scope review.
               </p>
             </div>
-            <div className="grid items-start gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid items-start gap-6 md:grid-cols-2 xl:grid-cols-4">
               {quickPackageServices.map((service) => <ServiceCard key={service.id} service={service} equalCollapsedHeight />)}
             </div>
           </section>
