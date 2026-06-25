@@ -161,7 +161,8 @@ export function ServiceCard({ service, equalCollapsedHeight = false }: { service
   const isLaundry = service.id === "laundry-rescue";
   const isQuoteBased = service.standardPrice.toLowerCase().includes("quoted");
   const equalClosed = equalCollapsedHeight && !open;
-  const collapsedHeightClass = equalCollapsedHeight ? "min-h-[660px]" : "";
+  const collapsedHeightClass = equalClosed ? "md:h-[730px] xl:h-[720px]" : "";
+  const pricePanelHeightClass = equalClosed ? "min-h-[11.25rem]" : "min-h-[9.35rem]";
 
   useEffect(() => {
     function handleOtherCard(event: Event) {
@@ -291,7 +292,7 @@ export function ServiceCard({ service, equalCollapsedHeight = false }: { service
           </button>
         </div>
 
-        <div className="mt-5 flex min-h-[9.35rem] shrink-0 overflow-hidden rounded-3xl border border-nest-gold/14 bg-gradient-to-br from-nest-cream via-white to-nest-mint/20 shadow-sm">
+        <div className={`mt-5 flex ${pricePanelHeightClass} shrink-0 overflow-hidden rounded-3xl border border-nest-gold/14 bg-gradient-to-br from-nest-cream via-white to-nest-mint/20 shadow-sm`}>
           <div className="grid w-full gap-0 sm:grid-cols-[minmax(0,1fr)_9rem]">
             <div className="flex flex-col justify-center p-4 sm:p-5">
               <div className="text-xs font-black uppercase tracking-[0.16em] text-nest-ink/55">{isQuoteBased ? "Pricing" : "Starting at"}</div>

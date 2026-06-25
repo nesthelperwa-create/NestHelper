@@ -2133,12 +2133,12 @@ function ServiceLegend({ activeServiceFilter, onToggleServiceFilter, counts }: {
             type="button"
             onClick={() => onToggleServiceFilter(key)}
             aria-pressed={active}
-            className={`inline-flex min-h-10 min-w-[142px] items-center justify-center gap-2 rounded-full border px-3 py-2 text-[11px] font-black uppercase tracking-wide shadow-sm transition-all focus:outline-none focus:ring-4 focus:ring-[#075c58]/20 ${active ? "scale-[1.02] ring-2 ring-[#075c58]" : "hover:-translate-y-0.5"} ${look.badge}`}
+            className={`inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-full border px-3 py-2 text-[10px] font-black uppercase tracking-wide shadow-sm transition-all focus:outline-none focus:ring-4 focus:ring-[#075c58]/20 sm:w-[13.25rem] sm:text-[10.5px] ${active ? "scale-[1.02] ring-2 ring-[#075c58]" : "hover:-translate-y-0.5"} ${look.badge}`}
             title={active ? `Showing ${look.label}. Click again to clear.` : `Show only ${look.label}.`}
           >
-            <span className={`h-2 w-2 rounded-full ${look.dot}`} />
-            <span>{look.label}</span>
-            <span className="rounded-full bg-white/20 px-2 py-0.5 text-[10px]">{count}</span>
+            <span className={`h-2 w-2 shrink-0 rounded-full ${look.dot}`} />
+            <span className="min-w-0 flex-1 truncate text-center">{look.label}</span>
+            <span className="shrink-0 rounded-full bg-white/20 px-2 py-0.5 text-[10px]">{count}</span>
           </button>
         );
       })}
