@@ -84,56 +84,55 @@ export const services: Service[] = [
       { cadence: "Weekly", price: "$259/visit" }
     ]
   },
-
   {
     id: "whole-home-reset",
     title: "Whole Home Reset",
     shortTitle: "Whole Home",
-    description: "Regular whole-home cleaning for families who need the main rooms cleaned in one visit — quoted after review.",
+    description: "Choose this for full-home cleaning or reset help, including first-time deep cleans and ongoing maintenance.",
     details: [
-      "Standard full-home cleaning for main living areas, kitchen, bathrooms, bedrooms, and reachable surfaces",
-      "Good fit for regular cleaning, first-visit cleaning, or recurring maintenance after review",
-      "Home size, bedroom/bath count, condition, pets, access, and photos help us quote accurately",
-      "Optional detail add-ons like interior fridge, interior oven, baseboards, pet hair focus, or linens can be requested",
-      "Best when the goal is the whole home, not just one room or specific area"
+      "Entire home cleaning or reset help",
+      "First-time deep clean of the entire home",
+      "First-time deep clean + recurring maintenance",
+      "Weekly, bi-weekly, or monthly full-home maintenance",
+      "General whole-home cleaning help"
     ],
     standardPrice: "Quoted after review",
     priceNote: "Size + condition reviewed",
     serviceTime: "Scope-based visit, usually 3–6+ hours",
     travelInfo: "Core Eastside/Northshore service area",
-    image: "/assets/services/service-family-reset.png",
-    note: "Whole Home Reset requests are reviewed before checkout. Square footage, bedroom/bathroom count, cleaning level, condition, pets, access, optional detail add-ons, photos, and scheduling all affect the quote. Recurring maintenance can be discussed after the first approved visit."
+    image: "/assets/services/service-whole-home-reset.png",
+    note: "Whole Home Reset requests are reviewed before checkout. Square footage, bedroom/bathroom count, visit type, condition, pets, access, optional detail add-ons, photos, and scheduling all affect the quote. Use this for the entire home; use Specific Area(s) Reset for selected rooms or focused areas only."
   },
   {
     id: "specific-area-reset",
     title: "Specific Area(s) Reset",
     shortTitle: "Area Reset",
-    description: "Focused help for specific rooms or zones — kitchen, bathroom(s), garage, pantry, closet, playroom, laundry room, or other areas — with optional detailed cleaning add-ons quoted after review.",
+    description: "Choose this when you only need help with selected rooms or focused areas — not the entire home.",
     details: [
-      "Select the room or rooms that need help, such as kitchen, bathroom(s), garage, pantry, closet, playroom, or laundry room",
-      "Choose the visit type: light reset, standard cleaning, deep detail focus, cleaning + organizing, or organizing only",
-      "Add detail items like interior fridge, interior oven, inside cabinets/drawers, shower buildup, floors, baseboards, donation prep, or Smart Labels",
-      "Good for kitchen + bath requests without turning NestHelper into a generic full-house maid service",
-      "Interior appliances, heavy buildup, large clutter, donation/trash prep, and specialty needs are reviewed before quoting"
+      "Selected rooms or areas only, such as kitchen, bathroom(s), bedrooms, playroom, pantry, laundry area, garage, or a few rooms",
+      "Kitchen add-ons can include interior fridge, interior oven, cabinets, dishes/sink, and appliance exteriors",
+      "Bathroom add-ons can include shower/tub buildup, toilet/vanity/sink detail, mirrors, grout, or soap-scum focus",
+      "Optional repeat area support every 2 weeks or monthly",
+      "Best when you do not need the entire home cleaned"
     ],
     standardPrice: "Quoted after review",
     priceNote: "Rooms + add-ons reviewed",
     serviceTime: "Scope-based visit, usually 2–4+ hours",
     travelInfo: "Core Eastside/Northshore service area",
     image: "/assets/services/service-specific-area-reset.png",
-    note: "Specific Area(s) Resets are reviewed before checkout. The selected rooms, cleaning type, detailed add-ons, size/count, photos, buildup or clutter level, access, product preferences, customer-arranged trash/donation prep, and safety notes all affect the quote. Kitchen + Bath Reset requests fit here. NestHelper does not provide dump runs, junk hauling, hazardous material disposal, pest/biohazard cleanup, mold remediation, or unsafe heavy lifting."
+    note: "Specific Area(s) Resets are reviewed before checkout. The selected rooms, repeat area support preference, cleaning type, detailed add-ons, size/count, photos, buildup or clutter level, access, product preferences, customer-arranged trash/donation prep, and safety notes all affect the quote. Kitchen + Bath Reset requests fit here. NestHelper does not provide dump runs, junk hauling, hazardous material disposal, pest/biohazard cleanup, mold remediation, or unsafe heavy lifting."
   },
   {
     id: "move-out-cleaning",
     title: "Move-In / Move-Out Cleaning",
     shortTitle: "Move-In / Out Clean",
-    description: "Empty-home cleaning for move-ins, move-outs, rentals, and listing prep — quoted after review.",
+    description: "Choose this for empty or mostly empty homes before moving in, after moving out, or before listing/renting.",
     details: [
-      "Empty or mostly empty home cleaning",
-      "Kitchen and bathroom focus",
-      "Floors, baseboards, surfaces, and touchpoints",
-      "Inside cabinets, drawers, or appliances when requested",
-      "Non-toxic or low-odor product preference reviewed"
+      "Empty or mostly empty homes",
+      "Before moving in or after moving out",
+      "Before listing, renting, or turnover-style cleaning",
+      "Kitchen, bathrooms, floors, baseboards, surfaces, and touchpoints",
+      "Inside cabinets, drawers, or appliances when requested"
     ],
     standardPrice: "Quoted after review",
     priceNote: "Square footage + condition reviewed",

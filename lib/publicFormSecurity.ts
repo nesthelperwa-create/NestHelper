@@ -87,12 +87,12 @@ const serviceRequestAllowedFields = [
   "smartLabelSetupNotes",
   "homePriorities",
   "homeAreas",
-  "wholeHomeCleaningType",
+  "wholeHomeVisitType",
+  "wholeHomeRecurringCadence",
   "wholeHomeCondition",
   "wholeHomeAddOns",
   "wholeHomeAddOnSummary",
   "wholeHomeOtherAddOn",
-  "bedrooms",
   "areaResetRooms",
   "areaResetRoomSummary",
   "areaResetOtherRoom",
@@ -105,6 +105,7 @@ const serviceRequestAllowedFields = [
   "areaResetAdditionalAreaSummary",
   "areaResetOtherAdditionalArea",
   "areaResetCleaningType",
+  "areaResetRepeatSupport",
   "areaResetBathroomCount",
   "areaResetSize",
   "areaResetCondition",
@@ -290,7 +291,13 @@ const textLimits: Record<string, number> = {
   areaResetOtherArea: 500,
   areaResetAdditionalAreaSummary: 700,
   areaResetOtherAdditionalArea: 500,
+  wholeHomeVisitType: 220,
+  wholeHomeRecurringCadence: 120,
+  wholeHomeCondition: 220,
+  wholeHomeAddOnSummary: 900,
+  wholeHomeOtherAddOn: 500,
   areaResetCleaningType: 220,
+  areaResetRepeatSupport: 160,
   areaResetBathroomCount: 140,
   areaResetSize: 500,
   areaResetCondition: 220,
@@ -477,16 +484,16 @@ function validateRequired(collection: SubmissionCollection, payload: Record<stri
 
       if (trimText(payload.service) === "whole-home-reset") {
         requireText("squareFootage", "approximate square footage");
-        requireText("bedrooms", "bedroom count");
-        requireText("bathrooms", "bathroom count");
-        requireText("wholeHomeCleaningType", "whole-home cleaning type");
+        requireText("bedrooms", "bedrooms");
+        requireText("bathrooms", "bathrooms");
+        requireText("wholeHomeVisitType", "visit type");
         requireText("requestDetails", "top priorities and safety notes");
 
-        const selectedAddOns = Array.isArray(payload.wholeHomeAddOns)
+        const selectedWholeHomeAddOns = Array.isArray(payload.wholeHomeAddOns)
           ? (payload.wholeHomeAddOns as unknown[]).map((item) => trimText(item, 220).toLowerCase())
           : [];
 
-        if (selectedAddOns.some((item) => item.includes("other")) && !trimText(payload.wholeHomeOtherAddOn)) {
+        if (selectedWholeHomeAddOns.some((item) => item.includes("other")) && !trimText(payload.wholeHomeOtherAddOn)) {
           missing.push("other whole-home add-on or focus item");
         }
       }

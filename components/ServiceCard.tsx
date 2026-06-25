@@ -22,19 +22,19 @@ const serviceStyles: Record<string, { eyebrow: string; accent: string; chip: str
     price: "bg-blue-50 text-blue-900",
     ring: "ring-blue-200/70",
   },
-  "whole-home-reset": {
-    eyebrow: "Whole home clean",
-    accent: "from-teal-500/12 via-nest-mint/30 to-white",
-    chip: "bg-teal-50 text-teal-900 border-teal-200",
-    price: "bg-teal-50 text-teal-950",
-    ring: "ring-teal-200/70",
-  },
   "helper-block-4hr": {
     eyebrow: "Bigger reset",
     accent: "from-violet-500/12 via-purple-100 to-white",
     chip: "bg-violet-50 text-violet-800 border-violet-200",
     price: "bg-violet-50 text-violet-900",
     ring: "ring-violet-200/70",
+  },
+  "whole-home-reset": {
+    eyebrow: "Whole home",
+    accent: "from-emerald-500/12 via-nest-mint/30 to-white",
+    chip: "bg-emerald-50 text-emerald-900 border-emerald-200",
+    price: "bg-emerald-50 text-emerald-950",
+    ring: "ring-emerald-200/70",
   },
   "specific-area-reset": {
     eyebrow: "Area reset",
@@ -101,22 +101,22 @@ const serviceExtras: Record<string, ServiceExtra> = {
     goodToKnow: ["Custom scope reviewed", "Half-day helper block", "Best for bigger lists"],
   },
   "whole-home-reset": {
-    bestFor: "Regular full-home cleaning when the goal is the entire home, not just one kitchen, bathroom, closet, garage, or small zone.",
+    bestFor: "Entire-home cleaning or reset help, including first-time deep cleans, first-time deep clean + recurring maintenance, and weekly, bi-weekly, or monthly full-home support after review.",
     extraDetails: [
-      "Good for standard cleaning, first-visit cleaning, or recurring maintenance after the first approved visit",
-      "Square footage, bedroom/bath count, condition, pets, access, and photos help us quote accurately",
-      "Interior fridge, interior oven, baseboards, pet hair focus, or extra linen tasks can be added for review",
+      "Best when the goal is the whole home, not just one room or selected areas",
+      "Visit type, home size, bedroom/bath count, condition, pets, and access help us quote accurately",
+      "Optional detail items like interior fridge, interior oven, baseboards, pet hair focus, or linen reset can be requested",
     ],
-    goodToKnow: ["Quote first", "Full-home focused", "Recurring reviewed"],
+    goodToKnow: ["Entire home", "Quote first", "Recurring available"],
   },
   "specific-area-reset": {
-    bestFor: "One focused space that needs a real reset — like a garage, pantry, closet, playroom, laundry room, entry, kitchen zone, or moving-prep area.",
+    bestFor: "Selected rooms or focused areas only — like kitchen, bathroom(s), pantry, closet, playroom, laundry area, garage, fridge, oven, or a few rooms but not the entire home.",
     extraDetails: [
-      "Garage Reset can include sorting, organizing, sweeping accessible areas, and grouping keep/donate/trash piles",
-      "Great for making room for storage, parking, strollers, tools, seasonal items, toys, or household systems",
-      "Photos help us quote clutter level, access, floor space, shelving, and any disposal needs before checkout",
+      "Kitchen requests can include fridge interior, oven interior, cabinets, dishes/sink, appliance exteriors, counters, or stovetop focus",
+      "Bathroom requests can include shower/tub buildup, toilet/vanity/sink detail, mirrors, grout, or soap-scum focus",
+      "Optional repeat area support can be requested every 2 weeks or monthly for selected rooms only",
     ],
-    goodToKnow: ["Quote first", "Photos recommended", "No hazardous cleanup"],
+    goodToKnow: ["Selected areas", "Repeat area support", "Quote first"],
   },
   "move-out-cleaning": {
     bestFor: "Empty or mostly empty homes that need a reviewed move-in, move-out, rental turnover, or listing-prep clean before keys are handed over.",
@@ -161,7 +161,7 @@ export function ServiceCard({ service, equalCollapsedHeight = false }: { service
   const isLaundry = service.id === "laundry-rescue";
   const isQuoteBased = service.standardPrice.toLowerCase().includes("quoted");
   const equalClosed = equalCollapsedHeight && !open;
-  const collapsedHeightClass = equalCollapsedHeight ? "h-[670px] sm:h-[650px]" : "min-h-[610px] md:h-[650px]";
+  const collapsedHeightClass = equalCollapsedHeight ? "min-h-[690px] sm:min-h-[670px]" : "min-h-[630px]";
 
   useEffect(() => {
     function handleOtherCard(event: Event) {
@@ -222,6 +222,13 @@ export function ServiceCard({ service, equalCollapsedHeight = false }: { service
     toggleCard();
   }
 
+  function getRequestHref() {
+    if (service.id === "specific-area-reset") return "/request?service=specific-area-reset#request-form";
+    if (service.id === "move-out-cleaning") return "/request?service=move-in-out-cleaning#request-form";
+    if (service.id === "whole-home-reset") return "/request?service=whole-home-reset#request-form";
+    return `/request?service=${service.id}#request-form`;
+  }
+
   function toggleDetails(event: MouseEvent<HTMLButtonElement>) {
     event.stopPropagation();
     if (open) {
@@ -261,11 +268,11 @@ export function ServiceCard({ service, equalCollapsedHeight = false }: { service
         </div>
       </div>
 
-      <div className={`flex flex-1 flex-col p-5 sm:p-6 ${equalClosed ? "pb-[10.25rem] sm:pb-[10.5rem]" : ""}`}>
+      <div className="flex flex-1 flex-col p-5 sm:p-6">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
             <h3 className={`text-2xl font-black leading-tight text-nest-teal ${open ? "" : "min-h-[3.1rem]"}`}>{service.title}</h3>
-            <p className={`mt-2 text-sm font-semibold leading-6 text-nest-ink/68 ${open ? "" : "line-clamp-2 min-h-[3rem]"}`}>
+            <p className={`mt-2 text-sm font-semibold leading-6 text-nest-ink/68 ${open ? "" : "line-clamp-3 min-h-[4.5rem]"}`}>
               {service.description}
             </p>
           </div>
@@ -284,8 +291,8 @@ export function ServiceCard({ service, equalCollapsedHeight = false }: { service
           </button>
         </div>
 
-        <div className={`mt-5 shrink-0 overflow-hidden rounded-3xl border border-nest-gold/14 bg-gradient-to-br from-nest-cream via-white to-nest-mint/20 shadow-sm ${equalClosed ? "h-[8.75rem]" : ""}`}>
-          <div className={`grid gap-0 sm:grid-cols-[1fr_8.4rem] ${equalClosed ? "h-full" : "min-h-[8.4rem]"}`}>
+        <div className={`mt-5 shrink-0 overflow-hidden rounded-3xl border border-nest-gold/14 bg-gradient-to-br from-nest-cream via-white to-nest-mint/20 shadow-sm ${equalClosed ? "min-h-[8.75rem]" : ""}`}>
+          <div className={`grid gap-0 sm:grid-cols-[1fr_8.4rem] ${equalClosed ? "min-h-[8.75rem]" : "min-h-[8.4rem]"}`}>
             <div className="flex flex-col justify-center p-4 sm:p-5">
               <div className="text-xs font-black uppercase tracking-[0.16em] text-nest-ink/55">{isQuoteBased ? "Pricing" : "Starting at"}</div>
               <div className={`mt-1 break-words font-black leading-tight text-nest-teal ${isLaundry ? "text-[1.55rem] sm:text-[1.62rem]" : "text-3xl"}`}>
@@ -302,7 +309,7 @@ export function ServiceCard({ service, equalCollapsedHeight = false }: { service
                 {isQuoteBased ? "Reviewed before checkout" : "Helper-based launch pricing"}
               </div>
             </div>
-            <div className={`flex min-h-[3.5rem] items-center justify-center px-3 py-3 text-center text-[0.58rem] font-black uppercase leading-5 tracking-[0.075em] sm:text-[0.62rem] ${theme.price}`}>
+            <div className={`flex min-h-[3.5rem] min-w-0 items-center justify-center break-words px-3 py-3 text-center text-[0.58rem] font-black uppercase leading-5 tracking-[0.075em] sm:text-[0.62rem] ${theme.price}`}>
               {service.priceNote}
             </div>
           </div>
@@ -383,7 +390,7 @@ export function ServiceCard({ service, equalCollapsedHeight = false }: { service
           </div>
         </div>
 
-        <div className={`shrink-0 pt-5 ${equalClosed ? "absolute bottom-5 left-5 right-5 sm:bottom-6 sm:left-6 sm:right-6" : "mt-auto"}`}>
+        <div className="mt-auto shrink-0 pt-5">
           <button
             type="button"
             onClick={toggleDetails}
@@ -400,7 +407,7 @@ export function ServiceCard({ service, equalCollapsedHeight = false }: { service
           </button>
 
           <Link
-            href={`/request?service=${service.id}`}
+            href={getRequestHref()}
             onClick={(event) => event.stopPropagation()}
             className="focus-ring group/link inline-flex w-full items-center justify-center gap-2 rounded-full bg-nest-teal px-5 py-3.5 font-black text-white shadow-soft transition hover:-translate-y-0.5 hover:bg-nest-teal2 hover:shadow-lift"
           >

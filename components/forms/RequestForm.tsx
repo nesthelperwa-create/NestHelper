@@ -49,7 +49,8 @@ const defaultState = {
   smartLabelSetupNotes: "",
   homePriorities: [] as string[],
   homeAreas: [] as string[],
-  wholeHomeCleaningType: "Standard cleaning / regular maintenance",
+  wholeHomeVisitType: "One-time whole home reset",
+  wholeHomeRecurringCadence: "Not sure yet",
   wholeHomeCondition: "Standard cleaning / normal household use",
   wholeHomeAddOns: [] as string[],
   wholeHomeOtherAddOn: "",
@@ -64,6 +65,7 @@ const defaultState = {
   areaResetAdditionalAreas: [] as string[],
   areaResetOtherAdditionalArea: "",
   areaResetCleaningType: "",
+  areaResetRepeatSupport: "One-time reset",
   areaResetBathroomCount: "",
   areaResetSize: "",
   areaResetCondition: "Standard cleaning / normal household use",
@@ -108,12 +110,18 @@ const priorityOptions = [
   "I am not sure — help me prioritize",
 ];
 
-const wholeHomeCleaningTypeOptions = [
-  "Standard cleaning / regular maintenance",
-  "Deep cleaning / first visit",
-  "Recurring maintenance after first visit",
-  "Move-in / move-out style cleaning",
-  "Not sure — please recommend after review",
+const wholeHomeVisitTypeOptions = [
+  "One-time whole home reset",
+  "First-time deep clean",
+  "First-time deep clean + recurring maintenance",
+  "Recurring maintenance only",
+];
+
+const wholeHomeRecurringCadenceOptions = [
+  "Weekly",
+  "Bi-weekly",
+  "Monthly",
+  "Not sure yet",
 ];
 
 const wholeHomeAddOnOptions = [
@@ -324,6 +332,13 @@ const areaResetAreaOptions = areaResetRoomOptions;
 const areaResetAdditionalAreaOptions: string[] = [];
 const areaResetGoalOptions = getAreaResetAddOnOptions(areaResetRoomOptions);
 
+const areaResetRepeatSupportOptions = [
+  "One-time reset",
+  "Every 2 weeks",
+  "Monthly area reset",
+  "Not sure yet",
+];
+
 const areaResetHaulingOptions = [
   "No disposal prep needed",
   "Customer will handle trash/disposal",
@@ -406,12 +421,18 @@ const laundryTypeOptions = [
   "Mixed household laundry",
 ];
 
+function normalizeServiceParam(serviceId: string) {
+  if (serviceId === "move-in-out-cleaning") return "move-out-cleaning";
+  return serviceId;
+}
+
 function getServiceCategory(serviceId: string) {
-  if (serviceId === "laundry-rescue") return "laundry";
-  if (serviceId === "errand-helper") return "errand";
-  if (serviceId === "specific-area-reset") return "areaReset";
-  if (serviceId === "move-out-cleaning") return "moveOut";
-  if (serviceId) return "home";
+  const normalizedServiceId = normalizeServiceParam(serviceId);
+  if (normalizedServiceId === "laundry-rescue") return "laundry";
+  if (normalizedServiceId === "errand-helper") return "errand";
+  if (normalizedServiceId === "specific-area-reset") return "areaReset";
+  if (normalizedServiceId === "move-out-cleaning") return "moveOut";
+  if (normalizedServiceId) return "home";
   return "none";
 }
 
@@ -548,7 +569,8 @@ function cleanForSelectedService(form: RequestFormState) {
         squareFootage: form.squareFootage,
         bedrooms: form.bedrooms,
         bathrooms: form.bathrooms,
-        wholeHomeCleaningType: form.wholeHomeCleaningType,
+        wholeHomeVisitType: form.wholeHomeVisitType,
+        wholeHomeRecurringCadence: form.wholeHomeRecurringCadence,
         wholeHomeCondition: form.wholeHomeCondition,
         wholeHomeAddOns: addOns,
         wholeHomeAddOnSummary: addOnSummary,
@@ -556,16 +578,17 @@ function cleanForSelectedService(form: RequestFormState) {
         pets: form.pets,
         petDetails: form.petDetails,
         supplyPreference: form.supplyPreference,
-        recurringResetInterest: form.recurringResetInterest,
-        recurringResetNote: form.recurringResetInterest !== "One-time reset for now"
-          ? "Recurring rates are request-based and begin only after the first completed standard-price reset if scope, schedule, service area, and helper fit are consistent."
-          : "Customer requested a one-time reset for now.",
+        recurringResetInterest: [form.wholeHomeVisitType, form.wholeHomeVisitType.toLowerCase().includes("recurring") ? form.wholeHomeRecurringCadence : ""].filter(Boolean).join(" — "),
+        recurringResetNote: form.wholeHomeVisitType.toLowerCase().includes("recurring")
+          ? "Customer is interested in full-home recurring maintenance. Cadence is request-based and depends on scope, service area, schedule, and helper fit."
+          : "Customer requested a one-time whole-home visit for now.",
         homeAreas: [WHOLE_HOME_OPTION],
         homePriorities: addOns,
         roomsAreas: [
           "Whole home",
           sizeSummary,
-          form.wholeHomeCleaningType,
+          form.wholeHomeVisitType,
+          form.wholeHomeVisitType.toLowerCase().includes("recurring") ? form.wholeHomeRecurringCadence : "",
           addOnSummary ? `Optional add-ons: ${addOnSummary}` : "",
           form.wholeHomeOtherAddOn,
         ].filter(Boolean).join(", "),
@@ -614,6 +637,7 @@ function cleanForSelectedService(form: RequestFormState) {
       areaResetAdditionalAreaSummary: "",
       areaResetOtherAdditionalArea: "",
       areaResetCleaningType: form.areaResetCleaningType,
+      areaResetRepeatSupport: form.areaResetRepeatSupport,
       areaResetBathroomCount: form.areaResetBathroomCount,
       areaResetSize: form.areaResetSize,
       areaResetCondition: form.areaResetCondition,
@@ -628,6 +652,7 @@ function cleanForSelectedService(form: RequestFormState) {
       roomsAreas: [
         roomSummary,
         form.areaResetOtherRoom,
+        form.areaResetRepeatSupport,
         form.areaResetBathroomCount ? `Bathrooms: ${form.areaResetBathroomCount}` : "",
         form.areaResetSize,
         addOnSummary ? `Add-ons: ${addOnSummary}` : "",
@@ -690,7 +715,7 @@ function cleanForSelectedService(form: RequestFormState) {
 
 export function RequestForm() {
   const params = useSearchParams();
-  const requestedService = params.get("service") || "";
+  const requestedService = normalizeServiceParam(params.get("service") || "");
   const requestedReferralCode = normalizeReferralInput(params.get("ref") || params.get("referral") || params.get("referralCode") || "");
   const [form, setForm] = useState({
     ...mergeCampaignAttribution({
@@ -741,7 +766,8 @@ export function RequestForm() {
       service,
       homePriorities: nextCategory === "home" && !isWholeHome ? prev.homePriorities : [],
       homeAreas: nextCategory === "home" ? (isWholeHome ? [WHOLE_HOME_OPTION] : prev.homeAreas) : [],
-      wholeHomeCleaningType: isWholeHome ? (prev.wholeHomeCleaningType || defaultState.wholeHomeCleaningType) : defaultState.wholeHomeCleaningType,
+      wholeHomeVisitType: isWholeHome ? (prev.wholeHomeVisitType || defaultState.wholeHomeVisitType) : defaultState.wholeHomeVisitType,
+      wholeHomeRecurringCadence: isWholeHome ? (prev.wholeHomeRecurringCadence || defaultState.wholeHomeRecurringCadence) : defaultState.wholeHomeRecurringCadence,
       wholeHomeCondition: isWholeHome ? (prev.wholeHomeCondition || defaultState.wholeHomeCondition) : defaultState.wholeHomeCondition,
       wholeHomeAddOns: isWholeHome ? prev.wholeHomeAddOns : [],
       wholeHomeOtherAddOn: isWholeHome ? prev.wholeHomeOtherAddOn : "",
@@ -756,6 +782,7 @@ export function RequestForm() {
       areaResetAdditionalAreas: nextCategory === "areaReset" ? prev.areaResetAdditionalAreas : [],
       areaResetOtherAdditionalArea: nextCategory === "areaReset" ? prev.areaResetOtherAdditionalArea : "",
       areaResetCleaningType: nextCategory === "areaReset" ? prev.areaResetCleaningType : defaultState.areaResetCleaningType,
+      areaResetRepeatSupport: nextCategory === "areaReset" ? prev.areaResetRepeatSupport : defaultState.areaResetRepeatSupport,
       areaResetBathroomCount: nextCategory === "areaReset" ? prev.areaResetBathroomCount : "",
       areaResetSize: nextCategory === "areaReset" ? prev.areaResetSize : "",
       areaResetCondition: nextCategory === "areaReset" ? prev.areaResetCondition : defaultState.areaResetCondition,
@@ -850,9 +877,15 @@ export function RequestForm() {
         return;
       }
 
-      if (!form.wholeHomeCleaningType.trim()) {
+      if (!form.wholeHomeVisitType.trim()) {
         setStatus("error");
-        setMessage("Please choose the whole-home cleaning type.");
+        setMessage("Please choose the Whole Home Reset visit type.");
+        return;
+      }
+
+      if (form.wholeHomeVisitType.toLowerCase().includes("recurring") && !form.wholeHomeRecurringCadence.trim()) {
+        setStatus("error");
+        setMessage("Please choose a maintenance cadence or select Not sure yet.");
         return;
       }
 
@@ -1028,13 +1061,13 @@ export function RequestForm() {
         <Section
           title={isWholeHomeReset ? "4. Whole home cleaning scope" : "4. Home reset focus"}
           description={isWholeHomeReset
-            ? "Regular whole-home cleaning is quoted after review. Home size, bedroom/bath count, condition, pets, access, and optional detail add-ons help us estimate the right time and price."
+            ? "Choose this for full-home cleaning or reset help, including first-time deep cleans and ongoing maintenance."
             : "Choose what needs attention. We review your package, time block, notes, and photos before confirming what can reasonably fit."}
         >
           {isWholeHomeReset ? (
             <>
               <div className="rounded-3xl border border-nest-gold/20 bg-nest-cream p-5 text-sm leading-6 text-nest-ink/76">
-                <strong className="text-nest-teal">Good fit:</strong> regular cleaning for the main rooms of the home, first-visit cleaning, or recurring maintenance after review. <strong className="text-nest-teal">Quote first:</strong> deep first visits, heavy buildup, interior appliances, extra linens, pet hair focus, or unusual access notes.
+                <strong className="text-nest-teal">Good fit:</strong> entire-home cleaning or reset help, first-time deep clean, first-time deep clean + recurring maintenance, or recurring maintenance only. <strong className="text-nest-teal">Quote first:</strong> heavy buildup, interior appliances, extra linens, pet hair focus, or unusual access notes.
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field label="Home type">
@@ -1055,11 +1088,21 @@ export function RequestForm() {
                 <Field label="Bathrooms" required>
                   <input className="input" required placeholder="Example: 2.5 bathrooms" value={form.bathrooms} onChange={(e) => update("bathrooms", e.target.value)} />
                 </Field>
-                <Field label="Whole-home cleaning type" required>
-                  <select className="input" required value={form.wholeHomeCleaningType} onChange={(e) => update("wholeHomeCleaningType", e.target.value)}>
-                    {wholeHomeCleaningTypeOptions.map((option) => <option key={option}>{option}</option>)}
+                <Field label="Visit type" required>
+                  <select className="input" required value={form.wholeHomeVisitType} onChange={(e) => update("wholeHomeVisitType", e.target.value)}>
+                    {wholeHomeVisitTypeOptions.map((option) => <option key={option}>{option}</option>)}
                   </select>
+                  <p className="mt-2 text-sm font-semibold leading-6 text-nest-ink/62">
+                    Choose this for full-home cleaning or reset help, including first-time deep cleans and ongoing maintenance.
+                  </p>
                 </Field>
+                {form.wholeHomeVisitType.toLowerCase().includes("recurring") && (
+                  <Field label="Maintenance cadence">
+                    <select className="input" value={form.wholeHomeRecurringCadence} onChange={(e) => update("wholeHomeRecurringCadence", e.target.value)}>
+                      {wholeHomeRecurringCadenceOptions.map((option) => <option key={option}>{option}</option>)}
+                    </select>
+                  </Field>
+                )}
                 <Field label="Condition level">
                   <select className="input" value={form.wholeHomeCondition} onChange={(e) => update("wholeHomeCondition", e.target.value)}>
                     <option>Light cleaning / mostly maintained</option>
@@ -1079,11 +1122,7 @@ export function RequestForm() {
                     <option>Not sure yet</option>
                   </select>
                 </Field>
-                <Field label="Interested in recurring cleaning?">
-                  <select className="input" value={form.recurringResetInterest} onChange={(e) => update("recurringResetInterest", e.target.value)}>
-                    {recurringResetOptions.map((option) => <option key={option}>{option}</option>)}
-                  </select>
-                </Field>
+
               </div>
 
               <div>
@@ -1185,9 +1224,9 @@ export function RequestForm() {
       )}
 
       {isAreaReset && (
-        <Section title="4. Specific Area(s) scope" description="Pick the room or rooms first. The form will show only the cleaning types and add-ons that match those selected rooms so customers are not staring at one long checklist.">
+        <Section title="4. Specific Area(s) scope" description="Choose this when you only need help with selected rooms or focused areas. Pick the rooms first, then the form only shows matching cleaning types and add-ons.">
           <div className="rounded-3xl border border-nest-gold/20 bg-nest-cream p-5 text-sm leading-6 text-nest-ink/76">
-            <strong className="text-nest-teal">Good fit:</strong> kitchen and bathroom cleaning, pantry, closet, playroom, laundry room, garage, entry/mudroom, or another specific zone. <strong className="text-nest-teal">Quote first:</strong> interior appliances, inside cabinets or drawers, heavy buildup, large clutter, donation/trash prep, and specialty needs.
+            <strong className="text-nest-teal">Good fit:</strong> selected rooms or focused areas like kitchen, bathroom(s), bedrooms, playroom, pantry, fridge, oven, laundry area, garage, or a few rooms. <strong className="text-nest-teal">Not for:</strong> entire-home recurring cleaning plans. <strong className="text-nest-teal">Quote first:</strong> interior appliances, inside cabinets or drawers, heavy buildup, large clutter, donation/trash prep, and specialty needs.
           </div>
 
           <div>
@@ -1216,6 +1255,14 @@ export function RequestForm() {
                     <option value="">Select the type of help</option>
                     {visibleAreaResetCleaningTypeOptions.map((option) => <option key={option}>{option}</option>)}
                   </select>
+                </Field>
+                <Field label="Is this a one-time reset or repeat area support?">
+                  <select className="input" value={form.areaResetRepeatSupport} onChange={(e) => update("areaResetRepeatSupport", e.target.value)}>
+                    {areaResetRepeatSupportOptions.map((option) => <option key={option}>{option}</option>)}
+                  </select>
+                  <p className="mt-2 text-sm font-semibold leading-6 text-nest-ink/62">
+                    Repeat area support is for selected rooms or areas only, not a full-home recurring cleaning plan.
+                  </p>
                 </Field>
                 {form.areaResetRooms.includes("Bathroom(s)") && (
                   <Field label="How many bathrooms?" required>
@@ -1274,7 +1321,7 @@ export function RequestForm() {
               )}
 
               <Field label="Top priorities and safety notes" required>
-                <textarea className="input min-h-28" required placeholder="Example: Kitchen + 2.5 bathrooms. Standard cleaning first. Please include interior fridge, but no oven this visit. Two dogs will be secured upstairs." value={form.areaResetNotes} onChange={(e) => update("areaResetNotes", e.target.value)} />
+                <textarea className="input min-h-28" required placeholder="Example: Kitchen + 2.5 bathrooms. Standard cleaning first. Please include interior fridge, but no oven this visit. Repeat area support monthly may help. Two dogs will be secured upstairs." value={form.areaResetNotes} onChange={(e) => update("areaResetNotes", e.target.value)} />
               </Field>
             </>
           )}
