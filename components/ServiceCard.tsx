@@ -161,8 +161,10 @@ export function ServiceCard({ service, equalCollapsedHeight = false }: { service
   const isLaundry = service.id === "laundry-rescue";
   const isQuoteBased = service.standardPrice.toLowerCase().includes("quoted");
   const equalClosed = equalCollapsedHeight && !open;
-  const collapsedHeightClass = equalClosed ? "md:h-[730px] xl:h-[720px]" : "";
-  const pricePanelHeightClass = equalClosed ? "min-h-[11.25rem]" : "min-h-[9.35rem]";
+  const collapsedHeightClass = equalClosed ? "md:h-[720px]" : "";
+  const closedTitleClass = equalClosed ? "line-clamp-2 h-[3.35rem]" : "";
+  const closedDescriptionClass = equalClosed ? "line-clamp-3 h-[4.5rem]" : "";
+  const pricePanelHeightClass = equalClosed ? "h-[12rem]" : "min-h-[9.35rem]";
 
   useEffect(() => {
     function handleOtherCard(event: Event) {
@@ -272,8 +274,8 @@ export function ServiceCard({ service, equalCollapsedHeight = false }: { service
       <div className="flex flex-1 flex-col p-5 sm:p-6">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
-            <h3 className={`text-2xl font-black leading-tight text-nest-teal ${open ? "" : "line-clamp-2 min-h-[3.35rem]"}`}>{service.title}</h3>
-            <p className={`mt-2 text-sm font-semibold leading-6 text-nest-ink/68 ${open ? "" : "line-clamp-3 min-h-[4.5rem]"}`}>
+            <h3 className={`text-2xl font-black leading-tight text-nest-teal ${closedTitleClass}`}>{service.title}</h3>
+            <p className={`mt-2 text-sm font-semibold leading-6 text-nest-ink/68 ${closedDescriptionClass}`}>
               {service.description}
             </p>
           </div>
