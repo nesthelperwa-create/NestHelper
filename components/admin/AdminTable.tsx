@@ -581,16 +581,28 @@ hello@nesthelperwa.com
   };
 }
 
+function getCompactServicePillLabel(item: AdminDoc) {
+  const key = getServiceKey(item);
+  if (key === "family-reset-3hr") return "Parent Reset";
+  if (key === "whole-home-reset") return "Whole Home";
+  if (key === "specific-area-reset") return "Area Reset";
+  if (key === "move-out-cleaning") return "Move In/Out";
+  if (key === "errand-helper") return "Errands";
+  if (key === "laundry-rescue") return "Laundry";
+  if (key === "commercial-reset") return "Commercial";
+  return getServiceLook(item).label;
+}
+
 function ServicePill({ item }: { item: AdminDoc }) {
   const look = getServiceLook(item);
-  const rawService = String(item.service || "");
+  const label = getCompactServicePillLabel(item);
   return (
-    <span className={`inline-flex min-w-[132px] items-center justify-center gap-2 rounded-full border px-3 py-1.5 text-[11px] font-black uppercase tracking-wide ${look.badge}`}>
-      <span className={`h-2.5 w-2.5 rounded-full ${look.dot}`} />
-      {look.label}
-      {rawService && !rawService.toLowerCase().includes(look.label.toLowerCase().split(" ")[0]) && (
-        <span className="font-bold opacity-60">{rawService}</span>
-      )}
+    <span
+      className={`inline-flex w-[118px] max-w-[118px] items-center justify-center gap-1.5 rounded-full border px-2.5 py-1.5 text-[10px] font-black uppercase tracking-wide ${look.badge}`}
+      title={look.label}
+    >
+      <span className={`h-2 w-2 shrink-0 rounded-full ${look.dot}`} />
+      <span className="min-w-0 truncate">{label}</span>
     </span>
   );
 }
