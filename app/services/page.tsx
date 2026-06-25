@@ -52,23 +52,28 @@ export default function ServicesPage() {
             <p className="mx-auto mt-4 max-w-3xl text-base font-semibold leading-7 text-nest-ink/70 sm:text-lg lg:mx-0">
               Choose Parent Reset Plan for busy-parent room resets, Whole Home Cleaning for the entire home, Specific Area(s) Reset for selected rooms, or Move-In / Move-Out Cleaning for empty or mostly empty homes. You can also request laundry help or errands.
             </p>
-            <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row lg:justify-start">
-              <ButtonLink href="/request#request-form">Request Help</ButtonLink>
-            </div>
+            <p className="mx-auto mt-5 max-w-3xl text-sm font-black leading-6 text-nest-teal sm:text-base lg:mx-0">
+              Click the matching service guide on the right to jump to that service card below.
+            </p>
           </div>
 
           <div className="pro-card rounded-[2.5rem] p-6 sm:p-8">
             <h3 className="text-2xl font-black text-nest-teal">Not sure what to choose?</h3>
             <div className="mt-5 grid gap-3">
               {[
-                { title: "Parent Reset Plan", label: "Busy-parent room reset", text: "Choose this for a 3-hour reset of playrooms, kids rooms, living areas, pantry, entry, or other family spaces with organizing, light cleaning, and child-safe disinfecting.", icon: <Sparkles size={16} />, badge: "bg-blue-50 text-blue-800 border-blue-200" },
-                { title: "Whole Home Cleaning", label: "Entire home", text: "Choose this for full-home cleaning, first-time deep cleans, and weekly, bi-weekly, or monthly maintenance.", icon: <Home size={16} />, badge: "bg-emerald-50 text-emerald-900 border-emerald-200" },
-                { title: "Specific Area(s) Reset", label: "Selected rooms", text: "Choose this for kitchen, bathroom(s), bedrooms, playroom, pantry, fridge, oven, laundry area, garage, or a few rooms — not the entire home.", icon: <Grid3X3 size={16} />, badge: "bg-lime-50 text-lime-900 border-lime-200" },
-                { title: "Move-In / Move-Out Cleaning", label: "Empty home", text: "Choose this for empty or mostly empty homes before moving in, after moving out, or before listing/renting.", icon: <Truck size={16} />, badge: "bg-cyan-50 text-cyan-900 border-cyan-200" },
-                { title: "Errand Helper", label: "Local errands", text: "Choose this for simple local errands, pickups, drop-offs, or family support tasks.", icon: <ShoppingBag size={16} />, badge: "bg-amber-50 text-amber-900 border-amber-200" },
-                { title: "Laundry Rescue", label: "Laundry help", text: "Choose this for laundry pickup, folding, reset help, or catching up on laundry.", icon: <Shirt size={16} />, badge: "bg-rose-50 text-rose-800 border-rose-200" },
+                { title: "Parent Reset Plan", label: "Busy-parent room reset", href: "#service-family-reset-3hr", text: "Choose this for a 3-hour reset of playrooms, kids rooms, living areas, pantry, entry, or other family spaces with organizing, light cleaning, and child-safe disinfecting.", icon: <Sparkles size={16} />, badge: "bg-blue-50 text-blue-800 border-blue-200" },
+                { title: "Whole Home Cleaning", label: "Entire home", href: "#service-whole-home-reset", text: "Choose this for full-home cleaning, first-time deep cleans, and weekly, bi-weekly, or monthly maintenance.", icon: <Home size={16} />, badge: "bg-emerald-50 text-emerald-900 border-emerald-200" },
+                { title: "Specific Area(s) Reset", label: "Selected rooms", href: "#service-specific-area-reset", text: "Choose this for kitchen, bathroom(s), bedrooms, playroom, pantry, fridge, oven, laundry area, garage, or a few rooms — not the entire home.", icon: <Grid3X3 size={16} />, badge: "bg-lime-50 text-lime-900 border-lime-200" },
+                { title: "Move-In / Move-Out Cleaning", label: "Empty home", href: "#service-move-out-cleaning", text: "Choose this for empty or mostly empty homes before moving in, after moving out, or before listing/renting.", icon: <Truck size={16} />, badge: "bg-cyan-50 text-cyan-900 border-cyan-200" },
+                { title: "Errand Helper", label: "Local errands", href: "#service-errand-helper", text: "Choose this for simple local errands, pickups, drop-offs, or family support tasks.", icon: <ShoppingBag size={16} />, badge: "bg-amber-50 text-amber-900 border-amber-200" },
+                { title: "Laundry Rescue", label: "Laundry help", href: "#service-laundry-rescue", text: "Choose this for laundry pickup, folding, reset help, or catching up on laundry.", icon: <Shirt size={16} />, badge: "bg-rose-50 text-rose-800 border-rose-200" },
               ].map((item) => (
-                <div key={item.title} className="rounded-3xl border border-nest-gold/14 bg-white/82 p-4 shadow-sm">
+                <a
+                  key={item.title}
+                  href={item.href}
+                  className="block rounded-3xl border border-nest-gold/14 bg-white/82 p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-nest-gold/30 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-nest-teal/20"
+                  aria-label={`Jump to ${item.title}`}
+                >
                   <div className="flex items-start gap-3">
                     <span className={`mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border ${item.badge}`}>{item.icon}</span>
                     <div className="min-w-0">
@@ -77,7 +82,7 @@ export default function ServicesPage() {
                       <p className="mt-2 text-sm font-semibold leading-6 text-nest-ink/68">{item.text}</p>
                     </div>
                   </div>
-                </div>
+                </a>
               ))}
             </div>
           </div>
@@ -134,7 +139,11 @@ export default function ServicesPage() {
               </p>
             </div>
             <div className="grid items-start gap-6 md:grid-cols-2 xl:grid-cols-3">
-              {specialtyServices.map((service) => <ServiceCard key={service.id} service={service} equalCollapsedHeight />)}
+              {specialtyServices.map((service) => (
+                <div key={service.id} id={`service-${service.id}`} className="scroll-mt-28">
+                  <ServiceCard service={service} equalCollapsedHeight />
+                </div>
+              ))}
             </div>
           </section>
         </div>
