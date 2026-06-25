@@ -269,7 +269,7 @@ export function ServiceCard({ service }: { service: Service }) {
       <div className="flex flex-1 flex-col p-5 sm:p-6">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
-            <h3 className={`text-2xl font-black leading-tight text-nest-teal ${open ? "" : "min-h-[3.1rem]"}`}>{service.title}</h3>
+            <h3 className={`text-2xl font-black leading-tight text-nest-teal ${open ? "" : "line-clamp-2 min-h-[3.35rem]"}`}>{service.title}</h3>
             <p className={`mt-2 text-sm font-semibold leading-6 text-nest-ink/68 ${open ? "" : "line-clamp-3 min-h-[4.5rem]"}`}>
               {service.description}
             </p>
@@ -289,8 +289,8 @@ export function ServiceCard({ service }: { service: Service }) {
           </button>
         </div>
 
-        <div className="mt-5 shrink-0 overflow-hidden rounded-3xl border border-nest-gold/14 bg-gradient-to-br from-nest-cream via-white to-nest-mint/20 shadow-sm">
-          <div className="grid gap-0 sm:grid-cols-[minmax(0,1fr)_9rem]">
+        <div className="mt-5 flex min-h-[9.35rem] shrink-0 overflow-hidden rounded-3xl border border-nest-gold/14 bg-gradient-to-br from-nest-cream via-white to-nest-mint/20 shadow-sm">
+          <div className="grid w-full gap-0 sm:grid-cols-[minmax(0,1fr)_9rem]">
             <div className="flex flex-col justify-center p-4 sm:p-5">
               <div className="text-xs font-black uppercase tracking-[0.16em] text-nest-ink/55">{isQuoteBased ? "Pricing" : "Starting at"}</div>
               <div className={`mt-1 break-words font-black leading-tight text-nest-teal ${isLaundry ? "text-[1.55rem] sm:text-[1.62rem]" : "text-2xl sm:text-3xl"}`}>
