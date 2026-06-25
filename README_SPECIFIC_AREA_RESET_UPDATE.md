@@ -22,3 +22,10 @@ This replaces the awkward single “primary area” dropdown with a clearer Spec
 - `app/services/page.tsx`
 - `app/faq/page.tsx`
 - `app/request/page.tsx`
+
+
+## Scheduling wording fix
+
+- Renamed **How soon do you need help?** to **Scheduling preference** so it no longer conflicts with a requested date that may be weeks or months out.
+- Renamed **Preferred date** to **Requested date** in the form, admin details, export, and customer confirmation email.
+- Updated scheduling options to support ASAP, flexible around the requested date, date-important, planning ahead, and recurring requests.

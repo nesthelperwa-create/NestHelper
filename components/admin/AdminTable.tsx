@@ -925,7 +925,7 @@ const DETAIL_FIELD_LABELS: Record<string, string> = {
   state: "State",
   zip: "ZIP",
   zipCode: "ZIP",
-  preferredDate: "Preferred date",
+  preferredDate: "Requested date",
   preferredTime: "Preferred time",
   roomsOrAreas: "Rooms / areas",
   roomsAreas: "Rooms / areas",
@@ -933,7 +933,7 @@ const DETAIL_FIELD_LABELS: Record<string, string> = {
   packageType: "Package type",
   preferredWindow: "Preferred window",
   alternateDate: "Alternate date",
-  urgency: "Urgency",
+  urgency: "Scheduling preference",
   areaResetRooms: "Rooms / areas",
   areaResetRoomSummary: "Rooms / areas",
   areaResetOtherRoom: "Other room / area",
@@ -1413,9 +1413,9 @@ function getCleanRequestedServiceSection(collectionName: string, item: AdminDoc)
   }
 
   entries.push(makeExportEntry("service", item.selectedServiceTitle || item.packageType || item.service, "Service"));
-  entries.push(makeExportEntry("preferredDate", item.preferredDate, "Preferred date"));
+  entries.push(makeExportEntry("preferredDate", item.preferredDate, "Requested date"));
   entries.push(makeExportEntry("preferredTime", item.preferredTime, "Preferred time"));
-  entries.push(makeExportEntry("urgency", item.urgency, "Urgency"));
+  entries.push(makeExportEntry("urgency", item.urgency, "Scheduling preference"));
   entries.push(makeExportEntry("roomsOrAreas", item.roomsOrAreas, "Rooms / areas"));
   entries.push(makeExportEntry("requestDetails", item.requestDetails, "Request details"));
   entries.push(makeExportEntry("smartLabelSetupInterest", item.smartLabelSetupInterest, "Smart Label Setup"));

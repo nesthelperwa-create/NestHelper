@@ -23,7 +23,7 @@ const defaultState = {
   preferredDate: "",
   preferredWindow: "",
   alternateDate: "",
-  urgency: "Flexible — anytime this week is okay",
+  urgency: "Flexible around my preferred date",
   promoCode: "",
   howFoundUs: "",
   howFoundUsDetails: "",
@@ -731,15 +731,16 @@ export function RequestForm() {
               {services.map((service) => <option key={service.id} value={service.id}>{service.title}</option>)}
             </select>
           </Field>
-          <Field label="How soon do you need help?">
+          <Field label="Scheduling preference">
             <select className="input" value={form.urgency} onChange={(e) => update("urgency", e.target.value)}>
-              <option>Flexible — anytime this week is okay</option>
-              <option>Soon — ideally within 2-3 days</option>
-              <option>Urgent — next available opening</option>
+              <option>Flexible around my preferred date</option>
+              <option>Preferred date is important</option>
+              <option>ASAP — next available opening</option>
+              <option>Planning ahead for a future date</option>
               <option>Recurring help — contact me to discuss</option>
             </select>
           </Field>
-          <Field label="Preferred date" required><input type="date" className="input" required value={form.preferredDate} onChange={(e) => update("preferredDate", e.target.value)} /></Field>
+          <Field label="Requested date" required><input type="date" className="input" required value={form.preferredDate} onChange={(e) => update("preferredDate", e.target.value)} /></Field>
           <Field label="Backup date (optional)"><input type="date" className="input" value={form.alternateDate} onChange={(e) => update("alternateDate", e.target.value)} /></Field>
         </div>
         <Field label="Preferred time window"><input className="input" placeholder="Example: Friday morning, Saturday after 1pm, weekdays after 4" value={form.preferredWindow} onChange={(e) => update("preferredWindow", e.target.value)} /></Field>
