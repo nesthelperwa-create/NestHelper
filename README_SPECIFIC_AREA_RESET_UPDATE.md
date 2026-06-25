@@ -42,3 +42,12 @@ This replaces the awkward single “primary area” dropdown with a clearer Spec
 - Removed the customer-facing `$2 per extra label` option from the dropdown so customers do not confuse extra labels with setup labor.
 - Added `smartLabelEstimatedCount` to the request payload, admin details, export/print flow, form security allowlist, and customer confirmation email summary.
 - Updated Smart Label public wording so setup is quoted after review based on label count, storage spots, organizing needs, and documentation/photos needed.
+
+## Conditional room-specific form update
+
+- Specific Area(s) Reset now shows room-specific add-ons only after the customer selects room(s).
+- Kitchen requests show kitchen items like interior fridge, interior oven, cabinets/drawers, dishes/sink reset, appliances, and counters/stovetop/backsplash.
+- Bathroom requests show bathroom items like shower/tub buildup, toilet/vanity/sink detail, mirrors/glass, grout/soap-scum focus, floors, and baseboards.
+- Garage, pantry, closet, playroom, laundry room, bedrooms, entry/mudroom, and moving-prep areas show organizing, sorting, storage, trash/donation prep, shelves/bins, and Smart Label related options where they make sense.
+- Cleaning/reset type options now adjust based on the selected room(s), so customers are not shown one broad list when only a kitchen or bathroom is selected.
+- Smart Label setup details are also conditional: the label count only appears when the customer chooses setup help, and notes only appear when starter labels or setup help are selected.

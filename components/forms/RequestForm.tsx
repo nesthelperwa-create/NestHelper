@@ -133,41 +133,172 @@ const areaResetRoomOptions = [
   "Other — I’ll explain below",
 ];
 
-const areaResetCleaningTypeOptions = [
+const areaResetCleaningCoreOptions = [
   "Light reset / refresh",
   "Standard cleaning",
   "Deep cleaning / detail focus",
-  "Cleaning + organizing mix",
-  "Organizing / sorting only",
-  "Move prep or unpacking support",
-  "Not sure — please recommend after review",
 ];
 
-const areaResetAddOnOptions = [
-  "Interior fridge",
-  "Interior oven",
-  "Inside cabinets or drawers",
-  "Pantry shelves",
-  "Dishes / sink reset",
-  "Appliance exteriors",
-  "Shower / tub buildup",
-  "Toilet, vanity, and sink detail",
-  "Mirrors / glass",
-  "Grout or soap-scum focus",
-  "Baseboards, doors, switches, and handles",
-  "Sweep, vacuum, or mop accessible floors",
-  "Sort keep / donate / trash piles",
-  "Light trash bagging or donation prep",
-  "Set up shelves, bins, zones, or Smart Labels",
-  "Not sure — help me prioritize",
+const areaResetOrganizingTypeOptions = [
+  "Cleaning + organizing mix",
+  "Organizing / sorting only",
+];
+
+const areaResetMovingTypeOptions = [
+  "Move prep or unpacking support",
+];
+
+const areaResetCleanFirstRooms = [
+  "Kitchen",
+  "Bathroom(s)",
+  "Laundry room",
+  "Entry / mudroom",
+  "Bedroom(s)",
+  "Living room",
+  "Nursery / kids room",
   "Other — I’ll explain below",
 ];
+
+const areaResetOrganizingRooms = [
+  "Garage",
+  "Pantry",
+  "Closet",
+  "Playroom / toys",
+  "Laundry room",
+  "Nursery / kids room",
+  "Entry / mudroom",
+  "Bedroom(s)",
+  "Living room",
+  "Moving prep area",
+  "Other — I’ll explain below",
+];
+
+const areaResetGeneralAddOnOptions = [
+  "Baseboards, doors, switches, and handles",
+  "Sweep, vacuum, or mop accessible floors",
+];
+
+const areaResetRoomAddOnOptions: Record<string, string[]> = {
+  Kitchen: [
+    "Counters, stovetop, and backsplash",
+    "Interior fridge",
+    "Interior oven",
+    "Inside cabinets or drawers",
+    "Dishes / sink reset",
+    "Appliance exteriors",
+  ],
+  "Bathroom(s)": [
+    "Shower / tub buildup",
+    "Toilet, vanity, and sink detail",
+    "Mirrors / glass",
+    "Grout or soap-scum focus",
+  ],
+  Garage: [
+    "Sort keep / donate / trash piles",
+    "Light trash bagging or donation prep",
+    "Set up shelves, bins, zones, or Smart Labels",
+    "Sweep, vacuum, or mop accessible floors",
+  ],
+  Pantry: [
+    "Pantry shelves",
+    "Inside cabinets or drawers",
+    "Sort keep / donate / trash piles",
+    "Set up shelves, bins, zones, or Smart Labels",
+  ],
+  Closet: [
+    "Sort keep / donate / trash piles",
+    "Light trash bagging or donation prep",
+    "Set up shelves, bins, zones, or Smart Labels",
+  ],
+  "Playroom / toys": [
+    "Sort keep / donate / trash piles",
+    "Light trash bagging or donation prep",
+    "Set up shelves, bins, zones, or Smart Labels",
+    "Sweep, vacuum, or mop accessible floors",
+  ],
+  "Laundry room": [
+    "Washer / dryer exterior",
+    "Inside cabinets or drawers",
+    "Laundry sorting or folding focus",
+    "Sort keep / donate / trash piles",
+    "Set up shelves, bins, zones, or Smart Labels",
+    "Sweep, vacuum, or mop accessible floors",
+  ],
+  "Nursery / kids room": [
+    "Sort keep / donate / trash piles",
+    "Light trash bagging or donation prep",
+    "Set up shelves, bins, zones, or Smart Labels",
+    "Sweep, vacuum, or mop accessible floors",
+  ],
+  "Entry / mudroom": [
+    "Sort keep / donate / trash piles",
+    "Light trash bagging or donation prep",
+    "Set up shelves, bins, zones, or Smart Labels",
+    "Sweep, vacuum, or mop accessible floors",
+  ],
+  "Bedroom(s)": [
+    "Sort keep / donate / trash piles",
+    "Light trash bagging or donation prep",
+    "Set up shelves, bins, zones, or Smart Labels",
+    "Sweep, vacuum, or mop accessible floors",
+  ],
+  "Living room": [
+    "Sort keep / donate / trash piles",
+    "Light trash bagging or donation prep",
+    "Set up shelves, bins, zones, or Smart Labels",
+    "Sweep, vacuum, or mop accessible floors",
+  ],
+  "Moving prep area": [
+    "Inside cabinets or drawers",
+    "Sort keep / donate / trash piles",
+    "Light trash bagging or donation prep",
+    "Set up shelves, bins, zones, or Smart Labels",
+  ],
+  "Other — I’ll explain below": [
+    "Baseboards, doors, switches, and handles",
+    "Sweep, vacuum, or mop accessible floors",
+    "Sort keep / donate / trash piles",
+    "Light trash bagging or donation prep",
+    "Set up shelves, bins, zones, or Smart Labels",
+  ],
+};
+
+function uniqueOptions(items: string[]) {
+  return Array.from(new Set(items));
+}
+
+function getAreaResetCleaningTypeOptions(selectedRooms: string[]) {
+  if (!selectedRooms.length) return [];
+
+  const hasCleanFirstRoom = selectedRooms.some((room) => areaResetCleanFirstRooms.includes(room));
+  const hasOrganizingRoom = selectedRooms.some((room) => areaResetOrganizingRooms.includes(room));
+  const hasMovingPrep = selectedRooms.includes("Moving prep area");
+
+  return uniqueOptions([
+    ...(hasCleanFirstRoom ? areaResetCleaningCoreOptions : ["Light reset / refresh"]),
+    ...(hasOrganizingRoom ? areaResetOrganizingTypeOptions : []),
+    ...(hasMovingPrep ? areaResetMovingTypeOptions : []),
+    "Not sure — please recommend after review",
+  ]);
+}
+
+function getAreaResetAddOnOptions(selectedRooms: string[]) {
+  if (!selectedRooms.length) return [];
+
+  const roomSpecific = selectedRooms.flatMap((room) => areaResetRoomAddOnOptions[room] || []);
+  return uniqueOptions([
+    ...roomSpecific,
+    ...areaResetGeneralAddOnOptions,
+    "Not sure — help me prioritize",
+    "Other — I’ll explain below",
+  ]);
+}
 
 // Older submissions used a primary-area dropdown and add-on-area list. Keep the names below
 // out of the UI but preserve backwards-compatible payload/admin support.
 const areaResetAreaOptions = areaResetRoomOptions;
 const areaResetAdditionalAreaOptions: string[] = [];
-const areaResetGoalOptions = areaResetAddOnOptions;
+const areaResetGoalOptions = getAreaResetAddOnOptions(areaResetRoomOptions);
 
 const areaResetHaulingOptions = [
   "No disposal prep needed",
@@ -398,7 +529,9 @@ function cleanForSelectedService(form: RequestFormState) {
   if (category === "areaReset") {
     const selectedRooms = form.areaResetRooms.filter(Boolean);
     const roomSummary = selectedRooms.join(", ");
-    const addOnSummary = form.areaResetAddOns.join(", ");
+    const allowedAddOns = getAreaResetAddOnOptions(selectedRooms);
+    const selectedAddOns = form.areaResetAddOns.filter((item) => allowedAddOns.includes(item));
+    const addOnSummary = selectedAddOns.join(", ");
 
     return {
       ...base,
@@ -406,7 +539,7 @@ function cleanForSelectedService(form: RequestFormState) {
       areaResetRooms: selectedRooms,
       areaResetRoomSummary: roomSummary,
       areaResetOtherRoom: form.areaResetOtherRoom,
-      areaResetAddOns: form.areaResetAddOns,
+      areaResetAddOns: selectedAddOns,
       areaResetAddOnSummary: addOnSummary,
       areaResetOtherAddOn: form.areaResetOtherAddOn,
       // Backward-compatible summary fields used by older admin/email views.
@@ -419,7 +552,7 @@ function cleanForSelectedService(form: RequestFormState) {
       areaResetBathroomCount: form.areaResetBathroomCount,
       areaResetSize: form.areaResetSize,
       areaResetCondition: form.areaResetCondition,
-      areaResetGoals: form.areaResetAddOns,
+      areaResetGoals: selectedAddOns,
       areaResetGoalSummary: addOnSummary,
       areaResetHauling: form.areaResetHauling,
       homeType: form.homeType,
@@ -516,6 +649,10 @@ export function RequestForm() {
   const smartLabelsAvailable = isSmartLabelEligibleCategory(serviceCategory);
   const wholeHomeSelected = form.homeAreas.includes(WHOLE_HOME_OPTION);
   const homeScopeWarning = isHomeReset ? getHomeScopeWarning(form.service, form.homeAreas) : "";
+  const visibleAreaResetCleaningTypeOptions = isAreaReset ? getAreaResetCleaningTypeOptions(form.areaResetRooms) : [];
+  const visibleAreaResetAddOnOptions = isAreaReset ? getAreaResetAddOnOptions(form.areaResetRooms) : [];
+  const showSmartLabelCount = form.smartLabelSetupInterest === "Help me set up Smart Labels during the reset";
+  const showSmartLabelNotes = form.smartLabelSetupInterest === "Help me set up Smart Labels during the reset" || form.smartLabelSetupInterest === "Free starter labels only — we’ll leave them with you";
   const petDetailsRequired = (isHomeReset || isAreaReset || isMoveOut) && form.pets !== "No pets" && form.pets !== "No pets now, but pets lived here before";
   const referralApplies = Boolean(form.incomingReferralCode && isReferralEligibleService(form.service));
   const referralNeedsEligiblePackage = Boolean(form.incomingReferralCode && form.service && !isReferralEligibleService(form.service));
@@ -602,6 +739,20 @@ export function RequestForm() {
         return {
           ...prev,
           homeAreas: checked ? [...withoutWholeHome, item] : withoutWholeHome.filter((value) => value !== item),
+        };
+      }
+
+      if (name === "areaResetRooms") {
+        const nextRooms = checked ? [...current, item] : current.filter((value) => value !== item);
+        const nextAddOnOptions = getAreaResetAddOnOptions(nextRooms);
+        const nextCleaningTypeOptions = getAreaResetCleaningTypeOptions(nextRooms);
+
+        return {
+          ...prev,
+          areaResetRooms: nextRooms,
+          areaResetAddOns: prev.areaResetAddOns.filter((value) => nextAddOnOptions.includes(value)),
+          areaResetCleaningType: nextCleaningTypeOptions.includes(prev.areaResetCleaningType) ? prev.areaResetCleaningType : "",
+          areaResetBathroomCount: nextRooms.includes("Bathroom(s)") ? prev.areaResetBathroomCount : "",
         };
       }
 
@@ -856,9 +1007,9 @@ export function RequestForm() {
       )}
 
       {isAreaReset && (
-        <Section title="4. Specific room(s) and cleaning add-ons" description="Choose the room or rooms that need help, then add any detailed cleaning items like interior fridge, interior oven, cabinets, shower buildup, floors, or organizing support.">
+        <Section title="4. Specific Area(s) scope" description="Pick the room or rooms first. The form will show only the cleaning types and add-ons that match those selected rooms so customers are not staring at one long checklist.">
           <div className="rounded-3xl border border-nest-gold/20 bg-nest-cream p-5 text-sm leading-6 text-nest-ink/76">
-            <strong className="text-nest-teal">Good fit:</strong> kitchen and bathroom cleaning, pantry, closet, playroom, laundry room, garage, entry/mudroom, or another specific zone. <strong className="text-nest-teal">Quote first:</strong> interior fridge/oven, inside cabinets or drawers, heavy buildup, large clutter, donation/trash prep, and specialty needs.
+            <strong className="text-nest-teal">Good fit:</strong> kitchen and bathroom cleaning, pantry, closet, playroom, laundry room, garage, entry/mudroom, or another specific zone. <strong className="text-nest-teal">Quote first:</strong> interior appliances, inside cabinets or drawers, heavy buildup, large clutter, donation/trash prep, and specialty needs.
           </div>
 
           <div>
@@ -868,7 +1019,9 @@ export function RequestForm() {
                 <CheckOption key={item} checked={form.areaResetRooms.includes(item)} onChange={(checked) => toggleList("areaResetRooms", item, checked)}>{item}</CheckOption>
               ))}
             </div>
-            {!form.areaResetRooms.length && <p className="mt-2 text-xs font-bold text-nest-ink/55">Select at least one room or area so we know what to quote.</p>}
+            {!form.areaResetRooms.length && (
+              <p className="mt-2 text-xs font-bold text-nest-ink/55">Select at least one room or area first. Then we’ll show the matching cleaning types and add-on choices.</p>
+            )}
           </div>
 
           {form.areaResetRooms.includes("Other — I’ll explain below") && (
@@ -877,67 +1030,76 @@ export function RequestForm() {
             </Field>
           )}
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Cleaning / reset type" required>
-              <select className="input" required value={form.areaResetCleaningType} onChange={(e) => update("areaResetCleaningType", e.target.value)}>
-                <option value="">Select the type of help</option>
-                {areaResetCleaningTypeOptions.map((option) => <option key={option}>{option}</option>)}
-              </select>
-            </Field>
-            {form.areaResetRooms.includes("Bathroom(s)") && (
-              <Field label="How many bathrooms?" required>
-                <input className="input" required placeholder="Example: 2.5 bathrooms" value={form.areaResetBathroomCount} onChange={(e) => update("areaResetBathroomCount", e.target.value)} />
+          {form.areaResetRooms.length > 0 && (
+            <>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field label="Cleaning / reset type" required>
+                  <select className="input" required value={form.areaResetCleaningType} onChange={(e) => update("areaResetCleaningType", e.target.value)}>
+                    <option value="">Select the type of help</option>
+                    {visibleAreaResetCleaningTypeOptions.map((option) => <option key={option}>{option}</option>)}
+                  </select>
+                </Field>
+                {form.areaResetRooms.includes("Bathroom(s)") && (
+                  <Field label="How many bathrooms?" required>
+                    <input className="input" required placeholder="Example: 2.5 bathrooms" value={form.areaResetBathroomCount} onChange={(e) => update("areaResetBathroomCount", e.target.value)} />
+                  </Field>
+                )}
+                <Field label="Approximate size / count" required>
+                  <input className="input" required placeholder="Example: kitchen + 2.5 baths, small pantry, 1-car garage, 10x12 room" value={form.areaResetSize} onChange={(e) => update("areaResetSize", e.target.value)} />
+                </Field>
+                <Field label="Condition level">
+                  <select className="input" value={form.areaResetCondition} onChange={(e) => update("areaResetCondition", e.target.value)}>
+                    <option>Light cleaning / mostly maintained</option>
+                    <option>Standard cleaning / normal household use</option>
+                    <option>Deep cleaning / visible buildup</option>
+                    <option>Lots to sort, but walkable</option>
+                    <option>Heavy clutter / limited floor space</option>
+                    <option>Needs photos or walkthrough before quoting</option>
+                  </select>
+                </Field>
+                <Field label="Trash/donation prep needed?">
+                  <select className="input" value={form.areaResetHauling} onChange={(e) => update("areaResetHauling", e.target.value)}>
+                    {areaResetHaulingOptions.map((option) => <option key={option}>{option}</option>)}
+                  </select>
+                </Field>
+                <Field label="Product preference">
+                  <select className="input" value={form.supplyPreference} onChange={(e) => update("supplyPreference", e.target.value)}>
+                    <option>NestHelper brings standard supplies</option>
+                    <option>Non-toxic / low-odor options requested where appropriate</option>
+                    <option>Fragrance-free / sensitive products requested</option>
+                    <option>Customer-provided products only</option>
+                    <option>Not sure yet</option>
+                  </select>
+                </Field>
+              </div>
+
+              <div>
+                <div className="label mb-3">Room-specific add-ons / focus items</div>
+                <p className="mb-3 text-sm leading-6 text-nest-ink/65">
+                  These options are based on the room(s) selected above, so kitchen requests show kitchen details, bathroom requests show bathroom details, and organizing areas show sorting/storage choices.
+                </p>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {visibleAreaResetAddOnOptions.map((item) => (
+                    <CheckOption key={item} checked={form.areaResetAddOns.includes(item)} onChange={(checked) => toggleList("areaResetAddOns", item, checked)}>{item}</CheckOption>
+                  ))}
+                </div>
+                <p className="mt-2 text-xs font-bold text-nest-ink/55">Some detail items, like interior fridge, interior oven, inside cabinets, or heavy buildup, may affect the price and time needed.</p>
+                {visibleAreaResetAddOnOptions.includes("Set up shelves, bins, zones, or Smart Labels") && (
+                  <p className="mt-1 text-xs font-bold text-nest-ink/55">Smart Labels are simple QR stickers for bins, shelves, closets, boxes, and storage areas so your family can scan and update what belongs there.</p>
+                )}
+              </div>
+
+              {form.areaResetAddOns.includes("Other — I’ll explain below") && (
+                <Field label="Other add-on / focus item" required>
+                  <input className="input" required placeholder="Example: inside microwave, high chair detail, hallway walls, pet hair focus" value={form.areaResetOtherAddOn} onChange={(e) => update("areaResetOtherAddOn", e.target.value)} />
+                </Field>
+              )}
+
+              <Field label="Top priorities and safety notes" required>
+                <textarea className="input min-h-28" required placeholder="Example: Kitchen + 2.5 bathrooms. Standard cleaning first. Please include interior fridge, but no oven this visit. Two dogs will be secured upstairs." value={form.areaResetNotes} onChange={(e) => update("areaResetNotes", e.target.value)} />
               </Field>
-            )}
-            <Field label="Approximate size / count" required>
-              <input className="input" required placeholder="Example: kitchen + 2.5 baths, small pantry, 1-car garage, 10x12 room" value={form.areaResetSize} onChange={(e) => update("areaResetSize", e.target.value)} />
-            </Field>
-            <Field label="Condition level">
-              <select className="input" value={form.areaResetCondition} onChange={(e) => update("areaResetCondition", e.target.value)}>
-                <option>Light cleaning / mostly maintained</option>
-                <option>Standard cleaning / normal household use</option>
-                <option>Deep cleaning / visible buildup</option>
-                <option>Lots to sort, but walkable</option>
-                <option>Heavy clutter / limited floor space</option>
-                <option>Needs photos or walkthrough before quoting</option>
-              </select>
-            </Field>
-            <Field label="Trash/donation prep needed?">
-              <select className="input" value={form.areaResetHauling} onChange={(e) => update("areaResetHauling", e.target.value)}>
-                {areaResetHaulingOptions.map((option) => <option key={option}>{option}</option>)}
-              </select>
-            </Field>
-            <Field label="Product preference">
-              <select className="input" value={form.supplyPreference} onChange={(e) => update("supplyPreference", e.target.value)}>
-                <option>NestHelper brings standard supplies</option>
-                <option>Non-toxic / low-odor options requested where appropriate</option>
-                <option>Fragrance-free / sensitive products requested</option>
-                <option>Customer-provided products only</option>
-                <option>Not sure yet</option>
-              </select>
-            </Field>
-          </div>
-
-          <div>
-            <div className="label mb-3">Specific cleaning add-ons / focus items</div>
-            <div className="grid gap-2 sm:grid-cols-2">
-              {areaResetAddOnOptions.map((item) => (
-                <CheckOption key={item} checked={form.areaResetAddOns.includes(item)} onChange={(checked) => toggleList("areaResetAddOns", item, checked)}>{item}</CheckOption>
-              ))}
-            </div>
-            <p className="mt-2 text-xs font-bold text-nest-ink/55">These help us quote correctly. Some items, like interior fridge, interior oven, inside cabinets, or heavy buildup, may affect the price and time needed.</p>
-            <p className="mt-1 text-xs font-bold text-nest-ink/55">Smart Labels are simple QR stickers for bins, shelves, closets, boxes, and storage areas so your family can scan and update what belongs there.</p>
-          </div>
-
-          {form.areaResetAddOns.includes("Other — I’ll explain below") && (
-            <Field label="Other add-on / focus item" required>
-              <input className="input" required placeholder="Example: inside microwave, high chair detail, hallway walls, pet hair focus" value={form.areaResetOtherAddOn} onChange={(e) => update("areaResetOtherAddOn", e.target.value)} />
-            </Field>
+            </>
           )}
-
-          <Field label="Top priorities and safety notes" required>
-            <textarea className="input min-h-28" required placeholder="Example: Kitchen + 2.5 bathrooms. Standard cleaning first. Please include interior fridge, but no oven this visit. Two dogs will be secured upstairs." value={form.areaResetNotes} onChange={(e) => update("areaResetNotes", e.target.value)} />
-          </Field>
         </Section>
       )}
 
@@ -1141,14 +1303,18 @@ export function RequestForm() {
                 {smartLabelSetupOptions.map((option) => <option key={option}>{option}</option>)}
               </select>
             </Field>
-            <Field label="Estimated label count / storage spots">
-              <select className="input" value={form.smartLabelEstimatedCount} onChange={(e) => update("smartLabelEstimatedCount", e.target.value)}>
-                {smartLabelEstimatedCountOptions.map((option) => <option key={option}>{option}</option>)}
-              </select>
-            </Field>
-            <Field label="Label notes (optional)">
-              <input className="input" placeholder="Example: pantry shelves, garage bins, kids clothes, moving boxes, toy storage" value={form.smartLabelSetupNotes} onChange={(e) => update("smartLabelSetupNotes", e.target.value)} />
-            </Field>
+            {showSmartLabelCount && (
+              <Field label="Estimated label count / storage spots">
+                <select className="input" value={form.smartLabelEstimatedCount} onChange={(e) => update("smartLabelEstimatedCount", e.target.value)}>
+                  {smartLabelEstimatedCountOptions.map((option) => <option key={option}>{option}</option>)}
+                </select>
+              </Field>
+            )}
+            {showSmartLabelNotes && (
+              <Field label="Label notes (optional)">
+                <input className="input" placeholder="Example: pantry shelves, garage bins, kids clothes, moving boxes, toy storage" value={form.smartLabelSetupNotes} onChange={(e) => update("smartLabelSetupNotes", e.target.value)} />
+              </Field>
+            )}
           </div>
         </Section>
       )}
