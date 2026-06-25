@@ -88,20 +88,20 @@ export const services: Service[] = [
     id: "specific-area-reset",
     title: "Specific Area Reset",
     shortTitle: "Area Reset",
-    description: "Focused reset help for one area like a garage, pantry, closet, playroom, laundry room, or kitchen — quoted after review.",
+    description: "Focused help for specific rooms or zones — kitchen, bathroom(s), garage, pantry, closet, playroom, laundry room, or other areas — with optional detailed cleaning add-ons quoted after review.",
     details: [
-      "Garage, pantry, closet, playroom, kitchen, laundry room, or another area",
-      "Sorting, organizing, light cleanup, and practical reset support",
-      "Keep, donate, trash, and relocation piles when requested",
-      "Sweeping or vacuuming accessible floors and wiping reachable surfaces when appropriate",
-      "Hauling, hazardous materials, pest/biohazard cleanup, and heavy lifting reviewed separately"
+      "Select the room or rooms that need help, such as kitchen, bathroom(s), garage, pantry, closet, playroom, or laundry room",
+      "Choose the visit type: light reset, standard cleaning, deep detail focus, cleaning + organizing, or organizing only",
+      "Add detail items like interior fridge, interior oven, inside cabinets/drawers, shower buildup, floors, baseboards, donation prep, or Smart Labels",
+      "Good for kitchen + bath requests without turning NestHelper into a generic full-house maid service",
+      "Interior appliances, heavy buildup, large clutter, donation/trash prep, and specialty needs are reviewed before quoting"
     ],
     standardPrice: "Quoted after review",
-    priceNote: "Area size + condition reviewed",
+    priceNote: "Rooms + add-ons reviewed",
     serviceTime: "Scope-based visit, usually 2–4+ hours",
     travelInfo: "Core Eastside/Northshore service area",
     image: "/assets/services/service-specific-area-reset.png",
-    note: "Specific Area Resets are reviewed before checkout. The area, size, photos, clutter level, sorting needs, access, hauling/disposal needs, and safety notes all affect the quote. Garage Reset requests are welcome, but hazardous materials, pest/biohazard cleanup, mold remediation, and heavy junk hauling are not included unless separately reviewed and approved."
+    note: "Specific Area Resets are reviewed before checkout. The selected rooms, cleaning type, detailed add-ons, size/count, photos, buildup or clutter level, access, product preferences, customer-arranged trash/donation prep, and safety notes all affect the quote. Kitchen + Bath Reset requests fit here. NestHelper does not provide dump runs, junk hauling, hazardous material disposal, pest/biohazard cleanup, mold remediation, or unsafe heavy lifting."
   },
   {
     id: "move-out-cleaning",

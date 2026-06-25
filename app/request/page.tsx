@@ -8,14 +8,14 @@ import { siteConfig } from "@/lib/siteConfig";
 export const metadata: Metadata = {
   title: "Request Household Help, Area Resets & Move-In / Move-Out Cleaning | NestHelper",
   description:
-    "Request household help from NestHelper for home resets, garage and area resets, move-in / move-out cleaning, laundry catch-up, errands, and organizing in Bothell, Woodinville, and nearby Eastside areas.",
+    "Request household help from NestHelper for home resets, kitchen and bath resets, garage and area resets, move-in / move-out cleaning, laundry catch-up, errands, and organizing in Bothell, Woodinville, and nearby Eastside areas.",
   alternates: {
     canonical: `${siteConfig.url}/request`,
   },
   openGraph: {
     title: "Request Household Help, Area Resets & Move-In / Move-Out Cleaning | NestHelper",
     description:
-      "Tell NestHelper what kind of home help, area reset, or move-in / move-out cleaning you need. We review service area, timing, scope, square footage when needed, safety notes, and pricing before payment.",
+      "Tell NestHelper what kind of home help, kitchen and bath reset, area reset, or move-in / move-out cleaning you need. We review service area, timing, scope, square footage when needed, safety notes, and pricing before payment.",
     url: `${siteConfig.url}/request`,
     images: [siteConfig.assets.og],
   },

@@ -86,6 +86,12 @@ const serviceRequestAllowedFields = [
   "smartLabelSetupNotes",
   "homePriorities",
   "homeAreas",
+  "areaResetRooms",
+  "areaResetRoomSummary",
+  "areaResetOtherRoom",
+  "areaResetAddOns",
+  "areaResetAddOnSummary",
+  "areaResetOtherAddOn",
   "areaResetArea",
   "areaResetOtherArea",
   "areaResetAdditionalAreas",
@@ -269,7 +275,11 @@ const maxSubmissionsByCollection: Record<SubmissionCollection, number> = {
 
 const textLimits: Record<string, number> = {
   requestDetails: 1800,
-  areaResetArea: 180,
+  areaResetRoomSummary: 900,
+  areaResetOtherRoom: 500,
+  areaResetAddOnSummary: 1200,
+  areaResetOtherAddOn: 500,
+  areaResetArea: 900,
   areaResetOtherArea: 500,
   areaResetAdditionalAreaSummary: 700,
   areaResetOtherAdditionalArea: 500,
@@ -458,25 +468,27 @@ function validateRequired(collection: SubmissionCollection, payload: Record<stri
       requireText("city", "city");
 
       if (trimText(payload.service) === "specific-area-reset") {
-        requireText("areaResetArea", "primary area");
+        requireArray("areaResetRooms", "room or area");
         requireText("areaResetCleaningType", "cleaning / reset type");
         requireText("areaResetSize", "area size or count");
         requireText("requestDetails", "top priorities and safety notes");
 
-        const primaryArea = trimText(payload.areaResetArea, 220).toLowerCase();
-        const additionalAreas = Array.isArray(payload.areaResetAdditionalAreas)
-          ? (payload.areaResetAdditionalAreas as unknown[]).map((item) => trimText(item, 220).toLowerCase())
+        const selectedRooms = Array.isArray(payload.areaResetRooms)
+          ? (payload.areaResetRooms as unknown[]).map((item) => trimText(item, 220).toLowerCase())
+          : [];
+        const selectedAddOns = Array.isArray(payload.areaResetAddOns)
+          ? (payload.areaResetAddOns as unknown[]).map((item) => trimText(item, 220).toLowerCase())
           : [];
 
-        if (primaryArea.includes("other") && !trimText(payload.areaResetOtherArea)) {
-          missing.push("other primary area");
+        if (selectedRooms.some((item) => item.includes("other")) && !trimText(payload.areaResetOtherRoom)) {
+          missing.push("other room or area");
         }
 
-        if (additionalAreas.some((item) => item.includes("other")) && !trimText(payload.areaResetOtherAdditionalArea)) {
-          missing.push("other add-on area");
+        if (selectedAddOns.some((item) => item.includes("other")) && !trimText(payload.areaResetOtherAddOn)) {
+          missing.push("other add-on or focus item");
         }
 
-        if ((primaryArea.includes("bathroom") || additionalAreas.some((item) => item.includes("bathroom"))) && !trimText(payload.areaResetBathroomCount)) {
+        if (selectedRooms.some((item) => item.includes("bathroom")) && !trimText(payload.areaResetBathroomCount)) {
           missing.push("bathroom count");
         }
       }

@@ -60,8 +60,9 @@ function getConfirmationContent(collection: SubmissionCollection, payload: Recor
       summary: {
         "Request ID": submissionId,
         Service: service,
-        "Rooms / areas": formatValue(payload.roomsAreas),
+        "Rooms / areas": formatValue(payload.areaResetRoomSummary || payload.roomsAreas),
         "Cleaning / reset type": formatValue(payload.areaResetCleaningType),
+        "Cleaning add-ons": formatValue(payload.areaResetAddOnSummary),
         "Preferred date": formatValue(payload.preferredDate),
         "Preferred time window": formatValue(payload.preferredWindow),
         City: formatValue(payload.city),

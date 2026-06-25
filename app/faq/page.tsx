@@ -5,23 +5,25 @@ import { siteConfig } from "@/lib/siteConfig";
 export const metadata: Metadata = {
   title: "Household Help FAQ: Home Reset, Laundry & Errands",
   description:
-    "Answers about NestHelper household help, home resets, garage and area resets, move-in / move-out cleaning, laundry, errands, organizing, pricing, safety, and no-childcare service boundaries.",
+    "Answers about NestHelper household help, home resets, kitchen and bath resets, garage and area resets, move-in / move-out cleaning, laundry, errands, organizing, pricing, safety, and no-childcare service boundaries.",
   alternates: {
     canonical: `${siteConfig.url}/faq`,
   },
   openGraph: {
     title: "Household Help FAQ | NestHelper",
     description:
-      "Learn how NestHelper household support, home reset help, move-in / move-out cleaning, laundry help, organizing, and errands work for busy families.",
+      "Learn how NestHelper household support, home reset help, kitchen and bath resets, move-in / move-out cleaning, laundry help, organizing, and errands work for busy families.",
     url: `${siteConfig.url}/faq`,
     images: [siteConfig.assets.og],
   },
 };
 
 const faqs = [
-  ["What does NestHelper help with?", "NestHelper gives busy families extra hands around the home with household support, home resets, garage and area resets, move-in / move-out cleaning, laundry rescue, errands, organizing, and practical family support. We do not provide childcare, unsupervised babysitting, medical care, elder care, or emergency services."],
+  ["What does NestHelper help with?", "NestHelper gives busy families extra hands around the home with household support, home resets, kitchen and bath resets, garage and area resets, move-in / move-out cleaning, laundry rescue, errands, organizing, and practical family support. We do not provide childcare, unsupervised babysitting, medical care, elder care, or emergency services."],
   ["Do you serve outside Bothell?", `Yes. NestHelper serves ${siteConfig.serviceArea}. If you are close by but unsure, submit a request and we will confirm availability before sending any payment link.`],
-  ["Can I request home reset help, specific area resets, move-in / move-out cleaning, laundry help, or errand help separately?", "Yes. You can request a full Parent Reset package or a more focused service such as Specific Area Reset, Garage Reset, Move-In / Move-Out Cleaning, Laundry Rescue, approved errands, or light household catch-up support."],
+  ["Can I request home reset help, specific area resets, move-in / move-out cleaning, laundry help, or errand help separately?", "Yes. You can request a full Parent Reset package or a more focused service such as Specific Area Reset for kitchen, bathroom(s), garage, pantry, closet, playroom, laundry room, or another room/zone, with optional detail add-ons like interior fridge, interior oven, inside cabinets, shower buildup, floors, or organizing. Move-In / Move-Out Cleaning, Laundry Rescue, approved errands, and light household catch-up support can also be requested separately."],
+  ["What are NestHelper Smart Labels?", "Smart Labels are customer-owned QR stickers included at no extra cost with qualifying resets. Standard qualifying resets can include up to 10 labels, and larger organizing projects can include up to 30 when helpful. Families can use them for bins, closets, shelves, moving boxes, seasonal items, garages, storage areas, pantries, and playrooms. A family can scan a label to update the name, location, items inside, notes, and small photos. Labels start with no PIN by default, and the family can add an optional 4-digit PIN later for privacy."],
+  ["What is Smart Label Setup?", "Smart Label Setup is an optional paid add-on when you want NestHelper to do more than leave the labels with you. Setup is $49 for up to 10 labels, $79 for up to 20 labels, and $109 for up to 30 labels. Additional standard label setup is $2 per label after 30. Detailed inventory, heavy photo documentation, garage inventory, or moving-box documentation can be quoted after review."],
   ["Is this childcare?", "No. NestHelper provides household support and Parent Reset services only. We do not provide childcare, unsupervised babysitting, medical care, elder care, or emergency services."],
   ["Why do you review requests before payment?", "We review location, scope, availability, safety, pets, access, and pricing first so customers are not charged for a job we cannot safely or reliably fulfill."],
   ["Why does NestHelper cost more than hiring someone from a local group?", "NestHelper is not trying to be the cheapest option or an open marketplace. Pricing reflects a managed service: request review, helper fit, clear scope, scheduling coordination, insured local service, secure payment, and follow-up after service."],

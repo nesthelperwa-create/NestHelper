@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import { Building2, CheckCircle2, ClipboardCheck, CreditCard, Mail, Scale, ShieldCheck, Sparkles, SprayCan } from "lucide-react";
+import { Building2, CheckCircle2, ClipboardCheck, CreditCard, KeyRound, Mail, QrCode, Scale, ShieldCheck, Sparkles, SprayCan, Tags } from "lucide-react";
 import { PageHero } from "@/components/PageHero";
 import { ServiceCard } from "@/components/ServiceCard";
 import { ButtonLink } from "@/components/ui/ButtonLink";
@@ -10,20 +10,25 @@ import { siteConfig } from "@/lib/siteConfig";
 export const metadata: Metadata = {
   title: "Household Help Services, Home Reset, Move-In / Move-Out Cleaning, Laundry & Errands",
   description:
-    "View NestHelper services for home resets, garage and area resets, move-in / move-out cleaning, laundry help, errands, and organizing in Bothell, Woodinville, and nearby Eastside/Northshore areas.",
+    "View NestHelper services for home resets, kitchen and bath resets, garage and area resets, move-in / move-out cleaning, laundry help, errands, and organizing in Bothell, Woodinville, and nearby Eastside/Northshore areas.",
   alternates: {
     canonical: `${siteConfig.url}/services`,
   },
   openGraph: {
     title: "Household Help Services, Home Reset, Move-In / Move-Out Cleaning, Laundry & Errands | NestHelper",
     description:
-      "Managed household support, home reset packages, garage and area resets, move-in / move-out cleaning, laundry help, organizing, and errand help for busy families. No childcare.",
+      "Managed household support, home reset packages, kitchen and bath resets, garage and area resets, move-in / move-out cleaning, laundry help, organizing, and errand help for busy families. No childcare.",
     url: `${siteConfig.url}/services`,
     images: [siteConfig.assets.og],
   },
 };
 
+const quickPackageIds = new Set(["parent-reset-2hr", "family-reset-3hr", "helper-block-4hr"]);
+
 export default function ServicesPage() {
+  const quickPackageServices = services.filter((service) => quickPackageIds.has(service.id));
+  const specialtyServices = services.filter((service) => !quickPackageIds.has(service.id));
+
   return (
     <>
       <PageHero
@@ -41,25 +46,103 @@ export default function ServicesPage() {
           </p>
         </div>
 
-        <div className="mb-10 grid gap-6 lg:grid-cols-[0.95fr_1.05fr] lg:items-end">
-          <div className="text-center lg:text-left">
-            <p className="pill-label mx-auto w-fit lg:mx-0"><Sparkles size={15} /> Household Help Packages</p>
-            <h2 className="text-balance mt-4 text-3xl font-black leading-tight text-nest-teal sm:text-5xl">Household help, home reset support, garage and area resets, move-in / move-out cleaning, laundry help, organizing, and errands when the house feels like too much.</h2>
-          </div>
-          <div className="pro-card rounded-[2rem] p-6">
-            <h3 className="text-xl font-black text-nest-teal">Simple at first glance. Details when you need them.</h3>
-            <p className="mt-3 font-medium leading-7 text-nest-ink/70">
-              Each card shows the essentials first. Open a package to see what is included, then request the one that fits your family best. NestHelper keeps the scope focused on reviewed home help, garage and area resets, move-in / move-out cleaning, laundry, errands, organizing, and reset tasks — not childcare or babysitting.
+        <div className="mb-10 grid gap-5 lg:grid-cols-[0.82fr_1.18fr] lg:items-stretch">
+          <div className="rounded-[2.5rem] border border-nest-gold/18 bg-gradient-to-br from-white via-nest-cream to-nest-mint/25 p-6 text-center shadow-soft sm:p-8 lg:text-left">
+            <p className="pill-label mx-auto w-fit lg:mx-0"><Sparkles size={15} /> Home Reset Services</p>
+            <h2 className="text-balance mt-4 text-3xl font-black leading-tight text-nest-teal sm:text-4xl lg:text-5xl">Choose the reset your home needs.</h2>
+            <p className="mx-auto mt-4 max-w-3xl text-base font-semibold leading-7 text-nest-ink/70 sm:text-lg lg:mx-0">
+              Start with a parent reset package, or request a custom review for kitchen + bath cleaning, move-in / move-out cleaning, garage resets, laundry help, errands, and specific areas that need attention.
             </p>
+            <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row lg:justify-start">
+              <ButtonLink href="/request">Request Help</ButtonLink>
+              <ButtonLink href="/request?service=specific-area-reset" variant="secondary">Start a Custom Reset</ButtonLink>
+            </div>
+          </div>
+
+          <div className="pro-card rounded-[2.5rem] p-6 sm:p-8">
+            <h3 className="text-2xl font-black text-nest-teal">Not sure what to choose?</h3>
+            <div className="mt-5 grid gap-3">
+              {[
+                { title: "Need everyday relief?", text: "Choose a 2, 3, or 4-hour reset package." },
+                { title: "Need focused rooms cleaned?", text: "Choose Specific Area Reset for kitchen, bathroom(s), garage, pantry, closet, playroom, laundry room, or another room — then add detail items like interior fridge, interior oven, inside cabinets, shower buildup, floors, or organizing." },
+                { title: "Moving in or out?", text: "Choose Move-In / Move-Out Cleaning so we can review square footage, condition, photos, and timing." },
+              ].map((item) => (
+                <div key={item.title} className="rounded-3xl border border-nest-gold/14 bg-white/82 p-4 shadow-sm">
+                  <p className="font-black text-nest-teal">{item.title}</p>
+                  <p className="mt-1 text-sm font-semibold leading-6 text-nest-ink/68">{item.text}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="mb-10 rounded-[2.5rem] border border-nest-gold/18 bg-gradient-to-br from-white via-nest-cream to-nest-mint/25 p-7 shadow-soft sm:p-8">
+          <div className="grid gap-6 lg:grid-cols-[0.82fr_1.18fr] lg:items-center">
+            <div className="text-center lg:text-left">
+              <p className="pill-label mx-auto w-fit lg:mx-0"><QrCode size={15} /> Smart Labels</p>
+              <h2 className="mt-4 text-3xl font-black leading-tight text-nest-teal sm:text-4xl">Included labels. Optional setup help.</h2>
+              <p className="mt-3 font-medium leading-7 text-nest-ink/70">
+                NestHelper Smart Labels are included at no extra cost with qualifying resets — up to 10 labels for standard qualifying resets and up to 30 labels when a larger organizing project needs them. Families can use them to keep bins, closets, shelves, moving boxes, seasonal items, and storage areas easier to maintain.
+              </p>
+              <p className="mt-3 font-medium leading-7 text-nest-ink/70">
+                Want us to set them up for you? Add Smart Label Setup and we’ll place the labels, scan them, name each bin or area, document what’s inside, add notes/photos, and show the family how to keep everything updated after we leave.
+              </p>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <SmartLabelFeature icon={<Tags size={19} />} title="Labels included" text="Up to 10 included, with up to 30 for larger organizing projects." />
+              <SmartLabelFeature icon={<KeyRound size={19} />} title="Optional PIN" text="Default is no PIN. Add a 4-digit PIN for private labels." />
+              <SmartLabelFeature icon={<ShieldCheck size={19} />} title="Family-owned" text="Use them yourself, or ask NestHelper to set them up." />
+            </div>
+          </div>
+          <div className="mt-5 grid gap-3 text-sm font-bold leading-6 text-nest-ink/70 md:grid-cols-3">
+            <div className="rounded-3xl border border-nest-gold/16 bg-white/78 p-4">
+              <p className="text-xs font-black uppercase tracking-[0.16em] text-nest-gold">Smart Labels</p>
+              <p className="mt-1 text-lg font-black text-nest-teal">Included free</p>
+              <p className="mt-1">Use up to 10 yourself with qualifying resets, or up to 30 for larger organizing projects.</p>
+            </div>
+            <div className="rounded-3xl border border-nest-gold/16 bg-white/78 p-4">
+              <p className="text-xs font-black uppercase tracking-[0.16em] text-nest-gold">Setup add-on</p>
+              <p className="mt-1 text-lg font-black text-nest-teal">$49 / $79 / $109</p>
+              <p className="mt-1">Setup for up to 10, 20, or 30 labels during approved reset work.</p>
+            </div>
+            <div className="rounded-3xl border border-nest-gold/16 bg-white/78 p-4">
+              <p className="text-xs font-black uppercase tracking-[0.16em] text-nest-gold">Extra labels</p>
+              <p className="mt-1 text-lg font-black text-nest-teal">$2 each after 30</p>
+              <p className="mt-1">Detailed inventory or heavy photo documentation can still be quoted.</p>
+            </div>
           </div>
         </div>
 
         <div className="mb-5 rounded-3xl border border-nest-gold/16 bg-white/80 p-4 text-sm font-bold text-nest-ink/65 shadow-sm sm:px-5">
-          Tap or click a card to open details. Opening another package closes the previous one.
+          Tap or click a card to open details. If you are unsure, start with the closest option and add notes in the request form.
         </div>
 
-        <div className="grid items-start gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {services.map((service) => <ServiceCard key={service.id} service={service} equalCollapsedHeight />)}
+        <div className="space-y-10">
+          <section aria-labelledby="quick-help-packages">
+            <div className="mb-5 flex flex-col gap-2 text-center sm:text-left">
+              <p className="pill-label mx-auto w-fit sm:mx-0"><Sparkles size={15} /> Quick Help Packages</p>
+              <h3 id="quick-help-packages" className="text-2xl font-black text-nest-teal sm:text-3xl">Start here for everyday home reset help.</h3>
+              <p className="max-w-3xl font-semibold leading-7 text-nest-ink/68">
+                These are structured helper visits for busy families who need dishes, toys, surfaces, folding, organizing, and priority catch-up tasks handled in a focused block of time.
+              </p>
+            </div>
+            <div className="grid items-start gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {quickPackageServices.map((service) => <ServiceCard key={service.id} service={service} equalCollapsedHeight />)}
+            </div>
+          </section>
+
+          <section aria-labelledby="specific-reset-support">
+            <div className="mb-5 flex flex-col gap-2 text-center sm:text-left">
+              <p className="pill-label mx-auto w-fit sm:mx-0"><Sparkles size={15} /> Specific Resets & Support</p>
+              <h3 id="specific-reset-support" className="text-2xl font-black text-nest-teal sm:text-3xl">For kitchen + bath, garages, moving, laundry, errands, and one-off areas.</h3>
+              <p className="max-w-3xl font-semibold leading-7 text-nest-ink/68">
+                These requests are reviewed around scope, access, safety, product preferences, photos, and timing so you get the right plan before checkout.
+              </p>
+            </div>
+            <div className="grid items-start gap-6 md:grid-cols-2 xl:grid-cols-4">
+              {specialtyServices.map((service) => <ServiceCard key={service.id} service={service} equalCollapsedHeight />)}
+            </div>
+          </section>
         </div>
 
         <div className="mt-10 rounded-[2.5rem] border border-nest-gold/18 bg-gradient-to-br from-white via-nest-cream to-nest-mint/25 p-7 shadow-soft sm:p-8">
@@ -180,6 +263,16 @@ export default function ServicesPage() {
         </div>
       </section>
     </>
+  );
+}
+
+function SmartLabelFeature({ icon, title, text }: { icon: ReactNode; title: string; text: string }) {
+  return (
+    <div className="rounded-[1.6rem] border border-nest-gold/14 bg-white p-5 text-center shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+      <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-nest-mint/35 text-nest-teal">{icon}</div>
+      <h3 className="font-black text-nest-teal">{title}</h3>
+      <p className="mt-2 text-sm font-semibold leading-6 text-nest-ink/64">{text}</p>
+    </div>
   );
 }
 
