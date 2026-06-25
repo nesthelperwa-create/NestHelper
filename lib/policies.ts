@@ -36,7 +36,7 @@ export const policies: Policy[] = [
     sections: [
       {
         heading: "Family-to-family only",
-        body: "The referral program is for eligible NestHelper family services only, including Parent Reset, Family Reset, Helper Block, Whole Home Reset, Errand Helper, and Laundry Rescue when NestHelper approves the request. Specific Area(s) Reset, Garage Reset, Move-In / Move-Out Cleaning, Commercial Reset, partner services, helper applications, and business quote requests are excluded unless NestHelper approves an exception in writing."
+        body: "The referral program is for eligible NestHelper family services only, including Parent Reset, Family Reset, Helper Block, Whole Home Cleaning, Errand Helper, and Laundry Rescue when NestHelper approves the request. Specific Area(s) Reset, Garage Reset, Move-In / Move-Out Cleaning, Commercial Reset, partner services, helper applications, and business quote requests are excluded unless NestHelper approves an exception in writing."
       },
       {
         heading: "Eligible services",

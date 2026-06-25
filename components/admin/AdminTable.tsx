@@ -4609,7 +4609,7 @@ export default function AdminTable({
                           <input
                             value={customInitialTitle}
                             onChange={(e) => setCustomInitialTitle(e.target.value)}
-                            placeholder={selected.service === "laundry-rescue" ? "Laundry Rescue custom deposit" : selected.service === "commercial-reset" ? "Commercial Reset approved quote" : selected.service === "move-out-cleaning" ? "Move-In / Move-Out Cleaning approved quote" : selected.service === "specific-area-reset" ? "Specific Area(s) Reset approved quote" : selected.service === "whole-home-reset" ? "Whole Home Reset approved quote" : "Custom Parent Reset checkout"}
+                            placeholder={selected.service === "laundry-rescue" ? "Laundry Rescue custom deposit" : selected.service === "commercial-reset" ? "Commercial Reset approved quote" : selected.service === "move-out-cleaning" ? "Move-In / Move-Out Cleaning approved quote" : selected.service === "specific-area-reset" ? "Specific Area(s) Reset approved quote" : selected.service === "whole-home-reset" ? "Whole Home Cleaning approved quote" : "Custom Parent Reset checkout"}
                             className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]"
                           />
                         </label>

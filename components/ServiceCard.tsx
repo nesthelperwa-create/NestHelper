@@ -30,7 +30,7 @@ const serviceStyles: Record<string, { eyebrow: string; accent: string; chip: str
     ring: "ring-violet-200/70",
   },
   "whole-home-reset": {
-    eyebrow: "Whole home",
+    eyebrow: "Whole-home clean",
     accent: "from-emerald-500/12 via-nest-mint/30 to-white",
     chip: "bg-emerald-50 text-emerald-900 border-emerald-200",
     price: "bg-emerald-50 text-emerald-950",
@@ -101,9 +101,9 @@ const serviceExtras: Record<string, ServiceExtra> = {
     goodToKnow: ["Custom scope reviewed", "Half-day helper block", "Best for bigger lists"],
   },
   "whole-home-reset": {
-    bestFor: "Entire-home cleaning or reset help, including first-time deep cleans, first-time deep clean + recurring maintenance, and weekly, bi-weekly, or monthly full-home support after review.",
+    bestFor: "Entire-home cleaning help, including first-time deep cleans, first-time deep clean + recurring maintenance, and weekly, bi-weekly, or monthly full-home support after review.",
     extraDetails: [
-      "Best when the goal is the whole home, not just one room or selected areas",
+      "Best when the goal is cleaning the whole home, not just one room or selected areas",
       "Visit type, home size, bedroom/bath count, condition, pets, and access help us quote accurately",
       "Optional detail items like interior fridge, interior oven, baseboards, pet hair focus, or linen reset can be requested",
     ],
@@ -157,11 +157,11 @@ export function ServiceCard({ service, equalCollapsedHeight = false }: { service
   const theme = serviceStyles[service.id] || serviceStyles["parent-reset-2hr"];
   const extra = serviceExtras[service.id];
   const detailsId = `service-details-${service.id}`;
-  const featured = service.id === "family-reset-3hr";
+  const featured = service.id === "whole-home-reset";
   const isLaundry = service.id === "laundry-rescue";
   const isQuoteBased = service.standardPrice.toLowerCase().includes("quoted");
   const equalClosed = equalCollapsedHeight && !open;
-  const collapsedHeightClass = equalCollapsedHeight ? "min-h-[690px] sm:min-h-[670px]" : "min-h-[630px]";
+  const collapsedHeightClass = equalCollapsedHeight ? "min-h-[640px] sm:min-h-[620px]" : "min-h-[630px]";
 
   useEffect(() => {
     function handleOtherCard(event: Event) {
@@ -245,7 +245,7 @@ export function ServiceCard({ service, equalCollapsedHeight = false }: { service
     <article
       ref={cardRef}
       onClick={handleCardClick}
-      className={`group relative flex cursor-pointer flex-col overflow-hidden rounded-[2rem] border bg-white/95 shadow-sm backdrop-blur transition duration-300 hover:-translate-y-1 hover:shadow-lift ${
+      className={`group relative flex cursor-pointer flex-col overflow-visible rounded-[2rem] border bg-white/95 shadow-sm backdrop-blur transition duration-300 hover:-translate-y-1 hover:shadow-lift ${
         open ? `border-nest-gold/35 ring-4 ${theme.ring}` : `${collapsedHeightClass} border-nest-gold/16`
       }`}
     >
@@ -292,10 +292,10 @@ export function ServiceCard({ service, equalCollapsedHeight = false }: { service
         </div>
 
         <div className={`mt-5 shrink-0 overflow-hidden rounded-3xl border border-nest-gold/14 bg-gradient-to-br from-nest-cream via-white to-nest-mint/20 shadow-sm ${equalClosed ? "min-h-[8.75rem]" : ""}`}>
-          <div className={`grid gap-0 sm:grid-cols-[1fr_8.4rem] ${equalClosed ? "min-h-[8.75rem]" : "min-h-[8.4rem]"}`}>
+          <div className={`grid gap-0 sm:grid-cols-[minmax(0,1fr)_9rem] ${equalClosed ? "min-h-[8.75rem]" : "min-h-[8.4rem]"}`}>
             <div className="flex flex-col justify-center p-4 sm:p-5">
               <div className="text-xs font-black uppercase tracking-[0.16em] text-nest-ink/55">{isQuoteBased ? "Pricing" : "Starting at"}</div>
-              <div className={`mt-1 break-words font-black leading-tight text-nest-teal ${isLaundry ? "text-[1.55rem] sm:text-[1.62rem]" : "text-3xl"}`}>
+              <div className={`mt-1 break-words font-black leading-tight text-nest-teal ${isLaundry ? "text-[1.55rem] sm:text-[1.62rem]" : "text-2xl sm:text-3xl"}`}>
                 {isLaundry ? (
                   <>
                     <span>$59 minimum</span>
@@ -309,7 +309,7 @@ export function ServiceCard({ service, equalCollapsedHeight = false }: { service
                 {isQuoteBased ? "Reviewed before checkout" : "Helper-based launch pricing"}
               </div>
             </div>
-            <div className={`flex min-h-[3.5rem] min-w-0 items-center justify-center break-words px-3 py-3 text-center text-[0.58rem] font-black uppercase leading-5 tracking-[0.075em] sm:text-[0.62rem] ${theme.price}`}>
+            <div className={`flex min-h-[3.5rem] min-w-0 items-center justify-center whitespace-normal break-words px-3 py-3 text-center text-[0.58rem] font-black uppercase leading-5 tracking-[0.075em] sm:text-[0.62rem] ${theme.price}`}>
               {service.priceNote}
             </div>
           </div>

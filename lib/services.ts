@@ -86,11 +86,11 @@ export const services: Service[] = [
   },
   {
     id: "whole-home-reset",
-    title: "Whole Home Reset",
+    title: "Whole Home Cleaning",
     shortTitle: "Whole Home",
-    description: "Choose this for full-home cleaning or reset help, including first-time deep cleans and ongoing maintenance.",
+    description: "Choose this for full-home cleaning help, including first-time deep cleans and ongoing maintenance.",
     details: [
-      "Entire home cleaning or reset help",
+      "Entire home cleaning help",
       "First-time deep clean of the entire home",
       "First-time deep clean + recurring maintenance",
       "Weekly, bi-weekly, or monthly full-home maintenance",
@@ -101,7 +101,7 @@ export const services: Service[] = [
     serviceTime: "Scope-based visit, usually 3–6+ hours",
     travelInfo: "Core Eastside/Northshore service area",
     image: "/assets/services/service-whole-home-reset.png",
-    note: "Whole Home Reset requests are reviewed before checkout. Square footage, bedroom/bathroom count, visit type, condition, pets, access, optional detail add-ons, photos, and scheduling all affect the quote. Use this for the entire home; use Specific Area(s) Reset for selected rooms or focused areas only."
+    note: "Whole Home Cleaning requests are reviewed before checkout. Square footage, bedroom/bathroom count, visit type, condition, pets, access, optional detail add-ons, photos, and scheduling all affect the quote. Use this for the entire home; use Specific Area(s) Reset for selected rooms or focused areas only."
   },
   {
     id: "specific-area-reset",

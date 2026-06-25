@@ -105,7 +105,7 @@ export function getReferralServiceTitle(serviceId: unknown, fallback?: unknown) 
   if (service === "parent-reset-2hr") return "2-Hour Parent Reset";
   if (service === "family-reset-3hr") return "3-Hour Family Reset";
   if (service === "helper-block-4hr") return "4-Hour Helper Block";
-  if (service === "whole-home-reset") return "Whole Home Reset";
+  if (service === "whole-home-reset") return "Whole Home Cleaning";
   if (service === "laundry-rescue") return "Laundry Rescue";
   if (service === "errand-helper") return "Errand Helper";
   if (service === "commercial-reset") return "Commercial Reset";

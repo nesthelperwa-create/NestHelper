@@ -6,16 +6,16 @@ import { RequestForm } from "@/components/forms/RequestForm";
 import { siteConfig } from "@/lib/siteConfig";
 
 export const metadata: Metadata = {
-  title: "Request Whole Home Reset, Area Resets & Move-In / Move-Out Cleaning | NestHelper",
+  title: "Request Whole Home Cleaning, Area Resets & Move-In / Move-Out Cleaning | NestHelper",
   description:
-    "Request household help from NestHelper for Whole Home Reset, Specific Area(s) Reset, Move-In / Move-Out Cleaning, laundry catch-up, errands, and organizing in Bothell, Woodinville, and nearby Eastside areas.",
+    "Request household help from NestHelper for Whole Home Cleaning, Specific Area(s) Reset, Move-In / Move-Out Cleaning, laundry catch-up, errands, and organizing in Bothell, Woodinville, and nearby Eastside areas.",
   alternates: {
     canonical: `${siteConfig.url}/request`,
   },
   openGraph: {
-    title: "Request Whole Home Reset, Area Resets & Move-In / Move-Out Cleaning | NestHelper",
+    title: "Request Whole Home Cleaning, Area Resets & Move-In / Move-Out Cleaning | NestHelper",
     description:
-      "Tell NestHelper whether you need Whole Home Reset, Specific Area(s) Reset, Move-In / Move-Out Cleaning, laundry help, or errands. We review service area, timing, scope, safety notes, and pricing before payment.",
+      "Tell NestHelper whether you need Whole Home Cleaning, Specific Area(s) Reset, Move-In / Move-Out Cleaning, laundry help, or errands. We review service area, timing, scope, safety notes, and pricing before payment.",
     url: `${siteConfig.url}/request`,
     images: [siteConfig.assets.og],
   },

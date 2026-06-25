@@ -358,8 +358,10 @@ const recurringResetOptions = [
 
 const smartLabelSetupOptions = [
   "No Smart Labels needed",
-  "Free starter labels only — we’ll leave them with you",
-  "Help me set up Smart Labels during the reset",
+  "Free starter labels only — included with qualifying reset",
+  "Starter setup — up to 10 labels ($49)",
+  "Standard setup — up to 20 labels ($79)",
+  "Full setup — up to 30 labels ($109)",
   "Not sure — recommend after review",
 ];
 
@@ -729,6 +731,7 @@ export function RequestForm() {
   const [status, setStatus] = useState<Status>("idle");
   const [message, setMessage] = useState("");
 
+  const publicRequestServices = useMemo(() => services.filter((service) => !["parent-reset-2hr", "family-reset-3hr", "helper-block-4hr"].includes(service.id)), []);
   const selectedService = useMemo(() => services.find((service) => service.id === form.service), [form.service]);
   const serviceCategory = getServiceCategory(form.service);
   const isHomeReset = serviceCategory === "home";
@@ -742,8 +745,8 @@ export function RequestForm() {
   const homeScopeWarning = isHomeReset ? getHomeScopeWarning(form.service, form.homeAreas) : "";
   const visibleAreaResetCleaningTypeOptions = isAreaReset ? getAreaResetCleaningTypeOptions(form.areaResetRooms) : [];
   const visibleAreaResetAddOnOptions = isAreaReset ? getAreaResetAddOnOptions(form.areaResetRooms) : [];
-  const showSmartLabelCount = form.smartLabelSetupInterest === "Help me set up Smart Labels during the reset";
-  const showSmartLabelNotes = form.smartLabelSetupInterest === "Help me set up Smart Labels during the reset" || form.smartLabelSetupInterest === "Free starter labels only — we’ll leave them with you";
+  const showSmartLabelCount = form.smartLabelSetupInterest === "Not sure — recommend after review";
+  const showSmartLabelNotes = form.smartLabelSetupInterest !== "No Smart Labels needed";
   const petDetailsRequired = (isHomeReset || isAreaReset || isMoveOut) && form.pets !== "No pets" && form.pets !== "No pets now, but pets lived here before";
   const referralApplies = Boolean(form.incomingReferralCode && isReferralEligibleService(form.service));
   const referralNeedsEligiblePackage = Boolean(form.incomingReferralCode && form.service && !isReferralEligibleService(form.service));
@@ -1010,7 +1013,7 @@ export function RequestForm() {
           <Field label="Service requested" required>
             <select className="input" required value={form.service} onChange={(e) => handleServiceChange(e.target.value)}>
               <option value="">Choose a service</option>
-              {services.map((service) => <option key={service.id} value={service.id}>{service.title}</option>)}
+              {publicRequestServices.map((service) => <option key={service.id} value={service.id}>{service.title}</option>)}
             </select>
           </Field>
           <Field label="Scheduling preference">
@@ -1052,7 +1055,7 @@ export function RequestForm() {
       {serviceCategory === "none" && (
         <Section title="4. Package-specific questions" description="Choose a service above and this section will only show questions that match that package.">
           <div className="rounded-3xl border border-nest-gold/20 bg-nest-cream p-5 text-sm font-semibold leading-6 text-nest-ink/76">
-            Select 2-Hour Parent Reset, 3-Hour Family Reset, 4-Hour Helper Block, Whole Home Reset, Specific Area(s) Reset, Move-In / Move-Out Cleaning, Errand Helper, or Laundry Rescue to continue.
+            Select Whole Home Cleaning, Specific Area(s) Reset, Move-In / Move-Out Cleaning, Errand Helper, or Laundry Rescue to continue.
           </div>
         </Section>
       )}
@@ -1061,15 +1064,15 @@ export function RequestForm() {
         <Section
           title={isWholeHomeReset ? "4. Whole home cleaning scope" : "4. Home reset focus"}
           description={isWholeHomeReset
-            ? "Choose this for full-home cleaning or reset help, including first-time deep cleans and ongoing maintenance."
+            ? "Choose this for full-home cleaning, including first-time deep cleans and ongoing maintenance."
             : "Choose what needs attention. We review your package, time block, notes, and photos before confirming what can reasonably fit."}
         >
           {isWholeHomeReset ? (
             <>
               <div className="rounded-3xl border border-nest-gold/20 bg-nest-cream p-5 text-sm leading-6 text-nest-ink/76">
-                <strong className="text-nest-teal">Good fit:</strong> entire-home cleaning or reset help, first-time deep clean, first-time deep clean + recurring maintenance, or recurring maintenance only. <strong className="text-nest-teal">Quote first:</strong> heavy buildup, interior appliances, extra linens, pet hair focus, or unusual access notes.
+                <strong className="text-nest-teal">Good fit:</strong> entire-home cleaning, first-time deep clean, first-time deep clean + recurring maintenance, or recurring maintenance only. <strong className="text-nest-teal">Quote first:</strong> heavy buildup, interior appliances, extra linens, pet hair focus, or unusual access notes.
               </div>
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid items-start gap-4 sm:grid-cols-2">
                 <Field label="Home type">
                   <select className="input" value={form.homeType} onChange={(e) => update("homeType", e.target.value)}>
                     <option>Single-family home</option>
@@ -1092,9 +1095,6 @@ export function RequestForm() {
                   <select className="input" required value={form.wholeHomeVisitType} onChange={(e) => update("wholeHomeVisitType", e.target.value)}>
                     {wholeHomeVisitTypeOptions.map((option) => <option key={option}>{option}</option>)}
                   </select>
-                  <p className="mt-2 text-sm font-semibold leading-6 text-nest-ink/62">
-                    Choose this for full-home cleaning or reset help, including first-time deep cleans and ongoing maintenance.
-                  </p>
                 </Field>
                 {form.wholeHomeVisitType.toLowerCase().includes("recurring") && (
                   <Field label="Maintenance cadence">
@@ -1124,6 +1124,10 @@ export function RequestForm() {
                 </Field>
 
               </div>
+
+              <p className="text-sm font-semibold leading-6 text-nest-ink/62">
+                Choose Whole Home Cleaning for the entire home, including first-time deep cleans and ongoing maintenance.
+              </p>
 
               <div>
                 <div className="label mb-3">Optional detail add-ons / focus items</div>
@@ -1518,12 +1522,12 @@ export function RequestForm() {
       )}
 
       {smartLabelsAvailable && (
-        <Section title="Optional Smart Label Setup" description="Smart Labels are simple QR stickers for bins, shelves, closets, boxes, and storage areas. Choose whether you want starter labels only or setup help during the reset. Setup is quoted after review based on the number of labels, storage spots, organizing needs, and documentation needed.">
+        <Section title="Optional Smart Label Setup" description="Smart Labels are simple QR stickers for bins, shelves, closets, boxes, and storage areas. Choose starter labels only, or pick a simple setup package if you want NestHelper to place and document labels during the reset.">
           <div className="rounded-3xl border border-nest-gold/20 bg-nest-cream p-5 text-sm leading-6 text-nest-ink/76">
-            <strong className="text-nest-teal">What they are:</strong> QR stickers your family can scan to see or update the label name, location, contents, notes, and small photos. <strong className="text-nest-teal">Labels included:</strong> starter labels may be included with qualifying resets. <strong className="text-nest-teal">Setup help:</strong> choose setup only if you want NestHelper to place, scan, name, document, and walk you through keeping them updated. Larger setups, extra labels, and detailed inventory can be included in your quote after review.
+            <strong className="text-nest-teal">What they are:</strong> QR stickers your family can scan to see or update the label name, location, contents, notes, and small photos. <strong className="text-nest-teal">Simple setup pricing:</strong> Starter setup up to 10 labels is $49, Standard setup up to 20 labels is $79, and Full setup up to 30 labels is $109. Larger setups, extra labels, and detailed inventory can be quoted after review.
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Would you like Smart Label help?">
+            <Field label="Smart Label option">
               <select className="input" value={form.smartLabelSetupInterest} onChange={(e) => update("smartLabelSetupInterest", e.target.value)}>
                 {smartLabelSetupOptions.map((option) => <option key={option}>{option}</option>)}
               </select>
@@ -1643,7 +1647,7 @@ function Section({ title, description, children }: { title: string; description:
 
 function Field({ label, children, required = false }: { label: string; children: ReactNode; required?: boolean }) {
   return (
-    <label className="grid gap-2">
+    <label className="grid min-w-0 content-start gap-2">
       <span className="label">
         {label}
         {required && <span className="ml-1 text-base leading-none text-red-600" aria-label="required">*</span>}

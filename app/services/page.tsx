@@ -23,11 +23,10 @@ export const metadata: Metadata = {
   },
 };
 
-const quickPackageIds = new Set(["parent-reset-2hr", "family-reset-3hr", "helper-block-4hr"]);
+const hiddenLegacyPackageIds = new Set(["parent-reset-2hr", "family-reset-3hr", "helper-block-4hr"]);
 
 export default function ServicesPage() {
-  const quickPackageServices = services.filter((service) => quickPackageIds.has(service.id));
-  const specialtyServices = services.filter((service) => !quickPackageIds.has(service.id));
+  const specialtyServices = services.filter((service) => !hiddenLegacyPackageIds.has(service.id));
 
   return (
     <>
@@ -49,13 +48,12 @@ export default function ServicesPage() {
         <div className="mb-10 grid gap-5 lg:grid-cols-[0.82fr_1.18fr] lg:items-stretch">
           <div className="rounded-[2.5rem] border border-nest-gold/18 bg-gradient-to-br from-white via-nest-cream to-nest-mint/25 p-6 text-center shadow-soft sm:p-8 lg:text-left">
             <p className="pill-label mx-auto w-fit lg:mx-0"><Sparkles size={15} /> Home Reset Services</p>
-            <h2 className="text-balance mt-4 text-3xl font-black leading-tight text-nest-teal sm:text-4xl lg:text-5xl">Choose the reset your home needs.</h2>
+            <h2 className="text-balance mt-4 text-3xl font-black leading-tight text-nest-teal sm:text-4xl lg:text-5xl">Choose the help your home needs.</h2>
             <p className="mx-auto mt-4 max-w-3xl text-base font-semibold leading-7 text-nest-ink/70 sm:text-lg lg:mx-0">
-              Choose Whole Home Reset for the entire home, Specific Area(s) Reset for selected rooms, or Move-In / Move-Out Cleaning for empty or mostly empty homes. You can also request laundry help, errands, and everyday reset packages.
+              Choose Whole Home Cleaning for the entire home, Specific Area(s) Reset for selected rooms, or Move-In / Move-Out Cleaning for empty or mostly empty homes. You can also request laundry help or errands.
             </p>
             <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row lg:justify-start">
               <ButtonLink href="/request#request-form">Request Help</ButtonLink>
-              <ButtonLink href="/request?service=specific-area-reset#request-form" variant="secondary">Start a Specific Area(s) Reset</ButtonLink>
             </div>
           </div>
 
@@ -63,7 +61,7 @@ export default function ServicesPage() {
             <h3 className="text-2xl font-black text-nest-teal">Not sure what to choose?</h3>
             <div className="mt-5 grid gap-3">
               {[
-                { title: "Whole Home Reset", label: "Entire home", text: "Choose this for full-home cleaning or reset help, first-time deep cleans, and weekly, bi-weekly, or monthly maintenance.", icon: <Home size={16} />, badge: "bg-emerald-50 text-emerald-900 border-emerald-200" },
+                { title: "Whole Home Cleaning", label: "Entire home", text: "Choose this for full-home cleaning, first-time deep cleans, and weekly, bi-weekly, or monthly maintenance.", icon: <Home size={16} />, badge: "bg-emerald-50 text-emerald-900 border-emerald-200" },
                 { title: "Specific Area(s) Reset", label: "Selected rooms", text: "Choose this for kitchen, bathroom(s), bedrooms, playroom, pantry, fridge, oven, laundry area, garage, or a few rooms — not the entire home.", icon: <Grid3X3 size={16} />, badge: "bg-lime-50 text-lime-900 border-lime-200" },
                 { title: "Move-In / Move-Out Cleaning", label: "Empty home", text: "Choose this for empty or mostly empty homes before moving in, after moving out, or before listing/renting.", icon: <Truck size={16} />, badge: "bg-cyan-50 text-cyan-900 border-cyan-200" },
                 { title: "Laundry Rescue", label: "Laundry help", text: "Choose this for laundry pickup, folding, reset help, or catching up on laundry.", icon: <Shirt size={16} />, badge: "bg-rose-50 text-rose-800 border-rose-200" },
@@ -93,7 +91,7 @@ export default function ServicesPage() {
                 NestHelper Smart Labels are customer-owned QR stickers that may be included with qualifying resets. Families can use them to keep bins, closets, shelves, moving boxes, seasonal items, and storage areas easier to maintain.
               </p>
               <p className="mt-3 font-medium leading-7 text-nest-ink/70">
-                Want us to set them up for you? Choose Smart Label setup help and we’ll quote it based on the number of labels or storage spots, how much organizing/documenting is needed, and whether you want notes or photos added.
+                Want us to set them up for you? Choose Starter, Standard, or Full setup in the request form. Larger setups, extra labels, or photo-heavy inventory can still be quoted after review.
               </p>
             </div>
             <div className="grid gap-3 sm:grid-cols-3">
@@ -111,12 +109,12 @@ export default function ServicesPage() {
             <div className="rounded-3xl border border-nest-gold/16 bg-white/78 p-4">
               <p className="text-xs font-black uppercase tracking-[0.16em] text-nest-gold">Setup add-on</p>
               <p className="mt-1 text-lg font-black text-nest-teal">$49 / $79 / $109</p>
-              <p className="mt-1">Setup for up to 10, 20, or 30 labels during approved reset work.</p>
+              <p className="mt-1">Starter, Standard, or Full setup for up to 10, 20, or 30 labels during approved reset work.</p>
             </div>
             <div className="rounded-3xl border border-nest-gold/16 bg-white/78 p-4">
               <p className="text-xs font-black uppercase tracking-[0.16em] text-nest-gold">Extra labels</p>
-              <p className="mt-1 text-lg font-black text-nest-teal">$2 each after 30</p>
-              <p className="mt-1">Detailed inventory or heavy photo documentation can still be quoted.</p>
+              <p className="mt-1 text-lg font-black text-nest-teal">Quote after 30</p>
+              <p className="mt-1">Extra labels, detailed inventory, or photo-heavy setup can be quoted after review.</p>
             </div>
           </div>
         </div>
@@ -126,59 +124,18 @@ export default function ServicesPage() {
         </div>
 
         <div className="space-y-10">
-          <section aria-labelledby="quick-help-packages">
-            <div className="mb-5 flex flex-col gap-2 text-center sm:text-left">
-              <p className="pill-label mx-auto w-fit sm:mx-0"><Sparkles size={15} /> Quick Help Packages</p>
-              <h3 id="quick-help-packages" className="text-2xl font-black text-nest-teal sm:text-3xl">Start here for everyday home reset help.</h3>
-              <p className="max-w-3xl font-semibold leading-7 text-nest-ink/68">
-                These are structured helper visits for busy families who need dishes, toys, surfaces, folding, organizing, and priority catch-up tasks handled in a focused block of time.
-              </p>
-            </div>
-            <div className="grid items-start gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {quickPackageServices.map((service) => <ServiceCard key={service.id} service={service} equalCollapsedHeight />)}
-            </div>
-          </section>
-
           <section aria-labelledby="specific-reset-support">
             <div className="mb-5 flex flex-col gap-2 text-center sm:text-left">
-              <p className="pill-label mx-auto w-fit sm:mx-0"><Sparkles size={15} /> Specific Resets & Support</p>
+              <p className="pill-label mx-auto w-fit sm:mx-0"><Sparkles size={15} /> Home Cleaning & Support</p>
               <h3 id="specific-reset-support" className="text-2xl font-black text-nest-teal sm:text-3xl">For whole-home cleaning, selected areas, moving, laundry, and errands.</h3>
               <p className="max-w-3xl font-semibold leading-7 text-nest-ink/68">
-                Whole Home Reset is for the entire home. Specific Area(s) Reset is for selected rooms. Move-In / Move-Out Cleaning is for empty or mostly empty homes.
+                Whole Home Cleaning is for the entire home. Specific Area(s) Reset is for selected rooms. Move-In / Move-Out Cleaning is for empty or mostly empty homes.
               </p>
             </div>
             <div className="grid items-start gap-6 md:grid-cols-2 xl:grid-cols-3">
               {specialtyServices.map((service) => <ServiceCard key={service.id} service={service} equalCollapsedHeight />)}
             </div>
           </section>
-        </div>
-
-        <div className="mt-10 rounded-[2.5rem] border border-nest-gold/18 bg-gradient-to-br from-white via-nest-cream to-nest-mint/25 p-7 shadow-soft sm:p-8">
-          <div className="grid gap-6 lg:grid-cols-[0.78fr_1.22fr] lg:items-center">
-            <div className="text-center lg:text-left">
-              <p className="pill-label mx-auto w-fit lg:mx-0"><Sparkles size={15} /> Recurring Reset Plans</p>
-              <h2 className="mt-4 text-3xl font-black leading-tight text-nest-teal sm:text-4xl">Small loyalty savings after the first completed reset.</h2>
-              <p className="mt-3 font-medium leading-7 text-nest-ink/70">
-                Recurring rates are available after a first standard-price quick reset when the scope, schedule, service area, and helper fit are consistent. Whole Home Reset maintenance is requested separately and quoted after review.
-              </p>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-3">
-              {[
-                { title: "Parent Reset", biweekly: "$125", weekly: "$119" },
-                { title: "Family Reset", biweekly: "$189", weekly: "$179" },
-                { title: "Helper Block", biweekly: "$269", weekly: "$259" },
-              ].map((plan) => (
-                <div key={plan.title} className="rounded-[1.6rem] border border-nest-gold/14 bg-white p-5 shadow-sm">
-                  <h3 className="text-lg font-black text-nest-teal">{plan.title}</h3>
-                  <div className="mt-4 space-y-2 text-sm font-black text-nest-ink/76">
-                    <div className="flex justify-between gap-3"><span>Every 2 weeks</span><span>{plan.biweekly}</span></div>
-                    <div className="flex justify-between gap-3"><span>Weekly</span><span>{plan.weekly}</span></div>
-                  </div>
-                  <p className="mt-3 text-xs font-semibold leading-5 text-nest-ink/58">Per visit. First reset stays standard price.</p>
-                </div>
-              ))}
-            </div>
-          </div>
         </div>
 
         <div className="mt-10 rounded-[2.5rem] border border-nest-gold/18 bg-gradient-to-br from-white via-nest-cream to-nest-mint/30 p-7 shadow-soft sm:p-8">

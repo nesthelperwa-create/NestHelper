@@ -104,7 +104,7 @@ const FAMILY_PRESETS = [
   },
   {
     id: "whole-home-reset-reviewed",
-    label: "Whole Home Reset reviewed quote",
+    label: "Whole Home Cleaning reviewed quote",
     description: "Reviewed whole-home cleaning quote based on square footage, bedrooms/bathrooms, visit type, condition, pets, access, and optional detail add-ons.",
     unit: "flat",
     rate: "329",
@@ -112,7 +112,7 @@ const FAMILY_PRESETS = [
   },
   {
     id: "whole-home-reset-deep-clean",
-    label: "Whole Home Reset first-time deep clean",
+    label: "Whole Home Cleaning first-time deep clean",
     description: "Higher-scope first-time deep clean or full-home reset quote after review.",
     unit: "flat",
     rate: "449",
@@ -320,7 +320,7 @@ function BuilderSpinner() {
 function getServiceLabel(item: AdminDoc) {
   const raw = String(item.service || item.selectedServiceTitle || item.packageType || "").toLowerCase();
   if (raw.includes("laundry")) return "Laundry Rescue";
-  if (raw.includes("whole-home-reset") || raw.includes("whole home")) return "Whole Home Reset";
+  if (raw.includes("whole-home-reset") || raw.includes("whole home")) return "Whole Home Cleaning";
   if (raw.includes("specific-area-reset") || raw.includes("specific area") || raw.includes("area reset") || raw.includes("garage reset")) return "Specific Area(s) Reset";
   if (raw.includes("move-out") || raw.includes("move out") || raw.includes("move-in") || raw.includes("move in")) return "Move-In / Move-Out Cleaning";
   if (raw.includes("errand")) return "Errand Helper";
@@ -346,7 +346,7 @@ function getSuggestedPresetId(item: AdminDoc) {
 function getDefaultPaymentPlan(item: AdminDoc) {
   const raw = String(item.service || item.selectedServiceTitle || item.packageType || "").toLowerCase();
   if (raw.includes("laundry")) return "Laundry Rescue deposit";
-  if (raw.includes("whole-home-reset") || raw.includes("whole home")) return "Whole Home Reset reviewed quote";
+  if (raw.includes("whole-home-reset") || raw.includes("whole home")) return "Whole Home Cleaning reviewed quote";
   if (raw.includes("specific-area-reset") || raw.includes("specific area") || raw.includes("area reset") || raw.includes("garage reset")) return "One-time specific area reset";
   if (raw.includes("move-out") || raw.includes("move out") || raw.includes("move-in") || raw.includes("move in")) return "One-time move-in / move-out cleaning";
   if (raw.includes("errand")) return "One-time errand helper";
