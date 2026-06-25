@@ -8,16 +8,16 @@ import { services, laundryAddOns } from "@/lib/services";
 import { siteConfig } from "@/lib/siteConfig";
 
 export const metadata: Metadata = {
-  title: "Household Help Services, Home Reset, Move-In / Move-Out Cleaning, Laundry & Errands",
+  title: "Home Cleaning & Parent Reset Services | NestHelper",
   description:
-    "View NestHelper services for home resets, kitchen and bath resets, garage and area resets, move-in / move-out cleaning, laundry help, errands, and organizing in Bothell, Woodinville, and nearby Eastside/Northshore areas.",
+    "NestHelper offers whole-home cleaning, parent reset help, area resets, move-in/move-out cleaning, laundry rescue, and errands for Bothell and Eastside families.",
   alternates: {
     canonical: `${siteConfig.url}/services`,
   },
   openGraph: {
-    title: "Household Help Services, Home Reset, Move-In / Move-Out Cleaning, Laundry & Errands | NestHelper",
+    title: "Home Cleaning & Parent Reset Services | NestHelper",
     description:
-      "Managed household support, home reset packages, kitchen and bath resets, garage and area resets, move-in / move-out cleaning, laundry help, organizing, and errand help for busy families. No childcare.",
+      "Compare NestHelper services for whole-home cleaning, parent resets, area resets, move-in/move-out cleaning, laundry rescue, and errands.",
     url: `${siteConfig.url}/services`,
     images: [siteConfig.assets.og],
   },

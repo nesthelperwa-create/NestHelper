@@ -22,16 +22,16 @@ import { services } from "@/lib/services";
 import { siteConfig } from "@/lib/siteConfig";
 
 export const metadata: Metadata = {
-  title: { absolute: "NestHelper | Household Help in Bothell, Woodinville & Eastside WA" },
+  title: { absolute: "NestHelper | Bothell Home Cleaning & Parent Reset" },
   description:
-    "NestHelper provides household help, home resets, garage and area resets, move-in / move-out cleaning, laundry catch-up, errands, and organizing in Bothell, Woodinville, and nearby Eastside areas.",
+    "NestHelper helps Bothell and Eastside families with whole-home cleaning, parent resets, area resets, move-in/move-out cleaning, laundry, and errands.",
   alternates: {
     canonical: siteConfig.url,
   },
   openGraph: {
-    title: "NestHelper | Household Help in Bothell, Woodinville & Eastside WA",
+    title: "NestHelper | Bothell Home Cleaning & Parent Reset",
     description:
-      "Local household support, home resets, garage and area resets, move-in / move-out cleaning, laundry catch-up, errands, and organizing for busy Eastside/Northshore families. No childcare.",
+      "Whole-home cleaning, parent resets, area resets, move-in/move-out cleaning, laundry help, and errands for busy Bothell and Eastside families.",
     url: siteConfig.url,
     images: [siteConfig.assets.og],
   },

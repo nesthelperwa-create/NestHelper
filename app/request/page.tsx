@@ -6,16 +6,16 @@ import { RequestForm } from "@/components/forms/RequestForm";
 import { siteConfig } from "@/lib/siteConfig";
 
 export const metadata: Metadata = {
-  title: "Request Parent Reset, Whole Home Cleaning & Area Resets | NestHelper",
+  title: "Request NestHelper Service | Bothell, WA",
   description:
-    "Request household help from NestHelper for Parent Reset Plan, Whole Home Cleaning, Specific Area(s) Reset, Move-In / Move-Out Cleaning, laundry catch-up, errands, and organizing in Bothell, Woodinville, and nearby Eastside areas.",
+    "Request NestHelper help for whole-home cleaning, parent resets, area resets, move-in/move-out cleaning, laundry rescue, and local errands.",
   alternates: {
     canonical: `${siteConfig.url}/request`,
   },
   openGraph: {
-    title: "Request Parent Reset, Whole Home Cleaning & Area Resets | NestHelper",
+    title: "Request NestHelper Service | Bothell, WA",
     description:
-      "Tell NestHelper whether you need Parent Reset Plan, Whole Home Cleaning, Specific Area(s) Reset, Move-In / Move-Out Cleaning, laundry help, or errands. We review service area, timing, scope, safety notes, and pricing before payment.",
+      "Send a NestHelper request for home cleaning, parent reset help, area resets, move-in/move-out cleaning, laundry rescue, or local errands.",
     url: `${siteConfig.url}/request`,
     images: [siteConfig.assets.og],
   },
