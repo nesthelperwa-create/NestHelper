@@ -1,6 +1,6 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import type { FormEvent, ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { ArrowRight, CheckCircle2, Clock, Gift, MapPin } from "lucide-react";
@@ -720,6 +720,7 @@ function cleanForSelectedService(form: RequestFormState) {
 }
 
 export function RequestForm() {
+  const router = useRouter();
   const params = useSearchParams();
   const requestedService = normalizeServiceParam(params.get("service") || "");
   const requestedReferralCode = normalizeReferralInput(params.get("ref") || params.get("referral") || params.get("referralCode") || "");
@@ -926,7 +927,8 @@ export function RequestForm() {
       setMessage(form.incomingReferralCode
         ? "Request received with the family referral link. We’ll review the request and keep the referral pending until the eligible reset is completed."
         : "Request received. We’ll review your service area, timing, scope, safety notes, and pricing before sending a secure checkout link. A confirmation email is on its way.");
-      setForm(mergeCampaignAttribution({ ...defaultState, service: requestedService }));
+
+      router.push("/request/thank-you");
     } catch (err) {
       console.error(err);
       setStatus("error");

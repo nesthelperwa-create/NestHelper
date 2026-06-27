@@ -9,6 +9,14 @@ import { HashScrollManager } from "@/components/HashScrollManager";
 const siteUrl = siteConfig.url.replace(/\/$/, "");
 const absoluteUrl = (path: string) => `${siteUrl}${path.startsWith("/") ? path : `/${path}`}`;
 
+const googleAnalyticsId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || "G-64FSF1JRDH";
+const googleAdsId = process.env.NEXT_PUBLIC_GOOGLE_ADS_ID || "";
+const googleTagLoaderId = googleAdsId || googleAnalyticsId;
+const googleTagConfigLines = [googleAnalyticsId, googleAdsId]
+  .filter(Boolean)
+  .map((id) => `gtag('config', ${JSON.stringify(id)});`)
+  .join("\n            ");
+
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   applicationName: siteConfig.name,
@@ -126,18 +134,22 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body className="min-h-screen overflow-x-hidden antialiased">
-        <Script
-          src="https://www.googletagmanager.com/gtag/js?id=G-64FSF1JRDH"
-          strategy="afterInteractive"
-        />
-        <Script id="google-tag" strategy="afterInteractive">
-          {`
+        {googleTagLoaderId && (
+          <Script
+            src={`https://www.googletagmanager.com/gtag/js?id=${googleTagLoaderId}`}
+            strategy="afterInteractive"
+          />
+        )}
+        {googleTagConfigLines && (
+          <Script id="google-tag" strategy="afterInteractive">
+            {`
             window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}
             gtag('js', new Date());
-            gtag('config', 'G-64FSF1JRDH');
+            ${googleTagConfigLines}
           `}
-        </Script>
+          </Script>
+        )}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
