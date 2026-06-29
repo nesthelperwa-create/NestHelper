@@ -99,11 +99,11 @@ function getConfirmationContent(collection: SubmissionCollection, payload: Recor
 
   if (collection === "helperApplications") {
     return {
-      subject: "We received your NestHelper helper application",
+      subject: "We received your NestHelper cleaner/helper application",
       eyebrow: "Application received",
-      title: "Thanks — we received your helper application.",
+      title: "Thanks — we received your cleaner/helper application.",
       intro:
-        "We’ll review your availability, experience, service fit, and next-step onboarding requirements before following up.",
+        "We’ll review your availability, cleaning/helper experience, service fit, and next-step onboarding requirements before following up.",
       nextSteps: [
         "We’ll review your application details.",
         "If there may be a fit, we’ll follow up about references, standards, and background-check steps through secure providers.",
@@ -112,6 +112,7 @@ function getConfirmationContent(collection: SubmissionCollection, payload: Recor
       summary: {
         "Application ID": submissionId,
         City: formatValue(payload.city),
+        "Primary fit": formatValue(payload.roleFocus),
         Availability: formatValue(payload.availability),
       },
       closing: `Questions? Reply to this email or contact us at ${customerSupportEmail}.`,
@@ -122,7 +123,7 @@ function getConfirmationContent(collection: SubmissionCollection, payload: Recor
     subject: "We received your NestHelper partner application",
     eyebrow: "Partner application received",
     title: "Thanks — we received your partner / contractor application.",
-    intro: "We’ll review the business fit, service area, availability, standards, and insurance/business information before next steps.",
+    intro: "We’ll review the cleaning/provider fit, service area, availability, standards, and insurance/business information before next steps.",
     nextSteps: [
       "We’ll review your application details.",
       "If there may be a fit, we’ll follow up about service standards, documentation, and partnership requirements.",

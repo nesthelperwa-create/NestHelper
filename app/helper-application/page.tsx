@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import { permanentRedirect } from "next/navigation";
 
 export const metadata: Metadata = {
-  title: "Helper Application | NestHelper",
-  description: "Apply to support NestHelper families as a checked household helper or local partner provider.",
+  title: "Cleaner & Helper Application | NestHelper",
+  description: "Apply to support NestHelper families as a cleaner, deep cleaner, regular cleaner, checked household helper, or local partner provider.",
 };
 
 export default function HelperApplicationRedirectPage() {

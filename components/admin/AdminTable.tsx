@@ -981,6 +981,7 @@ const DETAIL_FIELD_LABELS: Record<string, string> = {
   campaignTerm: "Campaign term",
   campaignLandingPage: "Landing page",
   availability: "Availability",
+  roleFocus: "Primary fit",
   services: "Services",
   serviceType: "Services",
   serviceArea: "Service area",
@@ -988,6 +989,7 @@ const DETAIL_FIELD_LABELS: Record<string, string> = {
   travelRadius: "Travel radius",
   experienceLevel: "Experience",
   comfortLevel: "Comfort level",
+  workStyle: "Work-style fit",
   notWillingToDo: "Limits",
   insuranceStatus: "Insurance",
   licenseStatus: "License",
@@ -1000,7 +1002,7 @@ const DETAIL_FIELD_ORDER: Record<string, string[]> = {
     "fullName", "selectedServiceTitle", "service", "packageType", "phone", "email", "howFoundUs", "howFoundUsDetails", "campaignSource", "campaignName", "address", "city", "state", "zip", "zipCode", "preferredDate", "preferredWindow", "preferredTime", "alternateDate", "urgency", "roomsAreas", "roomsOrAreas", "wholeHomeVisitType", "wholeHomeRecurringCadence", "wholeHomeCondition", "wholeHomeAddOnSummary", "wholeHomeAddOns", "wholeHomeOtherAddOn", "areaResetRoomSummary", "areaResetRooms", "areaResetOtherRoom", "areaResetCleaningType", "areaResetRepeatSupport", "areaResetAddOnSummary", "areaResetAddOns", "areaResetOtherAddOn", "areaResetArea", "areaResetOtherArea", "areaResetAdditionalAreaSummary", "areaResetAdditionalAreas", "areaResetOtherAdditionalArea", "areaResetBathroomCount", "areaResetSize", "areaResetCondition", "areaResetGoalSummary", "areaResetGoals", "areaResetHauling", "requestDetails", "smartLabelSetupInterest", "smartLabelEstimatedCount", "smartLabelSetupNotes", "notes", "specialInstructions", "promoCode", "incomingReferralCode",
   ],
   helperApplications: [
-    "fullName", "phone", "email", "city", "howFoundUs", "howFoundUsDetails", "campaignSource", "campaignName", "state", "zip", "availability", "services", "transportation", "travelRadius", "experienceLevel", "comfortLevel", "notWillingToDo", "applicationDocumentCount",
+    "fullName", "phone", "email", "city", "roleFocus", "howFoundUs", "howFoundUsDetails", "campaignSource", "campaignName", "state", "zip", "availability", "services", "workStyle", "transportation", "travelRadius", "experienceLevel", "comfortLevel", "notWillingToDo", "applicationDocumentCount",
   ],
   partnerApplications: [
     "businessName", "ownerName", "phone", "email", "howFoundUs", "howFoundUsDetails", "campaignSource", "campaignName", "city", "state", "zip", "serviceType", "serviceArea", "businessStructure", "licenseStatus", "insuranceStatus", "availability", "applicationDocumentCount",

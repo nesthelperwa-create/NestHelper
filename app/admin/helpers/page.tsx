@@ -15,6 +15,7 @@ export default function AdminHelpersPage() {
           { key: "phone", label: "Phone" },
           { key: "email", label: "Email" },
           { key: "city", label: "City" },
+          { key: "roleFocus", label: "Primary Fit" },
           { key: "availability", label: "Availability" },
           { key: "transportation", label: "Transport" },
           { key: "services", label: "Services" },

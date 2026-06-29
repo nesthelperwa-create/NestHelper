@@ -21,17 +21,17 @@ const applicationOptions: Array<{
 }> = [
   {
     key: "helper",
-    eyebrow: "Individual helper",
-    title: "I want to be a NestHelper helper",
-    text: "For people who want to help families with parent-reset visits, laundry folding, errands, organizing, and home reset support.",
-    bullets: ["Individual application", "Gold Star Checked onboarding", "Part-time / flexible availability"],
-    button: "Show helper form",
+    eyebrow: "Individual applicant",
+    title: "I’m applying as a cleaner or helper",
+    text: "For individuals who want cleaning, deep-cleaning, regular home-cleaning, move-in/move-out, laundry, organizing, errand, or parent-reset work.",
+    bullets: ["Cleaning + helper application", "Gold Star Checked onboarding", "Part-time / flexible availability"],
+    button: "Show cleaner/helper form",
   },
   {
     key: "partner",
     eyebrow: "Business or provider",
-    title: "I’m a partner business or contractor",
-    text: "For cleaners, laundromats, errand providers, organizers, and local service businesses that want to partner with NestHelper.",
+    title: "I’m a cleaning business or partner provider",
+    text: "For cleaning companies, independent contractors, laundromats, organizers, errand providers, and local service businesses that want to partner with NestHelper.",
     bullets: ["Business/provider application", "Partner-vetted review", "Capacity, insurance, and service standards"],
     button: "Show partner form",
   },
@@ -61,19 +61,43 @@ const helperAvailabilityOptions = [
   "Saturday",
   "Sunday",
   "School-hour blocks",
+  "Recurring weekly route availability",
+  "Same-week / fill-in availability",
   "Occasional/on-call openings",
 ];
 
+const helperRoleFocusOptions = [
+  "Deep cleaner / detail cleaner",
+  "Regular recurring home cleaner",
+  "Move-in / move-out cleaner",
+  "Whole-home cleaner",
+  "Parent Reset / family home helper",
+  "Laundry and organizing helper",
+  "Errand helper",
+  "Open to multiple roles",
+  "Not sure yet",
+];
+
 const SERVICE_ERRANDS = "Errands / pickup and drop-off";
+const SERVICE_DEEP_CLEANING = "Deep cleaning / detail cleaning";
+const SERVICE_REGULAR_CLEANING = "Regular recurring home cleaning";
+const SERVICE_MOVE_OUT_CLEANING = "Move-in / move-out cleaning";
+const SERVICE_BATH_KITCHEN_DEEP_CLEAN = "Kitchen and bathroom deep cleans";
 
 const helperServiceOptions = [
+  SERVICE_DEEP_CLEANING,
+  SERVICE_REGULAR_CLEANING,
+  SERVICE_MOVE_OUT_CLEANING,
+  "Whole-home cleaning",
+  SERVICE_BATH_KITCHEN_DEEP_CLEAN,
+  "Specific rooms / area resets",
   "Parent Reset / home reset support",
   "Parent Reset Plan / deeper family-space reset visits",
-  "Laundry folding and put-away",
-  SERVICE_ERRANDS,
-  "Light organizing",
   "Dishes / kitchen reset",
   "Changing linens / bed reset",
+  "Laundry folding and put-away",
+  "Light organizing",
+  SERVICE_ERRANDS,
   "Pet-friendly homes",
 ];
 
@@ -82,6 +106,9 @@ const WORKSTYLE_LAUNDRY_HEAVY = "Okay with laundry-heavy visits";
 const WORKSTYLE_ERRAND_DRIVING = "Okay with errand driving";
 
 const helperWorkStyleOptions = [
+  "Strong fit for deep/detail cleaning",
+  "Strong fit for regular recurring cleaning",
+  "Strong fit for move-in/move-out empty-home cleaning",
   WORKSTYLE_CHILDREN_FAMILY_HOMES,
   "Comfortable with pets",
   WORKSTYLE_LAUNDRY_HEAVY,
@@ -98,11 +125,15 @@ const COMFORT_WORKING_WITH_FAMILY_HOME = "Comfortable working while family is ho
 const EMPTY_HOME_ONLY_COMFORT = "Only empty homes / no family present during visit";
 
 const helperComfortOptions = [
+  "Comfortable with deep-cleaning buildup",
+  "Comfortable with recurring family homes",
+  "Comfortable with empty-home cleanings",
   COMFORT_CHILDREN,
   "Comfortable around pets",
   "Comfortable with laundry",
   "Comfortable with kitchens",
   COMFORT_BATHROOMS,
+  "Comfortable using cleaning products/supplies",
   COMFORT_LIFTING,
   COMFORT_DRIVING_ERRANDS,
   COMFORT_WORKING_WITH_FAMILY_HOME,
@@ -115,6 +146,9 @@ const NOT_WILLING_DRIVING_ERRANDS = "No driving errands";
 
 const helperNotWillingOptions = [
   NOT_WILLING_BATHROOMS,
+  "No deep cleaning / heavy buildup",
+  "No move-in/move-out cleanings",
+  "No recurring house-cleaning routes",
   "No pet messes",
   "No biohazards",
   NOT_WILLING_HEAVY_LIFTING,
@@ -126,8 +160,10 @@ const helperNotWillingOptions = [
 
 const helperDocumentLabelOptions = [
   "Resume / work history",
+  "Cleaning experience proof",
+  "Before/after cleaning photos",
   "Reference letter",
-  "Cleaning or caregiving experience proof",
+  "Caregiving or family-support experience proof",
   "Food handler card",
   "CPR / First Aid",
   "Vehicle insurance",
@@ -136,14 +172,19 @@ const helperDocumentLabelOptions = [
 ];
 
 const partnerServiceOptions = [
-  "Residential cleaning support",
+  "Residential deep cleaning",
+  "Regular recurring house cleaning",
+  "Move-in / move-out cleaning",
+  "Whole-home cleaning",
+  "Kitchen and bathroom deep cleans",
+  "Specific room / area resets",
   "Commercial/janitorial cleaning",
+  "Short-term rental turnover",
   "Laundry wash/fold provider",
   "Errand / delivery support",
   "Home organizing",
   "Carpet / floor care",
   "Interior glass / specialty cleaning",
-  "Short-term rental turnover",
 ];
 
 const partnerAreaOptions = [
@@ -181,6 +222,7 @@ const helperDefaultState = {
   email: "",
   phone: "",
   city: "",
+  roleFocus: "",
   howFoundUs: "",
   howFoundUsDetails: "",
   campaignSource: "",
@@ -582,7 +624,7 @@ export function HelperApplicationForm() {
       <div className="rounded-[1.75rem] bg-gradient-to-br from-nest-cream via-white to-nest-mint/30 p-5">
         <p className="text-xs font-black uppercase tracking-[0.22em] text-nest-gold">Individual helper</p>
         <h2 className="mt-2 text-2xl font-black text-nest-teal">Part-Time Helper Application</h2>
-        <p className="mt-2 text-nest-ink/70">For individuals interested in becoming a NestHelper Gold Star Checked helper. Most questions are simple choices; use the notes boxes only where details help.</p>
+        <p className="mt-2 text-nest-ink/70">For individuals interested in cleaning, deep-cleaning, regular home-cleaning, move-in/move-out cleaning, laundry, organizing, errands, or Parent Reset support. Most questions are simple choices; use the notes boxes only where details help.</p>
       </div>
 
       <Grid>
@@ -606,6 +648,9 @@ export function HelperApplicationForm() {
       />
 
       <Grid>
+        <Select label="Primary work you’re applying for" value={form.roleFocus} onChange={(v) => update("roleFocus", v)} placeholder="Choose one" required>
+          {helperRoleFocusOptions.map((option) => <option key={option}>{option}</option>)}
+        </Select>
         <Select label="Weekly capacity" value={form.weeklyCapacity} onChange={(v) => update("weeklyCapacity", v)} placeholder="Choose one">
           <option>1 short shift per week</option>
           <option>2–3 shifts per week</option>
@@ -629,7 +674,8 @@ export function HelperApplicationForm() {
         <Select label="Experience level" value={form.experienceLevel} onChange={(v) => update("experienceLevel", v)} placeholder="Choose one">
           <option>New but willing to learn NestHelper standards</option>
           <option>Some personal/family home-help experience</option>
-          <option>Paid cleaning/home-help experience</option>
+          <option>Paid regular home-cleaning experience</option>
+          <option>Paid deep-cleaning or move-out cleaning experience</option>
           <option>Professional cleaning/organizing experience</option>
           <option>Caregiving/family support background</option>
         </Select>
@@ -637,7 +683,7 @@ export function HelperApplicationForm() {
 
       <CheckboxGroup
         label="Services you’re comfortable with"
-        description="Choose every service you are generally open to. This helps with matching and does not guarantee you will be assigned every selected service."
+        description="Choose every service you are generally open to. This helps us match deep cleaners, regular cleaners, move-out cleaners, and general helpers to the right work. It does not guarantee you will be assigned every selected service."
         options={helperServiceOptions}
         values={form.services}
         onChange={(option, checked) => toggle("services", option, checked)}
@@ -668,9 +714,9 @@ export function HelperApplicationForm() {
         onChange={(option, checked) => toggle("notWillingToDo", option, checked)}
       />
 
-      <Textarea label="Relevant experience details" value={form.experience} onChange={(v) => update("experience", v)} placeholder="Briefly share home-help, cleaning, laundry, organizing, errands, or customer service experience." />
+      <Textarea label="Relevant experience details" value={form.experience} onChange={(v) => update("experience", v)} placeholder="Briefly share paid cleaning, deep-cleaning, recurring cleaning, move-in/move-out, laundry, organizing, errands, family support, or customer service experience." />
       <Textarea label="References" value={form.references} onChange={(v) => update("references", v)} placeholder="Names/contact info or 'available upon request'." />
-      <Textarea label="Anything else?" value={form.notes} onChange={(v) => update("notes", v)} placeholder="Schedule limits, areas you prefer, languages, allergies/sensitivities, or anything NestHelper should know." />
+      <Textarea label="Anything else?" value={form.notes} onChange={(v) => update("notes", v)} placeholder="Schedule limits, areas you prefer, cleaning supplies/equipment experience, languages, allergies/sensitivities, or anything NestHelper should know." />
 
       <ApplicationDocumentUploadSection
         documents={documents}
@@ -745,7 +791,7 @@ export function PartnerApplicationForm() {
       <div className="rounded-[1.75rem] bg-gradient-to-br from-nest-cream via-white to-nest-mint/30 p-5">
         <p className="text-xs font-black uppercase tracking-[0.22em] text-nest-gold">Partner provider</p>
         <h2 className="mt-2 text-2xl font-black text-nest-teal">Independent Contractor / Partner Provider Application</h2>
-        <p className="mt-2 text-nest-ink/70">For cleaners, laundromats, errand providers, organizers, and local businesses interested in partnering with NestHelper.</p>
+        <p className="mt-2 text-nest-ink/70">For cleaning companies, independent cleaners/contractors, laundromats, errand providers, organizers, and local businesses interested in partnering with NestHelper.</p>
       </div>
 
       <Grid>
@@ -833,7 +879,7 @@ export function PartnerApplicationForm() {
 
       <Textarea label="Business license / UBI details" value={form.licenseInfo} onChange={(v) => update("licenseInfo", v)} placeholder="Basic info only. We’ll request documents securely later if needed." />
       <Textarea label="Insurance / bonding details" value={form.insuranceInfo} onChange={(v) => update("insuranceInfo", v)} placeholder="Carrier/type/status is enough here. Optional certificates can be uploaded above if you already have them." />
-      <Textarea label="Anything else?" value={form.notes} onChange={(v) => update("notes", v)} placeholder="Experience, service standards, equipment, detergents/products, team size, special notes, or questions." />
+      <Textarea label="Anything else?" value={form.notes} onChange={(v) => update("notes", v)} placeholder="Experience, deep-cleaning or recurring route capacity, service standards, equipment, detergents/products, team size, special notes, or questions." />
 
       <label className="flex gap-3 rounded-2xl bg-nest-cream p-4 text-sm font-semibold">
         <input type="checkbox" required className="mt-1" checked={form.consent} onChange={(e) => update("consent", e.target.checked)} />

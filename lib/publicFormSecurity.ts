@@ -181,6 +181,7 @@ const helperAllowedFields = [
   "email",
   "phone",
   "city",
+  "roleFocus",
   "howFoundUs",
   "howFoundUsDetails",
   "campaignSource",
@@ -312,6 +313,7 @@ const textLimits: Record<string, number> = {
   notes: 1800,
   experience: 1800,
   references: 1200,
+  roleFocus: 220,
   services: 1200,
   serviceArea: 1200,
   serviceAreaDetails: 1200,
@@ -452,6 +454,7 @@ function validateRequired(collection: SubmissionCollection, payload: Record<stri
     requireEmail();
     requireText("phone", "phone");
     requireText("city", "city");
+    requireText("roleFocus", "primary work preference");
     requireTrue("backgroundConsent", "background check acknowledgement");
   }
 

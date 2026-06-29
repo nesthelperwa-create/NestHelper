@@ -5,16 +5,16 @@ import { ApplicationFormChooser } from "@/components/forms/ApplicationForms";
 import { siteConfig } from "@/lib/siteConfig";
 
 export const metadata: Metadata = {
-  title: "Helpers & Partners | NestHelper",
+  title: "Cleaning Helper Jobs & Partner Applications | NestHelper",
   description:
-    "Apply to work with NestHelper as a household helper or local partner supporting home resets, laundry, errands, and organizing.",
+    "Apply to work with NestHelper as a deep cleaner, regular cleaner, move-out cleaner, household helper, or local partner supporting home resets, laundry, errands, and organizing.",
   alternates: {
     canonical: `${siteConfig.url}/helpers`,
   },
   openGraph: {
-    title: "Helpers & Partners | NestHelper",
+    title: "Cleaning Helper Jobs & Partner Applications | NestHelper",
     description:
-      "Apply to support NestHelper families as a checked household helper or local partner provider.",
+      "Apply to support NestHelper families as a cleaner, checked household helper, or local partner provider.",
     url: `${siteConfig.url}/helpers`,
     images: [siteConfig.assets.og],
   },
@@ -24,17 +24,17 @@ export default function HelpersPage() {
   return (
     <>
       <PageHero
-        eyebrow="For Helpers & Partners"
+        eyebrow="For Cleaners, Helpers & Partners"
         title="Join a parent-focused service built on trust."
-        text="Choose whether you are applying as an individual helper or as a local partner provider. We’ll show the right application so the process feels simple and clear."
+        text="We’re looking for reliable deep cleaners, regular home cleaners, move-in/move-out cleaners, laundry and organizing helpers, parent-reset helpers, and trusted local partner providers. Choose the path that fits you and we’ll show the right application."
         cta={false}
       />
 
       <section className="mx-auto max-w-7xl px-4 pt-12 sm:px-6 lg:px-8">
         <div className="grid gap-5 md:grid-cols-3">
-          <InfoCard icon={<ShieldCheck />} title="Trust-first" text="NestHelper reviews helper fit, standards, references, and screening before active work." />
-          <InfoCard icon={<HeartHandshake />} title="Parent-focused" text="The service is built around helping overwhelmed families with household support." />
-          <InfoCard icon={<Sparkles />} title="Clear expectations" text="We define service scope, communication, and standards before matching work." />
+          <InfoCard icon={<ShieldCheck />} title="Trust-first" text="NestHelper reviews helper fit, cleaning standards, references, and screening before active work." />
+          <InfoCard icon={<HeartHandshake />} title="Cleaning + home support" text="We match people to the right work: deep cleaning, regular cleaning, move-out cleaning, laundry, organizing, errands, and Parent Reset support." />
+          <InfoCard icon={<Sparkles />} title="Clear expectations" text="We define service scope, communication, supplies/equipment expectations, and standards before matching work." />
         </div>
       </section>
 

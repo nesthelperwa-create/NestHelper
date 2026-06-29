@@ -193,13 +193,14 @@ function buildErrandReplyIntro(rows: Record<string, unknown>) {
 
 function buildHelperReplyIntro(rows: Record<string, unknown>) {
   const availability = getRowValue(rows, ["availability", "Availability"]);
-  const serviceArea = getRowValue(rows, ["serviceArea", "Service area"]);
-  const context = [serviceArea ? `service area: ${serviceArea}` : "", availability ? `availability: ${availability}` : ""].filter(Boolean).join("; ");
+  const roleFocus = getRowValue(rows, ["roleFocus", "Primary fit"]);
+  const city = getRowValue(rows, ["city", "City"]);
+  const context = [roleFocus ? `primary fit: ${roleFocus}` : "", city ? `city: ${city}` : "", availability ? `availability: ${availability}` : ""].filter(Boolean).join("; ");
 
   return [
-    "Thanks for applying to become a NestHelper helper.",
+    "Thanks for applying to become a NestHelper cleaner/helper.",
     "",
-    `I’m reviewing your experience, service area, availability, references/background-check readiness, and fit for Parent Reset services${context ? ` (${context})` : ""}.`,
+    `I’m reviewing your cleaning/helper experience, service fit, availability, references/background-check readiness, and fit for NestHelper work${context ? ` (${context})` : ""}.`,
   ];
 }
 
