@@ -42,12 +42,13 @@ export const services: Service[] = [
     id: "family-reset-3hr",
     title: "Parent Reset Plan",
     shortTitle: "Parent Reset",
-    description: "A 3-hour room reset for busy parents who need organizing, light cleaning, and child-safe disinfecting in the spaces their family uses most.",
+    description: "A 3-hour room reset for busy parents who need organizing, light cleaning, child-safe disinfecting, and optional simple in-home meal prep support in the spaces their family uses most.",
     details: [
       "3-hour parent-focused room reset",
       "Playroom, kids room, living area, pantry, entry, or laundry area help",
       "Organizing, sorting, and putting everyday items back in place",
       "Light cleaning of reachable surfaces and accessible floors",
+      "Simple in-home meal prep support, like washing/chopping produce or portioning snacks, when requested",
       "Child-safe disinfecting for high-touch family areas"
     ],
     standardPrice: "$199",
@@ -60,7 +61,7 @@ export const services: Service[] = [
       { cadence: "Every 2 weeks", price: "$189/visit" },
       { cadence: "Weekly", price: "$179/visit" }
     ],
-    note: "Parent Reset Plan is for organizing selected family spaces with light cleaning and child-safe disinfecting. It is not childcare, a full-home cleaning plan, or a move-in / move-out clean."
+    note: "Parent Reset Plan is for organizing selected family spaces with light cleaning, child-safe disinfecting, and optional simple in-home meal prep support when requested. Meal prep is limited to simple prep inside the customer’s home using the customer’s food, kitchen, tools, containers, and instructions. It is not childcare, catering, private-chef service, off-site food prep, nutrition planning, a full-home cleaning plan, or a move-in / move-out clean."
   },
   {
     id: "helper-block-4hr",

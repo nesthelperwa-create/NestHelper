@@ -10,14 +10,14 @@ import { siteConfig } from "@/lib/siteConfig";
 export const metadata: Metadata = {
   title: "Home Cleaning & Parent Reset Services | NestHelper",
   description:
-    "NestHelper offers whole-home cleaning, parent reset help, area resets, move-in/move-out cleaning, laundry rescue, and errands for Bothell and Eastside families.",
+    "NestHelper offers whole-home cleaning, parent reset help, simple in-home meal prep support, area resets, move-in/move-out cleaning, laundry rescue, and errands for Bothell and Eastside families.",
   alternates: {
     canonical: `${siteConfig.url}/services`,
   },
   openGraph: {
     title: "Home Cleaning & Parent Reset Services | NestHelper",
     description:
-      "Compare NestHelper services for whole-home cleaning, parent resets, area resets, move-in/move-out cleaning, laundry rescue, and errands.",
+      "Compare NestHelper services for whole-home cleaning, parent resets, simple in-home meal prep support, area resets, move-in/move-out cleaning, laundry rescue, and errands.",
     url: `${siteConfig.url}/services`,
     images: [siteConfig.assets.og],
   },
@@ -50,7 +50,7 @@ export default function ServicesPage() {
             <p className="pill-label mx-auto w-fit lg:mx-0"><Sparkles size={15} /> Home Cleaning & Reset Services</p>
             <h2 className="text-balance mt-4 text-3xl font-black leading-tight text-nest-teal sm:text-4xl lg:text-5xl">Choose the help your home needs.</h2>
             <p className="mx-auto mt-4 max-w-3xl text-base font-semibold leading-7 text-nest-ink/70 sm:text-lg lg:mx-0">
-              Choose Parent Reset Plan for busy-parent room resets, Whole Home Cleaning for the entire home, Specific Area(s) Reset for selected rooms, or Move-In / Move-Out Cleaning for empty or mostly empty homes. You can also request laundry help or errands.
+              Choose Parent Reset Plan for busy-parent room resets, optional simple in-home meal prep support, Whole Home Cleaning for the entire home, Specific Area(s) Reset for selected rooms, or Move-In / Move-Out Cleaning for empty or mostly empty homes. You can also request laundry help or errands.
             </p>
             <p className="mx-auto mt-5 max-w-3xl text-sm font-black leading-6 text-nest-teal sm:text-base lg:mx-0">
               Click a service guide to jump to the matching service card below.
@@ -61,7 +61,7 @@ export default function ServicesPage() {
             <h3 className="text-2xl font-black text-nest-teal">Not sure what to choose?</h3>
             <div className="mt-5 grid gap-3">
               {[
-                { title: "Parent Reset Plan", label: "Busy-parent room reset", href: "#service-family-reset-3hr", text: "Choose this for a 3-hour reset of playrooms, kids rooms, living areas, pantry, entry, or other family spaces with organizing, light cleaning, and child-safe disinfecting.", icon: <Sparkles size={16} />, badge: "bg-blue-50 text-blue-800 border-blue-200" },
+                { title: "Parent Reset Plan", label: "Busy-parent room reset", href: "#service-family-reset-3hr", text: "Choose this for a 3-hour reset of playrooms, kids rooms, living areas, pantry, entry, or other family spaces with organizing, light cleaning, child-safe disinfecting, and optional simple in-home meal prep.", icon: <Sparkles size={16} />, badge: "bg-blue-50 text-blue-800 border-blue-200" },
                 { title: "Whole Home Cleaning", label: "Entire home", href: "#service-whole-home-reset", text: "Choose this for full-home cleaning, first-time deep cleans, and weekly, bi-weekly, or monthly maintenance.", icon: <Home size={16} />, badge: "bg-emerald-50 text-emerald-900 border-emerald-200" },
                 { title: "Specific Area(s) Reset", label: "Selected rooms", href: "#service-specific-area-reset", text: "Choose this for kitchen, bathroom(s), bedrooms, playroom, pantry, fridge, oven, laundry area, garage, or a few rooms — not the entire home.", icon: <Grid3X3 size={16} />, badge: "bg-lime-50 text-lime-900 border-lime-200" },
                 { title: "Move-In / Move-Out Cleaning", label: "Empty home", href: "#service-move-out-cleaning", text: "Choose this for empty or mostly empty homes before moving in, after moving out, or before listing/renting.", icon: <Truck size={16} />, badge: "bg-cyan-50 text-cyan-900 border-cyan-200" },
@@ -86,6 +86,14 @@ export default function ServicesPage() {
               ))}
             </div>
           </div>
+        </div>
+
+        <div className="mb-10 rounded-[2rem] border border-nest-gold/18 bg-nest-cream p-5 shadow-sm sm:p-6">
+          <p className="text-xs font-black uppercase tracking-[0.18em] text-nest-gold">Simple in-home meal prep</p>
+          <h3 className="mt-1 text-2xl font-black text-nest-teal">Available as a Parent Reset Plan priority.</h3>
+          <p className="mt-3 text-sm font-semibold leading-6 text-nest-ink/70">
+            Meal prep support is limited to simple prep inside the customer’s home using the customer’s food, kitchen, tools, containers, and instructions. Good examples include washing or chopping vegetables and fruit, portioning snacks, prepping simple ingredients, or organizing prepared items in the fridge. It is not catering, private-chef service, full meal cooking, off-site food prep, nutrition planning, or medical dietary support.
+          </p>
         </div>
 
         <div className="mb-10 rounded-[2.5rem] border border-nest-gold/18 bg-gradient-to-br from-white via-nest-cream to-nest-mint/25 p-7 shadow-soft sm:p-8">
@@ -135,7 +143,7 @@ export default function ServicesPage() {
               <p className="pill-label mx-auto w-fit sm:mx-0"><Sparkles size={15} /> Home Cleaning & Support</p>
               <h3 id="specific-reset-support" className="text-2xl font-black text-nest-teal sm:text-3xl">For parent resets, whole-home cleaning, selected areas, moving, laundry, and errands.</h3>
               <p className="max-w-3xl font-semibold leading-7 text-nest-ink/68">
-                Parent Reset Plan is for a 3-hour organizing + light cleaning reset in family spaces. Whole Home Cleaning is for the entire home. Specific Area(s) Reset is for selected rooms. Move-In / Move-Out Cleaning is for empty or mostly empty homes.
+                Parent Reset Plan is for a 3-hour organizing + light cleaning reset in family spaces, with optional simple in-home meal prep support when requested. Whole Home Cleaning is for the entire home. Specific Area(s) Reset is for selected rooms. Move-In / Move-Out Cleaning is for empty or mostly empty homes.
               </p>
             </div>
             <div className="grid items-start gap-6 md:grid-cols-2 xl:grid-cols-3">

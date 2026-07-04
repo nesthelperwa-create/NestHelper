@@ -83,13 +83,14 @@ const serviceExtras: Record<string, ServiceExtra> = {
     goodToKnow: ["Not childcare", "Light reset, not deep cleaning", "Reviewed before checkout"],
   },
   "family-reset-3hr": {
-    bestFor: "Busy parents who need a 3-hour reset for family spaces like playrooms, kids rooms, living areas, pantry, entryway, or laundry areas — with organizing, light cleaning, and child-safe disinfecting.",
+    bestFor: "Busy parents who need a 3-hour reset for family spaces like playrooms, kids rooms, living areas, pantry, entryway, laundry areas, or simple in-home meal prep support — with organizing, light cleaning, and child-safe disinfecting.",
     extraDetails: [
       "Designed for selected family spaces, not the entire home",
-      "Great for toys, clutter, daily pile-ups, surfaces, shelves, and accessible floors",
+      "Great for toys, clutter, daily pile-ups, surfaces, shelves, accessible floors, and simple prep tasks",
+      "Optional simple meal prep is done inside the customer’s home using the customer’s food, tools, containers, and instructions",
       "Includes child-safe disinfecting of high-touch areas when requested",
     ],
-    goodToKnow: ["3-hour parent reset", "Organize + light clean", "No childcare"],
+    goodToKnow: ["3-hour parent reset", "Simple meal prep only", "No childcare"],
   },
   "helper-block-4hr": {
     bestFor: "A bigger block for households that need real catch-up time, multi-area support, or a custom approved helper list.",

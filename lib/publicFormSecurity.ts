@@ -86,6 +86,11 @@ const serviceRequestAllowedFields = [
   "smartLabelEstimatedCount",
   "smartLabelSetupNotes",
   "homePriorities",
+  "mealPrepRequested",
+  "mealPrepTasks",
+  "mealPrepTaskSummary",
+  "mealPrepNotes",
+  "mealPrepAck",
   "homeAreas",
   "wholeHomeVisitType",
   "wholeHomeRecurringCadence",
@@ -284,6 +289,8 @@ const maxSubmissionsByCollection: Record<SubmissionCollection, number> = {
 
 const textLimits: Record<string, number> = {
   requestDetails: 1800,
+  mealPrepTaskSummary: 900,
+  mealPrepNotes: 1000,
   areaResetRoomSummary: 900,
   areaResetOtherRoom: 500,
   areaResetAddOnSummary: 1200,
@@ -498,6 +505,26 @@ function validateRequired(collection: SubmissionCollection, payload: Record<stri
 
         if (selectedWholeHomeAddOns.some((item) => item.includes("other")) && !trimText(payload.wholeHomeOtherAddOn)) {
           missing.push("other whole-home add-on or focus item");
+        }
+      }
+
+      if (trimText(payload.service) === "family-reset-3hr") {
+        const parentPriorities = Array.isArray(payload.homePriorities)
+          ? (payload.homePriorities as unknown[]).map((item) => trimText(item, 220).toLowerCase())
+          : [];
+        const simpleMealPrepRequested = parentPriorities.some((item) => item.includes("meal prep"));
+
+        if (simpleMealPrepRequested) {
+          requireArray("mealPrepTasks", "simple meal prep task");
+          requireTrue("mealPrepAck", "simple in-home meal prep acknowledgement");
+
+          const selectedMealPrepTasks = Array.isArray(payload.mealPrepTasks)
+            ? (payload.mealPrepTasks as unknown[]).map((item) => trimText(item, 220).toLowerCase())
+            : [];
+
+          if (selectedMealPrepTasks.some((item) => item.includes("other")) && !trimText(payload.mealPrepNotes)) {
+            missing.push("other simple meal prep notes");
+          }
         }
       }
 

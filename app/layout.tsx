@@ -44,7 +44,7 @@ export const metadata: Metadata = {
   ],
   openGraph: {
     title: "NestHelper | Household Help in Bothell, Woodinville & Eastside WA",
-    description: "Managed household support, home resets, laundry catch-up, errands, and organizing for busy Eastside/Northshore families. No childcare.",
+    description: "Managed household support, home resets, simple in-home meal prep support, laundry catch-up, errands, and organizing for busy Eastside/Northshore families. No childcare.",
     url: siteUrl,
     siteName: siteConfig.name,
     images: [
@@ -61,7 +61,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "NestHelper | Household Help in Bothell, Woodinville & Eastside WA",
-    description: "Local household support, home resets, laundry catch-up, errands, and organizing for busy Eastside/Northshore families. No childcare.",
+    description: "Local household support, home resets, simple in-home meal prep support, laundry catch-up, errands, and organizing for busy Eastside/Northshore families. No childcare.",
     images: [siteConfig.assets.og],
   },
   icons: {
@@ -104,7 +104,7 @@ const organizationJsonLd = {
   telephone: siteConfig.phone,
   email: siteConfig.emails.support,
   description:
-    "NestHelper provides managed household support, home reset help, laundry catch-up, errands, organizing, and extra hands around the house for busy families in Bothell, Woodinville, and nearby Eastside/Northshore communities. NestHelper does not provide childcare.",
+    "NestHelper provides managed household support, home reset help, simple in-home meal prep support, laundry catch-up, errands, organizing, and extra hands around the house for busy families in Bothell, Woodinville, and nearby Eastside/Northshore communities. NestHelper does not provide childcare.",
   areaServed: [
     "Bothell, WA",
     "Woodinville, WA",

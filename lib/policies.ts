@@ -86,15 +86,19 @@ export const policies: Policy[] = [
   {
     slug: "service-scope",
     title: "Service Scope",
-    intro: "NestHelper focuses on parent-reset services, not childcare, deep cleaning, medical care, or emergency support.",
+    intro: "NestHelper focuses on parent-reset services, simple household support, and reviewed cleaning/reset work — not childcare, private-chef service, medical care, or emergency support.",
     sections: [
       {
         heading: "Included services",
-        body: "Light home reset help, specific area resets, laundry support, simple organizing, errands, family logistics support, and approved household tasks within the selected package time or approved quote."
+        body: "Light home reset help, specific area resets, laundry support, simple organizing, errands, family logistics support, optional simple in-home meal prep support, and approved household tasks within the selected package time or approved quote."
+      },
+      {
+        heading: "Simple in-home meal prep boundaries",
+        body: "When approved as part of a Parent Reset Plan, meal prep support is limited to simple prep inside the customer’s home using the customer’s food, kitchen, tools, containers, and instructions. Examples include washing or chopping produce, portioning snacks, prepping simple ingredients, or organizing prepared items."
       },
       {
         heading: "Excluded services",
-        body: "No unsupervised childcare, bathing children, medical care, elder care, unsafe heavy lifting, hazardous cleaning, chemical or paint disposal, pest cleanup, hoarding/biohazards, mold remediation, illegal tasks, or emergency services."
+        body: "No unsupervised childcare, bathing children, medical care, elder care, private-chef service, catering, full meal cooking, off-site food prep, nutrition or diet planning, medical dietary decisions, food purchased/prepared by NestHelper, unsafe heavy lifting, hazardous cleaning, chemical or paint disposal, pest cleanup, hoarding/biohazards, mold remediation, illegal tasks, or emergency services."
       },
       {
         heading: "Supplies",

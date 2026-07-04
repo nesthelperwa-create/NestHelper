@@ -48,6 +48,9 @@ const defaultState = {
   smartLabelEstimatedCount: "Not sure",
   smartLabelSetupNotes: "",
   homePriorities: [] as string[],
+  mealPrepTasks: [] as string[],
+  mealPrepNotes: "",
+  mealPrepAck: false,
   homeAreas: [] as string[],
   wholeHomeVisitType: "One-time whole home reset",
   wholeHomeRecurringCadence: "Not sure yet",
@@ -100,8 +103,11 @@ const defaultState = {
 type RequestFormState = typeof defaultState;
 type Status = "idle" | "loading" | "success" | "error";
 
+const MEAL_PREP_OPTION = "Simple in-home meal prep support";
+
 const priorityOptions = [
   "Kitchen reset",
+  MEAL_PREP_OPTION,
   "Dishes / counters / surfaces",
   "Toy or living area tidy",
   "Laundry folding / put-away",
@@ -110,6 +116,15 @@ const priorityOptions = [
   "Child-safe disinfecting of high-touch surfaces",
   "Trash / quick pickup",
   "I am not sure — help me prioritize",
+];
+
+const mealPrepTaskOptions = [
+  "Wash and chop vegetables or fruit",
+  "Portion snacks or lunchbox items",
+  "Prep simple ingredients for customer-planned meals",
+  "Organize prepped items in customer-provided containers",
+  "Follow simple written family instructions",
+  "Other simple in-home prep — I’ll explain below",
 ];
 
 const wholeHomeVisitTypeOptions = [
@@ -614,6 +629,11 @@ function cleanForSelectedService(form: RequestFormState) {
         ? "Recurring rates are request-based and begin only after the first completed standard-price reset if scope, schedule, service area, and helper fit are consistent."
         : "Customer requested a one-time reset for now.",
       homePriorities: form.homePriorities,
+      mealPrepRequested: form.homePriorities.includes(MEAL_PREP_OPTION),
+      mealPrepTasks: form.homePriorities.includes(MEAL_PREP_OPTION) ? form.mealPrepTasks : [],
+      mealPrepTaskSummary: form.homePriorities.includes(MEAL_PREP_OPTION) ? form.mealPrepTasks.join(", ") : "",
+      mealPrepNotes: form.homePriorities.includes(MEAL_PREP_OPTION) ? form.mealPrepNotes : "",
+      mealPrepAck: form.homePriorities.includes(MEAL_PREP_OPTION) ? form.mealPrepAck : false,
       homeAreas: form.homeAreas,
       roomsAreas: form.homeAreas.length ? form.homeAreas.join(", ") : form.roomsAreas,
       requestDetails: form.requestDetails,
@@ -746,6 +766,8 @@ export function RequestForm() {
   const isLaundry = serviceCategory === "laundry";
   const isWholeHomeReset = form.service === "whole-home-reset";
   const isParentResetPlan = form.service === "family-reset-3hr";
+  const mealPrepRequested = form.homePriorities.includes(MEAL_PREP_OPTION);
+  const showMealPrepQuestions = isParentResetPlan && mealPrepRequested;
   const smartLabelsAvailable = isSmartLabelEligibleCategory(serviceCategory) && !isWholeHomeReset;
   const wholeHomeSelected = form.homeAreas.includes(WHOLE_HOME_OPTION);
   const homeScopeWarning = isHomeReset ? getHomeScopeWarning(form.service, form.homeAreas) : "";
@@ -774,6 +796,9 @@ export function RequestForm() {
       ...prev,
       service,
       homePriorities: nextCategory === "home" && !isWholeHome ? prev.homePriorities : [],
+      mealPrepTasks: service === "family-reset-3hr" ? prev.mealPrepTasks : [],
+      mealPrepNotes: service === "family-reset-3hr" ? prev.mealPrepNotes : "",
+      mealPrepAck: service === "family-reset-3hr" ? prev.mealPrepAck : false,
       homeAreas: nextCategory === "home" ? (isWholeHome ? [WHOLE_HOME_OPTION] : prev.homeAreas) : [],
       wholeHomeVisitType: isWholeHome ? (prev.wholeHomeVisitType || defaultState.wholeHomeVisitType) : defaultState.wholeHomeVisitType,
       wholeHomeRecurringCadence: isWholeHome ? (prev.wholeHomeRecurringCadence || defaultState.wholeHomeRecurringCadence) : defaultState.wholeHomeRecurringCadence,
@@ -830,9 +855,19 @@ export function RequestForm() {
     }));
   }
 
-  function toggleList(name: "homePriorities" | "homeAreas" | "wholeHomeAddOns" | "areaResetRooms" | "areaResetAddOns" | "areaResetAdditionalAreas" | "areaResetGoals" | "moveOutFocus" | "moveOutAppliances" | "laundryTypes" | "laundryAddOns", item: string, checked: boolean) {
+  function toggleList(name: "homePriorities" | "homeAreas" | "mealPrepTasks" | "wholeHomeAddOns" | "areaResetRooms" | "areaResetAddOns" | "areaResetAdditionalAreas" | "areaResetGoals" | "moveOutFocus" | "moveOutAppliances" | "laundryTypes" | "laundryAddOns", item: string, checked: boolean) {
     setForm((prev) => {
       const current = prev[name];
+
+      if (name === "homePriorities" && item === MEAL_PREP_OPTION && !checked) {
+        return {
+          ...prev,
+          homePriorities: current.filter((value) => value !== item),
+          mealPrepTasks: [],
+          mealPrepNotes: "",
+          mealPrepAck: false,
+        };
+      }
 
       if (name === "homeAreas") {
         if (item === WHOLE_HOME_OPTION) {
@@ -901,6 +936,26 @@ export function RequestForm() {
       if (form.wholeHomeAddOns.includes("Other — I’ll explain below") && !form.wholeHomeOtherAddOn.trim()) {
         setStatus("error");
         setMessage("Please explain the other whole-home add-on or focus item.");
+        return;
+      }
+    }
+
+    if (showMealPrepQuestions) {
+      if (!form.mealPrepTasks.length) {
+        setStatus("error");
+        setMessage("Please choose at least one simple in-home meal prep task or uncheck meal prep support.");
+        return;
+      }
+
+      if (form.mealPrepTasks.includes("Other simple in-home prep — I’ll explain below") && !form.mealPrepNotes.trim()) {
+        setStatus("error");
+        setMessage("Please explain the other simple in-home meal prep task.");
+        return;
+      }
+
+      if (!form.mealPrepAck) {
+        setStatus("error");
+        setMessage("Please acknowledge the simple in-home meal prep scope before submitting.");
         return;
       }
     }
@@ -1201,6 +1256,40 @@ export function RequestForm() {
                   ))}
                 </div>
               </div>
+              {showMealPrepQuestions && (
+                <div className="rounded-[1.75rem] border border-nest-gold/20 bg-nest-cream p-5 shadow-sm">
+                  <p className="text-xs font-black uppercase tracking-[0.18em] text-nest-gold">Simple in-home meal prep</p>
+                  <h4 className="mt-1 text-xl font-black text-nest-teal">Only simple prep inside the customer’s home.</h4>
+                  <p className="mt-2 text-sm font-semibold leading-6 text-nest-ink/70">
+                    Meal prep support is limited to simple hands-on prep using the customer’s food, kitchen, tools, containers, and instructions. Good examples include washing or chopping produce, portioning snacks, prepping simple ingredients, or organizing prepared items in the fridge.
+                  </p>
+                  <p className="mt-2 text-sm font-bold leading-6 text-nest-ink/68">
+                    Not included: catering, private-chef service, full meal cooking, off-site food prep, nutrition or diet planning, medical dietary decisions, or food purchased/prepared by NestHelper.
+                  </p>
+                  <div className="mt-5">
+                    <div className="label mb-3">Simple meal prep tasks <span className="text-red-600">*</span></div>
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      {mealPrepTaskOptions.map((item) => (
+                        <CheckOption key={item} checked={form.mealPrepTasks.includes(item)} onChange={(checked) => toggleList("mealPrepTasks", item, checked)}>{item}</CheckOption>
+                      ))}
+                    </div>
+                  </div>
+                  <Field label={form.mealPrepTasks.includes("Other simple in-home prep — I’ll explain below") ? "Meal prep notes / other task" : "Meal prep notes / instructions (optional)"} required={form.mealPrepTasks.includes("Other simple in-home prep — I’ll explain below")}>
+                    <textarea
+                      className="input min-h-24"
+                      required={form.mealPrepTasks.includes("Other simple in-home prep — I’ll explain below")}
+                      placeholder="Example: Please wash and chop bell peppers, cucumbers, and berries. Use the glass containers in the lower cabinet. No cooking needed."
+                      value={form.mealPrepNotes}
+                      onChange={(e) => update("mealPrepNotes", e.target.value)}
+                    />
+                  </Field>
+                  <label className="flex gap-3 rounded-2xl bg-white p-4 text-sm font-semibold text-nest-ink/82 shadow-sm">
+                    <input type="checkbox" required checked={form.mealPrepAck} onChange={(e) => update("mealPrepAck", e.target.checked)} className="mt-1 h-4 w-4" />
+                    <span><span className="text-red-600">*</span> I understand simple meal prep is done only inside my home using my food, kitchen tools, containers, and instructions. NestHelper does not provide catering, private-chef service, off-site food prep, nutrition planning, or medical dietary decisions.</span>
+                  </label>
+                </div>
+              )}
+
               <div>
                 <div className="label mb-2">Where should we focus first?</div>
                 <p className="mb-3 text-sm leading-6 text-nest-ink/65">
