@@ -156,14 +156,13 @@ const serviceExtras: Record<string, ServiceExtra> = {
     goodToKnow: ["No unsafe requests", "Mileage included", "Longer routes quoted"],
   },
   "laundry-rescue": {
-    bestFor: "Laundry catch-up when the baskets are taking over and you want pickup, wash, dry, fold, and return handled for you. The intro $59 minimum includes up to about 26.2 lbs of laundry.",
+    bestFor: "Laundry catch-up when the baskets are taking over and you want pickup, wash/fold coordination, and clean return delivery handled for you.",
     extraDetails: [
-      "The $59 intro minimum includes pickup, wash, dry, fold, return, and up to about 26.2 lbs",
-      "Additional laundry above the included weight is $2.25/lb",
+      "Laundry is dry-weighed at pickup so pricing is clear before final balance",
       "Clean clothes may be returned in reusable NestHelper bags or totes",
       "Add-ons can cover fragrance-free detergent, sensitive skin detergent, low heat, hang dry, or rush return when available",
     ],
-    goodToKnow: ["$59 includes up to 26.2 lbs", "Reusable bag return", "Bulky items quoted"],
+    goodToKnow: ["Deposit credited", "Reusable bag return", "Bulky items quoted"],
   },
 };
 
@@ -181,10 +180,10 @@ export function ServiceCard({ service, equalCollapsedHeight = false }: { service
   const isLaundry = service.id === "laundry-rescue";
   const isQuoteBased = service.standardPrice.toLowerCase().includes("quoted");
   const equalClosed = equalCollapsedHeight && !open;
-  const collapsedHeightClass = equalClosed ? "md:h-[720px]" : "";
-  const closedTitleClass = equalClosed ? "line-clamp-2 h-[3.35rem]" : "";
-  const closedDescriptionClass = equalClosed ? "line-clamp-3 h-[4.5rem]" : "";
-  const pricePanelHeightClass = equalClosed ? "h-[12rem]" : "min-h-[9.35rem]";
+  const collapsedHeightClass = equalClosed ? "md:min-h-[720px]" : "";
+  const closedTitleClass = equalClosed ? "line-clamp-2 min-h-[3.8rem]" : "";
+  const closedDescriptionClass = equalClosed ? "line-clamp-3 min-h-[5.1rem]" : "";
+  const pricePanelHeightClass = equalClosed ? "min-h-[12rem]" : "min-h-[9.35rem]";
 
   useEffect(() => {
     function handleOtherCard(event: Event) {
@@ -278,12 +277,12 @@ export function ServiceCard({ service, equalCollapsedHeight = false }: { service
         </div>
       )}
 
-      <div className={`relative h-40 shrink-0 overflow-hidden bg-gradient-to-br sm:h-44 ${theme.accent}`}>
+      <div className={`relative h-44 shrink-0 overflow-hidden bg-gradient-to-br sm:h-44 ${theme.accent}`}>
         <Image
           src={service.image}
           alt={service.title}
           fill
-          className="object-contain p-5 opacity-100 transition duration-700 group-hover:scale-[1.03] sm:p-6"
+          className="object-contain object-center p-6 opacity-100 transition duration-700 group-hover:scale-[1.02] sm:p-7"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-white/40 via-transparent to-white/0" />
         <div className={`absolute left-4 top-4 max-w-[72%] rounded-full border px-3 py-1.5 text-[0.68rem] font-black uppercase leading-tight tracking-[0.12em] shadow-sm ${theme.chip}`}>
@@ -293,9 +292,9 @@ export function ServiceCard({ service, equalCollapsedHeight = false }: { service
 
       <div className="flex flex-1 flex-col p-5 sm:p-6">
         <div className="flex items-start justify-between gap-4">
-          <div className="min-w-0">
-            <h3 className={`text-2xl font-black leading-tight text-nest-teal ${closedTitleClass}`}>{service.title}</h3>
-            <p className={`mt-2 text-sm font-semibold leading-6 text-nest-ink/68 ${closedDescriptionClass}`}>
+          <div className="min-w-0 flex-1">
+            <h3 className={`text-[1.8rem] font-black leading-tight text-nest-teal sm:text-[1.95rem] ${closedTitleClass}`}>{service.title}</h3>
+            <p className={`mt-2 text-sm font-semibold leading-6 text-nest-ink/68 sm:text-[0.96rem] ${closedDescriptionClass}`}>
               {service.description}
             </p>
           </div>
@@ -318,18 +317,18 @@ export function ServiceCard({ service, equalCollapsedHeight = false }: { service
           <div className="grid w-full gap-0 sm:grid-cols-[minmax(0,1fr)_9rem]">
             <div className="flex flex-col justify-center p-4 sm:p-5">
               <div className="text-xs font-black uppercase tracking-[0.16em] text-nest-ink/55">{isQuoteBased ? "Pricing" : "Starting at"}</div>
-              <div className={`mt-1 break-words font-black leading-tight text-nest-teal ${isLaundry ? "text-[1.55rem] sm:text-[1.62rem]" : "text-2xl sm:text-3xl"}`}>
+              <div className={`mt-1 break-words font-black leading-tight text-nest-teal ${isLaundry ? "text-[1.18rem] sm:text-[1.28rem]" : "text-2xl sm:text-3xl"}`}>
                 {isLaundry ? (
                   <>
                     <span>$59 minimum</span>
-                    <span className="block text-[0.95rem] leading-5 sm:text-base">includes up to 26.2 lbs</span>
+                    <span className="mt-1 block">includes up to 26.2 lbs</span>
                   </>
                 ) : (
                   service.standardPrice
                 )}
               </div>
               <div className={`mt-2 font-bold text-nest-ink/60 ${isLaundry ? "text-[0.72rem] leading-4 sm:text-xs" : "text-sm"}`}>
-                {isQuoteBased ? "Reviewed before checkout" : isLaundry ? "Intro launch pricing" : "Helper-based launch pricing"}
+                {isLaundry ? "Additional laundry: $2.25/lb" : isQuoteBased ? "Reviewed before checkout" : "Helper-based launch pricing"}
               </div>
             </div>
             <div className={`flex min-h-[3.5rem] min-w-0 items-center justify-center whitespace-normal break-words px-3 py-3 text-center text-[0.58rem] font-black uppercase leading-5 tracking-[0.075em] sm:text-[0.62rem] ${theme.price}`}>
