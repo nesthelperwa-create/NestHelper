@@ -140,7 +140,7 @@ export const services: Service[] = [
     priceNote: "Square footage + condition reviewed",
     serviceTime: "Scope-based visit, usually 2–6+ hours",
     travelInfo: "Core Eastside/Northshore service area",
-    image: "/assets/services/service-move-out-cleaning.png",
+    image: "/assets/services/service-move-out-cleaning.svg",
     note: "Move-in / move-out cleaning is reviewed before checkout. Square footage, empty-home status, photos, kitchen/bathroom condition, appliance requests, access notes, and timing all affect the quote."
   },
   {
@@ -160,7 +160,7 @@ export const services: Service[] = [
     priceNote: "Up to 2 helper-hours",
     serviceTime: "Move prep packages from 2–3.5 helper-hours",
     travelInfo: "Core Eastside/Northshore service area",
-    image: "/assets/services/service-move-out-cleaning.png",
+    image: "/assets/services/service-move-prep-home-reset.svg",
     note: "Movers handle the heavy lifting. NestHelper helps with the home reset. NestHelper does not transport household goods or operate as a moving company. We provide in-home move prep, organizing, labeling, cleaning, unpacking, and reset support. Move Prep Add-On starts at $199 for up to 2 helper-hours; Focused Room Prep is $249 up to 2.5 helper-hours; Kitchen Essentials Prep is $349 up to 3.5 helper-hours; Move-In Essentials Reset is $299 up to 3 helper-hours; Smart Label Setup is $99 up to 20 QR labels; Supply Kits are $59–$199; garage, storage areas, sheds, and heavy clutter are custom quote after review. Additional approved time is $65 per helper-hour with a 1-hour minimum. Move-out cleaning is quoted separately."
   },
   {
