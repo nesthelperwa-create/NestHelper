@@ -52,7 +52,7 @@ const defaultState = {
   mealPrepNotes: "",
   mealPrepAck: false,
   homeAreas: [] as string[],
-  movePrepPackage: "Move Prep Add-On — starts at $199, up to 2 helper-hours",
+  movePrepPackage: "Move Prep Add-On — $199",
   movePrepOptions: [] as string[],
   movePrepNotes: "",
   movePrepAck: false,
@@ -437,20 +437,20 @@ const moveOutApplianceOptions = [
 ];
 
 const movePrepPackageOptions = [
-  "Move Prep Add-On — starts at $199, up to 2 helper-hours",
-  "Focused Room Prep — $249, up to 2.5 helper-hours",
-  "Move-In Essentials Reset — $299, up to 3 helper-hours",
-  "Kitchen Essentials Prep — $349, up to 3.5 helper-hours",
+  "Move Prep Add-On — $199",
+  "Focused Room Prep — $249",
+  "Move-In Reset After Movers — $299",
+  "Kitchen Move Prep / Reset — $349",
   "Custom quote — garage, storage, sheds, or heavy clutter",
   "Not sure — recommend after review",
 ];
 
 const movePrepPackageDescriptions: Record<string, string> = {
-  "Move Prep Add-On — starts at $199, up to 2 helper-hours": "Best for light move prep, sorting, open-first boxes, labels, or supplies before movers arrive.",
-  "Focused Room Prep — $249, up to 2.5 helper-hours": "Best when one room or area needs focused sorting, packing prep, organizing, or reset help.",
-  "Move-In Essentials Reset — $299, up to 3 helper-hours": "Best after the move for setting up key areas, light unpacking, laundry help, and making the home usable.",
-  "Kitchen Essentials Prep — $349, up to 3.5 helper-hours": "Best for kitchen setup, open-first kitchen boxes, pantry/fridge basics, and simple organizing.",
-  "Custom quote — garage, storage, sheds, or heavy clutter": "Best for larger storage areas, heavy clutter, sheds, or anything that needs review before pricing.",
+  "Move Prep Add-On — $199": "Light before-move help for sorting, open-first boxes, simple labels, supplies, or a small prep list. Includes up to 2 helper-hours.",
+  "Focused Room Prep — $249": "Best for one room or area that needs focused sorting, packing prep, organizing, or reset help. Includes up to 2.5 helper-hours.",
+  "Move-In Reset After Movers — $299": "For after the heavy items arrive: light unpacking, key-area setup, laundry help, and getting the home usable. Includes up to 3 helper-hours.",
+  "Kitchen Move Prep / Reset — $349": "Kitchen-focused help before or after the move, including open-first kitchen items, pantry/fridge basics, and simple organizing. Includes up to 3.5 helper-hours.",
+  "Custom quote — garage, storage, sheds, or heavy clutter": "Choose this for larger storage areas, heavy clutter, sheds, or anything that needs review before time and price are confirmed.",
   "Not sure — recommend after review": "Choose this if you want Leo/Gen to review your notes and recommend the best starting point.",
 };
 
@@ -467,6 +467,20 @@ const movePrepOptionOptions = [
   "Move-out cleaning quote",
   "Garage, storage, shed, or heavy clutter review",
 ];
+
+const movePrepOptionDescriptions: Record<string, string> = {
+  "Move prep before movers arrive": "Group, sort, and set aside items before the movers come.",
+  "Sorting / decluttering help": "Separate keep, donate, toss, or review-later piles.",
+  "Open-first essentials boxes": "Set aside must-have items for the first night or first morning.",
+  "Move-in reset support": "Reset key areas after the move so the home feels usable faster.",
+  "Light unpacking / home reset": "Unpack simple items, clear surfaces, and set up everyday zones.",
+  "Donation sorting": "Group donation items so the family can decide what leaves the home.",
+  "QR smart labels": "Optional labels for boxes, bins, shelves, or storage areas.",
+  "Boxes / packing supply kit": "Let us know if you may need boxes, tape, labels, or basic supplies.",
+  "Laundry help": "Fold, sort, or put away laundry during the visit; pickup/delivery can be quoted separately.",
+  "Move-out cleaning quote": "Ask us to review a separate move-out cleaning quote after the home is empty.",
+  "Garage, storage, shed, or heavy clutter review": "Larger or heavier areas need review before we confirm time or price.",
+};
 
 const laundryTypeOptions = [
   "Adult clothes",
@@ -1542,10 +1556,10 @@ export function RequestForm() {
           <details className="rounded-3xl border border-nest-gold/16 bg-white p-4 text-sm leading-6 text-nest-ink/70 shadow-sm">
             <summary className="cursor-pointer font-bold text-nest-teal">Quick package guide</summary>
             <ul className="mt-3 space-y-2 pl-4">
-              <li><strong>Move Prep Add-On:</strong> light help before movers arrive.</li>
-              <li><strong>Focused Room Prep:</strong> one room or area that needs attention.</li>
-              <li><strong>Move-In Essentials Reset:</strong> unpack and reset the basics after moving in.</li>
-              <li><strong>Kitchen Essentials Prep:</strong> kitchen-focused setup and organizing.</li>
+              <li><strong>Move Prep Add-On:</strong> light before-move help, up to 2 helper-hours.</li>
+              <li><strong>Focused Room Prep:</strong> one room or area, up to 2.5 helper-hours.</li>
+              <li><strong>Move-In Reset After Movers:</strong> unpack and reset the basics after heavy items arrive, up to 3 helper-hours.</li>
+              <li><strong>Kitchen Move Prep / Reset:</strong> kitchen-focused prep, setup, and organizing, up to 3.5 helper-hours.</li>
               <li><strong>Custom quote:</strong> garage, storage, sheds, or heavier clutter.</li>
             </ul>
           </details>
@@ -1553,12 +1567,22 @@ export function RequestForm() {
           <div>
             <div className="label mb-3">What should we focus on?</div>
             <p className="mb-3 text-sm leading-6 text-nest-ink/65">
-              Check anything that applies. This helps Leo/Gen understand the request without locking you into every item.
+              Check anything that applies. When selected, a short note appears so the options stay clear without crowding the form.
             </p>
             <div className="grid gap-2 sm:grid-cols-2">
-              {movePrepOptionOptions.map((item) => (
-                <CheckOption key={item} checked={form.movePrepOptions.includes(item)} onChange={(checked) => toggleList("movePrepOptions", item, checked)}>{item}</CheckOption>
-              ))}
+              {movePrepOptionOptions.map((item) => {
+                const checked = form.movePrepOptions.includes(item);
+                return (
+                  <MovePrepCheckOption
+                    key={item}
+                    checked={checked}
+                    description={movePrepOptionDescriptions[item]}
+                    onChange={(nextChecked) => toggleList("movePrepOptions", item, nextChecked)}
+                  >
+                    {item}
+                  </MovePrepCheckOption>
+                );
+              })}
             </div>
             <p className="mt-2 text-xs font-bold text-nest-ink/55">
               Basic sorting, open-first boxes, and simple labeling can usually fit within the selected helper-hours. QR smart labels, supply kits, laundry pickup/delivery, garage or heavy clutter work, and move-out cleaning may affect the final quote.
@@ -1566,7 +1590,7 @@ export function RequestForm() {
           </div>
 
           <div className="rounded-3xl border border-nest-gold/16 bg-white p-5 text-sm font-semibold leading-6 text-nest-ink/72 shadow-sm">
-            <p><strong className="text-nest-teal">Simple pricing guide:</strong> Move Prep starts at $199. Focused Room Prep is $249. Kitchen Essentials Prep is $349. Move-In Essentials Reset is $299.</p>
+            <p><strong className="text-nest-teal">Simple pricing guide:</strong> Move Prep Add-On starts at $199. Focused Room Prep is $249. Move-In Reset After Movers is $299. Kitchen Move Prep / Reset is $349.</p>
             <p className="mt-2">Additional approved time is $65 per helper-hour with a 1-hour minimum. Move-out cleaning, garage/storage areas, sheds, heavy clutter, QR label setup, and supply kits are reviewed before confirming.</p>
           </div>
 
@@ -1934,6 +1958,18 @@ function ScopeNotice({ children, tone = "info" }: { children: ReactNode; tone?: 
     <div className={`mt-3 rounded-2xl border px-4 py-3 text-sm font-bold leading-6 ${classes}`}>
       {children}
     </div>
+  );
+}
+
+function MovePrepCheckOption({ checked, onChange, children, description }: { checked: boolean; onChange: (checked: boolean) => void; children: ReactNode; description?: string }) {
+  return (
+    <label className={`flex items-start gap-3 rounded-2xl border p-3 text-sm font-semibold transition ${checked ? "border-nest-gold/45 bg-nest-mint/35 text-nest-teal shadow-sm" : "border-nest-gold/10 bg-nest-cream text-nest-ink/78 hover:bg-nest-mint/25"}`}>
+      <input type="checkbox" className="mt-0.5 h-4 w-4 shrink-0 accent-nest-teal" checked={checked} onChange={(e) => onChange(e.target.checked)} />
+      <span className="min-w-0 flex-1">
+        <span className="block leading-5">{children}</span>
+        {checked && description && <span className="mt-1 block text-xs font-semibold leading-5 text-nest-ink/62">{description}</span>}
+      </span>
+    </label>
   );
 }
 
