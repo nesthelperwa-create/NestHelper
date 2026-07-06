@@ -462,7 +462,7 @@ const movePrepPricedAddOnOptions = [
   "Kitchen setup / kitchen reset — from $349",
   "QR smart label setup — $99 up to 20 labels",
   "Basic packing supply kit — from $59",
-  "Larger packing supply kit — quoted before checkout",
+  "Larger packing supply kit — reviewed before checkout",
   "Laundry Rescue pickup/delivery — from $59",
 ];
 
@@ -479,8 +479,8 @@ const movePrepOptionDescriptions: Record<string, string> = {
   "After-move unpacking / home reset — from $299": "Add this if you want help after movers deliver: light unpacking, key-area setup, and getting the home usable faster. Starts around 3 helper-hours.",
   "Kitchen setup / kitchen reset — from $349": "Add this for kitchen essentials, pantry/fridge basics, cabinet zones, and everyday-item setup. Starts around 3.5 helper-hours.",
   "QR smart label setup — $99 up to 20 labels": "Add this for boxes, bins, shelves, or storage areas. Larger label setups are quoted before checkout.",
-  "Basic packing supply kit — from $59": "Charged separately. Good for a small focused area or open-first boxes. Final supply list is confirmed before checkout.",
-  "Larger packing supply kit — quoted before checkout": "Use this when you may need more boxes, tape, packing paper, labels, or specialty supplies. Typical larger kits are reviewed before price is confirmed.",
+  "Basic packing supply kit — from $59": "Starter supplies for open-first boxes or one small area: a small set of boxes or bags, packing tape, marker, and simple labels. Final contents confirmed before checkout.",
+  "Larger packing supply kit — reviewed before checkout": "For multiple rooms or bigger prep: more boxes, tape, packing paper or protection, labels, and marker. Quoted after review so you only pay for what is needed.",
   "Laundry Rescue pickup/delivery — from $59": "Optional laundry pickup/delivery. The $59 minimum includes pickup, wash, dry, fold, return, and up to about 26.2 lbs; additional laundry is $2.25/lb.",
   "Move-out cleaning quote — quoted separately": "Ask us to review a separate move-out cleaning quote after the home is empty.",
   "Garage, storage, shed, or heavy clutter review — custom quote": "Larger or heavier areas need review before we confirm time or price.",
@@ -1573,7 +1573,7 @@ export function RequestForm() {
           <div>
             <div className="label mb-3">2. Optional priced add-ons</div>
             <p className="mb-3 text-sm leading-6 text-nest-ink/65">
-              Add these only if you want them reviewed with the request. Supply kits are charged separately and confirmed before checkout.
+              Add these only if you want them reviewed with the request. Supply kit descriptions are shown below so you can choose the closest fit.
             </p>
             <div className="grid gap-2 sm:grid-cols-2">
               {movePrepPricedAddOnOptions.map((item) => {
@@ -1583,6 +1583,7 @@ export function RequestForm() {
                     key={item}
                     checked={checked}
                     description={movePrepOptionDescriptions[item]}
+                    showDescription
                     onChange={(nextChecked) => toggleList("movePrepOptions", item, nextChecked)}
                   >
                     {item}
@@ -1986,13 +1987,13 @@ function ScopeNotice({ children, tone = "info" }: { children: ReactNode; tone?: 
   );
 }
 
-function MovePrepCheckOption({ checked, onChange, children, description }: { checked: boolean; onChange: (checked: boolean) => void; children: ReactNode; description?: string }) {
+function MovePrepCheckOption({ checked, onChange, children, description, showDescription = false }: { checked: boolean; onChange: (checked: boolean) => void; children: ReactNode; description?: string; showDescription?: boolean }) {
   return (
     <label className={`flex items-start gap-3 rounded-2xl border p-3 text-sm font-semibold transition ${checked ? "border-nest-gold/45 bg-nest-mint/35 text-nest-teal shadow-sm" : "border-nest-gold/10 bg-nest-cream text-nest-ink/78 hover:bg-nest-mint/25"}`}>
       <input type="checkbox" className="mt-0.5 h-4 w-4 shrink-0 accent-nest-teal" checked={checked} onChange={(e) => onChange(e.target.checked)} />
       <span className="min-w-0 flex-1">
         <span className="block leading-5">{children}</span>
-        {checked && description && <span className="mt-1 block text-xs font-semibold leading-5 text-nest-ink/62">{description}</span>}
+        {(checked || showDescription) && description && <span className="mt-1 block text-xs font-semibold leading-5 text-nest-ink/62">{description}</span>}
       </span>
     </label>
   );
