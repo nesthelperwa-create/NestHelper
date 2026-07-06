@@ -52,7 +52,7 @@ const defaultState = {
   mealPrepNotes: "",
   mealPrepAck: false,
   homeAreas: [] as string[],
-  movePrepPackage: "Move Prep Add-On — $199 starting point",
+  movePrepPackage: "Not sure — recommend after review",
   movePrepOptions: [] as string[],
   movePrepNotes: "",
   movePrepAck: false,
@@ -437,23 +437,24 @@ const moveOutApplianceOptions = [
 ];
 
 const movePrepPackageOptions = [
-  "Move Prep Add-On — $199 starting point",
-  "Focused Room Prep — $249",
-  "Kitchen Essentials Prep — $349",
-  "Move-In Essentials Reset — $299",
-  "Smart Label Setup only — $99",
+  "Not sure — recommend after review",
+  "Move Prep Add-On — starts at $199, up to 2 helper-hours",
+  "Focused Room Prep — $249, up to 2.5 helper-hours",
+  "Kitchen Essentials Prep — $349, up to 3.5 helper-hours",
+  "Move-In Essentials Reset — $299, up to 3 helper-hours",
+  "Smart Label Setup only — $99, up to 20 QR labels",
   "Supply Kit only — $59–$199",
   "Custom quote — garage/storage/heavy clutter",
-  "Not sure — recommend after review",
 ];
 
 const movePrepOptionOptions = [
+  "Move prep before movers arrive",
   "Sorting / decluttering help",
   "Donation sorting",
   "Open-first essentials boxes",
   "QR Smart Labels",
   "Boxes / packing supply kit",
-  "Move-out cleaning quote",
+  "Move-out cleaning — quote separately",
   "Move-in reset support",
   "Laundry help",
   "Light unpacking / home reset",
@@ -1022,12 +1023,6 @@ export function RequestForm() {
     }
 
     if (serviceCategory === "movePrep") {
-      if (!form.movePrepOptions.length) {
-        setStatus("error");
-        setMessage("Please choose at least one Move Prep & Home Reset option.");
-        return;
-      }
-
       if (!form.movePrepAck) {
         setStatus("error");
         setMessage("Please acknowledge that NestHelper does not transport household goods or operate as a moving company.");
@@ -1501,19 +1496,19 @@ export function RequestForm() {
 
 
       {isMovePrep && (
-        <Section title="4. Move Prep & Home Reset scope" description="Movers handle the heavy lifting. NestHelper helps with the home reset. Pick one starting package, then check anything else you may want help with.">
+        <Section title="4. Move Prep & Home Reset scope" description="Movers handle the heavy lifting. NestHelper helps with the home reset. Pick the best starting point, tell us what is happening with the move, and check any extras that apply.">
           <div className="rounded-3xl border border-nest-gold/20 bg-nest-cream p-5 text-sm leading-6 text-nest-ink/76">
             <strong className="text-nest-teal">Important boundary:</strong> {MOVE_PREP_DISCLAIMER} <strong className="text-nest-teal">Move-out cleaning:</strong> choosing that option only tells us to include a separate cleaning quote.
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <Field label="Choose the main starting package" required>
+              <Field label="Best starting point" required>
                 <select className="input" required value={form.movePrepPackage} onChange={(e) => update("movePrepPackage", e.target.value)}>
                   {movePrepPackageOptions.map((option) => <option key={option}>{option}</option>)}
                 </select>
               </Field>
-              <p className="mt-2 text-xs font-bold text-nest-ink/55">This is the main package to start from. You can add details below and we will review before confirming.</p>
+              <p className="mt-2 text-xs font-bold text-nest-ink/55">Not sure is okay. We review the request before confirming price or timing.</p>
             </div>
             <Field label="Home type">
               <select className="input" value={form.homeType} onChange={(e) => update("homeType", e.target.value)}>
@@ -1536,13 +1531,13 @@ export function RequestForm() {
           </div>
 
           <div>
-            <div className="label mb-3">What else should we include or quote? <span className="text-red-600">*</span></div>
+            <div className="label mb-3">Optional focus areas or add-ons</div>
             <div className="grid gap-2 sm:grid-cols-2">
               {movePrepOptionOptions.map((item) => (
                 <CheckOption key={item} checked={form.movePrepOptions.includes(item)} onChange={(checked) => toggleList("movePrepOptions", item, checked)}>{item}</CheckOption>
               ))}
             </div>
-            <p className="mt-2 text-xs font-bold text-nest-ink/55">Move-out cleaning is quoted separately. Garage, storage areas, sheds, and heavy clutter are custom quote after review. Additional approved time is $65 per helper-hour with a 1-hour minimum.</p>
+            <p className="mt-2 text-xs font-bold text-nest-ink/55">Check only what applies. Move-out cleaning is quoted separately. Garage, storage areas, sheds, and heavy clutter are custom quote after review. Additional approved time is $65 per helper-hour with a 1-hour minimum.</p>
           </div>
 
           <div className="grid gap-3 text-sm font-semibold leading-6 text-nest-ink/72 sm:grid-cols-2">
@@ -1553,7 +1548,7 @@ export function RequestForm() {
           </div>
 
           <Field label="Tell us what is happening with the move" required>
-            <textarea className="input min-h-28" required placeholder="Example: Movers are coming Friday. We need help sorting kitchen essentials, setting up open-first boxes, labeling pantry/kids boxes, and making a donation pile. We may also need a separate move-out cleaning quote." value={form.movePrepNotes} onChange={(e) => update("movePrepNotes", e.target.value)} />
+            <textarea className="input min-h-28" required placeholder="Example: Movers are coming Friday. We need help with kitchen essentials, open-first boxes, pantry/kids labels, and a donation pile. We may also need a separate move-out cleaning quote after the home is empty." value={form.movePrepNotes} onChange={(e) => update("movePrepNotes", e.target.value)} />
           </Field>
 
           <label className="flex gap-3 rounded-2xl bg-white p-4 text-sm font-semibold text-nest-ink/82 shadow-sm">
