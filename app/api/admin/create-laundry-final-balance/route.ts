@@ -152,7 +152,7 @@ export async function POST(request: Request) {
     const body = (await request.json().catch(() => null)) as LaundryFinalBalanceBody | null;
     const requestId = getString(body?.requestId);
     const dryWeightLbs = cleanNumber(body?.dryWeightLbs);
-    const ratePerLb = cleanNumber(body?.ratePerLb) || 2.99;
+    const ratePerLb = cleanNumber(body?.ratePerLb) || 2.25;
     const addOnsAmount = Math.max(0, cleanNumber(body?.addOnsAmount));
     const finalBalanceNote = getString(body?.finalBalanceNote);
     const shouldSendEmail = body?.sendEmail !== false;
@@ -285,7 +285,7 @@ export async function POST(request: Request) {
       tax_behavior: "exclusive",
       tax_code: laundryProductTaxCode,
       description: [
-        "Laundry Rescue wash, dry, fold, and coordination — dry weight",
+        "Laundry Rescue wash, dry, fold, return, and coordination — dry weight",
         `Calculation: ${formatNumber(dryWeightLbs)} lb × ${formatMoney(ratePerLb)} per lb`,
         `Dry weight total before deposit credit: ${formatMoney(laundryBaseAmount)}`,
       ].join("\n"),

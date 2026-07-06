@@ -1639,7 +1639,7 @@ function buildQuotePrompt(item: AdminDoc) {
     "- Parent Reset Plan starts at $199 for a flat 3-hour parent reset.",
     "- Whole Home Cleaning, Specific Area(s) Reset, and Move-In / Move-Out Cleaning are quoted after review based on size, condition, scope, add-ons, and photos.",
     "- Errand Helper starts at $119.",
-    "- Laundry Rescue starts at a $59 minimum plus $2.99/lb.",
+    "- Laundry Rescue intro launch pricing: $59 minimum + $2.25/lb.",
     "- Smart Label setup pricing: Starter setup up to 10 labels is $49, Standard setup up to 20 labels is $79, Full setup up to 30 labels is $109. Larger setups or detailed inventory can be quoted after review.",
     "",
     "Selected service guidance:",
@@ -2491,7 +2491,7 @@ export default function AdminTable({
   const [statusError, setStatusError] = useState("");
   const [statusEmailOutcome, setStatusEmailOutcome] = useState<StatusEmailOutcome | null>(null);
   const [laundryDryWeightLbs, setLaundryDryWeightLbs] = useState("");
-  const [laundryRatePerLb, setLaundryRatePerLb] = useState("2.99");
+  const [laundryRatePerLb, setLaundryRatePerLb] = useState("2.25");
   const [laundryAddOnsAmount, setLaundryAddOnsAmount] = useState("0");
   const [laundryDepositCredit, setLaundryDepositCredit] = useState("59");
   const [laundryFinalNote, setLaundryFinalNote] = useState("");
@@ -2581,7 +2581,7 @@ export default function AdminTable({
     setStatusError("");
     setStatusEmailOutcome(null);
     setLaundryDryWeightLbs(selected?.laundryDryWeightLbs ? String(selected.laundryDryWeightLbs) : "");
-    setLaundryRatePerLb(selected?.laundryRatePerLb ? String(selected.laundryRatePerLb) : "2.99");
+    setLaundryRatePerLb(selected?.laundryRatePerLb ? String(selected.laundryRatePerLb) : "2.25");
     setLaundryAddOnsAmount(selected?.laundryAddOnsAmount ? String(selected.laundryAddOnsAmount) : "0");
     setLaundryDepositCredit(String(getLaundryDefaultDepositCredit(selected, nextMode) || 0));
     setLaundryFinalNote("");
@@ -5054,7 +5054,7 @@ export default function AdminTable({
                     />
                   </label>
                   <label className="grid gap-2 text-sm font-bold text-slate-700">
-                    Rate per lb
+                    Intro rate per lb
                     <input
                       value={laundryRatePerLb}
                       onChange={(e) => setLaundryRatePerLb(e.target.value)}

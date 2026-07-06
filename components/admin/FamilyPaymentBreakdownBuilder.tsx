@@ -185,9 +185,9 @@ const FAMILY_PRESETS = [
   {
     id: "laundry-final-weight",
     label: "Laundry dry weight charge",
-    description: "Laundry final-balance calculation based on dry weight at pickup.",
+    description: "Laundry final-balance calculation based on dry weight at pickup using the intro launch per-pound rate.",
     unit: "lb",
-    rate: "2.99",
+    rate: "2.25",
     amount: "0",
   },
   {

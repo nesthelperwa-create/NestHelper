@@ -96,7 +96,7 @@ const defaultState = {
   laundryTypes: [] as string[],
   laundryBagEstimate: "1–2 bags/hampers",
   laundryPickupSpot: "Front porch / outside door",
-  detergent: "Standard detergent",
+  detergent: "Eco-friendly standard detergent",
   dryPreference: "Standard dry",
   laundryAddOns: [] as string[],
   reusableBagAck: false,
@@ -927,7 +927,7 @@ export function RequestForm() {
       laundryTypes: nextCategory === "laundry" ? prev.laundryTypes : [],
       laundryBagEstimate: nextCategory === "laundry" ? prev.laundryBagEstimate : defaultState.laundryBagEstimate,
       laundryPickupSpot: nextCategory === "laundry" ? prev.laundryPickupSpot : defaultState.laundryPickupSpot,
-      detergent: nextCategory === "laundry" ? prev.detergent : "Standard detergent",
+      detergent: nextCategory === "laundry" ? prev.detergent : "Eco-friendly standard detergent",
       dryPreference: nextCategory === "laundry" ? prev.dryPreference : "Standard dry",
       laundryAddOns: nextCategory === "laundry" ? prev.laundryAddOns : [],
       reusableBagAck: nextCategory === "laundry" ? prev.reusableBagAck : false,
@@ -1727,7 +1727,7 @@ export function RequestForm() {
       )}
 
       {isLaundry && (
-        <Section title="4. Laundry Rescue preferences" description="Laundry is billed by dry weight at pickup. Your deposit is credited toward the final total, then the final balance is handled by your checkout choice: auto-charge after review or invoice before delivery.">
+        <Section title="4. Laundry Rescue preferences" description="Laundry Rescue intro launch pricing: $59 minimum + $2.25/lb. Includes wash, dry, fold, and return; eco-friendly detergent is available. Your deposit is credited toward the final total, then the final balance is handled by your checkout choice: auto-charge after review or invoice before delivery.">
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Estimated laundry amount" required>
               <select className="input" required value={form.laundryBagEstimate} onChange={(e) => update("laundryBagEstimate", e.target.value)}>
@@ -1750,7 +1750,7 @@ export function RequestForm() {
             </Field>
             <Field label="Detergent preference">
               <select className="input" value={form.detergent} onChange={(e) => update("detergent", e.target.value)}>
-                <option>Standard detergent</option>
+                <option>Eco-friendly standard detergent</option>
                 <option>Baby & Sensitive Skin Detergent +$5</option>
                 <option>Fragrance-free detergent +$5</option>
                 <option>No preference</option>

@@ -187,21 +187,21 @@ export const services: Service[] = [
     id: "laundry-rescue",
     title: "Laundry Rescue",
     shortTitle: "Laundry Rescue",
-    description: "Pickup, dry weigh-in, wash/fold coordination, and return delivery.",
+    description: "Pickup, dry weigh-in, wash, dry, fold, and return delivery.",
     details: [
       "Dry weight confirmed at pickup",
-      "$59 minimum + $2.99/lb",
-      "Pickup and return delivery",
-      "Baby/sensitive or fragrance-free detergent add-on",
+      "Laundry Rescue intro launch pricing: $59 minimum + $2.25/lb.",
+      "Wash, dry, fold, and return",
+      "Eco-friendly detergent available",
       "Auto-charge or invoice after weigh-in"
     ],
-    standardPrice: "$59 minimum + $2.99/lb",
-    priceNote: "Minimum + per-pound pricing",
+    standardPrice: "$59 minimum + $2.25/lb",
+    priceNote: "Intro launch pricing",
     serviceTime: "Pickup + return window scheduled",
     travelInfo: "Dry weight confirmed at pickup",
     image: "/assets/services/service-laundry-rescue.png",
     stripeStandardEnv: "STRIPE_PRICE_LAUNDRY_DEPOSIT_STANDARD",
-    note: "Laundry is billed by dry weight. The non-refundable deposit is credited before tax toward the final total, and any remaining balance is handled by the checkout option selected: auto-charge after review or invoice before delivery."
+    note: "Laundry Rescue intro launch pricing: $59 minimum + $2.25/lb. Includes wash, dry, fold, and return; eco-friendly detergent is available. Laundry is billed by dry weight. The non-refundable minimum/deposit is credited before tax toward the final total, and any remaining balance is handled by the checkout option selected: auto-charge after review or invoice before delivery."
   }
 ];
 

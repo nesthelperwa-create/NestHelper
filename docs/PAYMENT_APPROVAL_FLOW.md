@@ -13,7 +13,7 @@ Customers submit a request first. Admin reviews it. Admin sends payment only aft
 3-Hour Family Reset: $199
 4-Hour Helper Block: $279
 Errand Helper: $119
-Laundry Rescue: $59 minimum + $2.99/lb
+Laundry Rescue intro launch pricing: $59 minimum + $2.25/lb
 Extra approved time in the family builder: $35/half-hour or $70/hour
 ```
 
@@ -103,9 +103,9 @@ Final balance before optional manual sales tax = final laundry subtotal before t
 Use standard Laundry Rescue values:
 
 ```text
-Standard rate: $2.99/lb
+Intro launch rate: $2.25/lb
 Standard deposit/minimum credit before tax: $59
-Internal discount mode now uses the same Laundry Rescue deposit/rate unless you manually enter a custom amount.
+Internal discount mode now uses the same Laundry Rescue minimum/intro launch rate unless you manually enter a custom amount.
 ```
 
 

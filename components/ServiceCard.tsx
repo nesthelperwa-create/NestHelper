@@ -321,14 +321,14 @@ export function ServiceCard({ service, equalCollapsedHeight = false }: { service
                 {isLaundry ? (
                   <>
                     <span>$59 minimum</span>
-                    <span className="block">+ $2.99/lb</span>
+                    <span className="block">+ $2.25/lb</span>
                   </>
                 ) : (
                   service.standardPrice
                 )}
               </div>
               <div className={`mt-2 font-bold text-nest-ink/60 ${isLaundry ? "text-[0.72rem] leading-4 sm:text-xs" : "text-sm"}`}>
-                {isQuoteBased ? "Reviewed before checkout" : "Helper-based launch pricing"}
+                {isQuoteBased ? "Reviewed before checkout" : isLaundry ? "Intro launch pricing" : "Helper-based launch pricing"}
               </div>
             </div>
             <div className={`flex min-h-[3.5rem] min-w-0 items-center justify-center whitespace-normal break-words px-3 py-3 text-center text-[0.58rem] font-black uppercase leading-5 tracking-[0.075em] sm:text-[0.62rem] ${theme.price}`}>

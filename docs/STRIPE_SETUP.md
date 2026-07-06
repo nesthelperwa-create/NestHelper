@@ -60,7 +60,7 @@ Updated public standard pricing:
 3-Hour Family Reset: $199
 4-Hour Helper Block: $279
 Errand Helper: $119
-Laundry Rescue: $59 minimum + $2.99/lb
+Laundry Rescue intro launch pricing: $59 minimum + $2.25/lb
 ```
 
 Recommended env vars for the updated helper-based pricing:
