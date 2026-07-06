@@ -32,8 +32,11 @@ export default function RequestPage() {
           <h1 className="text-balance mt-4 text-3xl font-black tracking-tight text-nest-teal sm:text-5xl">
             Request household help.
           </h1>
-          <p className="mx-auto mt-4 max-w-3xl text-sm font-semibold leading-6 text-nest-ink/72 sm:text-base sm:leading-7">
-            Submit the details first. No payment is due today. NestHelper reviews service area, timing, scope, square footage when needed, pets, access, safety notes, and pricing before sending a secure payment link. Parent Reset Plan requests can also include simple in-home meal prep support, like chopping produce or portioning snacks, when requested. Move Prep & Home Reset requests are for in-home prep, sorting, labels, supplies, cleaning, unpacking, and reset support — not moving-company transportation.
+          <p className="mx-auto mt-4 max-w-2xl text-sm font-semibold leading-6 text-nest-ink/72 sm:text-base sm:leading-7">
+            Tell us what kind of help you need. NestHelper reviews the scope, timing, service area, and pricing before sending any secure payment link.
+          </p>
+          <p className="mx-auto mt-3 max-w-2xl text-xs font-bold leading-5 text-nest-ink/58 sm:text-sm">
+            Home cleaning, parent resets, laundry rescue, errands, move prep, and simple in-home meal prep support.
           </p>
           <div className="mx-auto mt-6 flex max-w-sm flex-col justify-center gap-3 sm:max-w-none sm:flex-row">
             <ButtonLink href="#request-form">Start the request</ButtonLink>
