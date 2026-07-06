@@ -180,10 +180,10 @@ export function ServiceCard({ service, equalCollapsedHeight = false }: { service
   const isLaundry = service.id === "laundry-rescue";
   const isQuoteBased = service.standardPrice.toLowerCase().includes("quoted");
   const equalClosed = equalCollapsedHeight && !open;
-  const collapsedHeightClass = equalClosed ? "md:min-h-[720px]" : "";
-  const closedTitleClass = equalClosed ? "line-clamp-2 min-h-[3.8rem]" : "";
-  const closedDescriptionClass = equalClosed ? "line-clamp-3 min-h-[5.1rem]" : "";
-  const pricePanelHeightClass = equalClosed ? "min-h-[12rem]" : "min-h-[9.35rem]";
+  const collapsedHeightClass = equalClosed ? "md:h-[720px]" : "";
+  const closedTitleClass = equalClosed ? "line-clamp-2 h-[3.6rem]" : "";
+  const closedDescriptionClass = equalClosed ? "line-clamp-3 h-[4.75rem]" : "";
+  const pricePanelHeightClass = equalClosed ? "h-[12rem]" : "min-h-[9.35rem]";
 
   useEffect(() => {
     function handleOtherCard(event: Event) {
@@ -267,7 +267,7 @@ export function ServiceCard({ service, equalCollapsedHeight = false }: { service
     <article
       ref={cardRef}
       onClick={handleCardClick}
-      className={`group relative flex cursor-pointer flex-col self-start overflow-visible rounded-[2rem] border bg-white/95 shadow-sm backdrop-blur transition duration-300 hover:-translate-y-1 hover:shadow-lift ${
+      className={`group relative flex h-full cursor-pointer flex-col overflow-hidden rounded-[2rem] border bg-white/95 shadow-sm backdrop-blur transition duration-300 hover:-translate-y-1 hover:shadow-lift ${
         open ? `border-nest-gold/35 ring-4 ${theme.ring}` : `${collapsedHeightClass} border-nest-gold/16`
       }`}
     >
@@ -293,8 +293,8 @@ export function ServiceCard({ service, equalCollapsedHeight = false }: { service
       <div className="flex flex-1 flex-col p-5 sm:p-6">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0 flex-1">
-            <h3 className={`text-[1.8rem] font-black leading-tight text-nest-teal sm:text-[1.95rem] ${closedTitleClass}`}>{service.title}</h3>
-            <p className={`mt-2 text-sm font-semibold leading-6 text-nest-ink/68 sm:text-[0.96rem] ${closedDescriptionClass}`}>
+            <h3 className={`text-2xl font-black leading-tight text-nest-teal ${closedTitleClass}`}>{service.title}</h3>
+            <p className={`mt-2 text-sm font-semibold leading-6 text-nest-ink/68 ${closedDescriptionClass}`}>
               {service.description}
             </p>
           </div>
