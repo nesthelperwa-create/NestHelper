@@ -459,11 +459,10 @@ const movePrepBeforeMoveOptions = [
 
 const movePrepPricedAddOnOptions = [
   "After-move unpacking / home reset — from $299",
-  "Kitchen setup / kitchen reset — from $349",
+  "After-move kitchen setup / kitchen reset — from $349",
   "QR smart label setup — $99 up to 20 labels",
   "Basic packing supply kit — from $59",
   "Larger packing supply kit — reviewed before checkout",
-  "Laundry Rescue pickup/delivery — from $59",
 ];
 
 const movePrepReviewOptionOptions = [
@@ -477,12 +476,11 @@ const movePrepOptionDescriptions: Record<string, string> = {
   "Light packing prep before movers arrive": "Help group items, stage supplies, and prep simple boxes. Movers still handle the heavy lifting and transportation.",
   "Donation sorting": "Group donation items so the family can decide what leaves the home.",
   "After-move unpacking / home reset — from $299": "Add this if you want help after movers deliver: light unpacking, key-area setup, and getting the home usable faster. Starts around 3 helper-hours.",
-  "Kitchen setup / kitchen reset — from $349": "Add this for kitchen essentials, pantry/fridge basics, cabinet zones, and everyday-item setup. Starts around 3.5 helper-hours.",
+  "After-move kitchen setup / kitchen reset — from $349": "After the move, we help set up kitchen essentials, pantry/fridge basics, cabinet zones, and everyday-item flow. Starts around 3.5 helper-hours.",
   "QR smart label setup — $99 up to 20 labels": "Add this for boxes, bins, shelves, or storage areas. Larger label setups are quoted before checkout.",
   "Basic packing supply kit — from $59": "Starter supplies for open-first boxes or one small area: a small set of boxes or bags, packing tape, marker, and simple labels. Final contents confirmed before checkout.",
   "Larger packing supply kit — reviewed before checkout": "For multiple rooms or bigger prep: more boxes, tape, packing paper or protection, labels, and marker. Quoted after review so you only pay for what is needed.",
-  "Laundry Rescue pickup/delivery — from $59": "Optional laundry pickup/delivery. The $59 minimum includes pickup, wash, dry, fold, return, and up to about 26.2 lbs; additional laundry is $2.25/lb.",
-  "Move-out cleaning quote — quoted separately": "Ask us to review a separate move-out cleaning quote after the home is empty.",
+    "Move-out cleaning quote — quoted separately": "Ask us to review a separate move-out cleaning quote after the home is empty.",
   "Garage, storage, shed, or heavy clutter review — custom quote": "Larger or heavier areas need review before we confirm time or price.",
 };
 
