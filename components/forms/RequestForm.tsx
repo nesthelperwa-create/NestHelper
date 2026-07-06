@@ -52,6 +52,10 @@ const defaultState = {
   mealPrepNotes: "",
   mealPrepAck: false,
   homeAreas: [] as string[],
+  movePrepPackage: "Move Prep Add-On — starting at $199, up to 2 helper-hours",
+  movePrepOptions: [] as string[],
+  movePrepNotes: "",
+  movePrepAck: false,
   wholeHomeVisitType: "One-time whole home reset",
   wholeHomeRecurringCadence: "Not sure yet",
   wholeHomeCondition: "Standard cleaning / normal household use",
@@ -104,6 +108,7 @@ type RequestFormState = typeof defaultState;
 type Status = "idle" | "loading" | "success" | "error";
 
 const MEAL_PREP_OPTION = "Simple in-home meal prep support";
+const MOVE_PREP_DISCLAIMER = "NestHelper does not transport household goods or operate as a moving company. We provide in-home move prep, organizing, labeling, cleaning, unpacking, and reset support.";
 
 const priorityOptions = [
   "Kitchen reset",
@@ -431,6 +436,30 @@ const moveOutApplianceOptions = [
   "None / not needed",
 ];
 
+const movePrepPackageOptions = [
+  "Move Prep Add-On — starting at $199, up to 2 helper-hours",
+  "Focused Room Prep — $249, up to 2.5 helper-hours",
+  "Kitchen Essentials Prep — $349, up to 3.5 helper-hours",
+  "Move-In Essentials Reset — $299, up to 3 helper-hours",
+  "Smart Label Setup — $99, up to 20 QR labels",
+  "Supply Kits — $59–$199",
+  "Garage, storage areas, sheds, or heavy clutter — custom quote after review",
+  "Not sure — recommend after review",
+];
+
+const movePrepOptionOptions = [
+  "Move prep",
+  "Sorting support",
+  "Open-first essentials boxes",
+  "Smart labels",
+  "Boxes/supplies",
+  "Donation sorting",
+  "Move-out cleaning — quote separately",
+  "Move-in reset",
+  "Laundry help",
+  "Unpacking support",
+];
+
 const laundryTypeOptions = [
   "Adult clothes",
   "Kids clothes",
@@ -453,6 +482,7 @@ function getServiceCategory(serviceId: string) {
   if (normalizedServiceId === "errand-helper") return "errand";
   if (normalizedServiceId === "specific-area-reset") return "areaReset";
   if (normalizedServiceId === "move-out-cleaning") return "moveOut";
+  if (normalizedServiceId === "move-prep-home-reset") return "movePrep";
   if (normalizedServiceId) return "home";
   return "none";
 }
@@ -710,6 +740,27 @@ function cleanForSelectedService(form: RequestFormState) {
     };
   }
 
+  if (category === "movePrep") {
+    const selectedOptions = form.movePrepOptions.filter(Boolean);
+    return {
+      ...base,
+      packageType: "Move Prep & Home Reset",
+      movePrepPackage: form.movePrepPackage,
+      movePrepOptions: selectedOptions,
+      movePrepOptionSummary: selectedOptions.join(", "),
+      movePrepNotes: form.movePrepNotes,
+      movePrepAck: form.movePrepAck,
+      movePrepDisclaimer: MOVE_PREP_DISCLAIMER,
+      moveOutCleaningQuotedSeparately: selectedOptions.includes("Move-out cleaning — quote separately"),
+      homeType: form.homeType,
+      pets: form.pets,
+      petDetails: form.petDetails,
+      supplyPreference: form.supplyPreference,
+      requestDetails: form.movePrepNotes,
+      roomsAreas: [form.movePrepPackage, selectedOptions.join(", ")].filter(Boolean).join(" — "),
+    };
+  }
+
   if (category === "errand") {
     return {
       ...base,
@@ -762,6 +813,7 @@ export function RequestForm() {
   const isHomeReset = serviceCategory === "home";
   const isAreaReset = serviceCategory === "areaReset";
   const isMoveOut = serviceCategory === "moveOut";
+  const isMovePrep = serviceCategory === "movePrep";
   const isErrand = serviceCategory === "errand";
   const isLaundry = serviceCategory === "laundry";
   const isWholeHomeReset = form.service === "whole-home-reset";
@@ -775,7 +827,7 @@ export function RequestForm() {
   const visibleAreaResetAddOnOptions = isAreaReset ? getAreaResetAddOnOptions(form.areaResetRooms) : [];
   const showSmartLabelCount = form.smartLabelSetupInterest === "Not sure — recommend after review";
   const showSmartLabelNotes = form.smartLabelSetupInterest !== "No Smart Labels needed";
-  const petDetailsRequired = (isHomeReset || isAreaReset || isMoveOut) && form.pets !== "No pets" && form.pets !== "No pets now, but pets lived here before";
+  const petDetailsRequired = (isHomeReset || isAreaReset || isMoveOut || isMovePrep) && form.pets !== "No pets" && form.pets !== "No pets now, but pets lived here before";
   const referralApplies = Boolean(form.incomingReferralCode && isReferralEligibleService(form.service));
   const referralNeedsEligiblePackage = Boolean(form.incomingReferralCode && form.service && !isReferralEligibleService(form.service));
   const showHowFoundUsDetails = shouldShowHowFoundUsDetails(form.howFoundUs);
@@ -791,7 +843,7 @@ export function RequestForm() {
   function handleServiceChange(service: string) {
     const nextCategory = getServiceCategory(service);
     const isWholeHome = service === "whole-home-reset";
-    const isHomeLike = nextCategory === "home" || nextCategory === "areaReset" || nextCategory === "moveOut";
+    const isHomeLike = nextCategory === "home" || nextCategory === "areaReset" || nextCategory === "moveOut" || nextCategory === "movePrep";
     setForm((prev) => ({
       ...prev,
       service,
@@ -840,6 +892,10 @@ export function RequestForm() {
       moveOutFocus: nextCategory === "moveOut" ? prev.moveOutFocus : [],
       moveOutAppliances: nextCategory === "moveOut" ? prev.moveOutAppliances : [],
       moveOutNotes: nextCategory === "moveOut" ? prev.moveOutNotes : "",
+      movePrepPackage: nextCategory === "movePrep" ? (prev.movePrepPackage || defaultState.movePrepPackage) : defaultState.movePrepPackage,
+      movePrepOptions: nextCategory === "movePrep" ? prev.movePrepOptions : [],
+      movePrepNotes: nextCategory === "movePrep" ? prev.movePrepNotes : "",
+      movePrepAck: nextCategory === "movePrep" ? prev.movePrepAck : false,
       errandType: nextCategory === "errand" ? prev.errandType : defaultState.errandType,
       errandDistance: nextCategory === "errand" ? prev.errandDistance : defaultState.errandDistance,
       errandStops: nextCategory === "errand" ? prev.errandStops : "",
@@ -855,7 +911,7 @@ export function RequestForm() {
     }));
   }
 
-  function toggleList(name: "homePriorities" | "homeAreas" | "mealPrepTasks" | "wholeHomeAddOns" | "areaResetRooms" | "areaResetAddOns" | "areaResetAdditionalAreas" | "areaResetGoals" | "moveOutFocus" | "moveOutAppliances" | "laundryTypes" | "laundryAddOns", item: string, checked: boolean) {
+  function toggleList(name: "homePriorities" | "homeAreas" | "mealPrepTasks" | "wholeHomeAddOns" | "areaResetRooms" | "areaResetAddOns" | "areaResetAdditionalAreas" | "areaResetGoals" | "moveOutFocus" | "moveOutAppliances" | "movePrepOptions" | "laundryTypes" | "laundryAddOns", item: string, checked: boolean) {
     setForm((prev) => {
       const current = prev[name];
 
@@ -964,6 +1020,20 @@ export function RequestForm() {
       setStatus("error");
       setMessage("Please select at least one room or area for the Specific Area(s) Reset.");
       return;
+    }
+
+    if (serviceCategory === "movePrep") {
+      if (!form.movePrepOptions.length) {
+        setStatus("error");
+        setMessage("Please choose at least one Move Prep & Home Reset option.");
+        return;
+      }
+
+      if (!form.movePrepAck) {
+        setStatus("error");
+        setMessage("Please acknowledge that NestHelper does not transport household goods or operate as a moving company.");
+        return;
+      }
     }
 
     setStatus("loading");
@@ -1117,7 +1187,7 @@ export function RequestForm() {
       {serviceCategory === "none" && (
         <Section title="4. Package-specific questions" description="Choose a service above and this section will only show questions that match that package.">
           <div className="rounded-3xl border border-nest-gold/20 bg-nest-cream p-5 text-sm font-semibold leading-6 text-nest-ink/76">
-            Select Whole Home Cleaning, Specific Area(s) Reset, Move-In / Move-Out Cleaning, Errand Helper, or Laundry Rescue to continue.
+            Select Whole Home Cleaning, Specific Area(s) Reset, Move Prep & Home Reset, Move-In / Move-Out Cleaning, Errand Helper, or Laundry Rescue to continue.
           </div>
         </Section>
       )}
@@ -1430,6 +1500,65 @@ export function RequestForm() {
         </Section>
       )}
 
+
+      {isMovePrep && (
+        <Section title="4. Move Prep & Home Reset scope" description="Movers handle the heavy lifting. NestHelper helps with the home reset: in-home sorting, labeling, essentials boxes, supply kits, laundry help, unpacking support, and reset support before or after the move.">
+          <div className="rounded-3xl border border-nest-gold/20 bg-nest-cream p-5 text-sm leading-6 text-nest-ink/76">
+            <strong className="text-nest-teal">Important boundary:</strong> {MOVE_PREP_DISCLAIMER} <strong className="text-nest-teal">Move-out cleaning:</strong> request it here if needed, but cleaning is quoted separately from move prep support.
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Move Prep package / starting point" required>
+              <select className="input" required value={form.movePrepPackage} onChange={(e) => update("movePrepPackage", e.target.value)}>
+                {movePrepPackageOptions.map((option) => <option key={option}>{option}</option>)}
+              </select>
+            </Field>
+            <Field label="Home type">
+              <select className="input" value={form.homeType} onChange={(e) => update("homeType", e.target.value)}>
+                <option>Single-family home</option>
+                <option>Townhome</option>
+                <option>Apartment / condo</option>
+                <option>Multi-generational home</option>
+                <option>Other</option>
+              </select>
+            </Field>
+            <Field label="Product/supply preference">
+              <select className="input" value={form.supplyPreference} onChange={(e) => update("supplyPreference", e.target.value)}>
+                <option>NestHelper brings standard supplies</option>
+                <option>Boxes/supply kit requested</option>
+                <option>Customer has boxes/supplies already</option>
+                <option>Fragrance-free / sensitive products requested for any cleaning touchpoints</option>
+                <option>Not sure yet</option>
+              </select>
+            </Field>
+          </div>
+
+          <div>
+            <div className="label mb-3">Move prep options <span className="text-red-600">*</span></div>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {movePrepOptionOptions.map((item) => (
+                <CheckOption key={item} checked={form.movePrepOptions.includes(item)} onChange={(checked) => toggleList("movePrepOptions", item, checked)}>{item}</CheckOption>
+              ))}
+            </div>
+            <p className="mt-2 text-xs font-bold text-nest-ink/55">Garage, storage areas, sheds, and heavy clutter are custom quote after review. Additional approved time is $65 per helper-hour with a 1-hour minimum.</p>
+          </div>
+
+          <div className="rounded-3xl border border-nest-gold/16 bg-white p-5 text-sm font-semibold leading-6 text-nest-ink/72 shadow-sm">
+            <p className="font-black text-nest-teal">Pricing guide</p>
+            <p className="mt-2">Move Prep Add-On starts at $199 up to 2 helper-hours. Focused Room Prep is $249 up to 2.5 helper-hours. Kitchen Essentials Prep is $349 up to 3.5 helper-hours. Move-In Essentials Reset is $299 up to 3 helper-hours. Smart Label Setup is $99 up to 20 QR labels. Supply Kits are $59–$199. Move-out cleaning is quoted separately.</p>
+          </div>
+
+          <Field label="Move prep notes, rooms, timing, and safety notes" required>
+            <textarea className="input min-h-28" required placeholder="Example: Movers are coming Friday. Please help sort kitchen essentials, set up open-first boxes, label pantry/kids boxes, and prep donations. We may also need a separate move-out cleaning quote." value={form.movePrepNotes} onChange={(e) => update("movePrepNotes", e.target.value)} />
+          </Field>
+
+          <label className="flex gap-3 rounded-2xl bg-white p-4 text-sm font-semibold text-nest-ink/82 shadow-sm">
+            <input type="checkbox" required checked={form.movePrepAck} onChange={(e) => update("movePrepAck", e.target.checked)} className="mt-1 h-4 w-4" />
+            <span><span className="text-red-600">*</span> I understand NestHelper does not transport household goods, load vehicles, provide moving labor, or operate as a moving company. NestHelper provides in-home move prep, organizing, labeling, cleaning, unpacking, and reset support only.</span>
+          </label>
+        </Section>
+      )}
+
       {isMoveOut && (
         <Section title="4. Move-in / move-out cleaning scope" description="Move-in / move-out cleaning is quoted after review. Square footage, empty-home status, condition, photos, and priority areas help us give a clearer estimate before checkout.">
           <div className="rounded-3xl border border-nest-gold/20 bg-nest-cream p-5 text-sm leading-6 text-nest-ink/76">
@@ -1646,8 +1775,8 @@ export function RequestForm() {
         </Section>
       )}
 
-      {(isHomeReset || isAreaReset || isMoveOut) && (
-        <Section title="5. Home, pets, and access" description={isMoveOut ? "Clear move-in / move-out access notes help us quote accurately and avoid delays on service day." : isAreaReset ? "Clear area-reset access notes help us quote accurately, plan supplies, and avoid unsafe conditions on service day." : "Clear access notes help us avoid delays and make sure the request is safe for everyone."}>
+      {(isHomeReset || isAreaReset || isMoveOut || isMovePrep) && (
+        <Section title="5. Home, pets, and access" description={isMoveOut ? "Clear move-in / move-out access notes help us quote accurately and avoid delays on service day." : isMovePrep ? "Clear move prep access notes help us plan parking, entry, supplies, safe work areas, and any boxes or labels before service day." : isAreaReset ? "Clear area-reset access notes help us quote accurately, plan supplies, and avoid unsafe conditions on service day." : "Clear access notes help us avoid delays and make sure the request is safe for everyone."}>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label={isMoveOut ? "Pets or pet history" : "Pets in home"}>
               <select className="input" value={form.pets} onChange={(e) => update("pets", e.target.value)}>
@@ -1690,12 +1819,12 @@ export function RequestForm() {
       )}
 
       {serviceCategory !== "none" && (
-        <Section title="6. Optional photos" description={isMoveOut ? "Photos are strongly recommended for move-in / move-out cleaning so we can quote the kitchen, bathrooms, floors, appliances, and any buildup before checkout." : isAreaReset ? "Photos are strongly recommended for Specific Area(s) Resets so we can quote the selected rooms, cleaning level, clutter level, access, surfaces, buildup, and safety concerns before checkout." : "Photos are optional, but they can help us understand the scope before we approve, quote, or schedule the request."}>
+        <Section title="6. Optional photos" description={isMoveOut ? "Photos are strongly recommended for move-in / move-out cleaning so we can quote the kitchen, bathrooms, floors, appliances, and any buildup before checkout." : isMovePrep ? "Photos are helpful for move prep so we can understand boxes, storage areas, kitchen essentials, donations, supply needs, and any heavy clutter that may require a custom quote." : isAreaReset ? "Photos are strongly recommended for Specific Area(s) Resets so we can quote the selected rooms, cleaning level, clutter level, access, surfaces, buildup, and safety concerns before checkout." : "Photos are optional, but they can help us understand the scope before we approve, quote, or schedule the request."}>
           <PhotoUploadField
             photos={form.photoUploads}
             onChange={(photos) => update("photoUploads", photos)}
             label="Upload photos (optional)"
-            description={isMoveOut ? "Add up to 4 photos. Kitchen, bathrooms, floors, bathtub/shower, and any heavy buildup are the most helpful." : isAreaReset ? "Add up to 4 photos. Wide shots of the selected area, kitchen/bath surfaces, floor space, shelves, buildup, piles, and anything you do not want touched are the most helpful." : "Add up to 4 optional photos. Useful for before photos, rooms/areas involved, laundry amount, access notes, or anything that helps us quote and plan accurately."}
+            description={isMoveOut ? "Add up to 4 photos. Kitchen, bathrooms, floors, bathtub/shower, and any heavy buildup are the most helpful." : isMovePrep ? "Add up to 4 photos. Boxes, storage areas, kitchen essentials, donations, supply needs, and walkable work areas are the most helpful." : isAreaReset ? "Add up to 4 photos. Wide shots of the selected area, kitchen/bath surfaces, floor space, shelves, buildup, piles, and anything you do not want touched are the most helpful." : "Add up to 4 optional photos. Useful for before photos, rooms/areas involved, laundry amount, access notes, or anything that helps us quote and plan accurately."}
           />
         </Section>
       )}

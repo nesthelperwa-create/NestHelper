@@ -50,6 +50,13 @@ const serviceStyles: Record<string, { eyebrow: string; accent: string; chip: str
     price: "bg-cyan-50 text-cyan-950",
     ring: "ring-cyan-200/70",
   },
+  "move-prep-home-reset": {
+    eyebrow: "Move prep",
+    accent: "from-amber-500/14 via-nest-cream to-white",
+    chip: "bg-amber-50 text-amber-900 border-amber-200",
+    price: "bg-amber-50 text-amber-950",
+    ring: "ring-amber-200/70",
+  },
   "errand-helper": {
     eyebrow: "Errand support",
     accent: "from-amber-500/14 via-orange-100 to-white",
@@ -127,6 +134,17 @@ const serviceExtras: Record<string, ServiceExtra> = {
       "Inside appliances, drawers, cabinets, hard-water buildup, and heavy grease are quoted before checkout",
     ],
     goodToKnow: ["Quote first", "Photos recommended", "Empty-home focused"],
+  },
+  "move-prep-home-reset": {
+    bestFor: "Families who already have movers or a moving plan, but need help sorting, labeling, staging open-first essentials, resetting key rooms, or getting settled before and after the move.",
+    extraDetails: [
+      "Movers handle the heavy lifting. NestHelper helps with the home reset.",
+      "Move Prep Add-On starts at $199 for up to 2 helper-hours; additional packages are reviewed by scope",
+      "Open-first essentials boxes can be set up for kitchen, bathroom, kids, pets, work, or first-night needs",
+      "Smart Labels can be placed on boxes, bins, shelves, closets, or storage areas",
+      "Move-out cleaning can be requested, but it is quoted separately from move prep support",
+    ],
+    goodToKnow: ["No transportation", "Add-on service", "Move-out clean quoted separately"],
   },
   "errand-helper": {
     bestFor: "Local family logistics when the errands are simple, safe, and approved ahead of time, but you do not have the time to run them yourself.",

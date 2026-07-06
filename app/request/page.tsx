@@ -8,14 +8,14 @@ import { siteConfig } from "@/lib/siteConfig";
 export const metadata: Metadata = {
   title: "Request NestHelper Service | Bothell, WA",
   description:
-    "Request NestHelper help for whole-home cleaning, parent resets, simple in-home meal prep support, area resets, move-in/move-out cleaning, laundry rescue, and local errands.",
+    "Request NestHelper help for whole-home cleaning, parent resets, simple in-home meal prep support, area resets, Move Prep & Home Reset, move-in/move-out cleaning, laundry rescue, and local errands.",
   alternates: {
     canonical: `${siteConfig.url}/request`,
   },
   openGraph: {
     title: "Request NestHelper Service | Bothell, WA",
     description:
-      "Send a NestHelper request for home cleaning, parent reset help, simple in-home meal prep support, area resets, move-in/move-out cleaning, laundry rescue, or local errands.",
+      "Send a NestHelper request for home cleaning, parent reset help, simple in-home meal prep support, area resets, Move Prep & Home Reset, move-in/move-out cleaning, laundry rescue, or local errands.",
     url: `${siteConfig.url}/request`,
     images: [siteConfig.assets.og],
   },
@@ -33,14 +33,14 @@ export default function RequestPage() {
             Request household help.
           </h1>
           <p className="mx-auto mt-4 max-w-3xl text-sm font-semibold leading-6 text-nest-ink/72 sm:text-base sm:leading-7">
-            Submit the details first. No payment is due today. NestHelper reviews service area, timing, scope, square footage when needed, pets, access, safety notes, and pricing before sending a secure payment link. Parent Reset Plan requests can also include simple in-home meal prep support, like chopping produce or portioning snacks, when requested.
+            Submit the details first. No payment is due today. NestHelper reviews service area, timing, scope, square footage when needed, pets, access, safety notes, and pricing before sending a secure payment link. Parent Reset Plan requests can also include simple in-home meal prep support, like chopping produce or portioning snacks, when requested. Move Prep & Home Reset requests are for in-home prep, sorting, labels, supplies, cleaning, unpacking, and reset support — not moving-company transportation.
           </p>
           <div className="mx-auto mt-6 flex max-w-sm flex-col justify-center gap-3 sm:max-w-none sm:flex-row">
             <ButtonLink href="#request-form">Start the request</ButtonLink>
             <ButtonLink href="/services" variant="secondary">View Services</ButtonLink>
           </div>
           <div className="mx-auto mt-5 grid max-w-3xl gap-2 text-left sm:grid-cols-3">
-            {["No payment today", "Reviewed before checkout", "No childcare or chef services"].map((item) => (
+            {["No payment today", "Reviewed before checkout", "No childcare, chef, or moving services"].map((item) => (
               <div key={item} className="flex items-center gap-2 rounded-2xl bg-nest-cream px-4 py-3 text-sm font-black text-nest-teal">
                 <CheckCircle2 size={16} className="shrink-0 text-nest-gold" />
                 {item}

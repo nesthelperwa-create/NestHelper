@@ -10,14 +10,14 @@ import { siteConfig } from "@/lib/siteConfig";
 export const metadata: Metadata = {
   title: "Home Cleaning & Parent Reset Services | NestHelper",
   description:
-    "NestHelper offers whole-home cleaning, parent reset help, simple in-home meal prep support, area resets, move-in/move-out cleaning, laundry rescue, and errands for Bothell and Eastside families.",
+    "NestHelper offers whole-home cleaning, parent reset help, simple in-home meal prep support, area resets, Move Prep & Home Reset, move-in/move-out cleaning, laundry rescue, and errands for Bothell and Eastside families.",
   alternates: {
     canonical: `${siteConfig.url}/services`,
   },
   openGraph: {
     title: "Home Cleaning & Parent Reset Services | NestHelper",
     description:
-      "Compare NestHelper services for whole-home cleaning, parent resets, simple in-home meal prep support, area resets, move-in/move-out cleaning, laundry rescue, and errands.",
+      "Compare NestHelper services for whole-home cleaning, parent resets, simple in-home meal prep support, area resets, Move Prep & Home Reset, move-in/move-out cleaning, laundry rescue, and errands.",
     url: `${siteConfig.url}/services`,
     images: [siteConfig.assets.og],
   },
@@ -50,7 +50,7 @@ export default function ServicesPage() {
             <p className="pill-label mx-auto w-fit lg:mx-0"><Sparkles size={15} /> Home Cleaning & Reset Services</p>
             <h2 className="text-balance mt-4 text-3xl font-black leading-tight text-nest-teal sm:text-4xl lg:text-5xl">Choose the help your home needs.</h2>
             <p className="mx-auto mt-4 max-w-3xl text-base font-semibold leading-7 text-nest-ink/70 sm:text-lg lg:mx-0">
-              Choose Parent Reset Plan for busy-parent room resets, optional simple in-home meal prep support, Whole Home Cleaning for the entire home, Specific Area(s) Reset for selected rooms, or Move-In / Move-Out Cleaning for empty or mostly empty homes. You can also request laundry help or errands.
+              Choose Parent Reset Plan for busy-parent room resets, optional simple in-home meal prep support, Whole Home Cleaning for the entire home, Specific Area(s) Reset for selected rooms, or Move Prep & Home Reset for move support that does not replace movers, Move-In / Move-Out Cleaning for empty or mostly empty homes, laundry help, or errands.
             </p>
             <p className="mx-auto mt-5 max-w-3xl text-sm font-black leading-6 text-nest-teal sm:text-base lg:mx-0">
               Click a service guide to jump to the matching service card below.
@@ -65,6 +65,7 @@ export default function ServicesPage() {
                 { title: "Whole Home Cleaning", label: "Entire home", href: "#service-whole-home-reset", text: "Choose this for full-home cleaning, first-time deep cleans, and weekly, bi-weekly, or monthly maintenance.", icon: <Home size={16} />, badge: "bg-emerald-50 text-emerald-900 border-emerald-200" },
                 { title: "Specific Area(s) Reset", label: "Selected rooms", href: "#service-specific-area-reset", text: "Choose this for kitchen, bathroom(s), bedrooms, playroom, pantry, fridge, oven, laundry area, garage, or a few rooms — not the entire home.", icon: <Grid3X3 size={16} />, badge: "bg-lime-50 text-lime-900 border-lime-200" },
                 { title: "Move-In / Move-Out Cleaning", label: "Empty home", href: "#service-move-out-cleaning", text: "Choose this for empty or mostly empty homes before moving in, after moving out, or before listing/renting.", icon: <Truck size={16} />, badge: "bg-cyan-50 text-cyan-900 border-cyan-200" },
+                { title: "Move Prep & Home Reset", label: "Move support", href: "#service-move-prep-home-reset", text: "Movers handle the heavy lifting. NestHelper helps with sorting, open-first essentials boxes, Smart Labels, supplies, laundry, and move-in reset support.", icon: <Tags size={16} />, badge: "bg-amber-50 text-amber-900 border-amber-200" },
                 { title: "Errand Helper", label: "Local errands", href: "#service-errand-helper", text: "Choose this for simple local errands, pickups, drop-offs, or family support tasks.", icon: <ShoppingBag size={16} />, badge: "bg-amber-50 text-amber-900 border-amber-200" },
                 { title: "Laundry Rescue", label: "Laundry help", href: "#service-laundry-rescue", text: "Choose this for laundry pickup, folding, reset help, or catching up on laundry.", icon: <Shirt size={16} />, badge: "bg-rose-50 text-rose-800 border-rose-200" },
               ].map((item) => (
@@ -94,6 +95,17 @@ export default function ServicesPage() {
           <p className="mt-3 text-sm font-semibold leading-6 text-nest-ink/70">
             Meal prep support is limited to simple prep inside the customer’s home using the customer’s food, kitchen, tools, containers, and instructions. Good examples include washing or chopping vegetables and fruit, portioning snacks, prepping simple ingredients, or organizing prepared items in the fridge. It is not catering, private-chef service, full meal cooking, off-site food prep, nutrition planning, or medical dietary support.
           </p>
+        </div>
+
+        <div className="mb-10 rounded-[2rem] border border-nest-gold/18 bg-white p-5 shadow-sm sm:p-6">
+          <p className="text-xs font-black uppercase tracking-[0.18em] text-nest-gold">Move Prep & Home Reset</p>
+          <h3 className="mt-1 text-2xl font-black text-nest-teal">Movers handle the heavy lifting. NestHelper helps with the home reset.</h3>
+          <p className="mt-3 text-sm font-semibold leading-6 text-nest-ink/70">
+            Use Move Prep & Home Reset for in-home move prep, sorting support, open-first essentials boxes, QR Smart Labels, packing supply kits, donation sorting, laundry help, move-out cleaning requests, and move-in reset support. NestHelper does not transport household goods or operate as a moving company. We provide in-home move prep, organizing, labeling, cleaning, unpacking, and reset support.
+          </p>
+          <div className="mt-4 grid gap-3 text-sm font-bold text-nest-ink/72 sm:grid-cols-2 lg:grid-cols-3">
+            {["Move Prep Add-On — $199 up to 2 helper-hours", "Focused Room Prep — $249 up to 2.5 helper-hours", "Kitchen Essentials Prep — $349 up to 3.5 helper-hours", "Move-In Essentials Reset — $299 up to 3 helper-hours", "Smart Label Setup — $99 up to 20 QR labels", "Supply Kits — $59–$199", "Garage, storage, sheds, heavy clutter — custom quote", "Additional approved time — $65/helper-hour", "Move-out cleaning — quoted separately"].map((item) => <div key={item} className="rounded-2xl bg-nest-cream p-4">{item}</div>)}
+          </div>
         </div>
 
         <div className="mb-10 rounded-[2.5rem] border border-nest-gold/18 bg-gradient-to-br from-white via-nest-cream to-nest-mint/25 p-7 shadow-soft sm:p-8">
@@ -143,7 +155,7 @@ export default function ServicesPage() {
               <p className="pill-label mx-auto w-fit sm:mx-0"><Sparkles size={15} /> Home Cleaning & Support</p>
               <h3 id="specific-reset-support" className="text-2xl font-black text-nest-teal sm:text-3xl">For parent resets, whole-home cleaning, selected areas, moving, laundry, and errands.</h3>
               <p className="max-w-3xl font-semibold leading-7 text-nest-ink/68">
-                Parent Reset Plan is for a 3-hour organizing + light cleaning reset in family spaces, with optional simple in-home meal prep support when requested. Whole Home Cleaning is for the entire home. Specific Area(s) Reset is for selected rooms. Move-In / Move-Out Cleaning is for empty or mostly empty homes.
+                Parent Reset Plan is for a 3-hour organizing + light cleaning reset in family spaces, with optional simple in-home meal prep support when requested. Whole Home Cleaning is for the entire home. Specific Area(s) Reset is for selected rooms. Move Prep & Home Reset is for in-home move prep, sorting, labels, supplies, laundry, unpacking, and reset support. Move-In / Move-Out Cleaning is for empty or mostly empty homes.
               </p>
             </div>
             <div className="grid items-start gap-6 md:grid-cols-2 xl:grid-cols-3">

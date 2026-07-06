@@ -144,6 +144,26 @@ export const services: Service[] = [
     note: "Move-in / move-out cleaning is reviewed before checkout. Square footage, empty-home status, photos, kitchen/bathroom condition, appliance requests, access notes, and timing all affect the quote."
   },
   {
+    id: "move-prep-home-reset",
+    title: "Move Prep & Home Reset",
+    shortTitle: "Move Prep",
+    description: "Movers handle the heavy lifting. NestHelper helps with the home reset — in-home move prep, sorting support, open-first essentials boxes, QR Smart Labels, supplies, laundry help, and move-in reset support.",
+    details: [
+      "Move prep, sorting support, and room-by-room priority help",
+      "Open-first essentials boxes for first night, kitchen, kids, pets, bathroom, or work items",
+      "QR Smart Label setup for boxes, bins, shelves, closets, or storage areas",
+      "Packing supply kits available from $59–$199",
+      "Donation sorting, laundry help, unpacking, and move-in reset support",
+      "Move-out cleaning can be requested, but it is quoted separately"
+    ],
+    standardPrice: "From $199",
+    priceNote: "Up to 2 helper-hours",
+    serviceTime: "Move prep packages from 2–3.5 helper-hours",
+    travelInfo: "Core Eastside/Northshore service area",
+    image: "/assets/services/service-move-out-cleaning.png",
+    note: "Movers handle the heavy lifting. NestHelper helps with the home reset. NestHelper does not transport household goods or operate as a moving company. We provide in-home move prep, organizing, labeling, cleaning, unpacking, and reset support. Move Prep Add-On starts at $199 for up to 2 helper-hours; Focused Room Prep is $249 up to 2.5 helper-hours; Kitchen Essentials Prep is $349 up to 3.5 helper-hours; Move-In Essentials Reset is $299 up to 3 helper-hours; Smart Label Setup is $99 up to 20 QR labels; Supply Kits are $59–$199; garage, storage areas, sheds, and heavy clutter are custom quote after review. Additional approved time is $65 per helper-hour with a 1-hour minimum. Move-out cleaning is quoted separately."
+  },
+  {
     id: "errand-helper",
     title: "Errand Helper",
     shortTitle: "Errand Helper",

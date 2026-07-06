@@ -142,7 +142,7 @@ function getAvailableCustomerCreditTotal(credits: CustomerCredit[]) {
 function guessCheckoutMode(item: AdminDoc | null): CheckoutMode {
   const paymentMode = String(item?.paymentMode || "").toLowerCase();
   const rawService = String(item?.service || item?.selectedServiceTitle || item?.packageType || item?.requestType || "").toLowerCase();
-  if (rawService.includes("commercial") || rawService.includes("move-out") || rawService.includes("move out") || rawService.includes("move-in") || rawService.includes("move in") || rawService.includes("specific area") || rawService.includes("area reset") || rawService.includes("garage reset")) return "custom";
+  if (rawService.includes("commercial") || rawService.includes("move-prep") || rawService.includes("move prep") || rawService.includes("home reset") || rawService.includes("move-out") || rawService.includes("move out") || rawService.includes("move-in") || rawService.includes("move in") || rawService.includes("specific area") || rawService.includes("area reset") || rawService.includes("garage reset")) return "custom";
   if (paymentMode === "custom" || paymentMode === "custom_initial" || item?.customInitialPayment) return "custom";
   return "standard";
 }
@@ -233,6 +233,12 @@ const SERVICE_LOOKS: Record<string, { label: string; badge: string; row: string;
     row: "border-l-8 border-l-cyan-700 bg-cyan-50/50 hover:bg-cyan-100/80",
     dot: "bg-white ring-2 ring-cyan-100",
   },
+  "move-prep-home-reset": {
+    label: "Move Prep & Home Reset",
+    badge: "border-amber-700 bg-amber-500 text-slate-950 shadow-sm shadow-amber-900/20",
+    row: "border-l-8 border-l-amber-500 bg-amber-50/60 hover:bg-amber-100/90",
+    dot: "bg-slate-950 ring-2 ring-white",
+  },
   "errand-helper": {
     label: "Errand Helper",
     badge: "border-amber-600 bg-amber-400 text-slate-950 shadow-sm shadow-amber-900/20",
@@ -266,6 +272,7 @@ function getServiceKey(item: AdminDoc | null | undefined) {
   if (raw.includes("whole-home-reset") || raw.includes("whole home cleaning") || raw.includes("whole home reset") || raw.includes("entire home")) return "whole-home-reset";
   if (raw.includes("family-reset") || raw.includes("family reset") || raw.includes("parent reset plan") || raw.includes("parent-reset") || raw.includes("parent reset") || raw.includes("helper-block") || raw.includes("helper block") || raw.includes("2-hour") || raw.includes("3-hour") || raw.includes("4-hour")) return "family-reset-3hr";
   if (raw.includes("specific-area-reset") || raw.includes("specific area") || raw.includes("area reset") || raw.includes("a la carte") || raw.includes("garage reset")) return "specific-area-reset";
+  if (raw.includes("move-prep-home-reset") || raw.includes("move prep") || raw.includes("move-prep") || raw.includes("home reset")) return "move-prep-home-reset";
   if (raw.includes("move-out") || raw.includes("move out") || raw.includes("move-in") || raw.includes("move in")) return "move-out-cleaning";
   if (raw.includes("errand")) return "errand-helper";
   if (raw.includes("laundry")) return "laundry-rescue";
@@ -282,7 +289,7 @@ function isCommercialRequest(item: AdminDoc | null | undefined) {
 }
 
 function isFamilyReferralEligibleRequest(item: AdminDoc | null | undefined) {
-  return ["family-reset-3hr", "whole-home-reset", "specific-area-reset", "move-out-cleaning", "errand-helper", "laundry-rescue"].includes(getServiceKey(item));
+  return ["family-reset-3hr", "whole-home-reset", "specific-area-reset", "move-prep-home-reset", "move-out-cleaning", "errand-helper", "laundry-rescue"].includes(getServiceKey(item));
 }
 
 function isCompletedRequest(item: AdminDoc | null | undefined) {
@@ -969,6 +976,13 @@ const DETAIL_FIELD_LABELS: Record<string, string> = {
   mealPrepTaskSummary: "Simple meal prep tasks",
   mealPrepNotes: "Meal prep notes",
   mealPrepAck: "Meal prep acknowledgement",
+  movePrepPackage: "Move prep package",
+  movePrepOptions: "Move prep options",
+  movePrepOptionSummary: "Move prep options",
+  movePrepNotes: "Move prep notes",
+  movePrepAck: "Move prep acknowledgement",
+  movePrepDisclaimer: "Move prep disclaimer",
+  moveOutCleaningQuotedSeparately: "Move-out cleaning quoted separately",
   requestDetails: "Request details",
   smartLabelSetupInterest: "Smart Label help",
   smartLabelEstimatedCount: "Estimated Smart Labels / spots",
@@ -1004,7 +1018,7 @@ const DETAIL_FIELD_LABELS: Record<string, string> = {
 
 const DETAIL_FIELD_ORDER: Record<string, string[]> = {
   serviceRequests: [
-    "fullName", "selectedServiceTitle", "service", "packageType", "phone", "email", "howFoundUs", "howFoundUsDetails", "campaignSource", "campaignName", "address", "city", "state", "zip", "zipCode", "preferredDate", "preferredWindow", "preferredTime", "alternateDate", "urgency", "roomsAreas", "roomsOrAreas", "homePriorities", "mealPrepRequested", "mealPrepTaskSummary", "mealPrepTasks", "mealPrepNotes", "mealPrepAck", "wholeHomeVisitType", "wholeHomeRecurringCadence", "wholeHomeCondition", "wholeHomeAddOnSummary", "wholeHomeAddOns", "wholeHomeOtherAddOn", "areaResetRoomSummary", "areaResetRooms", "areaResetOtherRoom", "areaResetCleaningType", "areaResetRepeatSupport", "areaResetAddOnSummary", "areaResetAddOns", "areaResetOtherAddOn", "areaResetArea", "areaResetOtherArea", "areaResetAdditionalAreaSummary", "areaResetAdditionalAreas", "areaResetOtherAdditionalArea", "areaResetBathroomCount", "areaResetSize", "areaResetCondition", "areaResetGoalSummary", "areaResetGoals", "areaResetHauling", "requestDetails", "smartLabelSetupInterest", "smartLabelEstimatedCount", "smartLabelSetupNotes", "notes", "specialInstructions", "promoCode", "incomingReferralCode",
+    "fullName", "selectedServiceTitle", "service", "packageType", "phone", "email", "howFoundUs", "howFoundUsDetails", "campaignSource", "campaignName", "address", "city", "state", "zip", "zipCode", "preferredDate", "preferredWindow", "preferredTime", "alternateDate", "urgency", "roomsAreas", "roomsOrAreas", "homePriorities", "mealPrepRequested", "mealPrepTaskSummary", "mealPrepTasks", "mealPrepNotes", "mealPrepAck", "movePrepPackage", "movePrepOptionSummary", "movePrepOptions", "movePrepNotes", "movePrepAck", "movePrepDisclaimer", "moveOutCleaningQuotedSeparately", "wholeHomeVisitType", "wholeHomeRecurringCadence", "wholeHomeCondition", "wholeHomeAddOnSummary", "wholeHomeAddOns", "wholeHomeOtherAddOn", "areaResetRoomSummary", "areaResetRooms", "areaResetOtherRoom", "areaResetCleaningType", "areaResetRepeatSupport", "areaResetAddOnSummary", "areaResetAddOns", "areaResetOtherAddOn", "areaResetArea", "areaResetOtherArea", "areaResetAdditionalAreaSummary", "areaResetAdditionalAreas", "areaResetOtherAdditionalArea", "areaResetBathroomCount", "areaResetSize", "areaResetCondition", "areaResetGoalSummary", "areaResetGoals", "areaResetHauling", "requestDetails", "smartLabelSetupInterest", "smartLabelEstimatedCount", "smartLabelSetupNotes", "notes", "specialInstructions", "promoCode", "incomingReferralCode",
   ],
   helperApplications: [
     "fullName", "phone", "email", "city", "roleFocus", "howFoundUs", "howFoundUsDetails", "campaignSource", "campaignName", "state", "zip", "availability", "services", "workStyle", "transportation", "travelRadius", "experienceLevel", "comfortLevel", "notWillingToDo", "applicationDocumentCount",
@@ -1193,6 +1207,13 @@ const SERVICE_REQUEST_CLEAN_KEYS = [
   "mealPrepTasks",
   "mealPrepNotes",
   "mealPrepAck",
+  "movePrepPackage",
+  "movePrepOptionSummary",
+  "movePrepOptions",
+  "movePrepNotes",
+  "movePrepAck",
+  "movePrepDisclaimer",
+  "moveOutCleaningQuotedSeparately",
   "wholeHomeVisitType",
   "wholeHomeRecurringCadence",
   "wholeHomeCondition",
@@ -1514,6 +1535,13 @@ const QUOTE_PROMPT_FIELD_KEYS = [
   "mealPrepTasks",
   "mealPrepNotes",
   "mealPrepAck",
+  "movePrepPackage",
+  "movePrepOptionSummary",
+  "movePrepOptions",
+  "movePrepNotes",
+  "movePrepAck",
+  "movePrepDisclaimer",
+  "moveOutCleaningQuotedSeparately",
   "wholeHomeVisitType",
   "wholeHomeRecurringCadence",
   "wholeHomeCondition",
@@ -1579,6 +1607,7 @@ function getQuotePromptServiceGuidance(item: AdminDoc) {
   if (key === "whole-home-reset") return "Whole Home Cleaning = entire home cleaning, first-time deep cleans, and weekly/bi-weekly/monthly full-home maintenance.";
   if (key === "specific-area-reset") return "Specific Area(s) Reset = selected rooms or focused areas only, with optional repeat area support. Not intended as full-home maintenance.";
   if (key === "move-out-cleaning") return "Move-In / Move-Out Cleaning = empty or mostly empty homes before moving in, after moving out, before listing/renting, or turnover-style cleaning.";
+  if (key === "move-prep-home-reset") return "Move Prep & Home Reset = in-home move prep, sorting, open-first boxes, QR Smart Labels, supply kits, laundry help, unpacking, and reset support. NestHelper does not transport household goods or operate as a moving company. Move-out cleaning is quoted separately.";
   if (key === "laundry-rescue") return "Laundry Rescue = pickup/drop-off laundry support, folding, reset help, or catching up on laundry.";
   if (key === "errand-helper") return "Errand Helper = simple local errands, approved pickups/drop-offs, and family support tasks.";
   if (key === "commercial-reset") return "Commercial Reset = small office, studio, church, salon, daycare common area, real estate, rental, or other non-family service request.";

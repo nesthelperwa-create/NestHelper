@@ -24,14 +24,14 @@ import { siteConfig } from "@/lib/siteConfig";
 export const metadata: Metadata = {
   title: { absolute: "NestHelper | Bothell Home Cleaning & Parent Reset" },
   description:
-    "NestHelper helps Bothell and Eastside families with whole-home cleaning, parent resets, simple in-home meal prep support, area resets, move-in/move-out cleaning, laundry, and errands.",
+    "NestHelper helps Bothell and Eastside families with whole-home cleaning, parent resets, simple in-home meal prep support, area resets, Move Prep & Home Reset, move-in/move-out cleaning, laundry, and errands.",
   alternates: {
     canonical: siteConfig.url,
   },
   openGraph: {
     title: "NestHelper | Bothell Home Cleaning & Parent Reset",
     description:
-      "Whole-home cleaning, parent resets, simple in-home meal prep support, area resets, move-in/move-out cleaning, laundry help, and errands for busy Bothell and Eastside families.",
+      "Whole-home cleaning, parent resets, simple in-home meal prep support, area resets, Move Prep & Home Reset, move-in/move-out cleaning, laundry help, and errands for busy Bothell and Eastside families.",
     url: siteConfig.url,
     images: [siteConfig.assets.og],
   },
@@ -58,7 +58,7 @@ export default function HomePage() {
               Reset the home. Reclaim the day.
             </h1>
             <p className="mx-auto mt-5 max-w-2xl text-base font-semibold leading-7 text-nest-ink/74 sm:text-xl sm:leading-8">
-              Household help for busy families — parent room resets, whole-home cleaning, focused area resets, move-in / move-out cleaning, laundry rescue, errands, organizing, simple in-home meal prep support, and extra hands around the house with clear packages, reviewed requests, limited openings, and follow-up. No childcare services.
+              Household help for busy families — parent room resets, whole-home cleaning, focused area resets, Move Prep & Home Reset, move-in / move-out cleaning, laundry rescue, errands, organizing, simple in-home meal prep support, and extra hands around the house with clear packages, reviewed requests, limited openings, and follow-up. No childcare services.
             </p>
             <div className="mx-auto mt-7 flex max-w-sm flex-col justify-center gap-3 sm:max-w-none sm:flex-row">
               <ButtonLink href="/request">Request Help</ButtonLink>
@@ -114,14 +114,14 @@ export default function HomePage() {
             label="What NestHelper is"
             icon={<Heart size={15} />}
             title="Household help without the hiring headache."
-            description="NestHelper coordinates trusted household support for busy families — Parent Reset Plan visits, whole-home cleaning, focused area resets, move-in / move-out cleaning, laundry catch-up, errands, organizing, simple in-home meal prep support, and extra hands around the house — with reviewed requests, clear scope, insured support, and no childcare services."
+            description="NestHelper coordinates trusted household support for busy families — Parent Reset Plan visits, whole-home cleaning, focused area resets, Move Prep & Home Reset, move-in / move-out cleaning, laundry catch-up, errands, organizing, simple in-home meal prep support, and extra hands around the house — with reviewed requests, clear scope, insured support, and no childcare services."
           />
 
           <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             <InfoCard icon={<Home size={20} />} title="Parent reset help" text="Playroom, kids room, pantry, entry, and family-space resets with organizing, light cleaning, child-safe disinfecting, and optional simple in-home meal prep support when the day gets away from you." />
             <InfoCard icon={<Sparkles size={20} />} title="Laundry rescue" text="Pickup, dry weigh-in, wash/fold coordination, return delivery, and clear reusable bag expectations." />
             <InfoCard icon={<ClipboardCheck size={20} />} title="Errands and family support" text="Approved errands, pickups, returns, and household support with a reviewed scope before payment." />
-            <InfoCard icon={<MessageCircle size={20} />} title="One request, less chaos" text="NestHelper helps coordinate the details so families are not stuck managing every message, scope question, and next step alone." />
+            <InfoCard icon={<MessageCircle size={20} />} title="Move prep support" text="Movers handle the heavy lifting. NestHelper helps with in-home sorting, Smart Labels, open-first boxes, supplies, laundry, and move-in reset support." />
           </div>
         </SectionShell>
       </AnimatedSection>
@@ -188,7 +188,7 @@ export default function HomePage() {
                 step="1"
                 icon={<ClipboardCheck size={31} />}
                 title="Tell us what you need"
-                text="Submit a request for a parent reset, whole-home cleaning, selected area reset, move-in / move-out cleaning, laundry rescue, errands, or family support."
+                text="Submit a request for a parent reset, whole-home cleaning, selected area reset, Move Prep & Home Reset, move-in / move-out cleaning, laundry rescue, errands, or family support."
               />
               <ProcessStepCard
                 step="2"

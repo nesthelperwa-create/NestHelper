@@ -90,11 +90,15 @@ export const policies: Policy[] = [
     sections: [
       {
         heading: "Included services",
-        body: "Light home reset help, specific area resets, laundry support, simple organizing, errands, family logistics support, optional simple in-home meal prep support, and approved household tasks within the selected package time or approved quote."
+        body: "Light home reset help, specific area resets, laundry support, simple organizing, errands, family logistics support, optional simple in-home meal prep support, Move Prep & Home Reset support, and approved household tasks within the selected package time or approved quote."
       },
       {
         heading: "Simple in-home meal prep boundaries",
         body: "When approved as part of a Parent Reset Plan, meal prep support is limited to simple prep inside the customer’s home using the customer’s food, kitchen, tools, containers, and instructions. Examples include washing or chopping produce, portioning snacks, prepping simple ingredients, or organizing prepared items."
+      },
+      {
+        heading: "Move Prep & Home Reset boundaries",
+        body: "Movers handle the heavy lifting. NestHelper helps with the home reset. NestHelper does not transport household goods or operate as a moving company. We provide in-home move prep, organizing, labeling, cleaning, unpacking, and reset support. Move-out cleaning is quoted separately, and garage, storage areas, sheds, heavy clutter, unsafe lifting, disposal, or hauling needs require review before acceptance."
       },
       {
         heading: "Excluded services",
