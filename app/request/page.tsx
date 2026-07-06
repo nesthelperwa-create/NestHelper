@@ -43,7 +43,7 @@ export default function RequestPage() {
             <ButtonLink href="/services" variant="secondary">View Services</ButtonLink>
           </div>
           <div className="mx-auto mt-5 grid max-w-3xl gap-2 text-left sm:grid-cols-3">
-            {["No payment today", "Reviewed before checkout", "No childcare, chef, or moving services"].map((item) => (
+            {["No payment today", "Reviewed before checkout", "Clear scope before service"].map((item) => (
               <div key={item} className="flex items-center gap-2 rounded-2xl bg-nest-cream px-4 py-3 text-sm font-black text-nest-teal">
                 <CheckCircle2 size={16} className="shrink-0 text-nest-gold" />
                 {item}
