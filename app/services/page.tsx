@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import { Building2, CheckCircle2, ClipboardCheck, CreditCard, Grid3X3, Home, KeyRound, Mail, QrCode, Scale, ShieldCheck, Shirt, ShoppingBag, Sparkles, SprayCan, Tags, Truck } from "lucide-react";
+import { Building2, CheckCircle2, ClipboardCheck, CreditCard, Grid3X3, Home, Mail, Scale, ShieldCheck, Shirt, ShoppingBag, Sparkles, SprayCan, Tags, Truck } from "lucide-react";
 import { PageHero } from "@/components/PageHero";
 import { ServiceCard } from "@/components/ServiceCard";
 import { ButtonLink } from "@/components/ui/ButtonLink";
@@ -50,7 +50,7 @@ export default function ServicesPage() {
             <p className="pill-label mx-auto w-fit lg:mx-0"><Sparkles size={15} /> Home Cleaning & Reset Services</p>
             <h2 className="text-balance mt-4 text-3xl font-black leading-tight text-nest-teal sm:text-4xl lg:text-5xl">Choose the help your home needs.</h2>
             <p className="mx-auto mt-4 max-w-3xl text-base font-semibold leading-7 text-nest-ink/70 sm:text-lg lg:mx-0">
-              Choose Parent Reset Plan for busy-parent room resets, optional simple in-home meal prep support, Whole Home Cleaning for the entire home, Specific Area(s) Reset for selected rooms, or Move Prep & Home Reset for move support that does not replace movers, Move-In / Move-Out Cleaning for empty or mostly empty homes, laundry help, or errands.
+              Start with the closest service. We review the details before checkout, so you do not have to pick everything perfectly.
             </p>
             <p className="mx-auto mt-5 max-w-3xl text-sm font-black leading-6 text-nest-teal sm:text-base lg:mx-0">
               Click a service guide to jump to the matching service card below.
@@ -89,62 +89,6 @@ export default function ServicesPage() {
           </div>
         </div>
 
-        <div className="mb-10 rounded-[2rem] border border-nest-gold/18 bg-nest-cream p-5 shadow-sm sm:p-6">
-          <p className="text-xs font-black uppercase tracking-[0.18em] text-nest-gold">Simple in-home meal prep</p>
-          <h3 className="mt-1 text-2xl font-black text-nest-teal">Available as a Parent Reset Plan priority.</h3>
-          <p className="mt-3 text-sm font-semibold leading-6 text-nest-ink/70">
-            Meal prep support is limited to simple prep inside the customer’s home using the customer’s food, kitchen, tools, containers, and instructions. Good examples include washing or chopping vegetables and fruit, portioning snacks, prepping simple ingredients, or organizing prepared items in the fridge. It is not catering, private-chef service, full meal cooking, off-site food prep, nutrition planning, or medical dietary support.
-          </p>
-        </div>
-
-        <div className="mb-10 rounded-[2rem] border border-nest-gold/18 bg-white p-5 shadow-sm sm:p-6">
-          <p className="text-xs font-black uppercase tracking-[0.18em] text-nest-gold">Move Prep & Home Reset</p>
-          <h3 className="mt-1 text-2xl font-black text-nest-teal">Movers handle the heavy lifting. NestHelper helps with the home reset.</h3>
-          <p className="mt-3 text-sm font-semibold leading-6 text-nest-ink/70">
-            Use Move Prep & Home Reset for in-home move prep, sorting support, open-first essentials boxes, QR Smart Labels, packing supply kits, donation sorting, laundry help, move-out cleaning requests, and move-in reset support. NestHelper does not transport household goods or operate as a moving company. We provide in-home move prep, organizing, labeling, cleaning, unpacking, and reset support.
-          </p>
-          <div className="mt-4 grid gap-3 text-sm font-bold text-nest-ink/72 sm:grid-cols-2 lg:grid-cols-3">
-            {["Move Prep Add-On — $199 up to 2 helper-hours", "Focused Room Prep — $249 up to 2.5 helper-hours", "Kitchen Essentials Prep — $349 up to 3.5 helper-hours", "Move-In Essentials Reset — $299 up to 3 helper-hours", "Smart Label Setup — $99 up to 20 QR labels", "Supply Kits — $59–$199", "Garage, storage, sheds, heavy clutter — custom quote", "Additional approved time — $65/helper-hour", "Move-out cleaning — quoted separately"].map((item) => <div key={item} className="rounded-2xl bg-nest-cream p-4">{item}</div>)}
-          </div>
-        </div>
-
-        <div className="mb-10 rounded-[2.5rem] border border-nest-gold/18 bg-gradient-to-br from-white via-nest-cream to-nest-mint/25 p-7 shadow-soft sm:p-8">
-          <div className="grid gap-6 lg:grid-cols-[0.82fr_1.18fr] lg:items-center">
-            <div className="text-center lg:text-left">
-              <p className="pill-label mx-auto w-fit lg:mx-0"><QrCode size={15} /> Smart Labels</p>
-              <h2 className="mt-4 text-3xl font-black leading-tight text-nest-teal sm:text-4xl">Included labels. Optional setup help.</h2>
-              <p className="mt-3 font-medium leading-7 text-nest-ink/70">
-                NestHelper Smart Labels are customer-owned QR stickers that may be included with qualifying resets. Families can use them to keep bins, closets, shelves, moving boxes, seasonal items, and storage areas easier to maintain.
-              </p>
-              <p className="mt-3 font-medium leading-7 text-nest-ink/70">
-                Want us to set them up for you? Choose Starter, Standard, or Full setup in the request form. Larger setups, extra labels, or photo-heavy inventory can still be quoted after review.
-              </p>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-3">
-              <SmartLabelFeature icon={<Tags size={19} />} title="Labels included" text="Up to 10 included, with up to 30 for larger organizing projects." />
-              <SmartLabelFeature icon={<KeyRound size={19} />} title="Optional PIN" text="Default is no PIN. Add a 4-digit PIN for private labels." />
-              <SmartLabelFeature icon={<ShieldCheck size={19} />} title="Family-owned" text="Use them yourself, or ask NestHelper to set them up." />
-            </div>
-          </div>
-          <div className="mt-5 grid gap-3 text-sm font-bold leading-6 text-nest-ink/70 md:grid-cols-3">
-            <div className="rounded-3xl border border-nest-gold/16 bg-white/78 p-4">
-              <p className="text-xs font-black uppercase tracking-[0.16em] text-nest-gold">Smart Labels</p>
-              <p className="mt-1 text-lg font-black text-nest-teal">Included free</p>
-              <p className="mt-1">Use up to 10 yourself with qualifying resets, or up to 30 for larger organizing projects.</p>
-            </div>
-            <div className="rounded-3xl border border-nest-gold/16 bg-white/78 p-4">
-              <p className="text-xs font-black uppercase tracking-[0.16em] text-nest-gold">Setup add-on</p>
-              <p className="mt-1 text-lg font-black text-nest-teal">$49 / $79 / $109</p>
-              <p className="mt-1">Starter, Standard, or Full setup for up to 10, 20, or 30 labels during approved reset work.</p>
-            </div>
-            <div className="rounded-3xl border border-nest-gold/16 bg-white/78 p-4">
-              <p className="text-xs font-black uppercase tracking-[0.16em] text-nest-gold">Extra labels</p>
-              <p className="mt-1 text-lg font-black text-nest-teal">Quote after 30</p>
-              <p className="mt-1">Extra labels, detailed inventory, or photo-heavy setup can be quoted after review.</p>
-            </div>
-          </div>
-        </div>
-
         <div className="mb-5 rounded-3xl border border-nest-gold/16 bg-white/80 p-4 text-sm font-bold text-nest-ink/65 shadow-sm sm:px-5">
           Tap or click a card to open details. If you are unsure, start with the closest option and add notes in the request form.
         </div>
@@ -155,7 +99,7 @@ export default function ServicesPage() {
               <p className="pill-label mx-auto w-fit sm:mx-0"><Sparkles size={15} /> Home Cleaning & Support</p>
               <h3 id="specific-reset-support" className="text-2xl font-black text-nest-teal sm:text-3xl">For parent resets, whole-home cleaning, selected areas, moving, laundry, and errands.</h3>
               <p className="max-w-3xl font-semibold leading-7 text-nest-ink/68">
-                Parent Reset Plan is for a 3-hour organizing + light cleaning reset in family spaces, with optional simple in-home meal prep support when requested. Whole Home Cleaning is for the entire home. Specific Area(s) Reset is for selected rooms. Move Prep & Home Reset is for in-home move prep, sorting, labels, supplies, laundry, unpacking, and reset support. Move-In / Move-Out Cleaning is for empty or mostly empty homes.
+                Pick the main service first. Add-ons like simple meal prep, QR labels, supplies, laundry help, or move support can be noted in the request and confirmed before payment.
               </p>
             </div>
             <div className="grid items-start gap-6 md:grid-cols-2 xl:grid-cols-3">
@@ -166,6 +110,38 @@ export default function ServicesPage() {
               ))}
             </div>
           </section>
+        </div>
+
+        <div className="mt-10 rounded-[2.25rem] border border-nest-gold/18 bg-white/88 p-5 shadow-sm sm:p-6">
+          <div className="grid gap-5 lg:grid-cols-[0.82fr_1.18fr] lg:items-start">
+            <div>
+              <p className="pill-label w-fit"><Sparkles size={15} /> Helpful add-ons</p>
+              <h2 className="mt-3 text-2xl font-black leading-tight text-nest-teal sm:text-3xl">Mention extras without overthinking the package.</h2>
+              <p className="mt-3 text-sm font-semibold leading-6 text-nest-ink/68">
+                Choose the main service first. These extras can be added, reviewed, or quoted before any payment link is sent.
+              </p>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <SupportNoteCard
+                icon={<Sparkles size={18} />}
+                title="Simple meal prep"
+                label="Parent Reset option"
+                text="In-home only: wash/chop produce, portion snacks, or prep simple ingredients using the customer’s food and kitchen."
+              />
+              <SupportNoteCard
+                icon={<Tags size={18} />}
+                title="QR Smart Labels"
+                label="Organizing / move support"
+                text="Good for bins, shelves, closets, storage, and moving boxes. Use them yourself or ask for setup help."
+              />
+              <SupportNoteCard
+                icon={<ClipboardCheck size={18} />}
+                title="Move support"
+                label="Not a moving company"
+                text="Sorting, open-first boxes, labels, supplies, light unpacking, and reset help. Movers handle transportation and heavy lifting."
+              />
+            </div>
+          </div>
         </div>
 
         <div className="mt-10 rounded-[2.5rem] border border-nest-gold/18 bg-gradient-to-br from-white via-nest-cream to-nest-mint/30 p-7 shadow-soft sm:p-8">
@@ -261,11 +237,12 @@ export default function ServicesPage() {
   );
 }
 
-function SmartLabelFeature({ icon, title, text }: { icon: ReactNode; title: string; text: string }) {
+function SupportNoteCard({ icon, title, label, text }: { icon: ReactNode; title: string; label: string; text: string }) {
   return (
-    <div className="rounded-[1.6rem] border border-nest-gold/14 bg-white p-5 text-center shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
-      <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-nest-mint/35 text-nest-teal">{icon}</div>
-      <h3 className="font-black text-nest-teal">{title}</h3>
+    <div className="rounded-[1.6rem] border border-nest-gold/14 bg-nest-cream/70 p-4 shadow-sm sm:p-5">
+      <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-2xl bg-white text-nest-teal shadow-sm">{icon}</div>
+      <p className="text-[0.65rem] font-black uppercase tracking-[0.14em] text-nest-gold">{label}</p>
+      <h3 className="mt-1 text-lg font-black leading-tight text-nest-teal">{title}</h3>
       <p className="mt-2 text-sm font-semibold leading-6 text-nest-ink/64">{text}</p>
     </div>
   );
