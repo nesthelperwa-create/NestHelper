@@ -442,28 +442,22 @@ const movePrepPackageOptions = [
   "Focused Room Prep — $249, up to 2.5 helper-hours",
   "Kitchen Essentials Prep — $349, up to 3.5 helper-hours",
   "Move-In Essentials Reset — $299, up to 3 helper-hours",
-  "Smart Label Setup — $99, up to 20 QR labels only",
-  "Supply Kit — $59–$199, supplies only",
-  "Custom quote — garage/storage/heavy clutter",
+  "Custom quote — garage, storage, sheds, or heavy clutter",
 ];
 
-const movePrepIncludedOptions = [
-  "Move prep before movers arrive — included in selected helper-hours",
-  "Sorting / decluttering help — included in selected helper-hours",
-  "Donation sorting — included in selected helper-hours",
-  "Open-first essentials boxes — included in selected helper-hours; boxes/supplies extra if needed",
-  "Move-in reset support — included in selected helper-hours",
-  "Light unpacking / home reset — included in selected helper-hours",
+const movePrepOptionOptions = [
+  "Move prep before movers arrive",
+  "Sorting / decluttering help",
+  "Open-first essentials boxes",
+  "QR smart labels",
+  "Boxes / packing supply kit",
+  "Donation sorting",
+  "Move-out cleaning quote",
+  "Move-in reset support",
+  "Laundry help",
+  "Light unpacking / home reset",
+  "Garage, storage, shed, or heavy clutter review",
 ];
-
-const movePrepPricedOptionOptions = [
-  "QR Smart Labels — add $99 up to 20 labels; included if Smart Label Setup is the main package",
-  "Laundry help — in-home help counts toward helper-hours; pickup/delivery laundry billed separately",
-  "Move-out cleaning — separate quote after review",
-  "Garage, storage, sheds, or heavy clutter — custom quote after review",
-];
-
-const movePrepOptionOptions = [...movePrepIncludedOptions, ...movePrepPricedOptionOptions];
 
 const laundryTypeOptions = [
   "Adult clothes",
@@ -756,7 +750,7 @@ function cleanForSelectedService(form: RequestFormState) {
       movePrepNotes: form.movePrepNotes,
       movePrepAck: form.movePrepAck,
       movePrepDisclaimer: MOVE_PREP_DISCLAIMER,
-      moveOutCleaningQuotedSeparately: selectedOptions.includes("Move-out cleaning — quote separately"),
+      moveOutCleaningQuotedSeparately: selectedOptions.some((option) => option.toLowerCase().includes("move-out cleaning")),
       homeType: form.homeType,
       pets: form.pets,
       petDetails: form.petDetails,
@@ -1502,20 +1496,17 @@ export function RequestForm() {
 
 
       {isMovePrep && (
-        <Section title="4. Move Prep & Home Reset scope" description="Movers handle the heavy lifting. NestHelper helps with the home reset. Pick the best starting point, tell us what is happening with the move, and check any extras that apply.">
+        <Section title="4. Move Prep & Home Reset scope" description="Movers handle the heavy lifting. NestHelper helps with the home reset. Choose the closest starting point, then tell us what kind of help you need.">
           <div className="rounded-3xl border border-nest-gold/20 bg-nest-cream p-5 text-sm leading-6 text-nest-ink/76">
-            <strong className="text-nest-teal">Important boundary:</strong> {MOVE_PREP_DISCLAIMER} <strong className="text-nest-teal">Move-out cleaning:</strong> choosing that option only tells us to include a separate cleaning quote.
+            <strong className="text-nest-teal">Important boundary:</strong> {MOVE_PREP_DISCLAIMER} <strong className="text-nest-teal">Move-out cleaning:</strong> select it here if you want us to review it, but it will be quoted separately.
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <Field label="Best starting point" required>
-                <select className="input" required value={form.movePrepPackage} onChange={(e) => update("movePrepPackage", e.target.value)}>
-                  {movePrepPackageOptions.map((option) => <option key={option}>{option}</option>)}
-                </select>
-              </Field>
-              <p className="mt-2 text-xs font-bold text-nest-ink/55">Most packages include basic sorting and simple labeling within the helper-hours. QR Smart Labels are a separate $99 setup unless Smart Label Setup is chosen as the main package.</p>
-            </div>
+            <Field label="Best starting point" required>
+              <select className="input" required value={form.movePrepPackage} onChange={(e) => update("movePrepPackage", e.target.value)}>
+                {movePrepPackageOptions.map((option) => <option key={option}>{option}</option>)}
+              </select>
+            </Field>
             <Field label="Home type">
               <select className="input" value={form.homeType} onChange={(e) => update("homeType", e.target.value)}>
                 <option>Single-family home</option>
@@ -1525,11 +1516,11 @@ export function RequestForm() {
                 <option>Other</option>
               </select>
             </Field>
-            <Field label="Boxes / supply status">
+            <Field label="Boxes and supplies">
               <select className="input" value={form.supplyPreference} onChange={(e) => update("supplyPreference", e.target.value)}>
                 <option>Not sure yet</option>
-                <option>I may want a NestHelper supply kit — add $59–$199</option>
                 <option>I already have boxes/supplies</option>
+                <option>I may need boxes/supplies</option>
                 <option>NestHelper standard organizing/cleaning supplies only</option>
                 <option>Fragrance-free / sensitive products requested for any cleaning touchpoints</option>
               </select>
@@ -1537,41 +1528,27 @@ export function RequestForm() {
           </div>
 
           <div>
-            <div className="label mb-3">What should the selected helper-hours focus on?</div>
+            <div className="label mb-3">What do you need help with?</div>
             <p className="mb-3 text-sm leading-6 text-nest-ink/65">
-              These items are usually handled inside the package time. If the scope is bigger than the package, Leo/Gen can quote additional approved time at $65 per helper-hour.
+              Check anything that applies. This does not lock you into every item — it just helps Leo/Gen review the request and send the right quote.
             </p>
             <div className="grid gap-2 sm:grid-cols-2">
-              {movePrepIncludedOptions.map((item) => (
+              {movePrepOptionOptions.map((item) => (
                 <CheckOption key={item} checked={form.movePrepOptions.includes(item)} onChange={(checked) => toggleList("movePrepOptions", item, checked)}>{item}</CheckOption>
               ))}
             </div>
-          </div>
-
-          <div>
-            <div className="label mb-3">Priced add-ons or separate quotes</div>
-            <p className="mb-3 text-sm leading-6 text-nest-ink/65">
-              Smart labels, laundry pickup/delivery, garage/heavy clutter, and move-out cleaning should be quoted clearly before scheduling.
+            <p className="mt-2 text-xs font-bold text-nest-ink/55">
+              Simple sorting, open-first boxes, and basic labeling can usually fit inside the selected helper-hours. QR smart labels, supply kits, laundry pickup/delivery, garage or heavy clutter work, and move-out cleaning may affect the quote.
             </p>
-            <div className="grid gap-2 sm:grid-cols-2">
-              {movePrepPricedOptionOptions.map((item) => (
-                <CheckOption key={item} checked={form.movePrepOptions.includes(item)} onChange={(checked) => toggleList("movePrepOptions", item, checked)}>{item}</CheckOption>
-              ))}
-            </div>
-            <p className="mt-2 text-xs font-bold text-nest-ink/55">Supply kits are handled above under boxes/supply status. Additional approved time is $65 per helper-hour with a 1-hour minimum.</p>
           </div>
 
-          <div className="grid gap-3 text-sm font-semibold leading-6 text-nest-ink/72 sm:grid-cols-2">
-            <div className="rounded-3xl border border-nest-gold/16 bg-white p-4 shadow-sm"><strong className="text-nest-teal">Move Prep Add-On:</strong> starts at $199, up to 2 helper-hours for light sorting, simple prep, and open-first planning.</div>
-            <div className="rounded-3xl border border-nest-gold/16 bg-white p-4 shadow-sm"><strong className="text-nest-teal">Focused Room Prep:</strong> $249, up to 2.5 helper-hours for one room or focused area.</div>
-            <div className="rounded-3xl border border-nest-gold/16 bg-white p-4 shadow-sm"><strong className="text-nest-teal">Kitchen Essentials Prep:</strong> $349, up to 3.5 helper-hours for kitchen essentials, pantry basics, and open-first setup.</div>
-            <div className="rounded-3xl border border-nest-gold/16 bg-white p-4 shadow-sm"><strong className="text-nest-teal">Move-In Essentials Reset:</strong> $299, up to 3 helper-hours for unpacking support and key-area reset.</div>
-            <div className="rounded-3xl border border-nest-gold/16 bg-white p-4 shadow-sm"><strong className="text-nest-teal">Smart Label Setup:</strong> $99 up to 20 QR labels. Add when labels are needed with another package.</div>
-            <div className="rounded-3xl border border-nest-gold/16 bg-white p-4 shadow-sm"><strong className="text-nest-teal">Supply Kits:</strong> $59–$199 depending on kit size. Move-out cleaning is quoted separately.</div>
+          <div className="rounded-3xl border border-nest-gold/16 bg-white p-5 text-sm font-semibold leading-6 text-nest-ink/72 shadow-sm">
+            <p><strong className="text-nest-teal">Simple pricing guide:</strong> Move Prep starts at $199. Focused Room Prep is $249. Kitchen Essentials Prep is $349. Move-In Essentials Reset is $299.</p>
+            <p className="mt-2">Additional approved time is $65 per helper-hour with a 1-hour minimum. Move-out cleaning, garage/storage areas, sheds, heavy clutter, QR label setup, and supply kits are reviewed before confirming.</p>
           </div>
 
           <Field label="Tell us what is happening with the move" required>
-            <textarea className="input min-h-28" required placeholder="Example: Movers are coming Friday. We need help with kitchen essentials, open-first boxes, pantry/kids labels, and a donation pile. We may also need a separate move-out cleaning quote after the home is empty." value={form.movePrepNotes} onChange={(e) => update("movePrepNotes", e.target.value)} />
+            <textarea className="input min-h-28" required placeholder="Example: Movers are coming Friday. We need help sorting the kitchen, setting aside open-first boxes, making a donation pile, and possibly getting a separate move-out cleaning quote after the home is empty." value={form.movePrepNotes} onChange={(e) => update("movePrepNotes", e.target.value)} />
           </Field>
 
           <label className="flex gap-3 rounded-2xl bg-white p-4 text-sm font-semibold text-nest-ink/82 shadow-sm">
