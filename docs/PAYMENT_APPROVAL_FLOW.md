@@ -13,7 +13,7 @@ Customers submit a request first. Admin reviews it. Admin sends payment only aft
 3-Hour Family Reset: $199
 4-Hour Helper Block: $279
 Errand Helper: $119
-Laundry Rescue intro launch pricing: $59 minimum + $2.25/lb
+Laundry Rescue intro launch pricing: $59 minimum includes pickup, wash, dry, fold, return, and up to about 26.2 lbs. Additional laundry is $2.25/lb.
 Extra approved time in the family builder: $35/half-hour or $70/hour
 ```
 
@@ -77,7 +77,7 @@ Keep `ENABLE_STRIPE_AUTOMATIC_TAX=false` for testing and live payments. Add sale
 Laundry Rescue is treated differently from flat-price services.
 
 1. Admin reviews the Laundry Rescue request.
-2. Admin sends the normal quick checkout link. For Laundry Rescue, this is the non-refundable deposit/minimum only; manual sales tax is added only if checked.
+2. Admin sends the normal quick checkout link. For Laundry Rescue, this is the non-refundable intro minimum only; manual sales tax is added only if checked.
 3. During deposit checkout, Stripe asks the customer to choose one final-balance option:
    - Auto-charge my saved card after dry weight is confirmed
    - Send me the final invoice link before delivery
@@ -85,14 +85,14 @@ Laundry Rescue is treated differently from flat-price services.
 5. After pickup, admin dry-weighs the laundry.
 6. In the admin request detail view, use the **Laundry final balance** section:
    - Dry weight lbs
-   - Rate per lb
+   - Additional lb rate
    - Add-ons / bulky items
-   - Deposit credit before tax
+   - Minimum already paid / included weight
 7. NestHelper calculates:
 
 ```text
-Final laundry subtotal before tax = dry weight × rate per lb + add-ons
-Final balance before optional manual sales tax = final laundry subtotal before tax - pre-tax deposit credit
+Final laundry subtotal before tax = additional weight above the included minimum × additional lb rate + add-ons
+Final balance before optional manual sales tax = additional-weight amount + approved add-ons/bulky items
 ```
 
 8. NestHelper creates the final balance as a Stripe Invoice so the customer/admin can see the breakdown. Stripe automatic tax stays disabled; optional manual sales tax is added only when admin checks the manual sales-tax box before creating the invoice.
@@ -103,8 +103,8 @@ Final balance before optional manual sales tax = final laundry subtotal before t
 Use standard Laundry Rescue values:
 
 ```text
-Intro launch rate: $2.25/lb
-Standard deposit/minimum credit before tax: $59
+Additional laundry rate: $2.25/lb above the included minimum weight
+Standard intro minimum already paid: $59, including up to about 26.2 lbs
 Internal discount mode now uses the same Laundry Rescue minimum/intro launch rate unless you manually enter a custom amount.
 ```
 

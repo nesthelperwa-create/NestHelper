@@ -162,7 +162,7 @@ function getServicePriceLabel(serviceId: string) {
 }
 
 function getDefaultCustomTitle(serviceTitle: string, isLaundryRescue: boolean) {
-  return isLaundryRescue ? "Laundry Rescue custom deposit" : `${serviceTitle} custom checkout`;
+  return isLaundryRescue ? "Laundry Rescue custom intro minimum" : `${serviceTitle} custom checkout`;
 }
 
 
@@ -308,9 +308,9 @@ export async function POST(request: Request) {
               tax_behavior: "exclusive" as const,
               product_data: {
                 tax_code: laundryProductTaxCode,
-                name: useCustomInitial ? customTitle : "Laundry Rescue non-refundable deposit / minimum",
+                name: useCustomInitial ? customTitle : "Laundry Rescue non-refundable intro minimum",
                 description: [
-                  customNote || "Non-refundable Laundry Rescue deposit/minimum. This amount is credited toward the final laundry total after dry weight, add-ons, bulky items, or approved changes are reviewed.",
+                  customNote || "Non-refundable Laundry Rescue intro minimum. The $59 minimum includes pickup, wash, dry, fold, return, and up to about 26.2 lbs. Additional laundry, add-ons, bulky items, or approved changes are reviewed separately.",
                   referralCreditAlreadyDeductedNote,
                   "Final balance is handled after dry weigh-in. The customer chooses auto-charge or invoice-before-delivery during checkout.",
                 ].filter(Boolean).join("\n"),
@@ -396,7 +396,7 @@ export async function POST(request: Request) {
       checkoutParams.custom_text = {
         submit: {
           message:
-            "Laundry Rescue deposit/minimum is non-refundable and credited toward the final total. If you choose auto-charge, NestHelper may charge your saved payment method for the final balance after dry weight and add-ons are confirmed. If you choose invoice-before-delivery, laundry is held until the final invoice is fully paid.",
+            "Laundry Rescue intro minimum is non-refundable and includes pickup, wash, dry, fold, return, and up to about 26.2 lbs. If you choose auto-charge, NestHelper may charge your saved payment method for any additional laundry, approved add-ons, or bulky items after dry weight is confirmed. If you choose invoice-before-delivery, laundry is held until any final invoice is fully paid.",
         },
       };
     }
@@ -406,7 +406,7 @@ export async function POST(request: Request) {
     const checkoutUrl = session.url || "";
     const replyToEmail = isLaundryRescue ? emailAliases.laundry : isCommercialReset ? emailAliases.commercial : emailAliases.billing;
     const servicePrice = isLaundryRescue
-      ? `${formatMoney(laundryDepositAmount)} non-refundable deposit/minimum + tax, credited toward the final laundry total`
+      ? `${formatMoney(laundryDepositAmount)} non-refundable intro minimum + tax; includes pickup, wash, dry, fold, return, and up to about 26.2 lbs`
       : useCustomInitial
         ? savedDiscountCredit > 0
           ? `${formatMoney(customAmount)} custom checkout after ${formatMoney(savedDiscountCredit)} referral/customer credit`
@@ -431,7 +431,7 @@ export async function POST(request: Request) {
           quoteBreakdownText: isLaundryRescue
             ? [
                 referralCreditAlreadyDeductedNote,
-                "This deposit/minimum is non-refundable and is credited toward the final Laundry Rescue total. During Stripe checkout, the customer chooses either auto-charge for the final balance after dry weigh-in or invoice-before-delivery. Laundry is not released until the final balance is fully paid."
+                "This intro minimum is non-refundable and includes pickup, wash, dry, fold, return, and up to about 26.2 lbs. During Stripe checkout, the customer chooses either auto-charge for any additional weight/add-ons after dry weigh-in or invoice-before-delivery. Laundry is not released until any final balance is fully paid."
               ].filter(Boolean).join("\n\n")
             : isCommercialReset && useCustomInitial && shouldIncludeQuoteBreakdown
               ? savedCommercialBreakdownText

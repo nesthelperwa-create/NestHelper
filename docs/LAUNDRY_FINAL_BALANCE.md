@@ -1,12 +1,12 @@
 # Laundry Rescue Final Balance
 
-Laundry Rescue uses a two-step payment flow: a non-refundable deposit/minimum first, then an itemized final Stripe invoice after dry weigh-in. Manual sales tax can be added by admin only when needed.
+Laundry Rescue uses a two-step payment flow: a non-refundable intro minimum first, then an itemized final Stripe invoice only if there is additional weight, approved add-ons, bulky items, or other reviewed changes. Manual sales tax can be added by admin only when needed.
 
-## Step 1: Deposit / minimum
+## Step 1: Intro minimum
 
 The normal admin quick checkout button sends the first Stripe Checkout link.
 
-For Laundry Rescue, that first checkout is only the deposit/minimum. It should be treated as:
+For Laundry Rescue, that first checkout is only the intro minimum. It should be treated as:
 
 ```text
 Deposit Checkout Sent → Deposit Paid - Final Pending
@@ -14,7 +14,7 @@ Deposit Checkout Sent → Deposit Paid - Final Pending
 
 not fully paid.
 
-The deposit checkout keeps Stripe automatic tax disabled. If sales tax should be collected, the admin checks the manual sales-tax box and enters the verified rate before creating the checkout. The deposit/minimum is non-refundable and is credited toward the final laundry total before tax.
+The deposit checkout keeps Stripe automatic tax disabled. If sales tax should be collected, the admin checks the manual sales-tax box and enters the verified rate before creating the checkout. The $59 intro minimum is non-refundable and includes pickup, wash, dry, fold, return, and up to about 26.2 lbs of laundry.
 
 During Stripe checkout, the customer must choose one final-balance option:
 
@@ -30,19 +30,19 @@ After pickup, dry-weigh the laundry and open the request in `/admin/requests`.
 Use the **Laundry final balance** section to enter:
 
 - Dry weight lbs
-- Rate per lb
+- Additional lb rate
 - Add-ons / bulky items
-- Deposit credit before tax
+- Minimum already paid / included weight
 - Optional note
 
 The site calculates:
 
 ```text
-Laundry subtotal before tax = dry weight × rate per lb + add-ons
-Final balance before optional manual sales tax = laundry subtotal before tax - pre-tax deposit credit
+Laundry subtotal before tax = additional weight above the included minimum × additional lb rate + add-ons
+Final balance before optional manual sales tax = additional-weight amount + approved add-ons/bulky items
 ```
 
-The final balance is created as a Stripe Invoice with line-item details, not a plain Checkout link. Stripe automatic tax stays disabled. If sales tax is needed, admin checks the manual sales-tax box before creating the invoice, and the manual tax rate is applied to the remaining balance after the deposit credit.
+The final balance is created as a Stripe Invoice with line-item details, not a plain Checkout link. Stripe automatic tax stays disabled. If sales tax is needed, admin checks the manual sales-tax box before creating the invoice, and the manual tax rate is applied only to the additional-weight amount and approved add-ons/bulky items being invoiced.
 
 ## Auto-charge customers
 

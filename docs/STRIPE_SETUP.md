@@ -51,7 +51,7 @@ Create or update standard helper-based prices for:
 - 4-Hour Helper Block
 - Errand Helper
 
-Laundry Rescue deposit/minimum now uses dynamic Stripe `price_data` so it can stay tax-exclusive and support custom deposit amounts. You no longer need separate Laundry Rescue Deposit price IDs unless you want to keep them for your own Stripe reporting.
+Laundry Rescue intro minimum now uses dynamic Stripe `price_data` so it can stay tax-exclusive and support custom minimum amounts. You no longer need separate Laundry Rescue Deposit price IDs unless you want to keep them for your own Stripe reporting.
 
 Updated public standard pricing:
 
@@ -60,7 +60,7 @@ Updated public standard pricing:
 3-Hour Family Reset: $199
 4-Hour Helper Block: $279
 Errand Helper: $119
-Laundry Rescue intro launch pricing: $59 minimum + $2.25/lb
+Laundry Rescue intro launch pricing: $59 minimum includes pickup, wash, dry, fold, return, and up to about 26.2 lbs. Additional laundry is $2.25/lb.
 ```
 
 Recommended env vars for the updated helper-based pricing:
@@ -121,7 +121,7 @@ Use promo/internal discount prices sparingly. Because discounts differ by servic
 
 - Do not turn on public checkout yet.
 - Do not send a payment link until you approve service area, scope, safety, pets/access, and availability.
-- For Laundry Rescue, the first checkout should be a non-refundable deposit/minimum. The final balance should be a Stripe Invoice after dry weigh-in and add-ons.
+- For Laundry Rescue, the first checkout should be a non-refundable intro minimum. The final balance should be a Stripe Invoice only when there is additional weight above the included minimum, approved add-ons, bulky items, or reviewed changes.
 - For live tax, keep `ENABLE_STRIPE_AUTOMATIC_TAX=false` and use the admin manual sales-tax checkbox only when needed. Do not re-enable automatic tax unless you intentionally want Stripe Tax calculations on new payments.
 
 

@@ -12,6 +12,9 @@ export const runtime = "nodejs";
 
 const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
 const laundryProductTaxCode = (process.env.STRIPE_LAUNDRY_TAX_CODE || process.env.STRIPE_PRODUCT_TAX_CODE || process.env.STRIPE_TAX_CODE || "txcd_20090012").trim();
+const laundryIntroMinimum = 59;
+const laundryDefaultAdditionalRatePerLb = 2.25;
+const laundryDisplayIncludedLbs = 26.2;
 
 type LaundryFinalBalanceBody = {
   requestId?: string;
@@ -43,7 +46,7 @@ function formatMoney(value: number) {
 }
 
 function formatNumber(value: number) {
-  return Number.isFinite(value) ? value.toFixed(2).replace(/\.00$/, "") : "0";
+  return Number.isFinite(value) ? value.toFixed(2).replace(/\.?0+$/, "") : "0";
 }
 
 function getAddress(data: Record<string, unknown>): Stripe.AddressParam | undefined {
@@ -79,7 +82,7 @@ function getDepositCreditFromRecord(data: Record<string, unknown>, providedDepos
   const paymentStatus = getString(data.paymentStatus || data.laundryPaymentStatus || data.status);
   if (amountTotal > 0 && ["Paid", "Deposit Paid", "Deposit Paid - Final Pending"].includes(paymentStatus)) return amountTotal / 100;
 
-  return 59;
+  return laundryIntroMinimum;
 }
 
 function shouldAutoChargeFinalBalance(data: Record<string, unknown>) {
@@ -119,22 +122,6 @@ async function getOrCreateStripeCustomer(data: Record<string, unknown>, requestI
   return customer.id;
 }
 
-async function createDepositCreditCoupon(requestId: string, depositCredit: number) {
-  if (!stripe) throw new Error("Stripe is not configured.");
-
-  const depositCreditCents = moneyToCents(depositCredit);
-  if (depositCreditCents <= 0) return "";
-
-  const coupon = await stripe.coupons.create({
-    amount_off: depositCreditCents,
-    currency: "usd",
-    duration: "once",
-    name: `Laundry deposit credit ${formatMoney(depositCredit)}`,
-    metadata: { requestId, serviceId: "laundry-rescue", creditType: "non_refundable_deposit_credit" },
-  });
-
-  return coupon.id;
-}
 
 export async function POST(request: Request) {
   try {
@@ -152,7 +139,7 @@ export async function POST(request: Request) {
     const body = (await request.json().catch(() => null)) as LaundryFinalBalanceBody | null;
     const requestId = getString(body?.requestId);
     const dryWeightLbs = cleanNumber(body?.dryWeightLbs);
-    const ratePerLb = cleanNumber(body?.ratePerLb) || 2.25;
+    const ratePerLb = cleanNumber(body?.ratePerLb) || laundryDefaultAdditionalRatePerLb;
     const addOnsAmount = Math.max(0, cleanNumber(body?.addOnsAmount));
     const finalBalanceNote = getString(body?.finalBalanceNote);
     const shouldSendEmail = body?.sendEmail !== false;
@@ -183,17 +170,22 @@ export async function POST(request: Request) {
     const preferredDate = getString(data.preferredDate);
     const preferredWindow = getString(data.preferredWindow);
     const depositCredit = getDepositCreditFromRecord(data, cleanNumber(body?.depositCredit));
-    const laundryBaseAmount = dryWeightLbs * ratePerLb;
+    const includedWeightLbs = ratePerLb > 0 ? Math.max(laundryDisplayIncludedLbs, depositCredit / ratePerLb) : laundryDisplayIncludedLbs;
+    const additionalWeightLbs = Math.max(0, dryWeightLbs - includedWeightLbs);
+    const laundryBaseAmount = additionalWeightLbs * ratePerLb;
     const laundrySubtotal = laundryBaseAmount + addOnsAmount;
-    const balanceDue = Math.max(0, laundrySubtotal - depositCredit);
+    const balanceDue = Math.max(0, laundrySubtotal);
     const balanceDueCents = moneyToCents(balanceDue);
     const autoCharge = shouldAutoChargeFinalBalance(data);
     const savedPaymentMethodId = getString(data.laundryAutoChargePaymentMethodId);
 
     const updateBase = {
       laundryDryWeightLbs: Number(dryWeightLbs.toFixed(2)),
+      laundryIncludedWeightLbs: Number(includedWeightLbs.toFixed(2)),
+      laundryAdditionalWeightLbs: Number(additionalWeightLbs.toFixed(2)),
       laundryRatePerLb: Number(ratePerLb.toFixed(2)),
       laundryBaseAmount: Number(laundryBaseAmount.toFixed(2)),
+      laundryAdditionalWeightAmount: Number(laundryBaseAmount.toFixed(2)),
       laundryBaseAmountCents: moneyToCents(laundryBaseAmount),
       laundryAddOnsAmount: Number(addOnsAmount.toFixed(2)),
       laundryAddOnsAmountCents: moneyToCents(addOnsAmount),
@@ -239,7 +231,6 @@ export async function POST(request: Request) {
     }
 
     const customerId = await getOrCreateStripeCustomer(data, requestId, fullName, email);
-    const couponId = await createDepositCreditCoupon(requestId, depositCredit);
     const manualSalesTaxRateId = await getOrCreateManualSalesTaxRate(stripe, manualSalesTax, { requestId, serviceId: "laundry-rescue", paymentType: "laundry_final_balance" });
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
     const collectionMethod: "charge_automatically" | "send_invoice" = autoCharge ? "charge_automatically" : "send_invoice";
@@ -251,13 +242,14 @@ export async function POST(request: Request) {
       auto_advance: false,
       description: autoCharge ? "Laundry Rescue final balance — auto-charge authorized" : "Laundry Rescue final balance",
       footer: autoCharge
-        ? "This invoice reflects the final Laundry Rescue balance after dry weight, selected add-ons or bulky items, and the non-refundable deposit/minimum credit already paid. The customer authorized NestHelper to charge the saved payment method for this final balance."
-        : "This invoice reflects the final Laundry Rescue balance after dry weight, selected add-ons or bulky items, and the non-refundable deposit/minimum credit already paid. Laundry is held until the final balance is fully paid.",
-      discounts: couponId ? [{ coupon: couponId }] : undefined,
+        ? "This invoice reflects the final Laundry Rescue balance for additional laundry above the included minimum weight, plus selected add-ons or bulky items. The $59 minimum was already paid and includes pickup, wash, dry, fold, return, and up to about 26.2 lbs. The customer authorized NestHelper to charge the saved payment method for this final balance."
+        : "This invoice reflects the final Laundry Rescue balance for additional laundry above the included minimum weight, plus selected add-ons or bulky items. The $59 minimum was already paid and includes pickup, wash, dry, fold, return, and up to about 26.2 lbs. Laundry is held until the final balance is fully paid.",
       custom_fields: [
         { name: "Dry weight", value: `${formatNumber(dryWeightLbs)} lb` },
-        { name: "Rate", value: `${formatMoney(ratePerLb)} / lb` },
-        { name: "Deposit credit", value: `-${formatMoney(depositCredit)}` },
+        { name: "Included in minimum", value: `Up to about ${formatNumber(laundryDisplayIncludedLbs)} lb` },
+        { name: "Additional weight", value: `${formatNumber(additionalWeightLbs)} lb` },
+        { name: "Additional rate", value: `${formatMoney(ratePerLb)} / lb` },
+        { name: "Minimum already paid", value: formatMoney(depositCredit) },
         { name: "Final collection", value: autoCharge ? "Auto-charge authorized" : "Invoice before delivery" },
       ],
       metadata: {
@@ -267,6 +259,8 @@ export async function POST(request: Request) {
         paymentType: "laundry_final_balance",
         collectionMethod: autoCharge ? "auto_charge" : "send_invoice",
         dryWeightLbs: String(Number(dryWeightLbs.toFixed(2))),
+        includedWeightLbs: String(Number(includedWeightLbs.toFixed(2))),
+        additionalWeightLbs: String(Number(additionalWeightLbs.toFixed(2))),
         ratePerLb: String(Number(ratePerLb.toFixed(2))),
         addOnsAmount: String(Number(addOnsAmount.toFixed(2))),
         depositCredit: String(Number(depositCredit.toFixed(2))),
@@ -277,21 +271,23 @@ export async function POST(request: Request) {
       },
     });
 
-    await stripe.invoiceItems.create({
-      customer: customerId,
-      invoice: invoice.id,
-      currency: "usd",
-      amount: moneyToCents(laundryBaseAmount),
-      tax_behavior: "exclusive",
-      tax_code: laundryProductTaxCode,
-      description: [
-        "Laundry Rescue wash, dry, fold, return, and coordination — dry weight",
-        `Calculation: ${formatNumber(dryWeightLbs)} lb × ${formatMoney(ratePerLb)} per lb`,
-        `Dry weight total before deposit credit: ${formatMoney(laundryBaseAmount)}`,
-      ].join("\n"),
-      metadata: { requestId, serviceId: "laundry-rescue", lineType: "dry_weight", taxMode: manualSalesTax.enabled ? "manual_sales_tax" : "no_sales_tax" },
-      ...manualTaxRatesParam(manualSalesTaxRateId),
-    } as any);
+    if (moneyToCents(laundryBaseAmount) > 0) {
+      await stripe.invoiceItems.create({
+        customer: customerId,
+        invoice: invoice.id,
+        currency: "usd",
+        amount: moneyToCents(laundryBaseAmount),
+        tax_behavior: "exclusive",
+        tax_code: laundryProductTaxCode,
+        description: [
+          "Laundry Rescue additional laundry above the included intro minimum",
+          `Included minimum: ${formatMoney(depositCredit)} covers pickup, wash, dry, fold, return, and up to about ${formatNumber(laundryDisplayIncludedLbs)} lb`,
+          `Additional laundry: ${formatNumber(additionalWeightLbs)} lb × ${formatMoney(ratePerLb)} per lb`,
+        ].join("\n"),
+        metadata: { requestId, serviceId: "laundry-rescue", lineType: "additional_weight", taxMode: manualSalesTax.enabled ? "manual_sales_tax" : "no_sales_tax" },
+        ...manualTaxRatesParam(manualSalesTaxRateId),
+      } as any);
+    }
 
     if (addOnsAmount > 0) {
       await stripe.invoiceItems.create({
@@ -326,7 +322,7 @@ export async function POST(request: Request) {
         laundryFinalInvoicePdf: invoicePdf,
         laundryFinalInvoiceAmountDue: finalized.amount_due ?? null,
         laundryFinalInvoiceEmailWarning:
-          "Stripe finalized this laundry final balance invoice at $0.00, so NestHelper did not email or auto-charge it. Review the weight, add-ons, and deposit credit before trying again.",
+          "Stripe finalized this laundry final balance invoice at $0.00, so NestHelper did not email or auto-charge it. Review the weight, included minimum, add-ons, and final-balance calculation before trying again.",
         laundryFinalBalanceCreatedAt: FieldValue.serverTimestamp(),
       });
 
@@ -334,7 +330,7 @@ export async function POST(request: Request) {
         {
           ok: false,
           error:
-            "Stripe finalized the laundry final balance invoice at $0.00. The invoice was not emailed or auto-charged. Review the dry weight, add-ons, and deposit credit and try again.",
+            "Stripe finalized the laundry final balance invoice at $0.00. The invoice was not emailed or auto-charged. Review the dry weight, included weight, add-ons, and final-balance calculation and try again.",
         },
         { status: 500 }
       );
@@ -401,6 +397,8 @@ export async function POST(request: Request) {
           invoicePdf,
           invoiceNumber: finalized.number || undefined,
           dryWeightLbs,
+          includedWeightLbs,
+          additionalWeightLbs,
           ratePerLb,
           addOnsAmount,
           depositCredit,

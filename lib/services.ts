@@ -187,21 +187,21 @@ export const services: Service[] = [
     id: "laundry-rescue",
     title: "Laundry Rescue",
     shortTitle: "Laundry Rescue",
-    description: "Pickup, dry weigh-in, wash, dry, fold, and return delivery.",
+    description: "Pickup, wash, dry, fold, and return are included. The $59 intro minimum includes up to about 26.2 lbs of laundry.",
     details: [
-      "Dry weight confirmed at pickup",
-      "Laundry Rescue intro launch pricing: $59 minimum + $2.25/lb.",
-      "Wash, dry, fold, and return",
+      "Laundry Rescue intro launch pricing",
+      "$59 minimum includes pickup, wash, dry, fold, return, and up to about 26.2 lbs",
+      "Additional laundry is $2.25/lb",
       "Eco-friendly detergent available",
       "Auto-charge or invoice after weigh-in"
     ],
-    standardPrice: "$59 minimum + $2.25/lb",
-    priceNote: "Intro launch pricing",
+    standardPrice: "$59 minimum",
+    priceNote: "Includes up to 26.2 lbs",
     serviceTime: "Pickup + return window scheduled",
-    travelInfo: "Dry weight confirmed at pickup",
+    travelInfo: "Additional laundry billed only above the included weight",
     image: "/assets/services/service-laundry-rescue.png",
     stripeStandardEnv: "STRIPE_PRICE_LAUNDRY_DEPOSIT_STANDARD",
-    note: "Laundry Rescue intro launch pricing: $59 minimum + $2.25/lb. Includes wash, dry, fold, and return; eco-friendly detergent is available. Laundry is billed by dry weight. The non-refundable minimum/deposit is credited before tax toward the final total, and any remaining balance is handled by the checkout option selected: auto-charge after review or invoice before delivery."
+    note: "Laundry Rescue intro launch pricing: $59 minimum includes pickup, wash, dry, fold, return, and up to about 26.2 lbs of laundry. Additional laundry is $2.25/lb. Eco-friendly detergent is available. The non-refundable minimum is paid first; any additional weight, add-ons, bulky items, or approved changes are handled through the checkout option selected: auto-charge after review or invoice before delivery."
   }
 ];
 

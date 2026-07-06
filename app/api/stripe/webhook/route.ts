@@ -60,7 +60,7 @@ function getAdminAlertFields(isLaundryDeposit: boolean, isLaundryFinalBalance: b
       sentFlag: "laundryDepositAdminPaymentEmailSent",
       sentAt: "laundryDepositAdminPaymentEmailSentAt",
       errorField: "laundryDepositAdminPaymentEmailError",
-      paymentLabel: "Laundry Rescue deposit/minimum",
+      paymentLabel: "Laundry Rescue intro minimum",
     };
   }
 
@@ -250,7 +250,7 @@ export async function POST(request: Request) {
                   Email: email,
                   "Amount paid": formatMoney(invoice.amount_paid, invoice.currency),
                   "Dry weight": getString(existingData.laundryDryWeightLbs) ? `${getString(existingData.laundryDryWeightLbs)} lb` : "",
-                  "Deposit credit": existingData.laundryDepositCredit ? `$${existingData.laundryDepositCredit}` : "",
+                  "Minimum already paid": existingData.laundryDepositCredit ? `$${existingData.laundryDepositCredit}` : "",
                   Address: buildAddress(existingData),
                   "Stripe invoice": invoice.id,
                 },
@@ -614,7 +614,7 @@ export async function POST(request: Request) {
             : isCustomInitialPayment
               ? getString(session.metadata?.customInitialTitle) || getServiceTitle(existingData, session.metadata?.serviceTitle)
               : isLaundryDeposit
-                ? "Laundry Rescue deposit/minimum"
+                ? "Laundry Rescue intro minimum"
                 : getServiceTitle(existingData, session.metadata?.serviceTitle);
 
         const confirmationFlag = isAdditionalPayment
@@ -685,7 +685,7 @@ export async function POST(request: Request) {
               subject: `Stripe Payment Received: ${serviceTitle}`,
               title: isLaundryDeposit ? "Laundry deposit paid — final balance still pending" : "Payment received — ready to schedule",
               intro: isLaundryDeposit
-                ? "A customer paid the non-refundable Laundry Rescue deposit/minimum. The request is not fully paid yet; dry weight/add-ons still need a final balance before delivery."
+                ? "A customer paid the non-refundable Laundry Rescue intro minimum. The $59 minimum includes pickup, wash, dry, fold, return, and up to about 26.2 lbs. Additional weight/add-ons may still need a final balance before delivery."
                 : "A customer completed Stripe checkout. The request is now marked paid in the admin dashboard and is ready for scheduling follow-up.",
               adminPath: "/admin/requests",
               to: routedPaymentInbox,

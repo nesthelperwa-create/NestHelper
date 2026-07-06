@@ -156,13 +156,14 @@ const serviceExtras: Record<string, ServiceExtra> = {
     goodToKnow: ["No unsafe requests", "Mileage included", "Longer routes quoted"],
   },
   "laundry-rescue": {
-    bestFor: "Laundry catch-up when the baskets are taking over and you want pickup, wash/fold coordination, and clean return delivery handled for you.",
+    bestFor: "Laundry catch-up when the baskets are taking over and you want pickup, wash, dry, fold, and return handled for you. The intro $59 minimum includes up to about 26.2 lbs of laundry.",
     extraDetails: [
-      "Laundry is dry-weighed at pickup so pricing is clear before final balance",
+      "The $59 intro minimum includes pickup, wash, dry, fold, return, and up to about 26.2 lbs",
+      "Additional laundry above the included weight is $2.25/lb",
       "Clean clothes may be returned in reusable NestHelper bags or totes",
       "Add-ons can cover fragrance-free detergent, sensitive skin detergent, low heat, hang dry, or rush return when available",
     ],
-    goodToKnow: ["Deposit credited", "Reusable bag return", "Bulky items quoted"],
+    goodToKnow: ["$59 includes up to 26.2 lbs", "Reusable bag return", "Bulky items quoted"],
   },
 };
 
@@ -321,7 +322,7 @@ export function ServiceCard({ service, equalCollapsedHeight = false }: { service
                 {isLaundry ? (
                   <>
                     <span>$59 minimum</span>
-                    <span className="block">+ $2.25/lb</span>
+                    <span className="block text-[0.95rem] leading-5 sm:text-base">includes up to 26.2 lbs</span>
                   </>
                 ) : (
                   service.standardPrice

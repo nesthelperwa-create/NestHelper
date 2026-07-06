@@ -87,14 +87,14 @@ const baseSuccessContent: Record<PaymentType, SuccessContent> = {
   laundry_deposit: {
     eyebrow: "Laundry deposit received",
     title: "Your Laundry Rescue deposit was successful.",
-    text: "Thanks — your non-refundable Laundry Rescue deposit/minimum was received. We’ll confirm pickup details, dry-weigh laundry at pickup, and handle the final balance using the option you selected during checkout: auto-charge after review or invoice-before-delivery.",
+    text: "Thanks — your non-refundable Laundry Rescue intro minimum was received. The $59 minimum includes pickup, wash, dry, fold, return, and up to about 26.2 lbs. We’ll dry-weigh laundry at pickup and handle any additional weight or approved add-ons using the option you selected during checkout: auto-charge after review or invoice-before-delivery.",
     status: "Deposit paid ✓",
     steps: [
       "NestHelper confirms the pickup window, pickup spot, and laundry notes.",
-      "Laundry is dry-weighed at pickup so the total can be calculated clearly.",
-      "If you selected auto-charge, NestHelper may charge the saved payment method after dry weight, deposit credit, tax, and approved add-ons are confirmed. If you selected invoice-before-delivery, a final invoice link is sent before delivery.",
+      "Laundry is dry-weighed at pickup. Additional laundry above about 26.2 lbs is $2.25/lb.",
+      "If you selected auto-charge, NestHelper may charge the saved payment method after additional weight, tax, and approved add-ons are confirmed. If you selected invoice-before-delivery, a final invoice link is sent before delivery.",
     ],
-    note: "This deposit is non-refundable and credited before tax toward the final Laundry Rescue total. Dry weight, add-ons, bulky items, rush options, or extra work can change the final balance. Laundry is not released until the final balance is fully paid.",
+    note: "This minimum is non-refundable and includes pickup, wash, dry, fold, return, and up to about 26.2 lbs of laundry. Additional laundry, add-ons, bulky items, rush options, or extra work can change the final balance. Laundry is not released until the final balance is fully paid.",
     closing: "You can close this tab. Watch for Laundry Rescue pickup details from NestHelper.",
   },
   laundry_final_balance: {

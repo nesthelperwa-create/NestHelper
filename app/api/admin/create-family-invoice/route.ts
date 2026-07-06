@@ -165,7 +165,7 @@ async function createLaundryDepositCheckoutFromBreakdown(params: {
   const depositAmount = amountDueNowCents / 100;
   const discountCredit = cleanNumber(breakdown.discountCredit);
   const referralCreditAlreadyDeductedNote = discountCredit > 0
-    ? `Referral/customer credit of ${formatMoney(discountCredit)} has already been deducted from this deposit/minimum. The amount shown is the remaining amount due.`
+    ? `Referral/customer credit of ${formatMoney(discountCredit)} has already been deducted from this intro minimum. The amount shown is the remaining amount due.`
     : "";
 
   const address = getAddress(data);
@@ -200,9 +200,9 @@ async function createLaundryDepositCheckoutFromBreakdown(params: {
           tax_behavior: "exclusive" as const,
           product_data: {
             tax_code: laundryProductTaxCode,
-            name: "Laundry Rescue non-refundable deposit / minimum",
+            name: "Laundry Rescue non-refundable intro minimum",
             description: [
-              customerBreakdownText || getString(breakdown.customerNote) || "Non-refundable Laundry Rescue deposit/minimum credited toward the final total after dry weigh-in.",
+              customerBreakdownText || getString(breakdown.customerNote) || "Non-refundable Laundry Rescue intro minimum includes pickup, wash, dry, fold, return, and up to about 26.2 lbs. Additional weight/add-ons are reviewed after dry weigh-in.",
               referralCreditAlreadyDeductedNote,
               servicePeriodLabel ? `Service period: ${servicePeriodLabel}` : "",
             ].filter(Boolean).join("\n").slice(0, 1000),
@@ -221,7 +221,7 @@ async function createLaundryDepositCheckoutFromBreakdown(params: {
     custom_text: {
       submit: {
         message:
-          "Laundry Rescue deposit/minimum is non-refundable and credited toward the final total. If you choose auto-charge, NestHelper may charge your saved payment method for the final balance after dry weight and add-ons are confirmed. If you choose invoice-before-delivery, laundry is held until the final invoice is fully paid.",
+          "Laundry Rescue intro minimum is non-refundable and includes pickup, wash, dry, fold, return, and up to about 26.2 lbs. If you choose auto-charge, NestHelper may charge your saved payment method for any additional laundry, approved add-ons, or bulky items after dry weight is confirmed. If you choose invoice-before-delivery, laundry is held until any final invoice is fully paid.",
       },
     },
     success_url: `${siteUrl}/checkout?success=true&payment_type=laundry_deposit&service_id=laundry-rescue&session_id={CHECKOUT_SESSION_ID}`,
@@ -265,13 +265,13 @@ async function createLaundryDepositCheckoutFromBreakdown(params: {
         invoiceNumber: "Shown in Stripe checkout",
         amountDueCents: amountDueNowCents,
         dueDate: null,
-        serviceTitle: "Laundry Rescue deposit / minimum",
-        quoteTitle: "Laundry Rescue deposit and final-balance choice",
+        serviceTitle: "Laundry Rescue intro minimum",
+        quoteTitle: "Laundry Rescue intro minimum and final-balance choice",
         quoteBreakdownText: [
           customerBreakdownText,
           referralCreditAlreadyDeductedNote,
           manualSalesTax.enabled ? `Manual sales tax of ${manualSalesTax.rate}% is added in Stripe checkout.` : "No sales tax is added unless NestHelper manually enables it before sending.",
-          "During Stripe checkout, the customer chooses either auto-charge for the final balance after dry weigh-in or invoice-before-delivery. Laundry is not released until the final balance is fully paid.",
+          "During Stripe checkout, the customer chooses either auto-charge for any additional weight/add-ons after dry weigh-in or invoice-before-delivery. Laundry is not released until any final balance is fully paid.",
         ].filter(Boolean).join("\n\n"),
         servicePeriodLabel,
         replyToEmail: emailAliases.laundry,

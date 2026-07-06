@@ -151,8 +151,8 @@ function getLaundryDefaultDepositCredit(item: AdminDoc | null, mode: CheckoutMod
   if (!item || item.service !== "laundry-rescue") return 0;
   if (toNumber(item.laundryDepositCredit) > 0) return toNumber(item.laundryDepositCredit);
   if (toNumber(item.laundryDepositCreditCents) > 0) return centsToDollars(item.laundryDepositCreditCents);
-  // Credit only the pre-tax non-refundable deposit/minimum toward the final invoice.
-  // Tax is charged separately by Stripe on the deposit and then only on the final taxable balance.
+  // Track the pre-tax non-refundable intro minimum that was already paid.
+  // The final invoice charges only additional weight above the included minimum plus approved add-ons/bulky items.
   if (toNumber(item.laundryDepositAmountSubtotal) > 0) return centsToDollars(item.laundryDepositAmountSubtotal);
   if (toNumber(item.depositPaidAmountSubtotal) > 0) return centsToDollars(item.depositPaidAmountSubtotal);
   if (toNumber(item.laundryDepositExpectedAmountCents) > 0) return centsToDollars(item.laundryDepositExpectedAmountCents);
@@ -1491,7 +1491,7 @@ function getCleanLaundrySection(item: AdminDoc): AdminExportSection {
     makeExportEntry("laundryAddOns", item.laundryAddOns, "Add-ons"),
     makeExportEntry("reusableBagAck", item.reusableBagAck, "Reusable bag agreement"),
     makeExportEntry("laundryDryWeightLbs", item.laundryDryWeightLbs, "Dry weight"),
-    makeExportEntry("laundryRatePerLb", item.laundryRatePerLb, "Rate"),
+    makeExportEntry("laundryRatePerLb", item.laundryRatePerLb, "Additional lb rate"),
   ].filter((entry): entry is AdminExportEntry => Boolean(entry));
   return { title: "Laundry details", entries };
 }
@@ -1639,7 +1639,7 @@ function buildQuotePrompt(item: AdminDoc) {
     "- Parent Reset Plan starts at $199 for a flat 3-hour parent reset.",
     "- Whole Home Cleaning, Specific Area(s) Reset, and Move-In / Move-Out Cleaning are quoted after review based on size, condition, scope, add-ons, and photos.",
     "- Errand Helper starts at $119.",
-    "- Laundry Rescue intro launch pricing: $59 minimum + $2.25/lb.",
+    "- Laundry Rescue intro launch pricing: $59 minimum includes pickup, wash, dry, fold, return, and up to about 26.2 lbs. Additional laundry is $2.25/lb.",
     "- Smart Label setup pricing: Starter setup up to 10 labels is $49, Standard setup up to 20 labels is $79, Full setup up to 30 labels is $109. Larger setups or detailed inventory can be quoted after review.",
     "",
     "Selected service guidance:",
@@ -1713,7 +1713,7 @@ function getCleanPaymentSection(item: AdminDoc): AdminExportSection {
     makeExportEntry("familyPaymentPlan", item.familyPaymentPlan || breakdown.paymentPlan, "Payment plan"),
     makeExportEntry("amountDueNow", breakdown.amountDueNow ?? item.familyInitialAmount, "Amount requested"),
     makeExportEntry("laundrySubtotal", item.laundrySubtotal ?? item.laundryBaseAmount ?? breakdown.subtotal, "Laundry subtotal"),
-    makeExportEntry("laundryDepositCredit", item.laundryDepositCredit, "Deposit credit"),
+    makeExportEntry("laundryDepositCredit", item.laundryDepositCredit, "Minimum already paid"),
     makeExportEntry("laundryBalanceDue", item.laundryBalanceDue, "Final balance due"),
     makeExportEntry("laundryFinalPaymentOptions", item.laundryFinalPaymentOptions, "Final payment option"),
     makeExportEntry("refundStatus", refund.refundStatus, "Refund status"),
@@ -2243,9 +2243,9 @@ function getLaundryPaymentsCsv(records: AdminDoc[]) {
   const headers = [
     "Customer",
     "Pickup date",
-    "Deposit paid/credited",
+    "Minimum paid",
     "Dry weight lbs",
-    "Rate per lb",
+    "Additional lb rate",
     "Add-ons amount",
     "Laundry subtotal",
     "Final balance",
@@ -2258,7 +2258,7 @@ function getLaundryPaymentsCsv(records: AdminDoc[]) {
     String(item.preferredDate || item.pickupDate || ""),
     formatMoney(getBookkeepingDollarAmount(item, ["laundryDepositCredit", "laundryDepositExpectedAmount", "familyInitialAmount"], ["laundryDepositCreditCents", "laundryDepositExpectedAmountCents", "familyInitialAmountCents"])),
     String(item.laundryDryWeightLbs || ""),
-    item.laundryRatePerLb ? `${formatMoney(toNumber(item.laundryRatePerLb))}/lb` : "",
+    item.laundryRatePerLb ? `${formatMoney(toNumber(item.laundryRatePerLb))}/additional lb` : "",
     formatMoney(getBookkeepingDollarAmount(item, ["laundryAddOnsAmount"], ["laundryAddOnsAmountCents"])),
     formatMoney(getBookkeepingDollarAmount(item, ["laundrySubtotal", "laundryBaseAmount"], ["laundrySubtotalCents", "laundryBaseAmountCents"])),
     formatMoney(getBookkeepingDollarAmount(item, ["laundryBalanceDue"], ["laundryBalanceDueCents"])),
@@ -2731,8 +2731,10 @@ export default function AdminTable({
     setQueueFilter("all");
   }
 
-  const laundrySubtotal = Math.max(0, toNumber(laundryDryWeightLbs) * toNumber(laundryRatePerLb) + toNumber(laundryAddOnsAmount));
-  const laundryBalanceDue = Math.max(0, laundrySubtotal - toNumber(laundryDepositCredit));
+  const laundryIncludedWeightLbs = toNumber(laundryRatePerLb) > 0 ? Math.max(0, toNumber(laundryDepositCredit) / toNumber(laundryRatePerLb)) : 26.2;
+  const laundryAdditionalWeightLbs = Math.max(0, toNumber(laundryDryWeightLbs) - laundryIncludedWeightLbs);
+  const laundrySubtotal = Math.max(0, laundryAdditionalWeightLbs * toNumber(laundryRatePerLb) + toNumber(laundryAddOnsAmount));
+  const laundryBalanceDue = laundrySubtotal;
 
   async function updateStatus(item: AdminDoc, status: string, options?: { notifyCustomer?: boolean; customerNote?: string }) {
     const token = await firebaseAuth.currentUser?.getIdToken();
@@ -4939,7 +4941,7 @@ export default function AdminTable({
                     <div className="mt-4 rounded-3xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm leading-6 text-rose-900">
                       <p className="font-black text-rose-950">Laundry deposit checkout note</p>
                       <p className="mt-1 font-semibold">
-                        This creates the non-refundable, taxable deposit/minimum checkout. Stripe will ask the customer to choose either auto-charge for the final dry-weight balance or invoice-before-delivery. Deposit paid does not mean fully paid.
+                        This creates the non-refundable, taxable Laundry Rescue intro minimum checkout. The $59 minimum includes pickup, wash, dry, fold, return, and up to about 26.2 lbs. Stripe will ask the customer to choose auto-charge or invoice-before-delivery for any additional weight/add-ons.
                       </p>
                     </div>
                   )}
@@ -4956,7 +4958,7 @@ export default function AdminTable({
                         : selectedIsCommercial
                           ? "Create + email quick first-payment checkout link"
                           : selected.service === "laundry-rescue"
-                            ? "Create + email quick deposit checkout link"
+                            ? "Create + email intro minimum checkout link"
                             : "Create + email quick checkout link"}
                     </button>
                     <button
@@ -4968,7 +4970,7 @@ export default function AdminTable({
                       {selectedIsCommercial
                         ? "Create quick first-payment checkout link only"
                         : selected.service === "laundry-rescue"
-                          ? "Create quick deposit checkout link only"
+                          ? "Create intro minimum checkout link only"
                           : "Create quick checkout link only"}
                     </button>
                   </div>
@@ -5002,8 +5004,8 @@ export default function AdminTable({
                     </h4>
                     <p className="mt-2 text-sm leading-6 text-slate-700">
                       {laundryAutoChargeAuthorized
-                        ? "The customer chose auto-charge during deposit checkout. Enter the dry weight, rate, add-ons, and deposit credit; NestHelper creates an itemized Stripe invoice and charges the saved payment method instead of showing a manual sender section."
-                        : "The customer chose invoice-before-delivery, or no auto-charge authorization is saved. Enter the dry weight, rate, add-ons, and deposit credit; NestHelper creates a Stripe invoice with line-item details for the remaining taxable balance only."}
+                        ? "The customer chose auto-charge during intro-minimum checkout. Enter the dry weight, additional lb rate, add-ons, and minimum already paid; NestHelper creates an itemized Stripe invoice for additional weight/add-ons and charges the saved payment method instead of showing a manual sender section."
+                        : "The customer chose invoice-before-delivery, or no auto-charge authorization is saved. Enter the dry weight, additional lb rate, add-ons, and minimum already paid; NestHelper creates a Stripe invoice with line-item details for additional weight/add-ons only."}
                     </p>
                   </div>
                   <StatusBadge status={String(selected.laundryPaymentStatus || selected.paymentStatus || selected.status || "New")} />
@@ -5014,7 +5016,7 @@ export default function AdminTable({
                     <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Customer final-payment choice</p>
                     <p className="mt-1 font-black text-[#075c58]">{selected.laundryFinalPaymentPreferenceLabel || "Not captured yet"}</p>
                     <p className="mt-1 text-xs font-semibold text-slate-600">
-                      The deposit/minimum is non-refundable and taxable. The final invoice applies the pre-tax deposit as a credit so Stripe only taxes the remaining final balance.
+                      The intro minimum is non-refundable and taxable. The final invoice charges only additional laundry above the included weight plus approved add-ons/bulky items.
                     </p>
                   </div>
                   {laundryAutoChargeAuthorized ? (
@@ -5054,7 +5056,7 @@ export default function AdminTable({
                     />
                   </label>
                   <label className="grid gap-2 text-sm font-bold text-slate-700">
-                    Intro rate per lb
+                    Additional lb rate
                     <input
                       value={laundryRatePerLb}
                       onChange={(e) => setLaundryRatePerLb(e.target.value)}
@@ -5073,7 +5075,7 @@ export default function AdminTable({
                     />
                   </label>
                   <label className="grid gap-2 text-sm font-bold text-slate-700">
-                    Deposit credit before tax
+                    Minimum already paid
                     <input
                       value={laundryDepositCredit}
                       onChange={(e) => setLaundryDepositCredit(e.target.value)}
@@ -5083,14 +5085,18 @@ export default function AdminTable({
                   </label>
                 </div>
 
+                <p className="mt-3 rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-xs font-bold leading-5 text-slate-600">
+                  The $59 Laundry Rescue intro minimum already includes pickup, wash, dry, fold, return, and up to about 26.2 lbs. This final-balance tool charges only additional laundry above the included weight, plus approved add-ons or bulky items.
+                </p>
+
                 <div className="mt-4 grid gap-3 rounded-2xl bg-[#fbf6ea] p-4 text-sm md:grid-cols-3">
                   <div>
-                    <p className="font-black uppercase tracking-[0.14em] text-[#b98a2f]">Laundry total before tax</p>
+                    <p className="font-black uppercase tracking-[0.14em] text-[#b98a2f]">Additional total before tax</p>
                     <p className="mt-1 text-xl font-black text-[#075c58]">{formatMoney(laundrySubtotal)}</p>
                   </div>
                   <div>
-                    <p className="font-black uppercase tracking-[0.14em] text-[#b98a2f]">Deposit credit before tax</p>
-                    <p className="mt-1 text-xl font-black text-[#075c58]">-{formatMoney(toNumber(laundryDepositCredit))}</p>
+                    <p className="font-black uppercase tracking-[0.14em] text-[#b98a2f]">Included weight</p>
+                    <p className="mt-1 text-xl font-black text-[#075c58]">{laundryIncludedWeightLbs.toFixed(1)} lb</p>
                   </div>
                   <div>
                     <p className="font-black uppercase tracking-[0.14em] text-[#b98a2f]">Final taxable balance</p>
@@ -5103,7 +5109,7 @@ export default function AdminTable({
                   <textarea
                     value={laundryFinalNote}
                     onChange={(e) => setLaundryFinalNote(e.target.value)}
-                    placeholder="Example: 24 lbs dry weight, fragrance-free detergent, low heat dry. Deposit has already been credited before tax."
+                    placeholder="Example: 32 lbs dry weight, fragrance-free detergent, low heat dry. $59 minimum already includes up to about 26.2 lbs."
                     rows={3}
                     className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
                   />

@@ -40,11 +40,11 @@ function getPaymentCopy(paymentStatus: string) {
       subject: "Laundry Rescue deposit received",
       eyebrow: "Deposit received",
       title: "Your Laundry Rescue deposit was received.",
-      intro: "Thank you — we received your non-refundable Laundry Rescue deposit/minimum. This deposit is credited toward your final laundry total after dry weigh-in.",
+      intro: "Thank you — we received your non-refundable Laundry Rescue intro minimum. This $59 minimum includes pickup, wash, dry, fold, return, and up to about 26.2 lbs of laundry.",
       nextSteps: [
         "NestHelper will confirm pickup/return details and any prep notes.",
         "Your laundry will be dry-weighed at pickup.",
-        "If the final total is higher than your deposit, the final balance is handled based on the option selected during checkout: auto-charge the saved card or send an invoice link before delivery.",
+        "Any additional laundry above the included weight, approved add-ons, bulky items, or approved changes are handled based on the option selected during checkout: auto-charge the saved card or send an invoice link before delivery.",
       ],
     };
   }
@@ -83,7 +83,7 @@ function getPaymentCopy(paymentStatus: string) {
     nextSteps: [
       "NestHelper will confirm scheduling and any final prep notes.",
       "Reply right away if your timing, access details, parking, pets, or service needs changed.",
-      "For Laundry Rescue, dry weight and approved add-ons are confirmed before any final balance.",
+      "For Laundry Rescue, the $59 intro minimum includes up to about 26.2 lbs; additional laundry and approved add-ons are confirmed before any final balance.",
     ],
   };
 }

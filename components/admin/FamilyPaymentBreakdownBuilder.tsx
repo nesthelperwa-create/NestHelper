@@ -176,8 +176,8 @@ const FAMILY_PRESETS = [
   },
   {
     id: "laundry-deposit-standard",
-    label: "Laundry Rescue deposit / minimum",
-    description: "Laundry Rescue deposit or minimum. Deposit is credited toward the final total after dry weight, add-ons, bulky items, or approved changes are reviewed.",
+    label: "Laundry Rescue intro minimum",
+    description: "Laundry Rescue intro minimum. The $59 minimum includes pickup, wash, dry, fold, return, and up to about 26.2 lbs. Additional weight, add-ons, bulky items, or approved changes are reviewed after dry weigh-in.",
     unit: "flat",
     rate: "59",
     amount: "59",
@@ -185,7 +185,7 @@ const FAMILY_PRESETS = [
   {
     id: "laundry-final-weight",
     label: "Laundry dry weight charge",
-    description: "Laundry final-balance calculation based on dry weight at pickup using the intro launch per-pound rate.",
+    description: "Laundry final-balance calculation for additional weight above the included minimum, plus approved add-ons or bulky items.",
     unit: "lb",
     rate: "2.25",
     amount: "0",
@@ -443,7 +443,7 @@ function buildDefaultCustomerNote(item: AdminDoc, availableCustomerCredits: Cust
     ? ` A referral/customer credit of $${totalCredit} has been included in this payment breakdown.`
     : "";
   return String(item.service || "").includes("laundry")
-    ? `Laundry deposit/minimum is credited toward the final balance. A final balance invoice or payment link may be sent after dry weight, add-ons, bulky items, or approved changes are reviewed.${referralText}`
+    ? `Laundry intro minimum includes pickup, wash, dry, fold, return, and up to about 26.2 lbs. A final balance invoice or payment link may be sent for additional weight, add-ons, bulky items, or approved changes.${referralText}`
     : `Any added time, errands, mileage, or scope changes are reviewed before a separate invoice or payment link is sent.${referralText}`;
 }
 

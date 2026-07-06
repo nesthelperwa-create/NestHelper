@@ -40,7 +40,7 @@ function getConfirmationContent(collection: SubmissionCollection, payload: Recor
     const familyNextSteps = [
       "NestHelper will review the request details.",
       "If the request is a good fit, we’ll follow up with availability, any questions, and a secure checkout link.",
-      "For Laundry Rescue, intro launch pricing is $59 minimum + $2.25/lb. Dry weight and any add-ons are confirmed before the final balance is charged.",
+      "For Laundry Rescue, intro launch pricing is $59 minimum including pickup, wash, dry, fold, return, and up to about 26.2 lbs. Additional laundry is $2.25/lb, and add-ons are reviewed before any final balance is charged.",
       ...(referralCode ? ["Your family referral code was captured. If eligible, the new-family credit is reviewed before payment and the referrer credit is handled after the first completed paid service."] : []),
     ];
     return {
