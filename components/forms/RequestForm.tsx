@@ -52,7 +52,7 @@ const defaultState = {
   mealPrepNotes: "",
   mealPrepAck: false,
   homeAreas: [] as string[],
-  movePrepPackage: "Move Prep Add-On — $199",
+  movePrepPackage: "Move prep before movers arrive — starts at $199",
   movePrepOptions: [] as string[],
   movePrepNotes: "",
   movePrepAck: false,
@@ -437,19 +437,15 @@ const moveOutApplianceOptions = [
 ];
 
 const movePrepPackageOptions = [
-  "Move Prep Add-On — $199",
-  "Focused Room Prep — $249",
-  "Move-In Reset After Movers — $299",
-  "Kitchen Move Prep / Reset — $349",
+  "Move prep before movers arrive — starts at $199",
+  "Focused room or area prep — $249",
   "Custom quote — garage, storage, sheds, or heavy clutter",
   "Not sure — recommend after review",
 ];
 
 const movePrepPackageDescriptions: Record<string, string> = {
-  "Move Prep Add-On — $199": "Light before-move help for sorting, open-first boxes, simple labels, supplies, or a small prep list. Includes up to 2 helper-hours.",
-  "Focused Room Prep — $249": "Best for one room or area that needs focused sorting, packing prep, organizing, or reset help. Includes up to 2.5 helper-hours.",
-  "Move-In Reset After Movers — $299": "For after the heavy items arrive: light unpacking, key-area setup, laundry help, and getting the home usable. Includes up to 3 helper-hours.",
-  "Kitchen Move Prep / Reset — $349": "Kitchen-focused help before or after the move, including open-first kitchen items, pantry/fridge basics, and simple organizing. Includes up to 3.5 helper-hours.",
+  "Move prep before movers arrive — starts at $199": "Best for light prep before movers come: sorting, open-first boxes, simple labels, and a short helper list. Includes up to 2 helper-hours.",
+  "Focused room or area prep — $249": "Best when one room or area needs focused sorting, packing prep, organizing, or reset help. Includes up to 2.5 helper-hours.",
   "Custom quote — garage, storage, sheds, or heavy clutter": "Choose this for larger storage areas, heavy clutter, sheds, or anything that needs review before time and price are confirmed.",
   "Not sure — recommend after review": "Choose this if you want Leo/Gen to review your notes and recommend the best starting point.",
 };
@@ -458,28 +454,28 @@ const movePrepOptionOptions = [
   "Move prep before movers arrive",
   "Sorting / decluttering help",
   "Open-first essentials boxes",
-  "Move-in reset support",
-  "Light unpacking / home reset",
   "Donation sorting",
-  "QR smart labels",
-  "Boxes / packing supply kit",
-  "Laundry help",
-  "Move-out cleaning quote",
-  "Garage, storage, shed, or heavy clutter review",
+  "After-move unpacking / reset — from $299",
+  "Kitchen setup / kitchen reset — from $349",
+  "QR smart label setup — $99 up to 20 labels",
+  "Packing supply kit — from $59",
+  "Laundry Rescue pickup/delivery — from $59",
+  "Move-out cleaning quote — quoted separately",
+  "Garage, storage, shed, or heavy clutter review — custom quote",
 ];
 
 const movePrepOptionDescriptions: Record<string, string> = {
   "Move prep before movers arrive": "Group, sort, and set aside items before the movers come.",
   "Sorting / decluttering help": "Separate keep, donate, toss, or review-later piles.",
   "Open-first essentials boxes": "Set aside must-have items for the first night or first morning.",
-  "Move-in reset support": "Reset key areas after the move so the home feels usable faster.",
-  "Light unpacking / home reset": "Unpack simple items, clear surfaces, and set up everyday zones.",
   "Donation sorting": "Group donation items so the family can decide what leaves the home.",
-  "QR smart labels": "Optional labels for boxes, bins, shelves, or storage areas.",
-  "Boxes / packing supply kit": "Let us know if you may need boxes, tape, labels, or basic supplies.",
-  "Laundry help": "Fold, sort, or put away laundry during the visit; pickup/delivery can be quoted separately.",
-  "Move-out cleaning quote": "Ask us to review a separate move-out cleaning quote after the home is empty.",
-  "Garage, storage, shed, or heavy clutter review": "Larger or heavier areas need review before we confirm time or price.",
+  "After-move unpacking / reset — from $299": "Optional add-on for after movers deliver: light unpacking, key-area setup, and getting the home usable faster. Usually starts around 3 helper-hours.",
+  "Kitchen setup / kitchen reset — from $349": "Optional add-on for kitchen essentials, pantry/fridge basics, simple cabinet setup, and everyday-zone organizing. Usually starts around 3.5 helper-hours.",
+  "QR smart label setup — $99 up to 20 labels": "Optional setup for boxes, bins, shelves, or storage areas. Larger label setups can be quoted after review.",
+  "Packing supply kit — from $59": "Optional supply kit charged separately. Basic kits can include boxes, tape, marker/labels, and packing paper; larger kits are quoted before checkout.",
+  "Laundry Rescue pickup/delivery — from $59": "Optional laundry pickup/delivery. The $59 minimum includes pickup, wash, dry, fold, return, and up to about 26.2 lbs; additional laundry is $2.25/lb.",
+  "Move-out cleaning quote — quoted separately": "Ask us to review a separate move-out cleaning quote after the home is empty.",
+  "Garage, storage, shed, or heavy clutter review — custom quote": "Larger or heavier areas need review before we confirm time or price.",
 };
 
 const laundryTypeOptions = [
@@ -1526,7 +1522,7 @@ export function RequestForm() {
 
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Best starting point" required>
-              <select className="input" required value={form.movePrepPackage} onChange={(e) => update("movePrepPackage", e.target.value)}>
+              <select className="input text-sm sm:text-base" required value={form.movePrepPackage} onChange={(e) => update("movePrepPackage", e.target.value)}>
                 {movePrepPackageOptions.map((option) => <option key={option}>{option}</option>)}
               </select>
               <p className="mt-2 rounded-2xl bg-white px-3 py-2 text-xs font-semibold leading-5 text-nest-ink/65 shadow-sm">
@@ -1542,32 +1538,37 @@ export function RequestForm() {
                 <option>Other</option>
               </select>
             </Field>
-            <Field label="Boxes and supplies">
+            <Field label="Supplies / packing kit">
               <select className="input" value={form.supplyPreference} onChange={(e) => update("supplyPreference", e.target.value)}>
                 <option>Not sure yet</option>
                 <option>I already have boxes/supplies</option>
-                <option>I may need boxes/supplies</option>
+                <option>Add basic packing supply kit — from $59</option>
+                <option>Quote larger packing supply kit — $99–$199+</option>
                 <option>NestHelper standard organizing/cleaning supplies only</option>
                 <option>Fragrance-free / sensitive products requested for any cleaning touchpoints</option>
               </select>
+              <p className="mt-2 text-xs font-semibold leading-5 text-nest-ink/60">
+                Packing supplies are charged separately and confirmed before checkout.
+              </p>
             </Field>
           </div>
 
           <details className="rounded-3xl border border-nest-gold/16 bg-white p-4 text-sm leading-6 text-nest-ink/70 shadow-sm">
-            <summary className="cursor-pointer font-bold text-nest-teal">Quick package guide</summary>
+            <summary className="cursor-pointer font-bold text-nest-teal">Quick pricing guide</summary>
             <ul className="mt-3 space-y-2 pl-4">
-              <li><strong>Move Prep Add-On:</strong> light before-move help, up to 2 helper-hours.</li>
-              <li><strong>Focused Room Prep:</strong> one room or area, up to 2.5 helper-hours.</li>
-              <li><strong>Move-In Reset After Movers:</strong> unpack and reset the basics after heavy items arrive, up to 3 helper-hours.</li>
-              <li><strong>Kitchen Move Prep / Reset:</strong> kitchen-focused prep, setup, and organizing, up to 3.5 helper-hours.</li>
-              <li><strong>Custom quote:</strong> garage, storage, sheds, or heavier clutter.</li>
+              <li><strong>Move prep before movers:</strong> starts at $199 for up to 2 helper-hours.</li>
+              <li><strong>Focused room or area prep:</strong> $249 for up to 2.5 helper-hours.</li>
+              <li><strong>After-move unpacking / reset:</strong> optional add-on from $299.</li>
+              <li><strong>Kitchen setup / kitchen reset:</strong> optional add-on from $349.</li>
+              <li><strong>Packing supply kit:</strong> optional add-on from $59, charged separately.</li>
+              <li><strong>Custom quote:</strong> garage, storage, sheds, heavier clutter, or larger supply/label setups.</li>
             </ul>
           </details>
 
           <div>
-            <div className="label mb-3">What should we focus on?</div>
+            <div className="label mb-3">Optional add-ons / focus areas</div>
             <p className="mb-3 text-sm leading-6 text-nest-ink/65">
-              Check anything that applies. When selected, a short note appears so the options stay clear without crowding the form.
+              Check anything that applies. Unpacking, kitchen reset, supplies, QR labels, laundry, and move-out cleaning are add-ons or separate quotes so the starting package stays simple.
             </p>
             <div className="grid gap-2 sm:grid-cols-2">
               {movePrepOptionOptions.map((item) => {
@@ -1585,13 +1586,13 @@ export function RequestForm() {
               })}
             </div>
             <p className="mt-2 text-xs font-bold text-nest-ink/55">
-              Basic sorting, open-first boxes, and simple labeling can usually fit within the selected helper-hours. QR smart labels, supply kits, laundry pickup/delivery, garage or heavy clutter work, and move-out cleaning may affect the final quote.
+              Basic sorting, open-first boxes, and simple labeling can usually fit within the selected helper-hours. Add-ons such as after-move unpacking, kitchen reset, QR labels, supply kits, Laundry Rescue, garage/storage work, and move-out cleaning are reviewed before checkout.
             </p>
           </div>
 
           <div className="rounded-3xl border border-nest-gold/16 bg-white p-5 text-sm font-semibold leading-6 text-nest-ink/72 shadow-sm">
-            <p><strong className="text-nest-teal">Simple pricing guide:</strong> Move Prep Add-On starts at $199. Focused Room Prep is $249. Move-In Reset After Movers is $299. Kitchen Move Prep / Reset is $349.</p>
-            <p className="mt-2">Additional approved time is $65 per helper-hour with a 1-hour minimum. Move-out cleaning, garage/storage areas, sheds, heavy clutter, QR label setup, and supply kits are reviewed before confirming.</p>
+            <p><strong className="text-nest-teal">Simple pricing guide:</strong> Move prep starts at $199. Focused room or area prep is $249. After-move unpacking/reset can be added from $299. Kitchen setup/reset can be added from $349. Packing supply kits start at $59 and are charged separately.</p>
+            <p className="mt-2">Additional approved time is $65 per helper-hour with a 1-hour minimum. Move-out cleaning, garage/storage areas, sheds, heavy clutter, larger QR label setups, and larger supply kits are reviewed before confirming.</p>
           </div>
 
           <Field label="Tell us what is happening with the move" required>
