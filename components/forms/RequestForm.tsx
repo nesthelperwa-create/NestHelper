@@ -450,29 +450,37 @@ const movePrepPackageDescriptions: Record<string, string> = {
   "Not sure — recommend after review": "Choose this if you want Leo/Gen to review your notes and recommend the best starting point.",
 };
 
-const movePrepOptionOptions = [
-  "Move prep before movers arrive",
+const movePrepBeforeMoveOptions = [
   "Sorting / decluttering help",
   "Open-first essentials boxes",
+  "Light packing prep before movers arrive",
   "Donation sorting",
-  "After-move unpacking / reset — from $299",
+];
+
+const movePrepPricedAddOnOptions = [
+  "After-move unpacking / home reset — from $299",
   "Kitchen setup / kitchen reset — from $349",
   "QR smart label setup — $99 up to 20 labels",
-  "Packing supply kit — from $59",
+  "Basic packing supply kit — from $59",
+  "Larger packing supply kit — quoted before checkout",
   "Laundry Rescue pickup/delivery — from $59",
+];
+
+const movePrepReviewOptionOptions = [
   "Move-out cleaning quote — quoted separately",
   "Garage, storage, shed, or heavy clutter review — custom quote",
 ];
 
 const movePrepOptionDescriptions: Record<string, string> = {
-  "Move prep before movers arrive": "Group, sort, and set aside items before the movers come.",
   "Sorting / decluttering help": "Separate keep, donate, toss, or review-later piles.",
-  "Open-first essentials boxes": "Set aside must-have items for the first night or first morning.",
+  "Open-first essentials boxes": "Set aside must-have items for the first night, first morning, kids, pets, school, or work.",
+  "Light packing prep before movers arrive": "Help group items, stage supplies, and prep simple boxes. Movers still handle the heavy lifting and transportation.",
   "Donation sorting": "Group donation items so the family can decide what leaves the home.",
-  "After-move unpacking / reset — from $299": "Optional add-on for after movers deliver: light unpacking, key-area setup, and getting the home usable faster. Usually starts around 3 helper-hours.",
-  "Kitchen setup / kitchen reset — from $349": "Optional add-on for kitchen essentials, pantry/fridge basics, simple cabinet setup, and everyday-zone organizing. Usually starts around 3.5 helper-hours.",
-  "QR smart label setup — $99 up to 20 labels": "Optional setup for boxes, bins, shelves, or storage areas. Larger label setups can be quoted after review.",
-  "Packing supply kit — from $59": "Optional supply kit charged separately. Basic kits can include boxes, tape, marker/labels, and packing paper; larger kits are quoted before checkout.",
+  "After-move unpacking / home reset — from $299": "Add this if you want help after movers deliver: light unpacking, key-area setup, and getting the home usable faster. Starts around 3 helper-hours.",
+  "Kitchen setup / kitchen reset — from $349": "Add this for kitchen essentials, pantry/fridge basics, cabinet zones, and everyday-item setup. Starts around 3.5 helper-hours.",
+  "QR smart label setup — $99 up to 20 labels": "Add this for boxes, bins, shelves, or storage areas. Larger label setups are quoted before checkout.",
+  "Basic packing supply kit — from $59": "Charged separately. Good for a small focused area or open-first boxes. Final supply list is confirmed before checkout.",
+  "Larger packing supply kit — quoted before checkout": "Use this when you may need more boxes, tape, packing paper, labels, or specialty supplies. Typical larger kits are reviewed before price is confirmed.",
   "Laundry Rescue pickup/delivery — from $59": "Optional laundry pickup/delivery. The $59 minimum includes pickup, wash, dry, fold, return, and up to about 26.2 lbs; additional laundry is $2.25/lb.",
   "Move-out cleaning quote — quoted separately": "Ask us to review a separate move-out cleaning quote after the home is empty.",
   "Garage, storage, shed, or heavy clutter review — custom quote": "Larger or heavier areas need review before we confirm time or price.",
@@ -1515,9 +1523,9 @@ export function RequestForm() {
 
 
       {isMovePrep && (
-        <Section title="4. Move Prep & Home Reset scope" description="Movers handle the heavy lifting. NestHelper helps with the home reset. Choose the closest starting point, then tell us what kind of help you need.">
+        <Section title="4. Move Prep & Home Reset scope" description="Movers handle the heavy lifting. NestHelper helps with the home reset. Start with the main help you need, then add only the extras that apply.">
           <div className="rounded-3xl border border-nest-gold/20 bg-nest-cream p-5 text-sm leading-6 text-nest-ink/76">
-            <strong className="text-nest-teal">Important boundary:</strong> {MOVE_PREP_DISCLAIMER} <strong className="text-nest-teal">Move-out cleaning:</strong> select it here if you want us to review it, but it will be quoted separately.
+            <strong className="text-nest-teal">Simple flow:</strong> choose a starting package, pick before-move focus areas, then add any priced extras like unpacking, kitchen reset, QR labels, supply kits, laundry, or move-out cleaning review. <strong className="text-nest-teal">Boundary:</strong> {MOVE_PREP_DISCLAIMER}
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
@@ -1538,40 +1546,15 @@ export function RequestForm() {
                 <option>Other</option>
               </select>
             </Field>
-            <Field label="Supplies / packing kit">
-              <select className="input" value={form.supplyPreference} onChange={(e) => update("supplyPreference", e.target.value)}>
-                <option>Not sure yet</option>
-                <option>I already have boxes/supplies</option>
-                <option>Add basic packing supply kit — from $59</option>
-                <option>Quote larger packing supply kit — $99–$199+</option>
-                <option>NestHelper standard organizing/cleaning supplies only</option>
-                <option>Fragrance-free / sensitive products requested for any cleaning touchpoints</option>
-              </select>
-              <p className="mt-2 text-xs font-semibold leading-5 text-nest-ink/60">
-                Packing supplies are charged separately and confirmed before checkout.
-              </p>
-            </Field>
           </div>
 
-          <details className="rounded-3xl border border-nest-gold/16 bg-white p-4 text-sm leading-6 text-nest-ink/70 shadow-sm">
-            <summary className="cursor-pointer font-bold text-nest-teal">Quick pricing guide</summary>
-            <ul className="mt-3 space-y-2 pl-4">
-              <li><strong>Move prep before movers:</strong> starts at $199 for up to 2 helper-hours.</li>
-              <li><strong>Focused room or area prep:</strong> $249 for up to 2.5 helper-hours.</li>
-              <li><strong>After-move unpacking / reset:</strong> optional add-on from $299.</li>
-              <li><strong>Kitchen setup / kitchen reset:</strong> optional add-on from $349.</li>
-              <li><strong>Packing supply kit:</strong> optional add-on from $59, charged separately.</li>
-              <li><strong>Custom quote:</strong> garage, storage, sheds, heavier clutter, or larger supply/label setups.</li>
-            </ul>
-          </details>
-
           <div>
-            <div className="label mb-3">Optional add-ons / focus areas</div>
+            <div className="label mb-3">1. Before-move help to include in the starting package</div>
             <p className="mb-3 text-sm leading-6 text-nest-ink/65">
-              Check anything that applies. Unpacking, kitchen reset, supplies, QR labels, laundry, and move-out cleaning are add-ons or separate quotes so the starting package stays simple.
+              These are the normal Move Prep tasks. We will use your selected package time first, then recommend extra time only if needed.
             </p>
             <div className="grid gap-2 sm:grid-cols-2">
-              {movePrepOptionOptions.map((item) => {
+              {movePrepBeforeMoveOptions.map((item) => {
                 const checked = form.movePrepOptions.includes(item);
                 return (
                   <MovePrepCheckOption
@@ -1585,18 +1568,59 @@ export function RequestForm() {
                 );
               })}
             </div>
-            <p className="mt-2 text-xs font-bold text-nest-ink/55">
-              Basic sorting, open-first boxes, and simple labeling can usually fit within the selected helper-hours. Add-ons such as after-move unpacking, kitchen reset, QR labels, supply kits, Laundry Rescue, garage/storage work, and move-out cleaning are reviewed before checkout.
+          </div>
+
+          <div>
+            <div className="label mb-3">2. Optional priced add-ons</div>
+            <p className="mb-3 text-sm leading-6 text-nest-ink/65">
+              Add these only if you want them reviewed with the request. Supply kits are charged separately and confirmed before checkout.
             </p>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {movePrepPricedAddOnOptions.map((item) => {
+                const checked = form.movePrepOptions.includes(item);
+                return (
+                  <MovePrepCheckOption
+                    key={item}
+                    checked={checked}
+                    description={movePrepOptionDescriptions[item]}
+                    onChange={(nextChecked) => toggleList("movePrepOptions", item, nextChecked)}
+                  >
+                    {item}
+                  </MovePrepCheckOption>
+                );
+              })}
+            </div>
+          </div>
+
+          <div>
+            <div className="label mb-3">3. Separate quote or review items</div>
+            <p className="mb-3 text-sm leading-6 text-nest-ink/65">
+              These are reviewed separately so the move prep price stays clear and competitive.
+            </p>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {movePrepReviewOptionOptions.map((item) => {
+                const checked = form.movePrepOptions.includes(item);
+                return (
+                  <MovePrepCheckOption
+                    key={item}
+                    checked={checked}
+                    description={movePrepOptionDescriptions[item]}
+                    onChange={(nextChecked) => toggleList("movePrepOptions", item, nextChecked)}
+                  >
+                    {item}
+                  </MovePrepCheckOption>
+                );
+              })}
+            </div>
           </div>
 
           <div className="rounded-3xl border border-nest-gold/16 bg-white p-5 text-sm font-semibold leading-6 text-nest-ink/72 shadow-sm">
-            <p><strong className="text-nest-teal">Simple pricing guide:</strong> Move prep starts at $199. Focused room or area prep is $249. After-move unpacking/reset can be added from $299. Kitchen setup/reset can be added from $349. Packing supply kits start at $59 and are charged separately.</p>
-            <p className="mt-2">Additional approved time is $65 per helper-hour with a 1-hour minimum. Move-out cleaning, garage/storage areas, sheds, heavy clutter, larger QR label setups, and larger supply kits are reviewed before confirming.</p>
+            <p><strong className="text-nest-teal">Pricing guide:</strong> Move prep starts at $199. Focused room or area prep is $249. After-move unpacking/home reset starts at $299. Kitchen setup/reset starts at $349. QR smart labels are $99 up to 20 labels. Basic packing supply kits start at $59 and are charged separately.</p>
+            <p className="mt-2">Additional approved helper time is $65 per helper-hour with a 1-hour minimum. Larger supply kits, move-out cleaning, garage/storage areas, sheds, heavy clutter, and larger QR label setups are reviewed before checkout.</p>
           </div>
 
           <Field label="Tell us what is happening with the move" required>
-            <textarea className="input min-h-28" required placeholder="Example: Movers are coming Friday. We need help sorting the kitchen, setting aside open-first boxes, making a donation pile, and possibly getting a separate move-out cleaning quote after the home is empty." value={form.movePrepNotes} onChange={(e) => update("movePrepNotes", e.target.value)} />
+            <textarea className="input min-h-28" required placeholder="Example: Movers are coming Friday. We need help sorting the kitchen, setting aside open-first boxes, making a donation pile, and possibly adding a kitchen reset after the move." value={form.movePrepNotes} onChange={(e) => update("movePrepNotes", e.target.value)} />
           </Field>
 
           <label className="flex gap-3 rounded-2xl bg-white p-4 text-sm font-semibold text-nest-ink/82 shadow-sm">
