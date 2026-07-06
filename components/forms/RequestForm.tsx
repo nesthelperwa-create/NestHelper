@@ -52,7 +52,7 @@ const defaultState = {
   mealPrepNotes: "",
   mealPrepAck: false,
   homeAreas: [] as string[],
-  movePrepPackage: "Not sure — recommend after review",
+  movePrepPackage: "Move Prep Add-On — starts at $199, up to 2 helper-hours",
   movePrepOptions: [] as string[],
   movePrepNotes: "",
   movePrepAck: false,
@@ -437,25 +437,34 @@ const moveOutApplianceOptions = [
 ];
 
 const movePrepPackageOptions = [
-  "Not sure — recommend after review",
   "Move Prep Add-On — starts at $199, up to 2 helper-hours",
   "Focused Room Prep — $249, up to 2.5 helper-hours",
-  "Kitchen Essentials Prep — $349, up to 3.5 helper-hours",
   "Move-In Essentials Reset — $299, up to 3 helper-hours",
+  "Kitchen Essentials Prep — $349, up to 3.5 helper-hours",
   "Custom quote — garage, storage, sheds, or heavy clutter",
+  "Not sure — recommend after review",
 ];
+
+const movePrepPackageDescriptions: Record<string, string> = {
+  "Move Prep Add-On — starts at $199, up to 2 helper-hours": "Best for light move prep, sorting, open-first boxes, labels, or supplies before movers arrive.",
+  "Focused Room Prep — $249, up to 2.5 helper-hours": "Best when one room or area needs focused sorting, packing prep, organizing, or reset help.",
+  "Move-In Essentials Reset — $299, up to 3 helper-hours": "Best after the move for setting up key areas, light unpacking, laundry help, and making the home usable.",
+  "Kitchen Essentials Prep — $349, up to 3.5 helper-hours": "Best for kitchen setup, open-first kitchen boxes, pantry/fridge basics, and simple organizing.",
+  "Custom quote — garage, storage, sheds, or heavy clutter": "Best for larger storage areas, heavy clutter, sheds, or anything that needs review before pricing.",
+  "Not sure — recommend after review": "Choose this if you want Leo/Gen to review your notes and recommend the best starting point.",
+};
 
 const movePrepOptionOptions = [
   "Move prep before movers arrive",
   "Sorting / decluttering help",
   "Open-first essentials boxes",
+  "Move-in reset support",
+  "Light unpacking / home reset",
+  "Donation sorting",
   "QR smart labels",
   "Boxes / packing supply kit",
-  "Donation sorting",
-  "Move-out cleaning quote",
-  "Move-in reset support",
   "Laundry help",
-  "Light unpacking / home reset",
+  "Move-out cleaning quote",
   "Garage, storage, shed, or heavy clutter review",
 ];
 
@@ -1506,6 +1515,9 @@ export function RequestForm() {
               <select className="input" required value={form.movePrepPackage} onChange={(e) => update("movePrepPackage", e.target.value)}>
                 {movePrepPackageOptions.map((option) => <option key={option}>{option}</option>)}
               </select>
+              <p className="mt-2 rounded-2xl bg-white px-3 py-2 text-xs font-semibold leading-5 text-nest-ink/65 shadow-sm">
+                {movePrepPackageDescriptions[form.movePrepPackage] || "Tell us what is happening and we will recommend the best starting point."}
+              </p>
             </Field>
             <Field label="Home type">
               <select className="input" value={form.homeType} onChange={(e) => update("homeType", e.target.value)}>
@@ -1527,10 +1539,21 @@ export function RequestForm() {
             </Field>
           </div>
 
+          <details className="rounded-3xl border border-nest-gold/16 bg-white p-4 text-sm leading-6 text-nest-ink/70 shadow-sm">
+            <summary className="cursor-pointer font-bold text-nest-teal">Quick package guide</summary>
+            <ul className="mt-3 space-y-2 pl-4">
+              <li><strong>Move Prep Add-On:</strong> light help before movers arrive.</li>
+              <li><strong>Focused Room Prep:</strong> one room or area that needs attention.</li>
+              <li><strong>Move-In Essentials Reset:</strong> unpack and reset the basics after moving in.</li>
+              <li><strong>Kitchen Essentials Prep:</strong> kitchen-focused setup and organizing.</li>
+              <li><strong>Custom quote:</strong> garage, storage, sheds, or heavier clutter.</li>
+            </ul>
+          </details>
+
           <div>
-            <div className="label mb-3">What do you need help with?</div>
+            <div className="label mb-3">What should we focus on?</div>
             <p className="mb-3 text-sm leading-6 text-nest-ink/65">
-              Check anything that applies. This does not lock you into every item — it just helps Leo/Gen review the request and send the right quote.
+              Check anything that applies. This helps Leo/Gen understand the request without locking you into every item.
             </p>
             <div className="grid gap-2 sm:grid-cols-2">
               {movePrepOptionOptions.map((item) => (
@@ -1538,7 +1561,7 @@ export function RequestForm() {
               ))}
             </div>
             <p className="mt-2 text-xs font-bold text-nest-ink/55">
-              Simple sorting, open-first boxes, and basic labeling can usually fit inside the selected helper-hours. QR smart labels, supply kits, laundry pickup/delivery, garage or heavy clutter work, and move-out cleaning may affect the quote.
+              Basic sorting, open-first boxes, and simple labeling can usually fit within the selected helper-hours. QR smart labels, supply kits, laundry pickup/delivery, garage or heavy clutter work, and move-out cleaning may affect the final quote.
             </p>
           </div>
 
