@@ -2,25 +2,30 @@
   <rect width="920" height="600" fill="#F6F1E7"/>
   <path d="M0 40C120 -10 250 -10 370 45C395 57 418 73 438 90V310H0V40Z" fill="#CFE4DB"/>
   <path d="M920 160V600H620C594 548 580 491 580 432C580 290 702 182 920 160Z" fill="#E9C669"/>
-  <rect x="152" y="126" width="602" height="346" rx="40" fill="#FAFAF8" stroke="#D8C9AD" stroke-width="4"/>
+  <rect x="152" y="126" width="602" height="350" rx="40" fill="#FAFAF8" stroke="#D8C9AD" stroke-width="4"/>
 
-  <path d="M264 237L333 203L402 237V332L333 365L264 332V237Z" fill="#EFD8A5" stroke="#0D6660" stroke-width="12" stroke-linejoin="round"/>
-  <path d="M333 203V365" stroke="#0D6660" stroke-width="10" stroke-linecap="round"/>
-  <path d="M264 237L333 271L402 237" stroke="#0D6660" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
-  <rect x="307" y="253" width="52" height="32" rx="6" fill="#FAFAF8" stroke="#0D6660" stroke-width="6"/>
-  <path d="M317 262H349" stroke="#0D6660" stroke-width="5" stroke-linecap="round"/>
-  <path d="M317 272H341" stroke="#0D6660" stroke-width="5" stroke-linecap="round"/>
+  <rect x="296" y="150" width="328" height="52" rx="15" fill="#F2E9D6"/>
+  <text x="460" y="183" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="28" font-weight="900" fill="#0D6660">Move Prep</text>
 
-  <rect x="470" y="182" width="182" height="226" rx="20" fill="#FAFAF8" stroke="#0D6660" stroke-width="12"/>
-  <path d="M522 231L540 249L575 215" stroke="#0D6660" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M523 288L541 306L575 272" stroke="#0D6660" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M523 345L541 363L575 329" stroke="#0D6660" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M592 232H619" stroke="#0D6660" stroke-width="10" stroke-linecap="round"/>
-  <path d="M592 288H619" stroke="#0D6660" stroke-width="10" stroke-linecap="round"/>
-  <path d="M592 345H619" stroke="#0D6660" stroke-width="10" stroke-linecap="round"/>
+  <!-- Box with label -->
+  <path d="M264 252L333 218L402 252V342L333 375L264 342V252Z" fill="#EFD8A5" stroke="#0D6660" stroke-width="12" stroke-linejoin="round"/>
+  <path d="M333 218V375" stroke="#0D6660" stroke-width="10" stroke-linecap="round"/>
+  <path d="M264 252L333 286L402 252" stroke="#0D6660" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="307" y="268" width="52" height="32" rx="6" fill="#FAFAF8" stroke="#0D6660" stroke-width="6"/>
+  <path d="M317 277H349" stroke="#0D6660" stroke-width="5" stroke-linecap="round"/>
+  <path d="M317 287H341" stroke="#0D6660" stroke-width="5" stroke-linecap="round"/>
 
-  <path d="M662 164L674 176L686 164L674 152L662 164Z" fill="#E3B84D"/>
-  <path d="M690 207L706 223L722 207L706 191L690 207Z" fill="#E3B84D"/>
-  <path d="M410 184C428 169 451 160 476 160" stroke="#0D6660" stroke-width="9" stroke-linecap="round"/>
-  <path d="M404 395C423 410 447 419 472 419" stroke="#0D6660" stroke-width="9" stroke-linecap="round"/>
+  <!-- Checklist -->
+  <rect x="470" y="202" width="182" height="216" rx="20" fill="#FAFAF8" stroke="#0D6660" stroke-width="12"/>
+  <path d="M522 251L540 269L575 235" stroke="#0D6660" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M523 308L541 326L575 292" stroke="#0D6660" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M523 365L541 383L575 349" stroke="#0D6660" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M592 252H619" stroke="#0D6660" stroke-width="10" stroke-linecap="round"/>
+  <path d="M592 308H619" stroke="#0D6660" stroke-width="10" stroke-linecap="round"/>
+  <path d="M592 365H619" stroke="#0D6660" stroke-width="10" stroke-linecap="round"/>
+
+  <path d="M662 174L674 186L686 174L674 162L662 174Z" fill="#E3B84D"/>
+  <path d="M690 217L706 233L722 217L706 201L690 217Z" fill="#E3B84D"/>
+  <path d="M410 204C428 189 451 180 476 180" stroke="#0D6660" stroke-width="9" stroke-linecap="round"/>
+  <path d="M404 405C423 420 447 429 472 429" stroke="#0D6660" stroke-width="9" stroke-linecap="round"/>
 </svg>
