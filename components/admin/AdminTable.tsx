@@ -164,6 +164,45 @@ function getLaundryDefaultDepositCredit(item: AdminDoc | null, mode: CheckoutMod
   return 59;
 }
 
+function getLaundryDepositTaxCollectedAmount(item: AdminDoc | null) {
+  if (!item || item.service !== "laundry-rescue") return 0;
+
+  const directCents = [
+    toNumber(item.laundryDepositTaxAmount),
+    toNumber(item.depositPaidTaxAmount),
+    toNumber(item.laundryDepositSalesTaxCents),
+    toNumber(item.depositSalesTaxCents),
+  ].find((value) => value > 0);
+
+  if (directCents) return centsToDollars(directCents);
+
+  const pairs = [
+    [toNumber(item.laundryDepositAmountTotal), toNumber(item.laundryDepositAmountSubtotal)],
+    [toNumber(item.depositPaidAmountTotal), toNumber(item.depositPaidAmountSubtotal)],
+    [toNumber(item.amountTotal), toNumber(item.amountSubtotal)],
+  ];
+
+  for (const [total, subtotal] of pairs) {
+    const diff = total - subtotal;
+    if (total > 0 && subtotal > 0 && diff > 0) return centsToDollars(diff);
+  }
+
+  return 0;
+}
+
+function getLaundrySavedManualTaxRate(item: AdminDoc | null) {
+  if (!item || item.service !== "laundry-rescue") return "";
+  const candidates = [
+    item.laundryFinalManualSalesTaxRate,
+    item.laundryDepositManualSalesTaxRate,
+    item.manualSalesTaxRate,
+    item.familyInvoiceManualSalesTaxRate,
+  ];
+  const value = candidates.map(toNumber).find((rate) => rate > 0);
+  return value ? String(value) : "";
+}
+
+
 function shouldNotifyByDefault(status: string) {
   return ["Quote Sent", "Quote Approved", "Approved", "Scheduled", "Declined", "Follow-Up Needed", "Needs Info", "Canceled", "Cancelled"].includes(status);
 }
@@ -2847,6 +2886,8 @@ export default function AdminTable({
   const [laundryRatePerLb, setLaundryRatePerLb] = useState("2.25");
   const [laundryAddOnsAmount, setLaundryAddOnsAmount] = useState("0");
   const [laundryDepositCredit, setLaundryDepositCredit] = useState("59");
+  const [laundryManualSalesTax, setLaundryManualSalesTax] = useState(false);
+  const [laundryManualSalesTaxRate, setLaundryManualSalesTaxRate] = useState("");
   const [laundryFinalNote, setLaundryFinalNote] = useState("");
   const [laundryFinalBusy, setLaundryFinalBusy] = useState(false);
   const [laundryFinalMessage, setLaundryFinalMessage] = useState("");
@@ -2937,6 +2978,9 @@ export default function AdminTable({
     setLaundryRatePerLb(selected?.laundryRatePerLb ? String(selected.laundryRatePerLb) : "2.25");
     setLaundryAddOnsAmount(selected?.laundryAddOnsAmount ? String(selected.laundryAddOnsAmount) : "0");
     setLaundryDepositCredit(String(getLaundryDefaultDepositCredit(selected, nextMode) || 0));
+    const savedLaundryTaxRate = getLaundrySavedManualTaxRate(selected);
+    setLaundryManualSalesTax(selected?.service === "laundry-rescue" ? true : Boolean(savedLaundryTaxRate));
+    setLaundryManualSalesTaxRate(savedLaundryTaxRate);
     setLaundryFinalNote("");
     setLaundryFinalMessage("");
     setLaundryFinalError("");
@@ -3087,7 +3131,15 @@ export default function AdminTable({
   const laundryIncludedWeightLbs = toNumber(laundryRatePerLb) > 0 ? Math.max(0, toNumber(laundryDepositCredit) / toNumber(laundryRatePerLb)) : 26.2;
   const laundryAdditionalWeightLbs = Math.max(0, toNumber(laundryDryWeightLbs) - laundryIncludedWeightLbs);
   const laundrySubtotal = Math.max(0, laundryAdditionalWeightLbs * toNumber(laundryRatePerLb) + toNumber(laundryAddOnsAmount));
-  const laundryBalanceDue = laundrySubtotal;
+  const laundryTaxRateNumber = toNumber(laundryManualSalesTaxRate);
+  const laundryDepositTaxCollectedAmount = getLaundryDepositTaxCollectedAmount(selected);
+  const laundryDepositTaxAlreadyCollected = laundryDepositTaxCollectedAmount > 0;
+  const laundryDepositTaxCatchUpAmount = laundryManualSalesTax && laundryTaxRateNumber > 0 && !laundryDepositTaxAlreadyCollected
+    ? Math.max(0, toNumber(laundryDepositCredit) * (laundryTaxRateNumber / 100))
+    : 0;
+  const laundryEstimatedAdditionalTaxAmount = laundryManualSalesTax && laundryTaxRateNumber > 0 ? Math.max(0, laundrySubtotal * (laundryTaxRateNumber / 100)) : 0;
+  const laundryBalanceDue = laundrySubtotal + laundryDepositTaxCatchUpAmount;
+  const laundryEstimatedFinalTotalWithTax = laundryBalanceDue + laundryEstimatedAdditionalTaxAmount;
 
   async function updateStatus(item: AdminDoc, status: string, options?: { notifyCustomer?: boolean; customerNote?: string }) {
     const token = await firebaseAuth.currentUser?.getIdToken();
@@ -3482,7 +3534,12 @@ export default function AdminTable({
       const res = await fetch("/api/admin/create-commercial-invoice", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ requestId: selected.id, sendEmail }),
+        body: JSON.stringify({
+          requestId: selected.id,
+          sendEmail,
+          manualSalesTax: selected.service === "laundry-rescue" ? laundryManualSalesTax : undefined,
+          manualSalesTaxRate: selected.service === "laundry-rescue" ? laundryManualSalesTaxRate : undefined,
+        }),
       });
       const data = await res.json().catch(() => ({}));
 
@@ -3538,7 +3595,12 @@ export default function AdminTable({
       const res = await fetch("/api/admin/create-family-invoice", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ requestId: selected.id, sendEmail }),
+        body: JSON.stringify({
+          requestId: selected.id,
+          sendEmail,
+          manualSalesTax: selected.service === "laundry-rescue" ? laundryManualSalesTax : undefined,
+          manualSalesTaxRate: selected.service === "laundry-rescue" ? laundryManualSalesTaxRate : undefined,
+        }),
       });
       const data = await res.json().catch(() => ({}));
 
@@ -3614,6 +3676,8 @@ export default function AdminTable({
           customNote: useCustomInitial ? customInitialNote : undefined,
           includeQuoteBreakdown: selected.service === "commercial-reset" && useCustomInitial ? includeCommercialQuoteBreakdown : undefined,
           includeFamilyBreakdown: selected.service !== "commercial-reset" ? includeFamilyPaymentBreakdown : undefined,
+          manualSalesTax: selected.service === "laundry-rescue" ? laundryManualSalesTax : undefined,
+          manualSalesTaxRate: selected.service === "laundry-rescue" ? laundryManualSalesTaxRate : undefined,
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -3647,7 +3711,7 @@ export default function AdminTable({
             : " Family payment breakdown was not included because the checkbox was off."
         : "";
       const laundryDepositNotice = selected.service === "laundry-rescue"
-        ? " Stripe checkout will collect the non-refundable taxable deposit and ask the customer to choose auto-charge or invoice-before-delivery for the final laundry balance."
+        ? laundryManualSalesTax && laundryTaxRateNumber > 0 ? ` Stripe checkout will add manual WA sales tax at ${laundryManualSalesTaxRate}% to the non-refundable intro minimum and ask the customer to choose auto-charge or invoice-before-delivery for the final laundry balance.` : " Stripe checkout will collect the non-refundable intro minimum without sales tax. If sales tax is missed here, the final-balance tool can add a one-time tax catch-up when manual tax is turned on."
         : "";
       setCheckoutMessage(data.emailError || (data.emailSent ? `Quick checkout link created and emailed to the customer.${commercialBreakdownNotice}${familyBreakdownNotice}${laundryDepositNotice}` : `Quick checkout link created. Copy it and send it manually.${commercialBreakdownNotice}${familyBreakdownNotice}${laundryDepositNotice}`));
     } catch (error) {
@@ -3679,6 +3743,8 @@ export default function AdminTable({
           depositCredit: toNumber(laundryDepositCredit),
           finalBalanceNote: laundryFinalNote,
           sendEmail,
+          manualSalesTax: laundryManualSalesTax,
+          manualSalesTaxRate: laundryManualSalesTaxRate,
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -3696,6 +3762,10 @@ export default function AdminTable({
         laundryFinalInvoicePdf: data.invoicePdf || prev.laundryFinalInvoicePdf,
         laundryFinalInvoiceId: data.invoiceId || prev.laundryFinalInvoiceId,
         laundryFinalInvoiceNumber: data.invoiceNumber || prev.laundryFinalInvoiceNumber,
+        laundryDepositTaxAlreadyCollected: data.depositTaxAlreadyCollected ?? prev.laundryDepositTaxAlreadyCollected,
+        laundryDepositTaxCollectedAmount: data.depositTaxCollectedAmount ?? prev.laundryDepositTaxCollectedAmount,
+        laundryDepositTaxCatchUpAmount: data.depositTaxCatchUpAmount ?? prev.laundryDepositTaxCatchUpAmount,
+        laundryDepositTaxCatchUpRequired: data.depositTaxCatchUpRequired ?? prev.laundryDepositTaxCatchUpRequired,
         laundryFinalCheckoutUrl: data.url || data.invoiceUrl || prev.laundryFinalCheckoutUrl,
         laundryFinalCheckoutSessionId: data.sessionId || prev.laundryFinalCheckoutSessionId,
         laundryFinalInvoiceStatus: data.autoChargeSucceeded ? "paid" : prev.laundryFinalInvoiceStatus,
@@ -5299,6 +5369,42 @@ export default function AdminTable({
                     </div>
                   )}
 
+                  {selected.service === "laundry-rescue" && (
+                    <div className="mt-4 rounded-3xl border border-[#eadfc8] bg-white px-4 py-3 text-sm leading-6 text-slate-700">
+                      <label className="flex items-start gap-3 font-bold text-slate-800">
+                        <input
+                          type="checkbox"
+                          checked={laundryManualSalesTax}
+                          onChange={(e) => setLaundryManualSalesTax(e.target.checked)}
+                          className="mt-1 h-4 w-4 accent-[#075c58]"
+                        />
+                        <span>
+                          Apply manual WA sales tax
+                          <span className="mt-1 block text-xs font-semibold leading-5 text-slate-600">
+                            Use this for Laundry Rescue checkout and final balance. Verify the local tax rate before sending.
+                          </span>
+                        </span>
+                      </label>
+                      {laundryManualSalesTax && (
+                        <div className="mt-3 grid gap-3 sm:grid-cols-[14rem_1fr] sm:items-start">
+                          <label className="grid gap-2 text-sm font-bold text-slate-700">
+                            Sales tax rate %
+                            <input
+                              value={laundryManualSalesTaxRate}
+                              onChange={(e) => setLaundryManualSalesTaxRate(e.target.value)}
+                              inputMode="decimal"
+                              placeholder="Example: 10.3"
+                              className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]"
+                            />
+                          </label>
+                          <p className="rounded-2xl bg-[#fbf6ea] px-4 py-3 text-xs font-bold leading-5 text-slate-600">
+                            Enter the local WA sales tax rate before sending. If the $59 intro minimum is taxed now, the final invoice will only tax additional weight/add-ons. If the intro minimum was paid without tax, the final invoice can add a one-time tax catch-up for the missed $59 tax without charging the $59 again.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   <div className="mt-4 grid gap-3 md:grid-cols-2">
                     <button
                       type="button"
@@ -5369,7 +5475,7 @@ export default function AdminTable({
                     <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Customer final-payment choice</p>
                     <p className="mt-1 font-black text-[#075c58]">{selected.laundryFinalPaymentPreferenceLabel || "Not captured yet"}</p>
                     <p className="mt-1 text-xs font-semibold text-slate-600">
-                      The intro minimum is non-refundable and taxable. The final invoice charges only additional laundry above the included weight plus approved add-ons/bulky items.
+                      The intro minimum is non-refundable and taxable. The final invoice charges additional laundry/add-ons. If manual tax is on and the intro minimum was not taxed, it adds a one-time tax catch-up without charging the $59 again.
                     </p>
                   </div>
                   {laundryAutoChargeAuthorized ? (
@@ -5439,10 +5545,21 @@ export default function AdminTable({
                 </div>
 
                 <p className="mt-3 rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-xs font-bold leading-5 text-slate-600">
-                  The $59 Laundry Rescue intro minimum already includes pickup, wash, dry, fold, return, and up to about 26.2 lbs. This final-balance tool charges only additional laundry above the included weight, plus approved add-ons or bulky items.
+                  The $59 Laundry Rescue intro minimum already includes pickup, wash, dry, fold, return, and up to about 26.2 lbs. This final-balance tool charges only additional laundry above the included weight, plus approved add-ons or bulky items. If manual tax is on and the intro minimum was not taxed, it adds a one-time tax catch-up without charging the $59 again.
                 </p>
 
-                <div className="mt-4 grid gap-3 rounded-2xl bg-[#fbf6ea] p-4 text-sm md:grid-cols-3">
+                <div className="mt-3 rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-xs font-bold leading-5 text-slate-600">
+                  <p className="font-black uppercase tracking-[0.14em] text-[#b98a2f]">Laundry tax failsafe</p>
+                  <p className="mt-1">
+                    {laundryManualSalesTax && laundryTaxRateNumber > 0
+                      ? laundryDepositTaxAlreadyCollected
+                        ? `Intro minimum tax already appears collected (${formatMoney(laundryDepositTaxCollectedAmount)}). Final invoice will tax only additional weight/add-ons.`
+                        : `Intro minimum tax does not appear collected. Final invoice will add about ${formatMoney(laundryDepositTaxCatchUpAmount)} tax catch-up for the $59 minimum, plus estimated tax on additional items.`
+                      : "Manual sales tax is off or no rate is entered. No tax catch-up or final sales tax will be added."}
+                  </p>
+                </div>
+
+                <div className="mt-4 grid gap-3 rounded-2xl bg-[#fbf6ea] p-4 text-sm md:grid-cols-4">
                   <div>
                     <p className="font-black uppercase tracking-[0.14em] text-[#b98a2f]">Additional total before tax</p>
                     <p className="mt-1 text-xl font-black text-[#075c58]">{formatMoney(laundrySubtotal)}</p>
@@ -5454,6 +5571,10 @@ export default function AdminTable({
                   <div>
                     <p className="font-black uppercase tracking-[0.14em] text-[#b98a2f]">Final taxable balance</p>
                     <p className="mt-1 text-xl font-black text-[#075c58]">{formatMoney(laundryBalanceDue)}</p>
+                  </div>
+                  <div>
+                    <p className="font-black uppercase tracking-[0.14em] text-[#b98a2f]">Estimated total w/ tax</p>
+                    <p className="mt-1 text-xl font-black text-[#075c58]">{formatMoney(laundryEstimatedFinalTotalWithTax)}</p>
                   </div>
                 </div>
 

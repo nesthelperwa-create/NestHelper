@@ -85,6 +85,56 @@ function getDepositCreditFromRecord(data: Record<string, unknown>, providedDepos
   return laundryIntroMinimum;
 }
 
+function getLaundryDepositTaxCollectedCents(data: Record<string, unknown>) {
+  const directCandidates = [
+    cleanNumber(data.laundryDepositTaxAmount),
+    cleanNumber(data.depositPaidTaxAmount),
+    cleanNumber(data.laundryDepositSalesTaxCents),
+    cleanNumber(data.depositSalesTaxCents),
+  ].filter((value) => value > 0);
+
+  if (directCandidates.length) return Math.round(directCandidates[0]);
+
+  const totalSubtotalPairs = [
+    [cleanNumber(data.laundryDepositAmountTotal), cleanNumber(data.laundryDepositAmountSubtotal)],
+    [cleanNumber(data.depositPaidAmountTotal), cleanNumber(data.depositPaidAmountSubtotal)],
+    [cleanNumber(data.amountTotal), cleanNumber(data.amountSubtotal)],
+  ];
+
+  const paymentStatus = getString(data.paymentStatus || data.laundryPaymentStatus || data.status);
+  const paidEnoughToTrust = ["Paid", "Deposit Paid", "Deposit Paid - Final Pending", "Final Invoice Sent", "Final Invoice Created", "Final Balance Paid"].includes(paymentStatus);
+
+  for (const [total, subtotal] of totalSubtotalPairs) {
+    const diff = Math.round(total - subtotal);
+    if (paidEnoughToTrust && total > 0 && subtotal > 0 && diff > 0) return diff;
+  }
+
+  return 0;
+}
+
+function getLaundryDepositTaxCatchUp({
+  manualSalesTaxEnabled,
+  manualSalesTaxRate,
+  depositCredit,
+  depositTaxCollectedCents,
+}: {
+  manualSalesTaxEnabled: boolean;
+  manualSalesTaxRate: number;
+  depositCredit: number;
+  depositTaxCollectedCents: number;
+}) {
+  if (!manualSalesTaxEnabled || manualSalesTaxRate <= 0 || depositCredit <= 0 || depositTaxCollectedCents > 0) {
+    return { required: false, amountCents: 0, taxableBaseCents: 0 };
+  }
+
+  const taxableBaseCents = moneyToCents(depositCredit);
+  return {
+    required: true,
+    amountCents: Math.round(taxableBaseCents * (manualSalesTaxRate / 100)),
+    taxableBaseCents,
+  };
+}
+
 function shouldAutoChargeFinalBalance(data: Record<string, unknown>) {
   return Boolean(data.laundryAutoChargeAuthorized) && getString(data.laundryFinalPaymentCollectionMethod) === "auto_charge";
 }
@@ -170,11 +220,19 @@ export async function POST(request: Request) {
     const preferredDate = getString(data.preferredDate);
     const preferredWindow = getString(data.preferredWindow);
     const depositCredit = getDepositCreditFromRecord(data, cleanNumber(body?.depositCredit));
+    const depositTaxCollectedCents = getLaundryDepositTaxCollectedCents(data);
+    const depositTaxCatchUp = getLaundryDepositTaxCatchUp({
+      manualSalesTaxEnabled: manualSalesTax.enabled,
+      manualSalesTaxRate: manualSalesTax.rate,
+      depositCredit,
+      depositTaxCollectedCents,
+    });
     const includedWeightLbs = ratePerLb > 0 ? Math.max(laundryDisplayIncludedLbs, depositCredit / ratePerLb) : laundryDisplayIncludedLbs;
     const additionalWeightLbs = Math.max(0, dryWeightLbs - includedWeightLbs);
     const laundryBaseAmount = additionalWeightLbs * ratePerLb;
     const laundrySubtotal = laundryBaseAmount + addOnsAmount;
-    const balanceDue = Math.max(0, laundrySubtotal);
+    const depositTaxCatchUpAmount = depositTaxCatchUp.amountCents / 100;
+    const balanceDue = Math.max(0, laundrySubtotal + depositTaxCatchUpAmount);
     const balanceDueCents = moneyToCents(balanceDue);
     const autoCharge = shouldAutoChargeFinalBalance(data);
     const savedPaymentMethodId = getString(data.laundryAutoChargePaymentMethodId);
@@ -193,10 +251,24 @@ export async function POST(request: Request) {
       laundryDepositCreditCents: moneyToCents(depositCredit),
       laundrySubtotal: Number(laundrySubtotal.toFixed(2)),
       laundrySubtotalCents: moneyToCents(laundrySubtotal),
+      laundryDepositTaxCollectedCents: depositTaxCollectedCents,
+      laundryDepositTaxCollectedAmount: Number((depositTaxCollectedCents / 100).toFixed(2)),
+      laundryDepositTaxAlreadyCollected: depositTaxCollectedCents > 0,
+      laundryDepositTaxCatchUpRequired: depositTaxCatchUp.required,
+      laundryDepositTaxCatchUpTaxableBaseCents: depositTaxCatchUp.taxableBaseCents,
+      laundryDepositTaxCatchUpTaxableBaseAmount: Number((depositTaxCatchUp.taxableBaseCents / 100).toFixed(2)),
+      laundryDepositTaxCatchUpCents: depositTaxCatchUp.amountCents,
+      laundryDepositTaxCatchUpAmount: Number(depositTaxCatchUpAmount.toFixed(2)),
       laundryBalanceDue: Number(balanceDue.toFixed(2)),
       laundryBalanceDueCents: balanceDueCents,
       laundryFinalBalanceNote: finalBalanceNote,
-      laundryFinalBalanceTaxMode: manualSalesTax.enabled ? "Manual sales tax on final balance" : "No sales tax applied",
+      laundryFinalBalanceTaxMode: manualSalesTax.enabled
+        ? depositTaxCatchUp.required
+          ? "Manual sales tax on final balance plus one-time intro minimum tax catch-up"
+          : depositTaxCollectedCents > 0
+            ? "Manual sales tax on final balance; intro minimum tax already collected"
+            : "Manual sales tax on final balance"
+        : "No sales tax applied",
       ...getManualSalesTaxFirestoreFields(manualSalesTax),
       updatedAt: FieldValue.serverTimestamp(),
       updatedBy: decoded.email || "admin",
@@ -250,6 +322,16 @@ export async function POST(request: Request) {
         { name: "Additional weight", value: `${formatNumber(additionalWeightLbs)} lb` },
         { name: "Additional rate", value: `${formatMoney(ratePerLb)} / lb` },
         { name: "Minimum already paid", value: formatMoney(depositCredit) },
+        {
+          name: "Intro tax status",
+          value: manualSalesTax.enabled
+            ? depositTaxCatchUp.required
+              ? `Catch-up: ${formatMoney(depositTaxCatchUpAmount)}`
+              : depositTaxCollectedCents > 0
+                ? "Already collected"
+                : "No catch-up needed"
+            : "Not applied",
+        },
         { name: "Final collection", value: autoCharge ? "Auto-charge authorized" : "Invoice before delivery" },
       ],
       metadata: {
@@ -264,6 +346,9 @@ export async function POST(request: Request) {
         ratePerLb: String(Number(ratePerLb.toFixed(2))),
         addOnsAmount: String(Number(addOnsAmount.toFixed(2))),
         depositCredit: String(Number(depositCredit.toFixed(2))),
+        depositTaxCollectedCents: String(depositTaxCollectedCents),
+        depositTaxCatchUpRequired: depositTaxCatchUp.required ? "true" : "false",
+        depositTaxCatchUpAmount: String(Number(depositTaxCatchUpAmount.toFixed(2))),
         balanceDue: String(Number(balanceDue.toFixed(2))),
         siteUrl,
         taxHandling: manualSalesTax.enabled ? "manual_sales_tax" : "no_sales_tax",
@@ -306,6 +391,29 @@ export async function POST(request: Request) {
           .join("\n"),
         metadata: { requestId, serviceId: "laundry-rescue", lineType: "add_ons", taxMode: manualSalesTax.enabled ? "manual_sales_tax" : "no_sales_tax" },
         ...manualTaxRatesParam(manualSalesTaxRateId),
+      } as any);
+    }
+
+    if (depositTaxCatchUp.amountCents > 0) {
+      await stripe.invoiceItems.create({
+        customer: customerId,
+        invoice: invoice.id,
+        currency: "usd",
+        amount: depositTaxCatchUp.amountCents,
+        description: [
+          "Sales tax catch-up on previously paid Laundry Rescue intro minimum",
+          `Taxable minimum already paid: ${formatMoney(depositCredit)}`,
+          `Manual tax rate: ${formatNumber(manualSalesTax.rate)}%`,
+          "This line charges only the missed tax amount so the $59 minimum is not charged twice.",
+        ].join("\n"),
+        metadata: {
+          requestId,
+          serviceId: "laundry-rescue",
+          lineType: "intro_minimum_tax_catch_up",
+          taxableBaseCents: String(depositTaxCatchUp.taxableBaseCents),
+          taxRatePercent: String(Number(manualSalesTax.rate.toFixed(4))),
+          taxMode: "tax_only_catch_up_no_double_tax",
+        },
       } as any);
     }
 
@@ -403,7 +511,10 @@ export async function POST(request: Request) {
           addOnsAmount,
           depositCredit,
           balanceDue: (finalized.amount_due ?? balanceDueCents) / 100,
-          note: finalBalanceNote,
+          note: [
+            finalBalanceNote,
+            depositTaxCatchUp.required ? `Includes ${formatMoney(depositTaxCatchUpAmount)} sales tax catch-up for the previously paid Laundry Rescue intro minimum. The $59 minimum itself is not being charged again.` : "",
+          ].filter(Boolean).join("\n"),
           preferredDate,
           preferredWindow,
           city,
@@ -487,6 +598,10 @@ export async function POST(request: Request) {
       paymentStatus: nextPaymentStatus,
       manualSalesTaxEnabled: manualSalesTax.enabled,
       manualSalesTaxRate: manualSalesTax.rate,
+      depositTaxAlreadyCollected: depositTaxCollectedCents > 0,
+      depositTaxCollectedAmount: depositTaxCollectedCents / 100,
+      depositTaxCatchUpAmount,
+      depositTaxCatchUpRequired: depositTaxCatchUp.required,
     });
   } catch (error: any) {
     console.error(error);
