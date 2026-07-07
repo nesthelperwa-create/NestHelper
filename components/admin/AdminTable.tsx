@@ -1502,13 +1502,44 @@ const QUOTE_PROMPT_FIELD_KEYS = [
   "name",
   "phone",
   "email",
+  "createdAt",
+  "submittedAt",
+  "howFoundUs",
+  "howFoundUsDetails",
+  "campaignSource",
+  "campaignMedium",
+  "campaignName",
+  "campaignContent",
+  "campaignTerm",
+  "campaignLandingPage",
+  "campaignReferrer",
+  "campaignCapturedAtIso",
+  "incomingReferralProgram",
+  "incomingReferralLandingPage",
   "service",
+  "selectedService",
   "selectedServiceTitle",
   "packageType",
+  "serviceType",
+  "requestedService",
+  "preferredDate",
+  "requestedDate",
+  "preferredWindow",
+  "preferredTime",
+  "alternateDate",
+  "schedulingPreference",
+  "urgency",
+  "requestDetails",
+  "notes",
+  "specialInstructions",
   "address",
   "serviceAddress",
   "serviceAddressLine1",
+  "addressLine1",
   "serviceAddressLine2",
+  "addressLine2",
+  "unit",
+  "apt",
   "city",
   "serviceCity",
   "state",
@@ -1516,12 +1547,24 @@ const QUOTE_PROMPT_FIELD_KEYS = [
   "zip",
   "serviceZip",
   "zipCode",
-  "preferredDate",
-  "preferredWindow",
-  "preferredTime",
-  "alternateDate",
-  "urgency",
   "homeType",
+  "pets",
+  "petDetails",
+  "parkingAccess",
+  "supplyPreference",
+  "parkingNotes",
+  "parkingInstructions",
+  "accessNotes",
+  "accessInstructions",
+  "entryInstructions",
+  "gateCode",
+  "pickupSpot",
+  "dropoffSpot",
+  "dropOffSpot",
+  "returnSpot",
+  "garageNotes",
+  "garageAccessNotes",
+  "remoteAccessNotes",
   "squareFootage",
   "bedrooms",
   "bathrooms",
@@ -1530,18 +1573,22 @@ const QUOTE_PROMPT_FIELD_KEYS = [
   "roomsOrAreas",
   "homeAreas",
   "homePriorities",
+  "priorities",
+  "addOns",
+  "addons",
+  "ecoFriendly",
+  "ecoFriendlyProducts",
+  "nonToxicProducts",
+  "petSafeProducts",
+  "productPreferences",
+  "pets",
+  "allergies",
+  "odorNotes",
   "mealPrepRequested",
   "mealPrepTaskSummary",
   "mealPrepTasks",
   "mealPrepNotes",
   "mealPrepAck",
-  "movePrepPackage",
-  "movePrepOptionSummary",
-  "movePrepOptions",
-  "movePrepNotes",
-  "movePrepAck",
-  "movePrepDisclaimer",
-  "moveOutCleaningQuotedSeparately",
   "wholeHomeVisitType",
   "wholeHomeRecurringCadence",
   "wholeHomeCondition",
@@ -1560,74 +1607,377 @@ const QUOTE_PROMPT_FIELD_KEYS = [
   "areaResetAddOns",
   "areaResetOtherAddOn",
   "areaResetHauling",
+  "areaResetGoals",
+  "areaResetGoalSummary",
+  "areaResetNotes",
   "moveCleaningType",
   "occupancyStatus",
   "moveOutCondition",
   "moveOutFocusSummary",
   "moveOutFocus",
   "moveOutApplianceSummary",
-  "moveOutAppliances",
+  "moveOutAppliances", "moveOutNotes",
+  "moveOutNotes",
+  "errandType",
+  "errandDistance",
+  "errandStops",
+  "errandStartArea",
+  "errandMileageAck",
   "laundryBagEstimate",
+  "laundryHamperEstimate",
   "laundryPickupSpot",
+  "laundryReturnSpot",
+  "laundryDropoffSpot",
+  "laundryDropOffSpot",
   "laundryTypes",
   "detergent",
+  "detergentSelection",
+  "customerProvidedDetergent",
+  "customerProvidedDetergentSelected",
   "dryPreference",
   "laundryAddOns",
+  "foldingPreference",
+  "sortingPreference",
+  "comfortersBedding",
+  "heavyItems",
+  "hangDryItems",
+  "delicates",
+  "laundryAccessNotes",
+  "parkingAccess",
+  "movePrepPackage",
+  "movePrepOptionSummary",
+  "movePrepOptions",
+  "movePrepNotes",
+  "movePrepAck",
+  "movePrepDisclaimer",
+  "moveOutCleaningQuotedSeparately",
+  "businessType",
+  "commercialBusinessType",
+  "propertyType",
+  "turnoverTiming",
+  "checkInTime",
+  "checkOutTime",
   "smartLabelSetupInterest",
   "smartLabelEstimatedCount",
   "smartLabelSetupNotes",
-  "requestDetails",
-  "notes",
-  "specialInstructions",
+  "supplyKit",
+  "supplyKitSelection",
+  "supplyKitNotes",
   "promoCode",
   "incomingReferralCode",
-  "howFoundUs",
-  "howFoundUsDetails",
 ] as const;
 
-function getQuotePromptFieldLines(item: AdminDoc) {
-  const seen = new Set<string>();
-  return QUOTE_PROMPT_FIELD_KEYS
-    .filter((key) => {
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return item[key] !== undefined && item[key] !== null && item[key] !== "";
-    })
-    .map((key) => {
-      const value = exportValueToText(key, item[key]);
-      if (!value || value === "—" || value === "Saved in admin dashboard") return "";
-      return `${DETAIL_FIELD_LABELS[key] || humanizeKey(key)}: ${value}`;
+const QUOTE_PROMPT_SECTION_KEYS: Record<string, string[]> = {
+  "Customer / contact": [
+    "fullName", "name", "phone", "email", "createdAt", "submittedAt", "howFoundUs", "howFoundUsDetails", "campaignSource", "campaignMedium", "campaignName", "campaignContent", "campaignTerm", "campaignLandingPage", "campaignReferrer", "incomingReferralProgram", "incomingReferralLandingPage",
+  ],
+  "Service / request": [
+    "service", "selectedService", "selectedServiceTitle", "packageType", "serviceType", "requestedService", "preferredDate", "requestedDate", "preferredWindow", "preferredTime", "alternateDate", "schedulingPreference", "urgency", "requestDetails", "notes", "specialInstructions",
+  ],
+  "Address / access": [
+    "serviceAddress", "address", "serviceAddressLine1", "addressLine1", "serviceAddressLine2", "addressLine2", "unit", "apt", "serviceCity", "city", "serviceState", "state", "serviceZip", "zip", "zipCode", "homeType", "parkingAccess", "supplyPreference", "parkingNotes", "parkingInstructions", "accessNotes", "accessInstructions", "entryInstructions", "gateCode", "pickupSpot", "dropoffSpot", "dropOffSpot", "returnSpot", "garageNotes", "garageAccessNotes", "remoteAccessNotes",
+  ],
+  "Home cleaning / parent reset fields": [
+    "homeType", "pets", "petDetails", "supplyPreference", "squareFootage", "bedrooms", "bathrooms", "bathroomCount", "roomsAreas", "roomsOrAreas", "homeAreas", "homePriorities", "priorities", "addOns", "addons", "ecoFriendly", "ecoFriendlyProducts", "nonToxicProducts", "petSafeProducts", "productPreferences", "pets", "allergies", "odorNotes", "mealPrepRequested", "mealPrepTaskSummary", "mealPrepTasks", "mealPrepNotes", "mealPrepAck", "wholeHomeVisitType", "wholeHomeRecurringCadence", "wholeHomeCondition", "wholeHomeAddOnSummary", "wholeHomeAddOns", "wholeHomeOtherAddOn", "areaResetRoomSummary", "areaResetRooms", "areaResetOtherRoom", "areaResetCleaningType", "areaResetRepeatSupport", "areaResetBathroomCount", "areaResetSize", "areaResetCondition", "areaResetAddOnSummary", "areaResetAddOns", "areaResetOtherAddOn", "areaResetHauling", "areaResetGoals", "areaResetGoalSummary", "areaResetNotes", "moveCleaningType", "occupancyStatus", "moveOutCondition", "moveOutFocusSummary", "moveOutFocus", "moveOutApplianceSummary", "moveOutAppliances", "moveOutNotes",
+  ],
+  "Laundry Rescue fields": [
+    "laundryBagEstimate", "laundryHamperEstimate", "laundryPickupSpot", "laundryReturnSpot", "laundryDropoffSpot", "laundryDropOffSpot", "pickupSpot", "returnSpot", "dropoffSpot", "dropOffSpot", "laundryTypes", "detergent", "detergentSelection", "customerProvidedDetergent", "customerProvidedDetergentSelected", "dryPreference", "laundryAddOns", "foldingPreference", "sortingPreference", "comfortersBedding", "heavyItems", "hangDryItems", "delicates", "laundryAccessNotes", "parkingAccess", "garageNotes", "garageAccessNotes", "remoteAccessNotes", "accessNotes", "accessInstructions", "specialInstructions",
+  ],
+  "Move / organizing / commercial fields": [
+    "movePrepPackage", "movePrepOptionSummary", "movePrepOptions", "movePrepNotes", "movePrepAck", "movePrepDisclaimer", "moveOutCleaningQuotedSeparately", "businessType", "commercialBusinessType", "propertyType", "turnoverTiming", "checkInTime", "checkOutTime", "smartLabelSetupInterest", "smartLabelEstimatedCount", "smartLabelSetupNotes", "supplyKit", "supplyKitSelection", "supplyKitNotes",
+  ],
+};
+
+const QUOTE_PROMPT_LABEL_OVERRIDES: Record<string, string> = {
+  createdAt: "Submitted date/time",
+  submittedAt: "Submitted date/time",
+  campaignReferrer: "Campaign referrer",
+  incomingReferralProgram: "Referral program",
+  incomingReferralLandingPage: "Referral landing page",
+  selectedService: "Selected service",
+  requestedService: "Requested service",
+  requestedDate: "Requested date",
+  schedulingPreference: "Scheduling preference",
+  serviceAddressLine1: "Address line 1",
+  addressLine1: "Address line 1",
+  serviceAddressLine2: "Address line 2",
+  addressLine2: "Address line 2",
+  serviceCity: "City",
+  serviceState: "State",
+  serviceZip: "ZIP",
+  parkingAccess: "Parking/access notes",
+  supplyPreference: "Supply/product preference",
+  accessNotes: "Access notes",
+  accessInstructions: "Access instructions",
+  entryInstructions: "Entry/access instructions",
+  pickupSpot: "Pickup spot",
+  dropoffSpot: "Drop-off spot",
+  dropOffSpot: "Drop-off spot",
+  returnSpot: "Return/drop-off spot",
+  garageNotes: "Garage notes",
+  garageAccessNotes: "Garage/access notes",
+  remoteAccessNotes: "Remote access notes",
+  petDetails: "Pet details",
+  addOns: "Add-ons",
+  addons: "Add-ons",
+  ecoFriendly: "Eco-friendly preference",
+  ecoFriendlyProducts: "Eco-friendly products",
+  nonToxicProducts: "Non-toxic products",
+  petSafeProducts: "Pet-safe products",
+  productPreferences: "Product preferences",
+  odorNotes: "Odor notes",
+  areaResetGoals: "Area focus",
+  areaResetGoalSummary: "Area focus",
+  areaResetNotes: "Area reset notes",
+  moveOutNotes: "Move cleaning notes",
+  errandType: "Errand type",
+  errandDistance: "Errand distance",
+  errandStops: "Errand stops / task list",
+  errandStartArea: "Starting area / route",
+  errandMileageAck: "Errand mileage acknowledgement",
+  laundryHamperEstimate: "Estimated bags / hampers",
+  laundryReturnSpot: "Return/drop-off spot",
+  laundryDropoffSpot: "Return/drop-off spot",
+  laundryDropOffSpot: "Return/drop-off spot",
+  detergentSelection: "Detergent selection",
+  customerProvidedDetergent: "Customer-provided detergent",
+  customerProvidedDetergentSelected: "Customer-provided detergent selected",
+  foldingPreference: "Folding preference",
+  sortingPreference: "Sorting preference",
+  comfortersBedding: "Comforters / bedding / heavy items",
+  heavyItems: "Heavy items",
+  hangDryItems: "Hang-dry items",
+  delicates: "Delicates",
+  laundryAccessNotes: "Laundry access notes",
+  commercialBusinessType: "Business type",
+  turnoverTiming: "Turnover timing",
+  checkInTime: "Check-in time",
+  checkOutTime: "Check-out time",
+  supplyKit: "Supply kit",
+  supplyKitSelection: "Supply kit selection",
+  supplyKitNotes: "Supply kit notes",
+};
+
+function getQuotePromptLabel(key: string) {
+  return QUOTE_PROMPT_LABEL_OVERRIDES[key] || DETAIL_FIELD_LABELS[key] || humanizeKey(key);
+}
+
+function isEmptyQuotePromptValue(value: unknown): boolean {
+  if (value === null || value === undefined) return true;
+  if (typeof value === "string") return value.trim() === "";
+  if (Array.isArray(value)) return value.length === 0 || value.every((entry) => isEmptyQuotePromptValue(entry));
+  if (typeof value === "object") {
+    if ("toDate" in value && typeof value.toDate === "function") return false;
+    return Object.values(value as Record<string, unknown>).every((entry) => isEmptyQuotePromptValue(entry));
+  }
+  return false;
+}
+
+function isLongEncodedValue(value: string) {
+  const trimmed = value.trim();
+  return trimmed.startsWith("data:") || trimmed.length > 2000;
+}
+
+function formatPromptScalar(key: string, value: unknown): string {
+  if (value === null || value === undefined || value === "") return "";
+  if (typeof value === "object" && value && "toDate" in value && typeof value.toDate === "function") return formatDate(value);
+  if (typeof value === "boolean") return value ? "Yes" : "No";
+  if (typeof value === "number") {
+    if (isProbablyMoneyKey(key)) return formatExportMoneyValue(key, value);
+    return String(value);
+  }
+  const text = String(value).trim();
+  if (!text) return "";
+  if (isLongEncodedValue(text)) {
+    if (text.startsWith("data:image/")) return "[uploaded image data saved in admin dashboard]";
+    if (text.startsWith("data:")) return "[uploaded file data saved in admin dashboard]";
+    return `${text.slice(0, 500)}... [truncated]`;
+  }
+  return formatValue(key, value);
+}
+
+function formatObjectInline(value: Record<string, unknown>, parentKey = ""): string {
+  const parts = Object.entries(value)
+    .filter(([, entry]) => !isEmptyQuotePromptValue(entry))
+    .map(([key, entry]) => {
+      if (Array.isArray(entry)) return `${humanizeKey(key)}: ${formatPromptValue(key, entry)}`;
+      if (entry && typeof entry === "object" && !("toDate" in entry && typeof entry.toDate === "function")) {
+        return `${humanizeKey(key)}: ${formatObjectInline(entry as Record<string, unknown>, key)}`;
+      }
+      return `${humanizeKey(key)}: ${formatPromptScalar(parentKey ? `${parentKey}.${key}` : key, entry)}`;
     })
     .filter(Boolean);
+  return parts.join("; ");
+}
+
+function formatPromptValue(key: string, value: unknown): string {
+  if (isEmptyQuotePromptValue(value)) return "";
+  if (isPhotoDataField(key)) return formatPhotoFieldSummary(value);
+  if (Array.isArray(value)) {
+    const simple = value.every((entry) => ["string", "number", "boolean"].includes(typeof entry));
+    if (simple) return value.map((entry) => formatPromptScalar(key, entry)).filter(Boolean).join(", ");
+    return value
+      .map((entry, index) => {
+        if (isEmptyQuotePromptValue(entry)) return "";
+        if (entry && typeof entry === "object") return `${index + 1}. ${formatObjectInline(entry as Record<string, unknown>, key)}`;
+        return `${index + 1}. ${formatPromptScalar(key, entry)}`;
+      })
+      .filter(Boolean)
+      .join(" | ");
+  }
+  if (value && typeof value === "object" && !("toDate" in value && typeof value.toDate === "function")) {
+    return formatObjectInline(value as Record<string, unknown>, key) || "Saved in admin dashboard";
+  }
+  return formatPromptScalar(key, value);
+}
+
+function formatPhotoFieldSummary(value: unknown) {
+  if (Array.isArray(value)) {
+    const count = value.length;
+    if (!count) return "No photos uploaded";
+    const details = value
+      .map((entry, index) => {
+        if (typeof entry === "string") {
+          if (entry.startsWith("data:image/")) return `Photo ${index + 1}: image saved in admin dashboard`;
+          return `Photo ${index + 1}: ${formatPromptScalar("photo", entry)}`;
+        }
+        if (entry && typeof entry === "object") {
+          const photo = entry as Record<string, unknown>;
+          const name = String(photo.name || photo.originalName || photo.filename || `Photo ${index + 1}`).trim();
+          const size = photo.size ? `, ${formatPhotoSize(photo.size)}` : "";
+          const url = String(photo.url || photo.downloadUrl || photo.publicUrl || photo.storageUrl || "").trim();
+          const hasData = typeof photo.dataUrl === "string" && photo.dataUrl.startsWith("data:image/");
+          return `${name}${size}${url ? `, link: ${url}` : hasData ? ", image saved in admin dashboard" : ""}`;
+        }
+        return "";
+      })
+      .filter(Boolean);
+    return `${count} uploaded photo${count === 1 ? "" : "s"}${details.length ? ` (${details.join("; ")})` : ""}`;
+  }
+  return formatPromptValue("photo", value);
+}
+
+function getPromptLinesForKeys(item: AdminDoc, keys: readonly string[], seen?: Set<string>) {
+  const lines: string[] = [];
+  keys.forEach((key) => {
+    if (seen?.has(key)) return;
+    const value = item[key];
+    if (isEmptyQuotePromptValue(value)) return;
+    const formatted = formatPromptValue(key, value);
+    if (!formatted || formatted === "—" || formatted === "Saved in admin dashboard") return;
+    seen?.add(key);
+    lines.push(`${getQuotePromptLabel(key)}: ${formatted}`);
+  });
+  return lines;
+}
+
+function getQuotePromptFieldLines(item: AdminDoc) {
+  return getPromptLinesForKeys(item, QUOTE_PROMPT_FIELD_KEYS);
+}
+
+function getPhotoPromptLines(item: AdminDoc) {
+  const photoKeys = ["photoUploads", "uploadedPhotos", "photos", "photoFiles", "photoUrls", "photoDataUrls", "imageDataUrls"];
+  const lines = getPromptLinesForKeys(item, photoKeys);
+  if (lines.length) return lines;
+  const photos = getPhotoUploads(item);
+  return [`Uploaded photos: ${photos.length ? `${photos.length} photo${photos.length === 1 ? "" : "s"} available in the dashboard` : "No photos uploaded / not shown"}`];
+}
+
+function rawFieldLabel(path: string) {
+  return path;
+}
+
+function flattenRawSubmittedFields(value: unknown, path: string, lines: string[], depth = 0) {
+  if (isEmptyQuotePromptValue(value)) return;
+  if (depth > 5) {
+    lines.push(`${rawFieldLabel(path)}: [nested data saved in admin dashboard]`);
+    return;
+  }
+  if (Array.isArray(value)) {
+    const simple = value.every((entry) => ["string", "number", "boolean"].includes(typeof entry));
+    if (simple || isPhotoDataField(path)) {
+      const formatted = formatPromptValue(path, value);
+      if (formatted) lines.push(`${rawFieldLabel(path)}: ${formatted}`);
+      return;
+    }
+    value.forEach((entry, index) => flattenRawSubmittedFields(entry, `${path}[${index + 1}]`, lines, depth + 1));
+    return;
+  }
+  if (value && typeof value === "object" && !("toDate" in value && typeof value.toDate === "function")) {
+    Object.entries(value as Record<string, unknown>)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .forEach(([key, entry]) => flattenRawSubmittedFields(entry, path ? `${path}.${key}` : key, lines, depth + 1));
+    return;
+  }
+  const formatted = formatPromptScalar(path, value);
+  if (formatted) lines.push(`${rawFieldLabel(path)}: ${formatted}`);
+}
+
+function getRawSubmittedFieldLines(item: AdminDoc) {
+  const lines: string[] = [];
+  Object.entries(item)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .forEach(([key, value]) => flattenRawSubmittedFields(value, key, lines));
+  return lines;
 }
 
 function getQuotePromptServiceGuidance(item: AdminDoc) {
   const key = getServiceKey(item);
-  if (key === "family-reset-3hr") return "Parent Reset Plan = flat 3-hour busy-parent room reset for organizing selected family spaces, light cleaning, and child-safe disinfecting. It is not childcare and not a full-home cleaning.";
+  if (key === "family-reset-3hr") return "Parent Reset Plan = flat 3-hour busy-parent room reset for organizing selected family spaces, light cleaning, child-safe disinfecting, and optional simple in-home meal prep support. It is not childcare and not a full-home cleaning.";
   if (key === "whole-home-reset") return "Whole Home Cleaning = entire home cleaning, first-time deep cleans, and weekly/bi-weekly/monthly full-home maintenance.";
   if (key === "specific-area-reset") return "Specific Area(s) Reset = selected rooms or focused areas only, with optional repeat area support. Not intended as full-home maintenance.";
   if (key === "move-out-cleaning") return "Move-In / Move-Out Cleaning = empty or mostly empty homes before moving in, after moving out, before listing/renting, or turnover-style cleaning.";
-  if (key === "move-prep-home-reset") return "Move Prep & Home Reset = in-home move prep, sorting, open-first boxes, QR Smart Labels, supply kits, laundry help, unpacking, and reset support. NestHelper does not transport household goods or operate as a moving company. Move-out cleaning is quoted separately.";
-  if (key === "laundry-rescue") return "Laundry Rescue = pickup/drop-off laundry support, folding, reset help, or catching up on laundry.";
+  if (key === "move-prep-home-reset") return "Move Prep & Home Reset = in-home move prep, sorting, open-first boxes, QR Smart Labels, supply kits, unpacking, and reset support. NestHelper does not transport household goods or operate as a moving company. Move-out cleaning is quoted separately.";
+  if (key === "laundry-rescue") return "Laundry Rescue = pickup, wash, dry, fold, and return support for household laundry. The $59 minimum includes pickup/return and up to about 26.2 lbs; additional laundry is $2.25/lb.";
   if (key === "errand-helper") return "Errand Helper = simple local errands, approved pickups/drop-offs, and family support tasks.";
   if (key === "commercial-reset") return "Commercial Reset = small office, studio, church, salon, daycare common area, real estate, rental, or other non-family service request.";
   return "Use the submitted request details to choose the best NestHelper service fit.";
 }
 
+function getQuotePromptSections(item: AdminDoc) {
+  const seen = new Set<string>();
+  return Object.entries(QUOTE_PROMPT_SECTION_KEYS)
+    .map(([title, keys]) => ({ title, lines: getPromptLinesForKeys(item, keys, seen) }))
+    .filter((section) => section.lines.length);
+}
+
+function buildPromptSection(title: string, lines: string[]) {
+  return [title, lines.length ? lines.join("\n") : "No details found."].join("\n");
+}
+
+function getLaundryRescuePromptProcess(item: AdminDoc) {
+  if (getServiceKey(item) !== "laundry-rescue") return [];
+  return [
+    "Laundry Rescue reply/payment process:",
+    "- Confirm pickup time first.",
+    "- Return as soon as possible; if needed, state the latest return time.",
+    "- $59 minimum includes pickup, wash, dry, fold, return, and up to about 26 lbs.",
+    "- Anything over the included weight is $2.25/lb.",
+    "- After the customer confirms pickup, send the secure payment link for the $59 minimum.",
+    "- The payment link can allow optional auto-pay for final balance if laundry weighs over the included amount.",
+    "- If auto-pay is not selected, send the final payment link after weighing.",
+    "- If customer-provided detergent was selected, ask them to leave it with the laundry. If it is not there, use NestHelper eco-friendly standard detergent.",
+    "- Acknowledge porch, garage, remote access, pickup, and return notes.",
+    "",
+  ];
+}
+
 function buildQuotePrompt(item: AdminDoc) {
   const serviceLabel = getServiceLook(item).label;
-  const address = getCleanAddress(item);
-  const photos = getPhotoUploads(item);
-  const fieldLines = getQuotePromptFieldLines(item);
-  const addressLine = address ? [`Address / service area:\n${address}`] : [];
-  const photoLine = [`Uploaded photos: ${photos.length ? `${photos.length} photo${photos.length === 1 ? "" : "s"} available in the dashboard` : "No photos uploaded / not shown"}`];
+  const serviceKey = getServiceKey(item);
   const submittedAt = formatDate(item.createdAt);
+  const sections = getQuotePromptSections(item);
+  const photoLines = getPhotoPromptLines(item);
+  const rawLines = getRawSubmittedFieldLines(item);
 
   return [
     "Create a NestHelper quote recommendation from this service request.",
     "",
     "NestHelper quote rules:",
     "- Do not auto-send anything. Draft for Leo/Gen to review.",
+    "- Carefully review all fields, including raw submitted fields, before giving the quote recommendation.",
+    "- Do not ignore access notes, customer-provided supplies, add-ons, photos, or special instructions.",
+    "- If any field conflicts, flag the conflict and ask for clarification.",
     "- Identify the best service fit and whether the customer selected the right service.",
     "- Suggest an estimated time/helper plan and a fair quote or quote range.",
     "- Flag anything that needs clarification before quoting.",
@@ -1642,17 +1992,20 @@ function buildQuotePrompt(item: AdminDoc) {
     "- Laundry Rescue intro launch pricing: $59 minimum includes pickup, wash, dry, fold, return, and up to about 26.2 lbs. Additional laundry is $2.25/lb.",
     "- Smart Label setup pricing: Starter setup up to 10 labels is $49, Standard setup up to 20 labels is $79, Full setup up to 30 labels is $109. Larger setups or detailed inventory can be quoted after review.",
     "",
+    ...getLaundryRescuePromptProcess(item),
     "Selected service guidance:",
     getQuotePromptServiceGuidance(item),
     "",
-    "Requested service:",
+    "Requested service summary:",
     `Service shown in dashboard: ${serviceLabel}`,
-    `Submitted: ${submittedAt}`,
-    ...addressLine,
-    ...photoLine,
+    `Submitted service key: ${serviceKey}`,
+    `Submitted date/time: ${submittedAt}`,
     "",
-    "Submitted customer details:",
-    fieldLines.length ? fieldLines.join("\n") : "No detailed fields were found on this request.",
+    ...sections.flatMap((section) => [buildPromptSection(section.title, section.lines), ""]),
+    buildPromptSection("Photos / uploads", photoLines),
+    "",
+    "Raw submitted fields / full request data:",
+    rawLines.length ? rawLines.join("\n") : "No raw submitted fields were found.",
     "",
     "Please return:",
     "1. Best service fit",
