@@ -180,10 +180,10 @@ export function ServiceCard({ service, equalCollapsedHeight = false }: { service
   const isLaundry = service.id === "laundry-rescue";
   const isQuoteBased = service.standardPrice.toLowerCase().includes("quoted");
   const equalClosed = equalCollapsedHeight && !open;
-  const collapsedHeightClass = equalClosed ? "md:h-[720px]" : "";
-  const closedTitleClass = equalClosed ? "line-clamp-2 h-[3.6rem]" : "";
-  const closedDescriptionClass = equalClosed ? "line-clamp-3 h-[4.75rem]" : "";
-  const pricePanelHeightClass = equalClosed ? "h-[12rem]" : "min-h-[9.35rem]";
+  const collapsedHeightClass = equalClosed ? "md:h-[700px]" : "";
+  const closedTitleClass = equalClosed ? "line-clamp-2 h-[3.55rem]" : "";
+  const closedDescriptionClass = equalClosed ? "line-clamp-3 h-[4.65rem]" : "";
+  const pricePanelHeightClass = equalClosed ? "h-[11.5rem]" : "min-h-[9.35rem]";
 
   useEffect(() => {
     function handleOtherCard(event: Event) {
@@ -267,7 +267,7 @@ export function ServiceCard({ service, equalCollapsedHeight = false }: { service
     <article
       ref={cardRef}
       onClick={handleCardClick}
-      className={`group relative flex h-full cursor-pointer flex-col overflow-hidden rounded-[2rem] border bg-white/95 shadow-sm backdrop-blur transition duration-300 hover:-translate-y-1 hover:shadow-lift ${
+      className={`group relative flex cursor-pointer flex-col self-start overflow-hidden rounded-[2rem] border bg-white/95 shadow-sm backdrop-blur transition duration-300 hover:-translate-y-1 hover:shadow-lift ${
         open ? `border-nest-gold/35 ring-4 ${theme.ring}` : `${collapsedHeightClass} border-nest-gold/16`
       }`}
     >
@@ -277,17 +277,14 @@ export function ServiceCard({ service, equalCollapsedHeight = false }: { service
         </div>
       )}
 
-      <div className={`relative h-44 shrink-0 overflow-hidden bg-gradient-to-br sm:h-44 ${theme.accent}`}>
+      <div className={`relative h-40 shrink-0 overflow-hidden bg-gradient-to-br sm:h-44 ${theme.accent}`}>
         <Image
           src={service.image}
           alt={service.title}
           fill
-          className="object-contain object-center p-6 opacity-100 transition duration-700 group-hover:scale-[1.02] sm:p-7"
+          className="object-contain object-center p-8 opacity-100 transition duration-700 group-hover:scale-[1.02] sm:p-9"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-white/40 via-transparent to-white/0" />
-        <div className={`absolute left-4 top-4 max-w-[72%] rounded-full border px-3 py-1.5 text-[0.68rem] font-black uppercase leading-tight tracking-[0.12em] shadow-sm ${theme.chip}`}>
-          {theme.eyebrow}
-        </div>
       </div>
 
       <div className="flex flex-1 flex-col p-5 sm:p-6">

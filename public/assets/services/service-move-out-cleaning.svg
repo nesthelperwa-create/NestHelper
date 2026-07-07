@@ -1,40 +1,21 @@
-<svg width="1200" height="900" viewBox="0 0 1200 900" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="1200" height="900" fill="#F7F4EE"/>
-  <circle cx="55" cy="90" r="185" fill="#CFE2DB"/>
-  <circle cx="1060" cy="80" r="190" fill="#E6DDC9"/>
-  <g fill="#DDD4C4">
-    <circle cx="60" cy="820" r="105"/>
-    <circle cx="205" cy="840" r="105"/>
-    <circle cx="350" cy="825" r="105"/>
-    <circle cx="495" cy="850" r="105"/>
-    <circle cx="640" cy="825" r="105"/>
-    <circle cx="785" cy="840" r="105"/>
-    <circle cx="930" cy="820" r="105"/>
-    <circle cx="1075" cy="840" r="105"/>
-    <circle cx="1220" cy="825" r="105"/>
+<svg width="920" height="600" viewBox="0 0 920 600" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true">
+  <g opacity="0.98">
+    <circle cx="460" cy="300" r="214" fill="#FAFAF8" stroke="#D8C9AD" stroke-width="6"/>
+    <circle cx="315" cy="190" r="58" fill="#CFE4DB" opacity="0.85"/>
+    <circle cx="610" cy="418" r="78" fill="#E9C669" opacity="0.55"/>
+    
+    <path d="M292 343V262L406 176L520 262V432H292V343Z" stroke="#0D6660" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M356 432V346H456V432" stroke="#0D6660" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M315 462H548" stroke="#0D6660" stroke-width="18" stroke-linecap="round"/>
+    <path d="M600 204L552 406" stroke="#0D6660" stroke-width="18" stroke-linecap="round"/>
+    <path d="M515 410H585" stroke="#0D6660" stroke-width="18" stroke-linecap="round"/>
+    <path d="M527 413L505 464" stroke="#0D6660" stroke-width="16" stroke-linecap="round"/>
+    <path d="M559 413L584 464" stroke="#0D6660" stroke-width="16" stroke-linecap="round"/>
+    <path d="M630 355H710L696 442H644L630 355Z" fill="#F2E1B5" stroke="#0D6660" stroke-width="16" stroke-linejoin="round"/>
+    <path d="M640 355C643 324 664 306 690 306C713 306 731 324 734 355" stroke="#0D6660" stroke-width="14" stroke-linecap="round"/>
+    <circle cx="657" cy="277" r="14" fill="#CFE4DB" stroke="#0D6660" stroke-width="8"/>
+    <circle cx="706" cy="263" r="11" fill="#CFE4DB" stroke="#0D6660" stroke-width="7"/>
+    <path d="M686 178L704 196L722 178L704 160L686 178Z" fill="#D49D35"/>
+
   </g>
-
-  <rect x="360" y="165" width="480" height="420" rx="42" fill="#FBFBFA" stroke="#D8CDBB" stroke-width="4"/>
-
-  <!-- House -->
-  <path d="M455 415V340L528 282L601 340V498H455V415Z" stroke="#0C6962" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M488 498V425H568V498" stroke="#0C6962" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M479 352H576" stroke="#0C6962" stroke-width="9" stroke-linecap="round"/>
-
-  <!-- Cleaning bottle -->
-  <path d="M650 499H735" stroke="#0C6962" stroke-width="12" stroke-linecap="round"/>
-  <path d="M662 499V378C662 364 674 352 688 352H708C722 352 734 364 734 378V499" stroke="#0C6962" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M678 351V322C678 313 685 306 694 306H706C715 306 722 313 722 322V340" stroke="#0C6962" stroke-width="12" stroke-linecap="round"/>
-  <path d="M686 306L671 278" stroke="#0C6962" stroke-width="10" stroke-linecap="round"/>
-  <path d="M677 401H720" stroke="#0C6962" stroke-width="8" stroke-linecap="round"/>
-  <path d="M674 431H723" stroke="#0C6962" stroke-width="8" stroke-linecap="round"/>
-
-  <!-- Sparkles -->
-  <path d="M598 260L611 273L624 260L611 247L598 260Z" fill="#D09A34"/>
-  <path d="M742 280L756 294L770 280L756 266L742 280Z" fill="#D09A34"/>
-  <path d="M639 228L648 237L657 228L648 219L639 228Z" fill="#D09A34"/>
-
-  <!-- Under-icon title -->
-  <text x="600" y="680" text-anchor="middle" fill="#06655F" font-family="Arial, Helvetica, sans-serif" font-size="58" font-weight="800">Move-In / Move-Out</text>
-  <text x="600" y="750" text-anchor="middle" fill="#06655F" font-family="Arial, Helvetica, sans-serif" font-size="58" font-weight="800">Cleaning</text>
 </svg>

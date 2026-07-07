@@ -1,44 +1,21 @@
-<svg width="1200" height="900" viewBox="0 0 1200 900" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="1200" height="900" fill="#F7F4EE"/>
-  <circle cx="55" cy="90" r="185" fill="#CFE2DB"/>
-  <circle cx="1060" cy="80" r="190" fill="#E6DDC9"/>
-  <g fill="#DDD4C4">
-    <circle cx="60" cy="820" r="105"/>
-    <circle cx="205" cy="840" r="105"/>
-    <circle cx="350" cy="825" r="105"/>
-    <circle cx="495" cy="850" r="105"/>
-    <circle cx="640" cy="825" r="105"/>
-    <circle cx="785" cy="840" r="105"/>
-    <circle cx="930" cy="820" r="105"/>
-    <circle cx="1075" cy="840" r="105"/>
-    <circle cx="1220" cy="825" r="105"/>
+<svg width="920" height="600" viewBox="0 0 920 600" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true">
+  <g opacity="0.98">
+    <circle cx="460" cy="300" r="214" fill="#FAFAF8" stroke="#D8C9AD" stroke-width="6"/>
+    <circle cx="315" cy="190" r="58" fill="#CFE4DB" opacity="0.85"/>
+    <circle cx="610" cy="418" r="78" fill="#E9C669" opacity="0.55"/>
+    
+    <path d="M303 301L420 244L537 301V444L420 501L303 444V301Z" fill="#F2E1B5" stroke="#0D6660" stroke-width="20" stroke-linejoin="round"/>
+    <path d="M420 244V501" stroke="#0D6660" stroke-width="16" stroke-linecap="round"/>
+    <path d="M303 301L420 358L537 301" stroke="#0D6660" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="382" y="332" width="76" height="48" rx="8" fill="#FAFAF8" stroke="#0D6660" stroke-width="10"/>
+    <path d="M398 346H442" stroke="#0D6660" stroke-width="7" stroke-linecap="round"/>
+    <path d="M398 361H432" stroke="#0D6660" stroke-width="7" stroke-linecap="round"/>
+    <rect x="581" y="208" width="138" height="220" rx="24" fill="#FAFAF8" stroke="#0D6660" stroke-width="18"/>
+    <path d="M615 269L633 287L670 250" stroke="#0D6660" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M615 331L633 349L670 312" stroke="#0D6660" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M615 392L633 410L670 373" stroke="#0D6660" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M548 184L566 202L584 184L566 166L548 184Z" fill="#D49D35"/>
+    <path d="M728 190L746 208L764 190L746 172L728 190Z" fill="#D49D35"/>
+
   </g>
-
-  <rect x="360" y="165" width="480" height="420" rx="42" fill="#FBFBFA" stroke="#D8CDBB" stroke-width="4"/>
-
-  <!-- Box -->
-  <path d="M470 352L549 314L628 352V455L549 493L470 455V352Z" fill="#F2E1B5" stroke="#0C6962" stroke-width="12" stroke-linejoin="round"/>
-  <path d="M549 314V493" stroke="#0C6962" stroke-width="10" stroke-linecap="round"/>
-  <path d="M470 352L549 390L628 352" stroke="#0C6962" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
-  <rect x="521" y="369" width="56" height="34" rx="6" fill="#FBFBFA" stroke="#0C6962" stroke-width="5"/>
-  <path d="M532 379H565" stroke="#0C6962" stroke-width="4" stroke-linecap="round"/>
-  <path d="M532 388H557" stroke="#0C6962" stroke-width="4" stroke-linecap="round"/>
-
-  <!-- Checklist -->
-  <rect x="648" y="278" width="112" height="164" rx="14" fill="#FBFBFA" stroke="#0C6962" stroke-width="11"/>
-  <path d="M675 322L687 334L710 311" stroke="#0C6962" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M675 360L687 372L710 349" stroke="#0C6962" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M675 398L687 410L710 387" stroke="#0C6962" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M723 323H736" stroke="#0C6962" stroke-width="7" stroke-linecap="round"/>
-  <path d="M723 361H736" stroke="#0C6962" stroke-width="7" stroke-linecap="round"/>
-  <path d="M723 399H736" stroke="#0C6962" stroke-width="7" stroke-linecap="round"/>
-
-  <!-- Sparkles -->
-  <path d="M649 254L663 268L677 254L663 240L649 254Z" fill="#D09A34"/>
-  <path d="M755 252L769 266L783 252L769 238L755 252Z" fill="#D09A34"/>
-  <path d="M610 280L620 290L630 280L620 270L610 280Z" fill="#D09A34"/>
-
-  <!-- Under-icon title -->
-  <text x="600" y="680" text-anchor="middle" fill="#06655F" font-family="Arial, Helvetica, sans-serif" font-size="58" font-weight="800">Move Prep &amp; Home</text>
-  <text x="600" y="750" text-anchor="middle" fill="#06655F" font-family="Arial, Helvetica, sans-serif" font-size="58" font-weight="800">Reset</text>
 </svg>

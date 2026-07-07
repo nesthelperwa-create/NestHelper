@@ -31,7 +31,7 @@ export const services: Service[] = [
     priceNote: "Flat 2-hour visit",
     serviceTime: "2 hours of in-home help",
     travelInfo: "Core Eastside service area",
-    image: "/assets/services/service-parent-reset.png",
+    image: "/assets/services/service-parent-reset.svg",
     stripeStandardEnv: "STRIPE_PRICE_PARENT_RESET_STANDARD",
     recurringRates: [
       { cadence: "Every 2 weeks", price: "$125/visit" },
@@ -55,7 +55,7 @@ export const services: Service[] = [
     priceNote: "Flat 3-hour parent reset",
     serviceTime: "3 hours of reset help",
     travelInfo: "Core Eastside service area",
-    image: "/assets/services/service-family-reset.png",
+    image: "/assets/services/service-family-reset.svg",
     stripeStandardEnv: "STRIPE_PRICE_FAMILY_RESET_STANDARD",
     recurringRates: [
       { cadence: "Every 2 weeks", price: "$189/visit" },
@@ -79,7 +79,7 @@ export const services: Service[] = [
     priceNote: "Flat 4-hour visit",
     serviceTime: "4 hours of helper time",
     travelInfo: "Core Eastside service area",
-    image: "/assets/services/service-helper-block.png",
+    image: "/assets/services/service-helper-block.svg",
     stripeStandardEnv: "STRIPE_PRICE_HELPER_BLOCK_STANDARD",
     recurringRates: [
       { cadence: "Every 2 weeks", price: "$269/visit" },
@@ -102,7 +102,7 @@ export const services: Service[] = [
     priceNote: "Size + condition reviewed",
     serviceTime: "Scope-based visit, usually 3–6+ hours",
     travelInfo: "Core Eastside/Northshore service area",
-    image: "/assets/services/service-whole-home-reset.png",
+    image: "/assets/services/service-whole-home-reset.svg",
     note: "Whole Home Cleaning requests are reviewed before checkout. Square footage, bedroom/bathroom count, visit type, condition, pets, access, optional detail add-ons, photos, and scheduling all affect the quote. Use this for the entire home; use Specific Area(s) Reset for selected rooms or focused areas only."
   },
   {
@@ -121,7 +121,7 @@ export const services: Service[] = [
     priceNote: "Rooms + add-ons reviewed",
     serviceTime: "Scope-based visit, usually 2–4+ hours",
     travelInfo: "Core Eastside/Northshore service area",
-    image: "/assets/services/service-specific-area-reset.png",
+    image: "/assets/services/service-specific-area-reset.svg",
     note: "Specific Area(s) Resets are reviewed before checkout. The selected rooms, repeat area support preference, cleaning type, detailed add-ons, size/count, photos, buildup or clutter level, access, product preferences, customer-arranged trash/donation prep, and safety notes all affect the quote. Kitchen + Bath Reset requests fit here. NestHelper does not provide dump runs, junk hauling, hazardous material disposal, pest/biohazard cleanup, mold remediation, or unsafe heavy lifting."
   },
   {
@@ -179,7 +179,7 @@ export const services: Service[] = [
     priceNote: "Up to 2 hours + 15 miles",
     serviceTime: "Up to 2 hours",
     travelInfo: "Up to 15 driving miles included",
-    image: "/assets/services/service-errand-helper.png",
+    image: "/assets/services/service-errand-helper.svg",
     stripeStandardEnv: "STRIPE_PRICE_ERRAND_STANDARD",
     note: "Best for nearby errands in and around Bothell, Woodinville, Kirkland, Redmond, and nearby Eastside/Northshore communities. Longer routes can be reviewed before checkout."
   },
@@ -199,7 +199,7 @@ export const services: Service[] = [
     priceNote: "Includes up to 26.2 lbs",
     serviceTime: "Pickup + return window scheduled",
     travelInfo: "Additional laundry billed only above the included weight",
-    image: "/assets/services/service-laundry-rescue.png",
+    image: "/assets/services/service-laundry-rescue.svg",
     stripeStandardEnv: "STRIPE_PRICE_LAUNDRY_DEPOSIT_STANDARD",
     note: "Laundry Rescue intro launch pricing: $59 minimum includes pickup, wash, dry, fold, return, and up to about 26.2 lbs of laundry. Additional laundry is $2.25/lb. Eco-friendly detergent is available. The non-refundable minimum is paid first; any additional weight, add-ons, bulky items, or approved changes are handled through the checkout option selected: auto-charge after review or invoice before delivery."
   }
