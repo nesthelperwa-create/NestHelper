@@ -1058,9 +1058,9 @@ export default function FamilyPaymentBreakdownBuilder({
       {error && <p className="mt-3 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{error}</p>}
 
       {open && (
-        <div className="fixed inset-0 z-[70] overflow-y-auto bg-slate-950/70 p-3 sm:p-6" onClick={(e) => e.stopPropagation()}>
-          <div className="mx-auto max-w-6xl rounded-[2rem] bg-white shadow-2xl" role="dialog" aria-modal="true" aria-label="Family payment breakdown builder">
-            <div className="sticky top-0 z-10 rounded-t-[2rem] border-b border-[#eadfc8] bg-white/95 p-4 backdrop-blur sm:p-5">
+        <div className="fixed inset-x-0 bottom-0 top-[4.75rem] z-[120] overflow-y-auto bg-slate-950/70 p-3 sm:top-[5.25rem] sm:p-6" onClick={(e) => e.stopPropagation()}>
+          <div className="mx-auto mb-8 max-w-6xl rounded-[2rem] bg-white shadow-2xl" role="dialog" aria-modal="true" aria-label="Family payment breakdown builder">
+            <div className="sticky top-0 z-20 rounded-t-[2rem] border-b border-[#eadfc8] bg-white/95 p-4 backdrop-blur sm:p-5">
               <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                 <div>
                   <p className="text-xs font-black uppercase tracking-[0.2em] text-[#b98a2f]">Family Payment Breakdown Builder</p>
