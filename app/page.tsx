@@ -58,7 +58,7 @@ export default function HomePage() {
               Reset the home. Reclaim the day.
             </h1>
             <p className="mx-auto mt-5 max-w-2xl text-base font-semibold leading-7 text-nest-ink/74 sm:text-xl sm:leading-8">
-              Household help for busy families — parent room resets, whole-home cleaning, focused area resets, Move Prep & Home Reset, move-in / move-out cleaning, laundry rescue, errands, organizing, simple in-home meal prep support, and extra hands around the house with clear packages, reviewed requests, limited openings, and follow-up. No childcare services.
+              Household help for busy families — parent room resets, whole-home cleaning, focused area resets, laundry rescue, errands, simple in-home meal prep support, and move-related home reset help. Every request is reviewed first, with clear scope, limited openings, and no childcare services.
             </p>
             <div className="mx-auto mt-7 flex max-w-sm flex-col justify-center gap-3 sm:max-w-none sm:flex-row">
               <ButtonLink href="/request">Request Help</ButtonLink>
