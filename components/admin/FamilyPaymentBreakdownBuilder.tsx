@@ -31,44 +31,12 @@ type ButtonVariant = "primary" | "secondary" | "quiet" | "danger";
 
 const FAMILY_PRESETS = [
   {
-    id: "parent-reset-standard",
-    label: "2-Hour Parent Reset",
-    description: "One-time 2-hour Parent Reset package based on the customer request.",
-    unit: "flat",
-    rate: "129",
-    amount: "129",
-  },
-  {
     id: "family-reset-standard",
-    label: "Parent Reset Plan",
-    description: "One-time 3-hour parent reset for organizing selected family spaces, light cleaning, and child-safe disinfecting.",
+    label: "Parent Reset Plan — $199",
+    description: "Flat 3-hour Parent Reset Plan for selected family spaces, organizing, light cleaning, child-safe disinfecting, and approved simple in-home meal prep support.",
     unit: "flat",
     rate: "199",
     amount: "199",
-  },
-  {
-    id: "helper-block-standard",
-    label: "4-Hour Helper Block",
-    description: "One-time 4-hour Helper Block package based on the customer request.",
-    unit: "flat",
-    rate: "279",
-    amount: "279",
-  },
-  {
-    id: "parent-reset-biweekly",
-    label: "Parent Reset recurring — every 2 weeks",
-    description: "Recurring 2-hour Parent Reset rate after the first completed standard visit. Intended for consistent scope and schedule.",
-    unit: "visit",
-    rate: "125",
-    amount: "125",
-  },
-  {
-    id: "parent-reset-weekly",
-    label: "Parent Reset recurring — weekly",
-    description: "Weekly 2-hour Parent Reset rate after the first completed standard visit. Intended for consistent scope and schedule.",
-    unit: "visit",
-    rate: "119",
-    amount: "119",
   },
   {
     id: "family-reset-biweekly",
@@ -87,25 +55,9 @@ const FAMILY_PRESETS = [
     amount: "179",
   },
   {
-    id: "helper-block-biweekly",
-    label: "Helper Block recurring — every 2 weeks",
-    description: "Recurring 4-hour Helper Block rate after the first completed standard visit. Intended for consistent scope and schedule.",
-    unit: "visit",
-    rate: "269",
-    amount: "269",
-  },
-  {
-    id: "helper-block-weekly",
-    label: "Helper Block recurring — weekly",
-    description: "Weekly 4-hour Helper Block rate after the first completed standard visit. Intended for consistent scope and schedule.",
-    unit: "visit",
-    rate: "259",
-    amount: "259",
-  },
-  {
     id: "whole-home-reset-reviewed",
     label: "Whole Home Cleaning reviewed quote",
-    description: "Reviewed whole-home cleaning quote based on square footage, bedrooms/bathrooms, visit type, condition, pets, access, and optional detail add-ons.",
+    description: "Reviewed whole-home cleaning quote based on square footage, bedrooms/bathrooms, visit type, condition, pets, access, photos, and optional detail add-ons.",
     unit: "flat",
     rate: "329",
     amount: "329",
@@ -119,41 +71,9 @@ const FAMILY_PRESETS = [
     amount: "449",
   },
   {
-    id: "move-out-cleaning-reviewed",
-    label: "Move-In / Move-Out Cleaning reviewed quote",
-    description: "Reviewed move-in / move-out cleaning quote based on square footage, bedrooms/bathrooms, empty-home status, condition, and priority areas.",
-    unit: "flat",
-    rate: "395",
-    amount: "395",
-  },
-  {
-    id: "move-out-cleaning-larger-scope",
-    label: "Move-In / Move-Out larger-scope quote",
-    description: "Higher-scope move-in / move-out cleaning quote for larger homes, extra kitchen/bathroom buildup, or added appliance/cabinet scope after review.",
-    unit: "flat",
-    rate: "495",
-    amount: "495",
-  },
-  {
-    id: "move-out-inside-appliance",
-    label: "Move-In / Move-Out inside appliance add-on",
-    description: "Approved inside oven, refrigerator, or appliance cleaning add-on for move-in / move-out cleaning.",
-    unit: "appliance",
-    rate: "45",
-    amount: "45",
-  },
-  {
-    id: "garage-reset-reviewed",
-    label: "Garage Reset reviewed quote",
-    description: "Reviewed garage reset quote based on garage size, clutter level, sorting needs, access, photos, disposal needs, and safety notes.",
-    unit: "flat",
-    rate: "349",
-    amount: "349",
-  },
-  {
     id: "specific-area-reset-reviewed",
     label: "Specific Area(s) Reset reviewed quote",
-    description: "Reviewed quote for a focused pantry, closet, playroom, laundry room, kitchen zone, entry, or other area reset.",
+    description: "Reviewed quote for selected rooms or focused areas such as kitchen, bathroom(s), pantry, closet, playroom, laundry area, garage, fridge, oven, or a few rooms.",
     unit: "flat",
     rate: "249",
     amount: "249",
@@ -167,25 +87,121 @@ const FAMILY_PRESETS = [
     amount: "449",
   },
   {
+    id: "garage-reset-reviewed",
+    label: "Garage / storage area reviewed quote",
+    description: "Reviewed garage, storage, shed, or heavy-clutter quote based on size, clutter level, sorting needs, access, photos, disposal prep, and safety notes.",
+    unit: "flat",
+    rate: "349",
+    amount: "349",
+  },
+  {
+    id: "move-out-cleaning-reviewed",
+    label: "Move-In / Move-Out Cleaning reviewed quote",
+    description: "Reviewed move-in / move-out cleaning quote based on square footage, bedrooms/bathrooms, empty-home status, condition, photos, and priority areas.",
+    unit: "flat",
+    rate: "395",
+    amount: "395",
+  },
+  {
+    id: "move-out-cleaning-larger-scope",
+    label: "Move-In / Move-Out larger-scope quote",
+    description: "Higher-scope move-in / move-out cleaning quote for larger homes, extra kitchen/bathroom buildup, appliance/cabinet scope, or timing constraints after review.",
+    unit: "flat",
+    rate: "495",
+    amount: "495",
+  },
+  {
+    id: "move-out-inside-appliance",
+    label: "Move-In / Move-Out inside appliance add-on",
+    description: "Approved inside oven, refrigerator, or appliance cleaning add-on for move-in / move-out cleaning.",
+    unit: "appliance",
+    rate: "45",
+    amount: "45",
+  },
+  {
+    id: "move-prep-starting",
+    label: "Move Prep before movers arrive — $199",
+    description: "Move Prep starting package for light sorting, open-first boxes, simple labels, and short helper list. Includes up to 2 helper-hours.",
+    unit: "flat",
+    rate: "199",
+    amount: "199",
+  },
+  {
+    id: "move-prep-focused-room",
+    label: "Focused room or area prep — $249",
+    description: "Focused room or area prep for sorting, packing prep, organizing, or reset help in one room or area. Includes up to 2.5 helper-hours.",
+    unit: "flat",
+    rate: "249",
+    amount: "249",
+  },
+  {
+    id: "move-prep-unpack-reset",
+    label: "After-move unpacking / home reset — from $299",
+    description: "After-move unpacking or home reset support for open-first items, essentials, light unpacking, and getting key areas usable. Starts around 3 helper-hours.",
+    unit: "flat",
+    rate: "299",
+    amount: "299",
+  },
+  {
+    id: "move-prep-kitchen-setup",
+    label: "After-move kitchen setup / kitchen reset — from $349",
+    description: "After-move kitchen setup or kitchen reset for essentials, pantry/fridge basics, cabinet zones, and everyday-item flow. Starts around 3.5 helper-hours.",
+    unit: "flat",
+    rate: "349",
+    amount: "349",
+  },
+  {
+    id: "move-prep-smart-labels",
+    label: "QR Smart Label setup — $99 up to 20 labels",
+    description: "QR Smart Label setup for boxes, bins, shelves, closets, or storage areas. Includes setup for up to 20 labels.",
+    unit: "flat",
+    rate: "99",
+    amount: "99",
+  },
+  {
+    id: "move-prep-basic-supply-kit",
+    label: "Basic packing supply kit — from $59",
+    description: "Starter supplies for open-first boxes or one small area, such as a small set of boxes or bags, packing tape, marker, and simple labels. Final contents confirmed before checkout.",
+    unit: "flat",
+    rate: "59",
+    amount: "59",
+  },
+  {
+    id: "move-prep-larger-supply-kit",
+    label: "Larger packing supply kit — reviewed before checkout",
+    description: "For multiple rooms or bigger prep: more boxes, tape, packing paper or protection, labels, and marker. Quote after review so the customer only pays for what is needed.",
+    unit: "flat",
+    rate: "0",
+    amount: "0",
+  },
+  {
+    id: "move-prep-custom-review",
+    label: "Move Prep custom review item",
+    description: "Custom Move Prep, garage/storage/heavy clutter, larger QR setup, or separate review item. Enter the approved amount after review.",
+    unit: "flat",
+    rate: "0",
+    amount: "0",
+  },
+  {
     id: "errand-helper-standard",
-    label: "Errand Helper",
-    description: "Errand Helper base visit. Extra distance, complex stops, reimbursements, or wait time can be added separately after review.",
+    label: "Errand Helper — $119",
+    description: "Errand Helper base visit. Includes up to 2 hours and up to 15 driving miles. Extra distance, complex stops, reimbursements, or wait time can be added separately after review.",
     unit: "flat",
     rate: "119",
     amount: "119",
   },
   {
     id: "laundry-deposit-standard",
-    label: "Laundry Rescue intro minimum",
+    label: "Laundry Rescue intro minimum — $59",
     description: "Laundry Rescue intro minimum. The $59 minimum includes pickup, wash, dry, fold, return, and up to about 26.2 lbs. Additional weight, add-ons, bulky items, or approved changes are reviewed after dry weigh-in.",
     unit: "flat",
     rate: "59",
     amount: "59",
   },
   {
-    id: "laundry-final-weight",
-    label: "Laundry dry weight charge",
-    description: "Laundry final-balance calculation for additional weight above the included minimum, plus approved add-ons or bulky items.",
+    id: "laundry-additional-weight",
+    label: "Laundry additional weight — $2.25/lb",
+    description: "Final-balance line for additional dry weight above the included 26.2 lbs, not for pounds already included in the $59 minimum.",
     unit: "lb",
     rate: "2.25",
     amount: "0",
@@ -193,7 +209,7 @@ const FAMILY_PRESETS = [
   {
     id: "detergent-addon",
     label: "Laundry detergent add-on",
-    description: "Approved baby/sensitive or fragrance-free detergent add-on.",
+    description: "Approved baby/sensitive or fragrance-free detergent add-on. Customer-provided detergent should be $0 and noted, not charged.",
     unit: "flat",
     rate: "5",
     amount: "5",
@@ -223,6 +239,14 @@ const FAMILY_PRESETS = [
     amount: "20",
   },
   {
+    id: "approved-extra-helper-hour",
+    label: "Approved extra helper-hour",
+    description: "Approved extra helper time added after review. Use for Move Prep or other approved helper-hour work.",
+    unit: "hour",
+    rate: "65",
+    amount: "65",
+  },
+  {
     id: "approved-extra-half-hour",
     label: "Approved extra 30 minutes",
     description: "Approved extra time added to the family service scope.",
@@ -231,17 +255,9 @@ const FAMILY_PRESETS = [
     amount: "35",
   },
   {
-    id: "approved-extra-hour",
-    label: "Approved extra hour",
-    description: "Approved extra time added to the family service scope.",
-    unit: "hour",
-    rate: "70",
-    amount: "70",
-  },
-  {
     id: "recurring-family-visit",
     label: "Recurring family reset visit",
-    description: "Per-visit amount for recurring weekly or biweekly family help. Schedule is confirmed by NestHelper.",
+    description: "Per-visit amount for recurring weekly or biweekly Parent Reset Plan support. Schedule is confirmed by NestHelper.",
     unit: "visit",
     rate: "189",
     amount: "189",
@@ -320,46 +336,52 @@ function BuilderSpinner() {
 function getServiceLabel(item: AdminDoc) {
   const raw = String(item.service || item.selectedServiceTitle || item.packageType || "").toLowerCase();
   if (raw.includes("laundry")) return "Laundry Rescue";
+  if (raw.includes("move-prep") || raw.includes("move prep") || raw.includes("home reset")) return "Move Prep & Home Reset";
   if (raw.includes("whole-home-reset") || raw.includes("whole home")) return "Whole Home Cleaning";
   if (raw.includes("specific-area-reset") || raw.includes("specific area") || raw.includes("area reset") || raw.includes("garage reset")) return "Specific Area(s) Reset";
   if (raw.includes("move-out") || raw.includes("move out") || raw.includes("move-in") || raw.includes("move in")) return "Move-In / Move-Out Cleaning";
   if (raw.includes("errand")) return "Errand Helper";
-  if (raw.includes("helper")) return "Helper Block";
-  if (raw.includes("family") || raw.includes("parent reset plan")) return "Parent Reset Plan";
-  if (raw.includes("parent")) return "Parent Reset";
+  if (raw.includes("family") || raw.includes("parent reset plan") || raw.includes("parent")) return "Parent Reset Plan";
   return getString(item.selectedServiceTitle) || "NestHelper family service";
+}
+
+function getMovePrepPresetId(item: AdminDoc) {
+  const packageValue = String(item.movePrepPackage || item.packageType || item.selectedServiceTitle || item.service || "").toLowerCase();
+  if (packageValue.includes("focused room") || packageValue.includes("focused area")) return "move-prep-focused-room";
+  if (packageValue.includes("unpacking") || packageValue.includes("home reset") || packageValue.includes("move-in essentials")) return "move-prep-unpack-reset";
+  if (packageValue.includes("kitchen")) return "move-prep-kitchen-setup";
+  if (packageValue.includes("not sure") || packageValue.includes("custom quote") || packageValue.includes("heavy clutter") || packageValue.includes("garage") || packageValue.includes("storage") || packageValue.includes("shed")) return "move-prep-custom-review";
+  return "move-prep-starting";
 }
 
 function getSuggestedPresetId(item: AdminDoc) {
   const raw = String(item.service || item.selectedServiceTitle || item.packageType || "").toLowerCase();
   if (raw.includes("laundry")) return "laundry-deposit-standard";
+  if (raw.includes("move-prep") || raw.includes("move prep") || raw.includes("home reset")) return getMovePrepPresetId(item);
   if (raw.includes("garage reset") || raw.includes("arearesetarea: garage")) return "garage-reset-reviewed";
   if (raw.includes("whole-home-reset") || raw.includes("whole home")) return raw.includes("deep") ? "whole-home-reset-deep-clean" : "whole-home-reset-reviewed";
   if (raw.includes("specific-area-reset") || raw.includes("specific area") || raw.includes("area reset")) return "specific-area-reset-reviewed";
   if (raw.includes("move-out") || raw.includes("move out") || raw.includes("move-in") || raw.includes("move in")) return "move-out-cleaning-reviewed";
   if (raw.includes("errand")) return "errand-helper-standard";
-  if (raw.includes("helper")) return "helper-block-standard";
-  if (raw.includes("family") || raw.includes("parent reset plan")) return "family-reset-standard";
-  return "parent-reset-standard";
+  if (raw.includes("family") || raw.includes("parent reset plan") || raw.includes("parent")) return "family-reset-standard";
+  return "family-reset-standard";
 }
 
 function getDefaultPaymentPlan(item: AdminDoc) {
   const raw = String(item.service || item.selectedServiceTitle || item.packageType || "").toLowerCase();
   if (raw.includes("laundry")) return "Laundry Rescue deposit";
+  if (raw.includes("move-prep") || raw.includes("move prep") || raw.includes("home reset")) return "Move Prep & Home Reset reviewed quote";
   if (raw.includes("whole-home-reset") || raw.includes("whole home")) return "Whole Home Cleaning reviewed quote";
   if (raw.includes("specific-area-reset") || raw.includes("specific area") || raw.includes("area reset") || raw.includes("garage reset")) return "One-time specific area reset";
   if (raw.includes("move-out") || raw.includes("move out") || raw.includes("move-in") || raw.includes("move in")) return "One-time move-in / move-out cleaning";
   if (raw.includes("errand")) return "One-time errand helper";
-  if (raw.includes("family") || raw.includes("parent reset plan")) return "Parent Reset Plan";
+  if (raw.includes("family") || raw.includes("parent reset plan") || raw.includes("parent")) return "Parent Reset Plan";
   return "One-time family service";
 }
 
 function getRecommendedRecurringPresetId(item: AdminDoc, cadence = "Every 2 weeks") {
-  const raw = String(item.service || item.selectedServiceTitle || item.packageType || "").toLowerCase();
   const weekly = cadence.toLowerCase().includes("weekly");
-  if (raw.includes("helper")) return weekly ? "helper-block-weekly" : "helper-block-biweekly";
-  if (raw.includes("family") || raw.includes("parent reset plan")) return weekly ? "family-reset-weekly" : "family-reset-biweekly";
-  return weekly ? "parent-reset-weekly" : "parent-reset-biweekly";
+  return weekly ? "family-reset-weekly" : "family-reset-biweekly";
 }
 
 function getRecurringPresetAmount(presetId: string) {
@@ -492,6 +514,39 @@ function createDefaultLinesFromRequest(item: AdminDoc): FamilyLineItem[] {
         note: "Customer selected bulky items quoted separately.",
       }));
     }
+  }
+
+  if (service.includes("move-prep") || service.includes("move prep") || service.includes("home reset")) {
+    const selectedOptions = Array.isArray(item.movePrepOptions) ? item.movePrepOptions.map((value: unknown) => String(value)) : [];
+    const hasLine = (presetId: string) => lines.some((line) => line.preset === presetId);
+    const addMovePrepLine = (presetId: string, note: string) => {
+      if (!hasLine(presetId)) lines.push(createLineFromPreset(presetId, { note }));
+    };
+
+    selectedOptions.forEach((option) => {
+      const normalized = option.toLowerCase();
+      if (normalized.includes("unpacking") || normalized.includes("home reset")) {
+        addMovePrepLine("move-prep-unpack-reset", option);
+      } else if (normalized.includes("kitchen")) {
+        addMovePrepLine("move-prep-kitchen-setup", option);
+      } else if (normalized.includes("qr smart") || normalized.includes("smart label")) {
+        addMovePrepLine("move-prep-smart-labels", option);
+      } else if (normalized.includes("basic packing supply")) {
+        addMovePrepLine("move-prep-basic-supply-kit", option);
+      } else if (normalized.includes("larger packing supply")) {
+        addMovePrepLine("move-prep-larger-supply-kit", option);
+      } else if (normalized.includes("garage") || normalized.includes("storage") || normalized.includes("shed") || normalized.includes("heavy clutter")) {
+        addMovePrepLine("move-prep-custom-review", option);
+      } else if (normalized.includes("move-out cleaning")) {
+        lines.push(createLineFromPreset("custom-approved-line", {
+          label: "Move-out cleaning quote review",
+          description: "Customer asked for a separate move-out cleaning quote. Do not include unless reviewed and approved.",
+          amount: "0",
+          rate: "0",
+          note: option,
+        }));
+      }
+    });
   }
 
   if (service.includes("errand")) {
@@ -1010,7 +1065,7 @@ export default function FamilyPaymentBreakdownBuilder({
                 <div>
                   <p className="text-xs font-black uppercase tracking-[0.2em] text-[#b98a2f]">Family Payment Breakdown Builder</p>
                   <h3 className="mt-1 text-2xl font-black text-[#075c58]">{serviceLabel}</h3>
-                  <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-700">This is the family-side version of the Commercial builder. It defaults from the customer’s selected package and add-ons, but every line can be edited before saving, sending checkout, or creating a Stripe invoice.</p>
+                  <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-700">This is the family-side version of the Commercial builder. It defaults from the customer’s selected service and current NestHelper pricing, including move prep add-ons, Laundry Rescue minimum/additional weight, and reviewed cleaning quotes. Every line can be edited before saving, sending checkout, or creating a Stripe invoice.</p>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <button type="button" onClick={saveDraft} disabled={saving} className={getButtonClass("primary")}>{saving ? <><BuilderSpinner /> Saving...</> : "Save draft"}</button>
