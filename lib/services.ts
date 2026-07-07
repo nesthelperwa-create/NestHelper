@@ -55,7 +55,7 @@ export const services: Service[] = [
     priceNote: "Flat 3-hour parent reset",
     serviceTime: "3 hours of reset help",
     travelInfo: "Core Eastside service area",
-    image: "/assets/services/service-family-reset.svg",
+    image: "/assets/services/service-family-reset-refresh.png",
     stripeStandardEnv: "STRIPE_PRICE_FAMILY_RESET_STANDARD",
     recurringRates: [
       { cadence: "Every 2 weeks", price: "$189/visit" },
@@ -140,7 +140,7 @@ export const services: Service[] = [
     priceNote: "Square footage + condition reviewed",
     serviceTime: "Scope-based visit, usually 2–6+ hours",
     travelInfo: "Core Eastside/Northshore service area",
-    image: "/assets/services/service-move-out-cleaning.svg",
+    image: "/assets/services/service-move-out-cleaning-refresh.png",
     note: "Move-in / move-out cleaning is reviewed before checkout. Square footage, empty-home status, photos, kitchen/bathroom condition, appliance requests, access notes, and timing all affect the quote."
   },
   {
@@ -199,7 +199,7 @@ export const services: Service[] = [
     priceNote: "Includes up to 26.2 lbs",
     serviceTime: "Pickup + return window scheduled",
     travelInfo: "Additional laundry billed only above the included weight",
-    image: "/assets/services/service-laundry-rescue.svg",
+    image: "/assets/services/service-laundry-rescue-refresh.png",
     stripeStandardEnv: "STRIPE_PRICE_LAUNDRY_DEPOSIT_STANDARD",
     note: "Laundry Rescue intro launch pricing: $59 minimum includes pickup, wash, dry, fold, return, and up to about 26.2 lbs of laundry. Additional laundry is $2.25/lb. Eco-friendly detergent is available. The non-refundable minimum is paid first; any additional weight, add-ons, bulky items, or approved changes are handled through the checkout option selected: auto-charge after review or invoice before delivery."
   }
