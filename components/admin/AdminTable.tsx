@@ -2922,6 +2922,7 @@ export default function AdminTable({
   const [laundryManualSalesTax, setLaundryManualSalesTax] = useState(false);
   const [laundryManualSalesTaxRate, setLaundryManualSalesTaxRate] = useState("");
   const [laundryTaxLookupZip, setLaundryTaxLookupZip] = useState("");
+  const [laundryTaxLookupBusy, setLaundryTaxLookupBusy] = useState(false);
   const [laundryFinalNote, setLaundryFinalNote] = useState("");
   const [laundryFinalBusy, setLaundryFinalBusy] = useState(false);
   const [laundryFinalMessage, setLaundryFinalMessage] = useState("");
@@ -3171,6 +3172,48 @@ export default function AdminTable({
   const laundryTaxLookupCopyText = selected ? buildWaDorTaxLookupCopyText(selected, laundryTaxLookupZip) : "";
   const laundryTaxRateNumber = toNumber(laundryManualSalesTaxRate);
   const laundryDepositTaxCollectedAmount = getLaundryDepositTaxCollectedAmount(selected);
+
+  async function lookupLaundryTaxRateFromDor() {
+    if (!selected) return;
+    const token = await firebaseAuth.currentUser?.getIdToken();
+    if (!token) {
+      setCheckoutError("Admin session expired. Please sign in again before looking up tax.");
+      return;
+    }
+
+    setLaundryTaxLookupBusy(true);
+    setCheckoutMessage("");
+    setCheckoutError("");
+
+    try {
+      const res = await fetch("/api/admin/lookup-wa-tax-rate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          address: getCleanStreetAddressForTaxLookup(selected),
+          city: getCleanCity(selected),
+          state: getCleanState(selected) || "WA",
+          zip: laundryTaxLookupZip || getCleanZip(selected),
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok || !data.ok) {
+        throw new Error(data.error || "Unable to look up WA DOR tax rate.");
+      }
+
+      const nextRate = String(data.ratePercent || "").trim();
+      if (!nextRate) throw new Error("WA DOR did not return a usable tax rate.");
+
+      setLaundryManualSalesTax(true);
+      setLaundryManualSalesTaxRate(nextRate);
+      setCheckoutMessage(`WA DOR tax rate filled: ${nextRate}%${data.locationCode ? ` (location ${data.locationCode})` : ""}. Review before sending.`);
+    } catch (err) {
+      setCheckoutError(err instanceof Error ? err.message : "Unable to look up WA DOR tax rate.");
+    } finally {
+      setLaundryTaxLookupBusy(false);
+    }
+  }
   const laundryDepositTaxAlreadyCollected = laundryDepositTaxCollectedAmount > 0;
   const laundryDepositTaxCatchUpAmount = laundryManualSalesTax && laundryTaxRateNumber > 0 && !laundryDepositTaxAlreadyCollected
     ? Math.max(0, toNumber(laundryDepositCredit) * (laundryTaxRateNumber / 100))
@@ -5428,52 +5471,63 @@ export default function AdminTable({
                         </span>
                       </label>
                       {laundryManualSalesTax && (
-                        <div className="mt-3 grid gap-3 lg:grid-cols-[12rem_12rem_1fr] lg:items-start">
-                          <label className="grid gap-2 text-sm font-bold text-slate-700">
-                            Tax lookup ZIP
-                            <input
-                              value={laundryTaxLookupZip}
-                              onChange={(e) => setLaundryTaxLookupZip(e.target.value.replace(/[^0-9-]/g, "").slice(0, 10))}
-                              inputMode="numeric"
-                              placeholder="From request"
-                              className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]"
-                            />
-                            <span className="text-[11px] font-bold leading-4 text-slate-500">
-                              Auto-filled from the request. Edit only if the service ZIP is wrong.
-                            </span>
-                          </label>
-                          <label className="grid gap-2 text-sm font-bold text-slate-700">
-                            Sales tax rate %
-                            <input
-                              value={laundryManualSalesTaxRate}
-                              onChange={(e) => setLaundryManualSalesTaxRate(e.target.value)}
-                              inputMode="decimal"
-                              placeholder="Example: 10.3"
-                              className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]"
-                            />
-                            <span className="text-[11px] font-bold leading-4 text-slate-500">
-                              Enter percent form. Example: use 10.3 for 10.3%.
-                            </span>
-                          </label>
+                        <div className="mt-3 space-y-3">
+                          <div className="grid gap-3 sm:grid-cols-2">
+                            <label className="grid gap-2 text-sm font-bold text-slate-700">
+                              Tax lookup ZIP
+                              <input
+                                value={laundryTaxLookupZip}
+                                onChange={(e) => setLaundryTaxLookupZip(e.target.value.replace(/[^0-9-]/g, "").slice(0, 10))}
+                                inputMode="numeric"
+                                placeholder="From request"
+                                className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]"
+                              />
+                              <span className="text-[11px] font-bold leading-4 text-slate-500">
+                                Auto-filled from the request. Edit only if the service ZIP is wrong.
+                              </span>
+                            </label>
+                            <label className="grid gap-2 text-sm font-bold text-slate-700">
+                              Sales tax rate %
+                              <input
+                                value={laundryManualSalesTaxRate}
+                                onChange={(e) => setLaundryManualSalesTaxRate(e.target.value)}
+                                inputMode="decimal"
+                                placeholder="Example: 10.3"
+                                className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]"
+                              />
+                              <span className="text-[11px] font-bold leading-4 text-slate-500">
+                                The lookup can fill this for you. Review before sending.
+                              </span>
+                            </label>
+                          </div>
+
                           <div className="rounded-2xl bg-[#fbf6ea] px-4 py-3 text-xs font-bold leading-5 text-slate-600">
                             <p>
-                              Use the DOR lookup, then enter the returned local WA sales tax rate before sending.
+                              Use “Lookup + fill rate” to pull the WA DOR rate from the request address/ZIP. If the lookup cannot match cleanly, use the DOR page or copy the address and enter the rate manually.
                             </p>
                             {laundryTaxLookupAddress && (
                               <p className="mt-2 text-slate-700">
                                 Request address: <span className="font-black text-[#075c58]">{laundryTaxLookupAddress}</span>
                               </p>
                             )}
-                            <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+                            <div className="mt-3 grid gap-2 sm:grid-cols-3">
+                              <button
+                                type="button"
+                                onClick={lookupLaundryTaxRateFromDor}
+                                disabled={laundryTaxLookupBusy || !laundryTaxLookupZip}
+                                className="inline-flex min-h-10 items-center justify-center rounded-2xl bg-[#075c58] px-4 py-2 text-xs font-black text-white shadow-sm transition hover:bg-[#064b48] disabled:cursor-not-allowed disabled:opacity-50"
+                              >
+                                {laundryTaxLookupBusy ? <><ActionSpinner /> Looking up...</> : "Lookup + fill rate"}
+                              </button>
                               <button
                                 type="button"
                                 onClick={() => {
                                   if (laundryDorLookupUrl) window.open(laundryDorLookupUrl, "_blank", "noopener,noreferrer");
                                 }}
                                 disabled={!laundryDorLookupUrl}
-                                className="inline-flex min-h-10 items-center justify-center rounded-2xl bg-[#075c58] px-4 py-2 text-xs font-black text-white shadow-sm transition hover:bg-[#064b48] disabled:cursor-not-allowed disabled:opacity-50"
+                                className="inline-flex min-h-10 items-center justify-center rounded-2xl border border-[#d8c18f] bg-white px-4 py-2 text-xs font-black text-slate-700 shadow-sm transition hover:border-[#075c58] hover:text-[#075c58] disabled:cursor-not-allowed disabled:opacity-50"
                               >
-                                Open WA DOR lookup
+                                Open DOR page
                               </button>
                               <button
                                 type="button"
@@ -5485,7 +5539,7 @@ export default function AdminTable({
                                 disabled={!laundryTaxLookupCopyText}
                                 className="inline-flex min-h-10 items-center justify-center rounded-2xl border border-[#d8c18f] bg-white px-4 py-2 text-xs font-black text-slate-700 shadow-sm transition hover:border-[#075c58] hover:text-[#075c58] disabled:cursor-not-allowed disabled:opacity-50"
                               >
-                                Copy lookup address
+                                Copy address
                               </button>
                             </div>
                             <p className="mt-3">
