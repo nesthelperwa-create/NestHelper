@@ -1458,6 +1458,39 @@ function getCleanAddress(item: AdminDoc) {
   return [street, locality].filter(Boolean).join("\n");
 }
 
+function getCleanStreetAddressForTaxLookup(item: AdminDoc | null) {
+  if (!item) return "";
+  const direct = getFirstPresentValue(item, ["serviceAddressLine1", "addressLine1"]);
+  if (direct) return String(direct).trim();
+  const full = String(getFirstPresentValue(item, ["serviceAddress", "address"]) || "").trim();
+  if (!full) return "";
+  return full.split("\n")[0].split(",")[0].trim();
+}
+
+function buildWaDorAddressRateLookupUrl(item: AdminDoc | null, zipOverride = "") {
+  if (!item) return "";
+  const addr = getCleanStreetAddressForTaxLookup(item);
+  const city = getCleanCity(item);
+  const zip = String(zipOverride || getCleanZip(item)).trim();
+  if (!addr && !city && !zip) return "";
+  const params = new URLSearchParams();
+  params.set("output", "text");
+  if (addr) params.set("addr", addr);
+  if (city) params.set("city", city);
+  if (zip) params.set("zip", zip);
+  return `https://webgis.dor.wa.gov/webapi/AddressRates.aspx?${params.toString()}`;
+}
+
+function buildWaDorTaxLookupCopyText(item: AdminDoc | null, zipOverride = "") {
+  if (!item) return "";
+  const street = getCleanStreetAddressForTaxLookup(item);
+  const city = getCleanCity(item);
+  const state = getCleanState(item);
+  const zip = String(zipOverride || getCleanZip(item)).trim();
+  const locality = [city, state, zip].filter(Boolean).join(", ");
+  return [street, locality].filter(Boolean).join("\n");
+}
+
 function getCleanPrimarySection(collectionName: string, item: AdminDoc): AdminExportSection {
   const title = collectionName === "contactMessages" ? "Message summary" : "Submission summary";
   const created = makeExportEntry("createdAt", item.createdAt, "Submitted");
@@ -2888,6 +2921,7 @@ export default function AdminTable({
   const [laundryDepositCredit, setLaundryDepositCredit] = useState("59");
   const [laundryManualSalesTax, setLaundryManualSalesTax] = useState(false);
   const [laundryManualSalesTaxRate, setLaundryManualSalesTaxRate] = useState("");
+  const [laundryTaxLookupZip, setLaundryTaxLookupZip] = useState("");
   const [laundryFinalNote, setLaundryFinalNote] = useState("");
   const [laundryFinalBusy, setLaundryFinalBusy] = useState(false);
   const [laundryFinalMessage, setLaundryFinalMessage] = useState("");
@@ -2981,6 +3015,7 @@ export default function AdminTable({
     const savedLaundryTaxRate = getLaundrySavedManualTaxRate(selected);
     setLaundryManualSalesTax(selected?.service === "laundry-rescue" ? true : Boolean(savedLaundryTaxRate));
     setLaundryManualSalesTaxRate(savedLaundryTaxRate);
+    setLaundryTaxLookupZip(selected?.service === "laundry-rescue" ? getCleanZip(selected) : "");
     setLaundryFinalNote("");
     setLaundryFinalMessage("");
     setLaundryFinalError("");
@@ -3131,6 +3166,9 @@ export default function AdminTable({
   const laundryIncludedWeightLbs = toNumber(laundryRatePerLb) > 0 ? Math.max(0, toNumber(laundryDepositCredit) / toNumber(laundryRatePerLb)) : 26.2;
   const laundryAdditionalWeightLbs = Math.max(0, toNumber(laundryDryWeightLbs) - laundryIncludedWeightLbs);
   const laundrySubtotal = Math.max(0, laundryAdditionalWeightLbs * toNumber(laundryRatePerLb) + toNumber(laundryAddOnsAmount));
+  const laundryTaxLookupAddress = selected ? getCleanAddress(selected).replace(/\n/g, ", ") : "";
+  const laundryDorLookupUrl = selected ? buildWaDorAddressRateLookupUrl(selected, laundryTaxLookupZip) : "";
+  const laundryTaxLookupCopyText = selected ? buildWaDorTaxLookupCopyText(selected, laundryTaxLookupZip) : "";
   const laundryTaxRateNumber = toNumber(laundryManualSalesTaxRate);
   const laundryDepositTaxCollectedAmount = getLaundryDepositTaxCollectedAmount(selected);
   const laundryDepositTaxAlreadyCollected = laundryDepositTaxCollectedAmount > 0;
@@ -3539,6 +3577,7 @@ export default function AdminTable({
           sendEmail,
           manualSalesTax: selected.service === "laundry-rescue" ? laundryManualSalesTax : undefined,
           manualSalesTaxRate: selected.service === "laundry-rescue" ? laundryManualSalesTaxRate : undefined,
+          manualSalesTaxLookupZip: selected.service === "laundry-rescue" ? laundryTaxLookupZip : undefined,
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -3600,6 +3639,7 @@ export default function AdminTable({
           sendEmail,
           manualSalesTax: selected.service === "laundry-rescue" ? laundryManualSalesTax : undefined,
           manualSalesTaxRate: selected.service === "laundry-rescue" ? laundryManualSalesTaxRate : undefined,
+          manualSalesTaxLookupZip: selected.service === "laundry-rescue" ? laundryTaxLookupZip : undefined,
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -3678,6 +3718,7 @@ export default function AdminTable({
           includeFamilyBreakdown: selected.service !== "commercial-reset" ? includeFamilyPaymentBreakdown : undefined,
           manualSalesTax: selected.service === "laundry-rescue" ? laundryManualSalesTax : undefined,
           manualSalesTaxRate: selected.service === "laundry-rescue" ? laundryManualSalesTaxRate : undefined,
+          manualSalesTaxLookupZip: selected.service === "laundry-rescue" ? laundryTaxLookupZip : undefined,
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -3745,6 +3786,7 @@ export default function AdminTable({
           sendEmail,
           manualSalesTax: laundryManualSalesTax,
           manualSalesTaxRate: laundryManualSalesTaxRate,
+          manualSalesTaxLookupZip: laundryTaxLookupZip,
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -5386,7 +5428,20 @@ export default function AdminTable({
                         </span>
                       </label>
                       {laundryManualSalesTax && (
-                        <div className="mt-3 grid gap-3 sm:grid-cols-[14rem_1fr] sm:items-start">
+                        <div className="mt-3 grid gap-3 lg:grid-cols-[12rem_12rem_1fr] lg:items-start">
+                          <label className="grid gap-2 text-sm font-bold text-slate-700">
+                            Tax lookup ZIP
+                            <input
+                              value={laundryTaxLookupZip}
+                              onChange={(e) => setLaundryTaxLookupZip(e.target.value.replace(/[^0-9-]/g, "").slice(0, 10))}
+                              inputMode="numeric"
+                              placeholder="From request"
+                              className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]"
+                            />
+                            <span className="text-[11px] font-bold leading-4 text-slate-500">
+                              Auto-filled from the request. Edit only if the service ZIP is wrong.
+                            </span>
+                          </label>
                           <label className="grid gap-2 text-sm font-bold text-slate-700">
                             Sales tax rate %
                             <input
@@ -5396,10 +5451,47 @@ export default function AdminTable({
                               placeholder="Example: 10.3"
                               className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]"
                             />
+                            <span className="text-[11px] font-bold leading-4 text-slate-500">
+                              Enter percent form. Example: use 10.3 for 10.3%.
+                            </span>
                           </label>
-                          <p className="rounded-2xl bg-[#fbf6ea] px-4 py-3 text-xs font-bold leading-5 text-slate-600">
-                            Enter the local WA sales tax rate before sending. If the $59 intro minimum is taxed now, the final invoice will only tax additional weight/add-ons. If the intro minimum was paid without tax, the final invoice can add a one-time tax catch-up for the missed $59 tax without charging the $59 again.
-                          </p>
+                          <div className="rounded-2xl bg-[#fbf6ea] px-4 py-3 text-xs font-bold leading-5 text-slate-600">
+                            <p>
+                              Use the DOR lookup, then enter the returned local WA sales tax rate before sending.
+                            </p>
+                            {laundryTaxLookupAddress && (
+                              <p className="mt-2 text-slate-700">
+                                Request address: <span className="font-black text-[#075c58]">{laundryTaxLookupAddress}</span>
+                              </p>
+                            )}
+                            <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (laundryDorLookupUrl) window.open(laundryDorLookupUrl, "_blank", "noopener,noreferrer");
+                                }}
+                                disabled={!laundryDorLookupUrl}
+                                className="inline-flex min-h-10 items-center justify-center rounded-2xl bg-[#075c58] px-4 py-2 text-xs font-black text-white shadow-sm transition hover:bg-[#064b48] disabled:cursor-not-allowed disabled:opacity-50"
+                              >
+                                Open WA DOR lookup
+                              </button>
+                              <button
+                                type="button"
+                                onClick={async () => {
+                                  if (!laundryTaxLookupCopyText) return;
+                                  await copyPlainTextToClipboard(laundryTaxLookupCopyText);
+                                  setCheckoutMessage("WA DOR tax lookup address copied.");
+                                }}
+                                disabled={!laundryTaxLookupCopyText}
+                                className="inline-flex min-h-10 items-center justify-center rounded-2xl border border-[#d8c18f] bg-white px-4 py-2 text-xs font-black text-slate-700 shadow-sm transition hover:border-[#075c58] hover:text-[#075c58] disabled:cursor-not-allowed disabled:opacity-50"
+                              >
+                                Copy lookup address
+                              </button>
+                            </div>
+                            <p className="mt-3">
+                              Failsafe: if the $59 intro minimum is taxed now, the final invoice taxes only additional weight/add-ons. If the intro minimum was paid without tax, the final invoice can add a one-time catch-up for the missed $59 tax without charging the $59 again.
+                            </p>
+                          </div>
                         </div>
                       )}
                     </div>
