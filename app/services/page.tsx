@@ -65,9 +65,9 @@ export default function ServicesPage() {
                 { title: "Whole Home Cleaning", label: "Entire home", href: "#service-whole-home-reset", text: "Choose this for full-home cleaning, first-time deep cleans, and weekly, bi-weekly, or monthly maintenance.", icon: <Home size={16} />, badge: "bg-emerald-50 text-emerald-900 border-emerald-200" },
                 { title: "Specific Area(s) Reset", label: "Selected rooms", href: "#service-specific-area-reset", text: "Choose this for kitchen, bathroom(s), bedrooms, playroom, pantry, fridge, oven, laundry area, garage, or a few rooms — not the entire home.", icon: <Grid3X3 size={16} />, badge: "bg-lime-50 text-lime-900 border-lime-200" },
                 { title: "Move-In / Move-Out Cleaning", label: "Empty home", href: "#service-move-out-cleaning", text: "Choose this for empty or mostly empty homes before moving in, after moving out, or before listing/renting.", icon: <Truck size={16} />, badge: "bg-cyan-50 text-cyan-900 border-cyan-200" },
-                { title: "Move Prep & Home Reset", label: "Move support", href: "#service-move-prep-home-reset", text: "Movers handle the heavy lifting. NestHelper helps with sorting, open-first essentials boxes, Smart Labels, supplies, laundry, and move-in reset support.", icon: <Tags size={16} />, badge: "bg-amber-50 text-amber-900 border-amber-200" },
+                { title: "Move Prep & Home Reset", label: "Move support", href: "#service-move-prep-home-reset", text: "Movers handle the heavy lifting. NestHelper helps with sorting, open-first essentials boxes, QR labels, packing supply kits, light unpacking, and after-move setup.", icon: <Tags size={16} />, badge: "bg-amber-50 text-amber-900 border-amber-200" },
                 { title: "Errand Helper", label: "Local errands", href: "#service-errand-helper", text: "Choose this for simple local errands, pickups, drop-offs, or family support tasks.", icon: <ShoppingBag size={16} />, badge: "bg-amber-50 text-amber-900 border-amber-200" },
-                { title: "Laundry Rescue", label: "Laundry help", href: "#service-laundry-rescue", text: "Choose this for laundry pickup, folding, reset help, or catching up on laundry.", icon: <Shirt size={16} />, badge: "bg-rose-50 text-rose-800 border-rose-200" },
+                { title: "Laundry Rescue", label: "Laundry help", href: "#service-laundry-rescue", text: "Choose this for laundry pickup, wash, dry, fold, and return when the baskets are piling up.", icon: <Shirt size={16} />, badge: "bg-rose-50 text-rose-800 border-rose-200" },
               ].map((item) => (
                 <a
                   key={item.title}
@@ -99,7 +99,7 @@ export default function ServicesPage() {
               <p className="pill-label mx-auto w-fit sm:mx-0"><Sparkles size={15} /> Home Cleaning & Support</p>
               <h3 id="specific-reset-support" className="text-2xl font-black text-nest-teal sm:text-3xl">For parent resets, whole-home cleaning, selected areas, moving, laundry, and errands.</h3>
               <p className="max-w-3xl font-semibold leading-7 text-nest-ink/68">
-                Pick the main service first. Add-ons like simple meal prep, QR labels, supplies, laundry help, or move support can be noted in the request and confirmed before payment.
+                Pick the main service first. Add-ons like simple meal prep, QR labels, packing supply kits, or move support can be noted in the request and confirmed before payment. Laundry Rescue stays separate so pricing stays clear.
               </p>
             </div>
             <div className="grid items-start gap-6 md:grid-cols-2 xl:grid-cols-3">
@@ -137,8 +137,8 @@ export default function ServicesPage() {
               <SupportNoteCard
                 icon={<ClipboardCheck size={18} />}
                 title="Move support"
-                label="Not a moving company"
-                text="Sorting, open-first boxes, labels, supplies, light unpacking, and reset help. Movers handle transportation and heavy lifting."
+                label="Move support option"
+                text="Sorting, open-first boxes, QR labels, packing supply kits, light unpacking, and after-move setup. Movers handle transportation and heavy lifting."
               />
             </div>
           </div>

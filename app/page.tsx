@@ -121,7 +121,7 @@ export default function HomePage() {
             <InfoCard icon={<Home size={20} />} title="Parent reset help" text="Playroom, kids room, pantry, entry, and family-space resets with organizing, light cleaning, child-safe disinfecting, and optional simple in-home meal prep support when the day gets away from you." />
             <InfoCard icon={<Sparkles size={20} />} title="Laundry rescue" text="$59 intro minimum includes pickup, wash, dry, fold, return, and up to about 26.2 lbs. Additional laundry is $2.25/lb." />
             <InfoCard icon={<ClipboardCheck size={20} />} title="Errands and family support" text="Approved errands, pickups, returns, and household support with a reviewed scope before payment." />
-            <InfoCard icon={<MessageCircle size={20} />} title="Move prep support" text="Movers handle the heavy lifting. NestHelper helps with in-home sorting, Smart Labels, open-first boxes, supplies, laundry, and move-in reset support." />
+            <InfoCard icon={<MessageCircle size={20} />} title="Move prep support" text="Movers handle the heavy lifting. NestHelper helps with sorting, open-first boxes, QR labels, packing supply kits, light unpacking, and after-move setup." />
           </div>
         </SectionShell>
       </AnimatedSection>
