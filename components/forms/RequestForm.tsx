@@ -96,6 +96,7 @@ const defaultState = {
   laundryTypes: [] as string[],
   laundryBagEstimate: "1–2 bags/hampers",
   laundryPickupSpot: "Front porch / outside door",
+  laundryReturnSpot: "Same as pickup spot",
   detergent: "Eco-friendly standard detergent",
   dryPreference: "Standard dry",
   laundryAddOns: [] as string[],
@@ -495,6 +496,8 @@ const laundryTypeOptions = [
   "Mixed household laundry",
 ];
 
+const laundryRequestAddOns = laundryAddOns.filter((item) => item !== "Customer-provided detergent, no fee");
+
 function normalizeServiceParam(serviceId: string) {
   if (serviceId === "move-in-out-cleaning") return "move-out-cleaning";
   return serviceId;
@@ -804,6 +807,7 @@ function cleanForSelectedService(form: RequestFormState) {
       laundryTypes: form.laundryTypes,
       laundryBagEstimate: form.laundryBagEstimate,
       laundryPickupSpot: form.laundryPickupSpot,
+      laundryReturnSpot: form.laundryReturnSpot,
       detergent: form.detergent,
       dryPreference: form.dryPreference,
       laundryAddOns: form.laundryAddOns,
@@ -931,6 +935,7 @@ export function RequestForm() {
       laundryPickupSpot: nextCategory === "laundry" ? prev.laundryPickupSpot : defaultState.laundryPickupSpot,
       detergent: nextCategory === "laundry" ? prev.detergent : "Eco-friendly standard detergent",
       dryPreference: nextCategory === "laundry" ? prev.dryPreference : "Standard dry",
+      laundryReturnSpot: nextCategory === "laundry" ? prev.laundryReturnSpot : defaultState.laundryReturnSpot,
       laundryAddOns: nextCategory === "laundry" ? prev.laundryAddOns : [],
       reusableBagAck: nextCategory === "laundry" ? prev.reusableBagAck : false,
     }));
@@ -1081,14 +1086,14 @@ export function RequestForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} onInvalidCapture={focusFirstInvalidField} className="grid gap-6 overflow-hidden rounded-[2.5rem] border border-nest-gold/18 bg-white/90 p-4 shadow-soft backdrop-blur sm:p-6 lg:p-8">
+    <form onSubmit={onSubmit} onInvalidCapture={focusFirstInvalidField} className="grid gap-5 overflow-hidden rounded-[2.5rem] border border-nest-gold/18 bg-white/90 p-4 shadow-soft backdrop-blur sm:gap-6 sm:p-6 lg:p-8">
       <div className="rounded-[1.75rem] border border-nest-gold/16 bg-gradient-to-br from-nest-cream via-white to-nest-mint/25 p-4 shadow-sm sm:p-5">
         <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-center">
           <div>
             <p className="text-xs font-black uppercase tracking-[0.22em] text-nest-gold">No payment due yet</p>
             <h2 className="mt-2 text-2xl font-black text-nest-teal sm:text-3xl">Request details</h2>
             <p className="mt-2 max-w-2xl text-sm font-semibold leading-6 text-nest-ink/70 sm:text-base sm:leading-7">
-              Choose a service, then answer the questions that match that package. NestHelper reviews the request before checkout.
+              Start with the service and timing, then answer only the questions that apply. NestHelper reviews the request before checkout.
             </p>
             <p className="mt-2 text-sm font-bold text-nest-ink/65"><span className="text-red-600">*</span> Required fields</p>
           </div>
@@ -1142,24 +1147,7 @@ export function RequestForm() {
         </div>
       </Section>
 
-      <Section title="2. Service address" description="NestHelper reviews each address for service area, timing, access, and helper availability before payment.">
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Street address" required><input className="input" required autoComplete="address-line1" placeholder="123 Main St" value={form.address} onChange={(e) => update("address", e.target.value)} /></Field>
-          <Field label="Apt / unit / suite (optional)"><input className="input" autoComplete="address-line2" placeholder="Apt, unit, suite, gate code note, etc." value={form.address2} onChange={(e) => update("address2", e.target.value)} /></Field>
-          <Field label="City" required><input className="input" required autoComplete="address-level2" value={form.city} onChange={(e) => update("city", e.target.value)} /></Field>
-          <Field label="State" required>
-            <select className="input" required autoComplete="address-level1" value={form.state} onChange={(e) => update("state", e.target.value)}>
-              <option value="WA">Washington</option>
-            </select>
-          </Field>
-          <Field label="ZIP" required><input className="input" required autoComplete="postal-code" inputMode="numeric" pattern="\d{5}(-\d{4})?" placeholder="98072" value={form.zip} onChange={(e) => update("zip", normalizeZipInput(e.target.value))} /></Field>
-        </div>
-        <p className="rounded-2xl border border-nest-gold/15 bg-nest-cream/70 px-4 py-3 text-xs font-bold leading-5 text-nest-ink/65">
-          Use the service address so we can confirm area, access, availability, and any required taxes. If an address cannot be confirmed or appears outside our service area, NestHelper will follow up before accepting payment.
-        </p>
-      </Section>
-
-      <Section title="3. Service and timing" description="Choose the package first. The next section changes based on the package selected.">
+      <Section title="2. Choose service and timing" description="Pick the closest service. The form will only show questions that match that choice.">
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Service requested" required>
             <select className="input" required value={form.service} onChange={(e) => handleServiceChange(e.target.value)}>
@@ -1201,6 +1189,24 @@ export function RequestForm() {
             </div>
           </div>
         )}
+      </Section>
+
+
+      <Section title="3. Service address" description="After we know the service, we review the address for service area, timing, access, and helper availability before payment.">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Street address" required><input className="input" required autoComplete="address-line1" placeholder="123 Main St" value={form.address} onChange={(e) => update("address", e.target.value)} /></Field>
+          <Field label="Apt / unit / suite (optional)"><input className="input" autoComplete="address-line2" placeholder="Apt, unit, suite, gate code note, etc." value={form.address2} onChange={(e) => update("address2", e.target.value)} /></Field>
+          <Field label="City" required><input className="input" required autoComplete="address-level2" value={form.city} onChange={(e) => update("city", e.target.value)} /></Field>
+          <Field label="State" required>
+            <select className="input" required autoComplete="address-level1" value={form.state} onChange={(e) => update("state", e.target.value)}>
+              <option value="WA">Washington</option>
+            </select>
+          </Field>
+          <Field label="ZIP" required><input className="input" required autoComplete="postal-code" inputMode="numeric" pattern="\d{5}(-\d{4})?" placeholder="98072" value={form.zip} onChange={(e) => update("zip", normalizeZipInput(e.target.value))} /></Field>
+        </div>
+        <p className="rounded-2xl border border-nest-gold/15 bg-nest-cream/70 px-4 py-3 text-xs font-bold leading-5 text-nest-ink/65">
+          Use the service address so we can confirm area, access, availability, and any required taxes. If an address cannot be confirmed or appears outside our service area, NestHelper will follow up before accepting payment.
+        </p>
       </Section>
 
       {serviceCategory === "none" && (
@@ -1523,7 +1529,7 @@ export function RequestForm() {
       {isMovePrep && (
         <Section title="4. Move Prep & Home Reset scope" description="Movers handle the heavy lifting. NestHelper helps with the home reset. Start with the main help you need, then add only the extras that apply.">
           <div className="rounded-3xl border border-nest-gold/20 bg-nest-cream p-5 text-sm leading-6 text-nest-ink/76">
-            <strong className="text-nest-teal">Simple flow:</strong> choose a starting package, pick before-move focus areas, then add any priced extras like unpacking, kitchen reset, QR labels, supply kits, laundry, or move-out cleaning review. <strong className="text-nest-teal">Boundary:</strong> {MOVE_PREP_DISCLAIMER}
+            <strong className="text-nest-teal">Simple flow:</strong> choose a starting package, pick before-move focus areas, then add any priced extras like after-move unpacking, after-move kitchen setup, QR labels, supply kits, or move-out cleaning review. <strong className="text-nest-teal">Boundary:</strong> {MOVE_PREP_DISCLAIMER}
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
@@ -1571,7 +1577,7 @@ export function RequestForm() {
           <div>
             <div className="label mb-3">2. Optional priced add-ons</div>
             <p className="mb-3 text-sm leading-6 text-nest-ink/65">
-              Add these only if you want them reviewed with the request. Supply kit descriptions are shown below so you can choose the closest fit.
+              Add these only if you want them reviewed with the request. Supply kit details stay visible; other add-on notes appear when selected.
             </p>
             <div className="grid gap-2 sm:grid-cols-2">
               {movePrepPricedAddOnOptions.map((item) => {
@@ -1581,7 +1587,7 @@ export function RequestForm() {
                     key={item}
                     checked={checked}
                     description={movePrepOptionDescriptions[item]}
-                    showDescription
+                    showDescription={item.toLowerCase().includes("supply kit")}
                     onChange={(nextChecked) => toggleList("movePrepOptions", item, nextChecked)}
                   >
                     {item}
@@ -1614,7 +1620,7 @@ export function RequestForm() {
           </div>
 
           <div className="rounded-3xl border border-nest-gold/16 bg-white p-5 text-sm font-semibold leading-6 text-nest-ink/72 shadow-sm">
-            <p><strong className="text-nest-teal">Pricing guide:</strong> Move prep starts at $199. Focused room or area prep is $249. After-move unpacking/home reset starts at $299. Kitchen setup/reset starts at $349. QR smart labels are $99 up to 20 labels. Basic packing supply kits start at $59 and are charged separately.</p>
+            <p><strong className="text-nest-teal">Pricing guide:</strong> Move prep starts at $199. Focused room or area prep is $249. After-move unpacking/home reset starts at $299. After-move kitchen setup/reset starts at $349. QR smart labels are $99 up to 20 labels. Basic packing supply kits start at $59 and are charged separately.</p>
             <p className="mt-2">Additional approved helper time is $65 per helper-hour with a 1-hour minimum. Larger supply kits, move-out cleaning, garage/storage areas, sheds, heavy clutter, and larger QR label setups are reviewed before checkout.</p>
           </div>
 
@@ -1762,14 +1768,25 @@ export function RequestForm() {
                 <option>Not sure yet</option>
               </select>
             </Field>
-            <Field label="Pickup spot / access" required>
+            <Field label="Pickup spot" required>
               <select className="input" required value={form.laundryPickupSpot} onChange={(e) => update("laundryPickupSpot", e.target.value)}>
                 <option>Front porch / outside door</option>
                 <option>Garage</option>
                 <option>Apartment / condo door</option>
                 <option>Lobby / front desk</option>
                 <option>Text me on arrival</option>
-                <option>Other — I’ll explain below</option>
+                <option>Other — I’ll explain in access notes</option>
+              </select>
+            </Field>
+            <Field label="Return/drop-off spot">
+              <select className="input" value={form.laundryReturnSpot} onChange={(e) => update("laundryReturnSpot", e.target.value)}>
+                <option>Same as pickup spot</option>
+                <option>Front porch / outside door</option>
+                <option>Garage</option>
+                <option>Apartment / condo door</option>
+                <option>Lobby / front desk</option>
+                <option>Text me before returning</option>
+                <option>Other — I’ll explain in access notes</option>
               </select>
             </Field>
             <Field label="Detergent preference">
@@ -1777,8 +1794,14 @@ export function RequestForm() {
                 <option>Eco-friendly standard detergent</option>
                 <option>Baby & Sensitive Skin Detergent +$5</option>
                 <option>Fragrance-free detergent +$5</option>
+                <option>Customer-provided detergent, no fee</option>
                 <option>No preference</option>
               </select>
+              {form.detergent === "Customer-provided detergent, no fee" && (
+                <p className="rounded-2xl bg-nest-mint/30 px-3 py-2 text-xs font-bold leading-5 text-nest-teal">
+                  Please leave your detergent with the laundry. If it is not there, we’ll use NestHelper’s standard eco-friendly detergent.
+                </p>
+              )}
             </Field>
             <Field label="Dryer preference">
               <select className="input" value={form.dryPreference} onChange={(e) => update("dryPreference", e.target.value)}>
@@ -1799,7 +1822,7 @@ export function RequestForm() {
           <div>
             <div className="label mb-3">Laundry add-ons to consider</div>
             <div className="grid gap-2 sm:grid-cols-2">
-              {laundryAddOns.map((item) => (
+              {laundryRequestAddOns.map((item) => (
                 <CheckOption key={item} checked={form.laundryAddOns.includes(item)} onChange={(checked) => toggleList("laundryAddOns", item, checked)}>{item}</CheckOption>
               ))}
             </div>
@@ -1883,8 +1906,8 @@ export function RequestForm() {
       )}
 
       {isLaundry && (
-        <Section title="5. Laundry pickup and return notes" description="Only include the access details needed for laundry pickup and return.">
-          <Field label="Pickup/return, parking, or access notes"><input className="input" placeholder="Example: porch pickup, apartment gate code, text on arrival, leave clean bags by front door" value={form.parkingAccess} onChange={(e) => update("parkingAccess", e.target.value)} /></Field>
+        <Section title="5. Laundry pickup and return notes" description="Add porch, garage, gate, remote access, return location, or text-on-arrival details here.">
+          <Field label="Pickup, return, garage, porch, or access notes"><input className="input" placeholder="Example: porch pickup, remote garage opening, return clean laundry to garage shelf, gate code, text on arrival" value={form.parkingAccess} onChange={(e) => update("parkingAccess", e.target.value)} /></Field>
         </Section>
       )}
 
