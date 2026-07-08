@@ -498,6 +498,27 @@ const laundryTypeOptions = [
 
 const laundryRequestAddOns = laundryAddOns.filter((item) => item !== "Customer-provided detergent, no fee");
 
+const bedroomCountOptions = [
+  "Studio / no separate bedroom",
+  "1 bedroom",
+  "2 bedrooms",
+  "3 bedrooms",
+  "4 bedrooms",
+  "5+ bedrooms",
+  "Not sure",
+];
+
+const bathroomCountOptions = [
+  "1 bathroom",
+  "1.5 bathrooms",
+  "2 bathrooms",
+  "2.5 bathrooms",
+  "3 bathrooms",
+  "3.5 bathrooms",
+  "4+ bathrooms",
+  "Not sure",
+];
+
 function normalizeServiceParam(serviceId: string) {
   if (serviceId === "move-in-out-cleaning") return "move-out-cleaning";
   return serviceId;
@@ -1003,7 +1024,7 @@ export function RequestForm() {
     if (form.service === "whole-home-reset") {
       if (!form.squareFootage.trim() || !form.bedrooms.trim() || !form.bathrooms.trim()) {
         setStatus("error");
-        setMessage("Please enter the approximate square footage, bedrooms, and bathrooms for the Whole Home Reset.");
+        setMessage("Please complete the approximate square footage, bedrooms, and bathrooms for Whole Home Cleaning.");
         return;
       }
 
@@ -1245,10 +1266,16 @@ export function RequestForm() {
                   <input className="input" required inputMode="numeric" placeholder="Example: 1,850" value={form.squareFootage} onChange={(e) => update("squareFootage", e.target.value.replace(/[^0-9,]/g, "").slice(0, 8))} />
                 </Field>
                 <Field label="Bedrooms" required>
-                  <input className="input" required placeholder="Example: 3 bedrooms" value={form.bedrooms} onChange={(e) => update("bedrooms", e.target.value)} />
+                  <select className="input" required value={form.bedrooms} onChange={(e) => update("bedrooms", e.target.value)}>
+                    <option value="">Choose bedrooms</option>
+                    {bedroomCountOptions.map((option) => <option key={option}>{option}</option>)}
+                  </select>
                 </Field>
                 <Field label="Bathrooms" required>
-                  <input className="input" required placeholder="Example: 2.5 bathrooms" value={form.bathrooms} onChange={(e) => update("bathrooms", e.target.value)} />
+                  <select className="input" required value={form.bathrooms} onChange={(e) => update("bathrooms", e.target.value)}>
+                    <option value="">Choose bathrooms</option>
+                    {bathroomCountOptions.map((option) => <option key={option}>{option}</option>)}
+                  </select>
                 </Field>
                 <Field label="Visit type" required>
                   <select className="input" required value={form.wholeHomeVisitType} onChange={(e) => update("wholeHomeVisitType", e.target.value)}>
@@ -1654,10 +1681,16 @@ export function RequestForm() {
               <input className="input" required inputMode="numeric" placeholder="Example: 1,250" value={form.squareFootage} onChange={(e) => update("squareFootage", e.target.value.replace(/[^0-9,]/g, "").slice(0, 8))} />
             </Field>
             <Field label="Bedrooms" required>
-              <input className="input" required placeholder="Example: 2 bedrooms" value={form.bedrooms} onChange={(e) => update("bedrooms", e.target.value)} />
+              <select className="input" required value={form.bedrooms} onChange={(e) => update("bedrooms", e.target.value)}>
+                <option value="">Choose bedrooms</option>
+                {bedroomCountOptions.map((option) => <option key={option}>{option}</option>)}
+              </select>
             </Field>
             <Field label="Bathrooms" required>
-              <input className="input" required placeholder="Example: 2 bathrooms" value={form.bathrooms} onChange={(e) => update("bathrooms", e.target.value)} />
+              <select className="input" required value={form.bathrooms} onChange={(e) => update("bathrooms", e.target.value)}>
+                <option value="">Choose bathrooms</option>
+                {bathroomCountOptions.map((option) => <option key={option}>{option}</option>)}
+              </select>
             </Field>
             <Field label="Is this for move-in or move-out?" required>
               <select className="input" required value={form.moveCleaningType} onChange={(e) => update("moveCleaningType", e.target.value)}>
