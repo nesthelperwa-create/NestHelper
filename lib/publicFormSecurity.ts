@@ -144,6 +144,7 @@ const serviceRequestAllowedFields = [
   "serviceRegion",
   "businessType",
   "squareFootage",
+  "bedrooms",
   "bathrooms",
   "kitchens",
   "showers",
@@ -501,8 +502,10 @@ function validateRequired(collection: SubmissionCollection, payload: Record<stri
 
       if (trimText(payload.service) === "whole-home-reset") {
         requireText("squareFootage", "approximate square footage");
-        requireText("bedrooms", "bedrooms");
         requireText("bathrooms", "bathrooms");
+        // Bedrooms is collected and saved when provided, but it should not block
+        // a public request from submitting. If a browser/autofill/dropdown issue
+        // ever strips it out, Leo/Gen can clarify bedroom count during review.
         requireText("wholeHomeVisitType", "visit type");
         requireText("requestDetails", "top priorities and safety notes");
 
