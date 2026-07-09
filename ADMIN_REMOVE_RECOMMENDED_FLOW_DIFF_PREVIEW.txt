@@ -1,0 +1,46 @@
+--- before/components/admin/AdminTable.tsx
++++ after/components/admin/AdminTable.tsx
+@@ -787,28 +787,6 @@
+         <div className="rounded-2xl bg-[#f4ecdc] p-3"><span className="font-black text-[#075c58]">Outlined buttons</span> open, copy, fill, or create without emailing.</div>
+         <div className="rounded-2xl bg-[#f4ecdc] p-3"><span className="font-black text-[#075c58]">Messages appear clearly</span> after a click so admins know if it worked.</div>
+         <div className="rounded-2xl bg-[#f4ecdc] p-3"><span className="font-black text-[#075c58]">Detail windows</span> only close with the Close button to prevent lost work.</div>
+-      </div>
+-    </div>
+-  );
+-}
+-
+-function AdminWorkflowGuide({ selectedIsCommercial, selectedService }: { selectedIsCommercial: boolean; selectedService?: string }) {
+-  const laundry = selectedService === "laundry-rescue";
+-  const steps = selectedIsCommercial
+-    ? ["Review request", "Build quote", "Save breakdown", "Send first payment", "Track add-ons/refunds"]
+-    : laundry
+-      ? ["Review request", "Send deposit", "Dry weigh laundry", "Send final balance", "Track extras/refunds"]
+-      : ["Review request", "Update status", "Send checkout", "Schedule visit", "Track extras/refunds"];
+-  return (
+-    <div className="rounded-3xl border border-[#eadfc8] bg-white p-4 shadow-sm">
+-      <p className="text-xs font-black uppercase tracking-[0.18em] text-[#b98a2f]">Recommended flow</p>
+-      <div className="mt-3 grid gap-2 sm:grid-cols-5">
+-        {steps.map((step, index) => (
+-          <div key={step} className="rounded-2xl bg-[#fbf6ea] p-3 text-xs font-bold leading-5 text-slate-700">
+-            <span className="mb-2 inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#075c58] text-white">{index + 1}</span>
+-            <span className="block">{step}</span>
+-          </div>
+-        ))}
+       </div>
+     </div>
+   );
+@@ -4606,14 +4584,6 @@
+             </div>
+ 
+             <div className="mb-5 space-y-3">
+-              {showPaymentActions && (
+-                <details className="rounded-3xl border border-[#eadfc8] bg-white p-4 shadow-sm">
+-                  <summary className="cursor-pointer text-sm font-black text-[#075c58]">Recommended flow</summary>
+-                  <div className="mt-3">
+-                    <AdminWorkflowGuide selectedIsCommercial={selectedIsCommercial} selectedService={selected.service} />
+-                  </div>
+-                </details>
+-              )}
+               <AdminActionFeedback
+                 busy={anyActionBusy}
+                 activeAction={activeAction}

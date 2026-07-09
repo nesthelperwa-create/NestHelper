@@ -792,28 +792,6 @@ function AdminHelpCard() {
   );
 }
 
-function AdminWorkflowGuide({ selectedIsCommercial, selectedService }: { selectedIsCommercial: boolean; selectedService?: string }) {
-  const laundry = selectedService === "laundry-rescue";
-  const steps = selectedIsCommercial
-    ? ["Review request", "Build quote", "Save breakdown", "Send first payment", "Track add-ons/refunds"]
-    : laundry
-      ? ["Review request", "Send deposit", "Dry weigh laundry", "Send final balance", "Track extras/refunds"]
-      : ["Review request", "Update status", "Send checkout", "Schedule visit", "Track extras/refunds"];
-  return (
-    <div className="rounded-3xl border border-[#eadfc8] bg-white p-4 shadow-sm">
-      <p className="text-xs font-black uppercase tracking-[0.18em] text-[#b98a2f]">Recommended flow</p>
-      <div className="mt-3 grid gap-2 sm:grid-cols-5">
-        {steps.map((step, index) => (
-          <div key={step} className="rounded-2xl bg-[#fbf6ea] p-3 text-xs font-bold leading-5 text-slate-700">
-            <span className="mb-2 inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#075c58] text-white">{index + 1}</span>
-            <span className="block">{step}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 function isPhotoDataField(key: string) {
   const normalized = key.trim().toLowerCase().replaceAll("_", "").replaceAll("-", "");
   return ["photouploads", "uploadedphotos", "photodataurls", "imagedataurls"].includes(normalized);
@@ -4606,14 +4584,6 @@ export default function AdminTable({
             </div>
 
             <div className="mb-5 space-y-3">
-              {showPaymentActions && (
-                <details className="rounded-3xl border border-[#eadfc8] bg-white p-4 shadow-sm">
-                  <summary className="cursor-pointer text-sm font-black text-[#075c58]">Recommended flow</summary>
-                  <div className="mt-3">
-                    <AdminWorkflowGuide selectedIsCommercial={selectedIsCommercial} selectedService={selected.service} />
-                  </div>
-                </details>
-              )}
               <AdminActionFeedback
                 busy={anyActionBusy}
                 activeAction={activeAction}
