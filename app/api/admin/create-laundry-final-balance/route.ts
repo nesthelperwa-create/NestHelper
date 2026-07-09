@@ -316,23 +316,14 @@ export async function POST(request: Request) {
       footer: autoCharge
         ? "This invoice reflects the final Laundry Rescue balance for additional laundry above the included minimum weight, plus selected add-ons or bulky items. The $59 minimum was already paid and includes pickup, wash, dry, fold, return, and up to about 26.2 lbs. The customer authorized NestHelper to charge the saved payment method for this final balance."
         : "This invoice reflects the final Laundry Rescue balance for additional laundry above the included minimum weight, plus selected add-ons or bulky items. The $59 minimum was already paid and includes pickup, wash, dry, fold, return, and up to about 26.2 lbs. Laundry is held until the final balance is fully paid.",
+      // Stripe invoices allow only a small number of custom_fields.
+      // Keep the customer-facing invoice fields under the limit and store the
+      // rest in metadata below so the dashboard/audit details are preserved.
       custom_fields: [
         { name: "Dry weight", value: `${formatNumber(dryWeightLbs)} lb` },
-        { name: "Included in minimum", value: `Up to about ${formatNumber(laundryDisplayIncludedLbs)} lb` },
+        { name: "Included weight", value: `About ${formatNumber(laundryDisplayIncludedLbs)} lb` },
         { name: "Additional weight", value: `${formatNumber(additionalWeightLbs)} lb` },
-        { name: "Additional rate", value: `${formatMoney(ratePerLb)} / lb` },
-        { name: "Minimum already paid", value: formatMoney(depositCredit) },
-        {
-          name: "Intro tax status",
-          value: manualSalesTax.enabled
-            ? depositTaxCatchUp.required
-              ? `Catch-up: ${formatMoney(depositTaxCatchUpAmount)}`
-              : depositTaxCollectedCents > 0
-                ? "Already collected"
-                : "No catch-up needed"
-            : "Not applied",
-        },
-        { name: "Final collection", value: autoCharge ? "Auto-charge authorized" : "Invoice before delivery" },
+        { name: "Final collection", value: autoCharge ? "Auto-charge" : "Invoice before delivery" },
       ],
       metadata: {
         requestId,
@@ -346,6 +337,13 @@ export async function POST(request: Request) {
         ratePerLb: String(Number(ratePerLb.toFixed(2))),
         addOnsAmount: String(Number(addOnsAmount.toFixed(2))),
         depositCredit: String(Number(depositCredit.toFixed(2))),
+        introTaxStatus: manualSalesTax.enabled
+          ? depositTaxCatchUp.required
+            ? `catch_up_${Number(depositTaxCatchUpAmount.toFixed(2))}`
+            : depositTaxCollectedCents > 0
+              ? "already_collected"
+              : "no_catch_up_needed"
+          : "not_applied",
         depositTaxCollectedCents: String(depositTaxCollectedCents),
         depositTaxCatchUpRequired: depositTaxCatchUp.required ? "true" : "false",
         depositTaxCatchUpAmount: String(Number(depositTaxCatchUpAmount.toFixed(2))),
