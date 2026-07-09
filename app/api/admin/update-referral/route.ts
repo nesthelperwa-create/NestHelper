@@ -64,7 +64,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: false, error: "Missing referral code." }, { status: 400 });
     }
 
-    const defaultAmount = current.service === "laundry-rescue" ? REFERRAL_PROGRAM.laundryCredit : REFERRAL_PROGRAM.defaultNewCustomerCredit;
+    const defaultAmount = serviceKey.includes("laundry") ? REFERRAL_PROGRAM.laundryCredit : REFERRAL_PROGRAM.defaultNewCustomerCredit;
     const updates = {
       referralCode: nextCode,
       referralProgram: REFERRAL_PROGRAM.programName,

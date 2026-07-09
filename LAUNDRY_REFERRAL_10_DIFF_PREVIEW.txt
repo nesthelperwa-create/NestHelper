@@ -1,0 +1,70 @@
+--- before/lib/referrals.ts
++++ after/lib/referrals.ts
+@@ -3,7 +3,7 @@
+   programName: "Family Referrals",
+   label: "Family Referrals",
+   defaultNewCustomerCredit: 25,
+-  laundryCredit: 15,
++  laundryCredit: 10,
+   referrerReward: "a NestHelper family referral credit",
+   rewardLabel: "a NestHelper family referral credit",
+   statuses: [
+
+--- before/app/api/admin/create-family-invoice/route.ts
++++ after/app/api/admin/create-family-invoice/route.ts
+@@ -8,7 +8,7 @@
+ import { services } from "@/lib/services";
+ import { emailAliases } from "@/lib/emailRouting";
+ import { sendFamilyInvoiceEmail } from "@/lib/sendFamilyInvoiceEmail";
+-import { getAvailableCustomerReferralCreditsForEmail, getTotalCustomerCreditAmount, reserveAppliedCustomerReferralCreditsForPayment } from "@/lib/referrals";
++import { REFERRAL_PROGRAM, getAvailableCustomerReferralCreditsForEmail, getTotalCustomerCreditAmount, reserveAppliedCustomerReferralCreditsForPayment } from "@/lib/referrals";
+ import { createManualDiscountCoupon, getManualSalesTaxFirestoreFields, getManualSalesTaxMetadata, getOrCreateManualSalesTaxRate, manualTaxRatesParam, resolveManualSalesTaxConfig, type ManualSalesTaxConfig } from "@/lib/stripeManualTax";
+ 
+ export const runtime = "nodejs";
+@@ -84,7 +84,7 @@
+   );
+   if (savedAmount > 0) return savedAmount;
+   const raw = `${getString(data.service)} ${getString(data.selectedServiceTitle)} ${getString(data.packageType)}`.toLowerCase();
+-  return raw.includes("laundry") ? 15 : 25;
++  return raw.includes("laundry") ? REFERRAL_PROGRAM.laundryCredit : REFERRAL_PROGRAM.defaultNewCustomerCredit;
+ }
+ 
+ function getServiceTitle(data: Record<string, unknown>) {
+
+--- before/app/api/admin/update-referral/route.ts
++++ after/app/api/admin/update-referral/route.ts
+@@ -64,7 +64,7 @@
+       return NextResponse.json({ ok: false, error: "Missing referral code." }, { status: 400 });
+     }
+ 
+-    const defaultAmount = current.service === "laundry-rescue" ? REFERRAL_PROGRAM.laundryCredit : REFERRAL_PROGRAM.defaultNewCustomerCredit;
++    const defaultAmount = serviceKey.includes("laundry") ? REFERRAL_PROGRAM.laundryCredit : REFERRAL_PROGRAM.defaultNewCustomerCredit;
+     const updates = {
+       referralCode: nextCode,
+       referralProgram: REFERRAL_PROGRAM.programName,
+
+--- before/app/referrals/page.tsx
++++ after/app/referrals/page.tsx
+@@ -105,7 +105,7 @@
+               </div>
+ 
+               <div className="mt-4 rounded-2xl bg-nest-cream p-4 text-sm font-black leading-6 text-nest-ink/72">
+-                Laundry Rescue referral credits may be $15 instead of $25 because laundry pricing is based on weight and final balance.
++                Laundry Rescue referral credits may be $10 instead of $25 because laundry pricing is based on pickup, delivery, weight, and final balance.
+               </div>
+             </div>
+ 
+
+--- before/components/admin/AdminTable.tsx
++++ after/components/admin/AdminTable.tsx
+@@ -329,6 +329,10 @@
+ 
+ function isFamilyReferralEligibleRequest(item: AdminDoc | null | undefined) {
+   return ["family-reset-3hr", "whole-home-reset", "specific-area-reset", "move-prep-home-reset", "move-out-cleaning", "errand-helper", "laundry-rescue"].includes(getServiceKey(item));
++}
++
++function getSuggestedFamilyReferralCreditAmount(item: AdminDoc | null | undefined) {
++  return getServiceKey(item) === "laundry-rescue" ? 10 : 25;
+ }
+ 
+ function isCompletedRequest(item: AdminDoc | null | undefined) {

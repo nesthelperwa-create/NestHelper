@@ -331,6 +331,10 @@ function isFamilyReferralEligibleRequest(item: AdminDoc | null | undefined) {
   return ["family-reset-3hr", "whole-home-reset", "specific-area-reset", "move-prep-home-reset", "move-out-cleaning", "errand-helper", "laundry-rescue"].includes(getServiceKey(item));
 }
 
+function getSuggestedFamilyReferralCreditAmount(item: AdminDoc | null | undefined) {
+  return getServiceKey(item) === "laundry-rescue" ? 10 : 25;
+}
+
 function isCompletedRequest(item: AdminDoc | null | undefined) {
   return String(item?.status || "").trim().toLowerCase() === "completed";
 }

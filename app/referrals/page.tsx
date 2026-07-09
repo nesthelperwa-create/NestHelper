@@ -105,7 +105,7 @@ export default async function ReferralsPage({ searchParams }: ReferralsPageProps
               </div>
 
               <div className="mt-4 rounded-2xl bg-nest-cream p-4 text-sm font-black leading-6 text-nest-ink/72">
-                Laundry Rescue referral credits may be $15 instead of $25 because laundry pricing is based on weight and final balance.
+                Laundry Rescue referral credits may be $10 instead of $25 because laundry pricing is based on pickup, delivery, weight, and final balance.
               </div>
             </div>
 

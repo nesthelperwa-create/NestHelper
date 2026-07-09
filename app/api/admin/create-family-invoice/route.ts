@@ -8,7 +8,7 @@ import { getFirebaseAdminDb } from "@/lib/firebaseAdmin";
 import { services } from "@/lib/services";
 import { emailAliases } from "@/lib/emailRouting";
 import { sendFamilyInvoiceEmail } from "@/lib/sendFamilyInvoiceEmail";
-import { getAvailableCustomerReferralCreditsForEmail, getTotalCustomerCreditAmount, reserveAppliedCustomerReferralCreditsForPayment } from "@/lib/referrals";
+import { REFERRAL_PROGRAM, getAvailableCustomerReferralCreditsForEmail, getTotalCustomerCreditAmount, reserveAppliedCustomerReferralCreditsForPayment } from "@/lib/referrals";
 import { createManualDiscountCoupon, getManualSalesTaxFirestoreFields, getManualSalesTaxMetadata, getOrCreateManualSalesTaxRate, manualTaxRatesParam, resolveManualSalesTaxConfig, type ManualSalesTaxConfig } from "@/lib/stripeManualTax";
 
 export const runtime = "nodejs";
@@ -84,7 +84,7 @@ function getExpectedReferralCreditAmount(data: Record<string, unknown>) {
   );
   if (savedAmount > 0) return savedAmount;
   const raw = `${getString(data.service)} ${getString(data.selectedServiceTitle)} ${getString(data.packageType)}`.toLowerCase();
-  return raw.includes("laundry") ? 15 : 25;
+  return raw.includes("laundry") ? REFERRAL_PROGRAM.laundryCredit : REFERRAL_PROGRAM.defaultNewCustomerCredit;
 }
 
 function getServiceTitle(data: Record<string, unknown>) {
