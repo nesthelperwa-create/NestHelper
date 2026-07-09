@@ -109,6 +109,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
             <p className="text-xs font-bold uppercase tracking-[0.25em] text-[#b98a2f]">NestHelper LLC</p>
             <h1 className="text-2xl font-bold text-[#075c58]">Admin Dashboard</h1>
             <p className="text-sm text-slate-500">Signed in as {user.email}</p>
+            <p className="mt-1 text-xs font-semibold text-slate-400">Requests, quotes, helper ops, smart labels, outreach, and messages.</p>
           </div>
           <button
             onClick={() => signOut(firebaseAuth)}
@@ -117,7 +118,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
             Sign out
           </button>
         </div>
-        <nav className="mx-auto flex w-full max-w-7xl gap-2 overflow-x-auto px-3 pb-3 sm:px-4">
+        <nav className="mx-auto flex w-full max-w-7xl gap-2 overflow-x-auto px-3 pb-3 sm:flex-wrap sm:overflow-visible sm:px-4">
           {links.map((link) => (
             <Link
               key={link.href}

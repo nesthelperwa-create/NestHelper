@@ -1098,13 +1098,167 @@ function getRecordDetailFields(collectionName: string, item: AdminDoc | null | u
     .map((key) => ({ key, label: DETAIL_FIELD_LABELS[key] || key, value: item[key] }));
 }
 
+
+type AdminWorkflowNavItem = {
+  href: string;
+  eyebrow: string;
+  title: string;
+  description: string;
+};
+
+function AdminDetailWorkflowNav({
+  collectionName,
+  item,
+  showApplicationOnboardingPanel,
+  showCommercialQuotePanel,
+  showFamilyPaymentBreakdownPanel,
+  showPaymentActions,
+  showLaundryFinalBalance,
+  showFamilyReferralPanel,
+  showReviewRequestPanel,
+}: {
+  collectionName: string;
+  item: AdminDoc;
+  showApplicationOnboardingPanel: boolean;
+  showCommercialQuotePanel: boolean;
+  showFamilyPaymentBreakdownPanel: boolean;
+  showPaymentActions: boolean;
+  showLaundryFinalBalance: boolean;
+  showFamilyReferralPanel: boolean;
+  showReviewRequestPanel: boolean;
+}) {
+  const navItems: AdminWorkflowNavItem[] = [];
+
+  navItems.push({
+    href: "#admin-section-snapshot",
+    eyebrow: "1",
+    title: "Review snapshot",
+    description: collectionName === "serviceRequests" ? "Customer, service, timing, address, and key request answers." : "Contact, status, and the most important saved answers.",
+  });
+
+  if (showApplicationOnboardingPanel) {
+    navItems.push({
+      href: "#admin-section-applicant-email",
+      eyebrow: "2",
+      title: "Email applicant",
+      description: "Send phone screen, document, or follow-up messages.",
+    });
+    navItems.push({
+      href: "#admin-section-applicant-onboarding",
+      eyebrow: "3",
+      title: "Track onboarding",
+      description: "Status, checklist, fit notes, documents, and approval details.",
+    });
+  }
+
+  if (collectionName === "serviceRequests") {
+    if (showCommercialQuotePanel) {
+      navItems.push({
+        href: "#admin-section-commercial-quote",
+        eyebrow: "2",
+        title: "Commercial quote",
+        description: "Save quote details, email quote, then invoice when approved.",
+      });
+    }
+
+    if (showFamilyPaymentBreakdownPanel) {
+      navItems.push({
+        href: "#admin-section-family-breakdown",
+        eyebrow: "2",
+        title: "Build quote",
+        description: "Prepare the family payment breakdown before sending payment.",
+      });
+    }
+
+    if (showPaymentActions) {
+      navItems.push({
+        href: "#admin-section-payment",
+        eyebrow: "3",
+        title: "Send payment",
+        description: item.service === "laundry-rescue" ? "Create the intro minimum checkout first." : "Choose invoice or quick checkout.",
+      });
+    }
+
+    if (showLaundryFinalBalance) {
+      navItems.push({
+        href: "#admin-section-laundry-final",
+        eyebrow: "4",
+        title: "Laundry final",
+        description: "After dry weight, create the final invoice or auto-charge.",
+      });
+    }
+
+    navItems.push({
+      href: "#admin-section-status",
+      eyebrow: "Status",
+      title: "Update status",
+      description: "Change internal/customer status and choose whether to notify.",
+    });
+
+    if (showFamilyReferralPanel) {
+      navItems.push({
+        href: "#admin-section-referrals",
+        eyebrow: "Optional",
+        title: "Referrals",
+        description: "Create or review family-to-family referral links.",
+      });
+    }
+
+    if (showReviewRequestPanel) {
+      navItems.push({
+        href: "#admin-section-review-request",
+        eyebrow: "After job",
+        title: "Review request",
+        description: "Send Google review request after completion.",
+      });
+    }
+  }
+
+  navItems.push({
+    href: "#admin-section-uploads",
+    eyebrow: "Files",
+    title: "Photos/docs",
+    description: "Open uploads and full saved answers only when needed.",
+  });
+
+  return (
+    <div className="mb-5 rounded-3xl border border-[#eadfc8] bg-white p-4 shadow-sm sm:p-5">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="text-xs font-black uppercase tracking-[0.18em] text-[#b98a2f]">Work order map</p>
+          <h4 className="mt-1 text-xl font-black text-[#075c58]">Use these shortcuts instead of scrolling through everything</h4>
+        </div>
+        <p className="text-xs font-semibold leading-5 text-slate-500 sm:max-w-xs">
+          Navigation only. It does not send, save, charge, or update anything.
+        </p>
+      </div>
+      <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        {navItems.map((navItem) => (
+          <a
+            key={`${navItem.href}-${navItem.title}`}
+            href={navItem.href}
+            className="group rounded-2xl border border-[#eadfc8] bg-[#fbf6ea] p-4 text-left transition hover:-translate-y-0.5 hover:border-[#075c58]/35 hover:bg-white hover:shadow-md"
+          >
+            <span className="inline-flex rounded-full bg-white px-3 py-1 text-[11px] font-black uppercase tracking-[0.14em] text-[#b98a2f] shadow-sm group-hover:text-[#075c58]">
+              {navItem.eyebrow}
+            </span>
+            <p className="mt-3 text-sm font-black text-[#075c58]">{navItem.title}</p>
+            <p className="mt-1 text-xs font-semibold leading-5 text-slate-600">{navItem.description}</p>
+          </a>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+
 function AdminDetailSnapshot({ collectionName, item }: { collectionName: string; item: AdminDoc }) {
   const fields = getRecordDetailFields(collectionName, item);
   const visibleFields = fields.slice(0, collectionName === "serviceRequests" ? 12 : 10);
   if (!visibleFields.length) return null;
 
   return (
-    <div className="mb-5 rounded-3xl border border-[#eadfc8] bg-[#fbf6ea] p-4 shadow-sm sm:p-5">
+    <div id="admin-section-snapshot" className="scroll-mt-28 mb-5 rounded-3xl border border-[#eadfc8] bg-[#fbf6ea] p-4 shadow-sm sm:p-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <p className="text-xs font-black uppercase tracking-[0.18em] text-[#b98a2f]">Snapshot</p>
@@ -1130,7 +1284,7 @@ function AdminAdvancedRecordDetails({ item }: { item: AdminDoc }) {
   if (!entries.length) return null;
 
   return (
-    <details className="rounded-3xl border border-[#eadfc8] bg-white p-4 shadow-sm">
+    <details id="admin-section-advanced" className="scroll-mt-28 rounded-3xl border border-[#eadfc8] bg-white p-4 shadow-sm">
       <summary className="cursor-pointer text-sm font-black text-[#075c58]">Advanced / full saved answers</summary>
       <p className="mt-2 text-xs leading-5 text-slate-500">Open this only when you need the complete submitted record for troubleshooting or uncommon fields.</p>
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -1152,7 +1306,7 @@ function ApplicationQuickRead({ item, documentCount }: { item: AdminDoc; documen
   const statusCount = Object.values((item.onboardingChecklist || {}) as OnboardingChecklist).filter(Boolean).length;
 
   return (
-    <div className="mb-5 grid gap-3 md:grid-cols-4">
+    <div id="admin-section-quick-read" className="scroll-mt-28 mb-5 grid gap-3 md:grid-cols-4">
       <div className="rounded-3xl border border-[#eadfc8] bg-white p-4 shadow-sm md:col-span-2">
         <p className="text-xs font-black uppercase tracking-[0.18em] text-[#b98a2f]">Best quick read</p>
         <p className="mt-2 text-sm font-bold leading-6 text-slate-700">{formatValue("services", serviceValue) || "Review services in full answers."}</p>
@@ -4514,9 +4668,12 @@ export default function AdminTable({
         <div className="fixed inset-0 z-50 grid place-items-center bg-black/50 p-2 sm:p-4">
           <div className="max-h-[92vh] w-full max-w-6xl overflow-auto rounded-3xl bg-white p-4 shadow-2xl sm:p-6">
             <div className="sticky top-0 z-20 -mx-4 -mt-4 mb-4 flex items-center justify-between gap-3 border-b border-[#eadfc8] bg-white/95 px-4 py-4 backdrop-blur sm:-mx-6 sm:-mt-6 sm:px-6">
-              <div>
+              <div className="min-w-0">
                 <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#b98a2f]">Admin details</p>
-                <h3 className="text-2xl font-bold text-[#075c58]">Submission Details</h3>
+                <h3 className="truncate text-2xl font-bold text-[#075c58]">{getRecordDisplayName(selected)}</h3>
+                <p className="mt-1 text-xs font-semibold leading-5 text-slate-500">
+                  {collectionName === "serviceRequests" ? getCleanServiceLabel(selected) : title} · {getRecordContactLine(selected)}
+                </p>
               </div>
               <div className="flex flex-wrap items-center justify-end gap-2">
                 <button onClick={() => setSelected(null)} className={getAdminActionClass("quiet")}>Close details</button>
@@ -4562,10 +4719,21 @@ export default function AdminTable({
             </div>
 
             <AdminDetailSnapshot collectionName={collectionName} item={selected} />
+            <AdminDetailWorkflowNav
+              collectionName={collectionName}
+              item={selected}
+              showApplicationOnboardingPanel={showApplicationOnboardingPanel}
+              showCommercialQuotePanel={Boolean(showCommercialQuotePanel)}
+              showFamilyPaymentBreakdownPanel={Boolean(showFamilyPaymentBreakdownPanel)}
+              showPaymentActions={Boolean(showPaymentActions)}
+              showLaundryFinalBalance={Boolean(showLaundryFinalBalance)}
+              showFamilyReferralPanel={Boolean(showFamilyReferralPanel)}
+              showReviewRequestPanel={Boolean(showReviewRequestPanel)}
+            />
             {showApplicationOnboardingPanel && <ApplicationQuickRead item={selected} documentCount={selectedApplicationDocuments.length} />}
 
             {showApplicationOnboardingPanel && (
-              <div className="mb-5 rounded-3xl border border-[#eadfc8] bg-white p-5 shadow-sm">
+              <div id="admin-section-applicant-email" className="scroll-mt-28 mb-5 rounded-3xl border border-[#eadfc8] bg-white p-5 shadow-sm">
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                   <div className="max-w-3xl">
                     <p className="text-xs font-black uppercase tracking-[0.2em] text-[#b98a2f]">Applicant email</p>
@@ -4665,7 +4833,7 @@ export default function AdminTable({
             )}
 
             {showApplicationOnboardingPanel && (
-              <div className="mb-5 rounded-3xl border border-[#eadfc8] bg-gradient-to-br from-white via-white to-[#fbf6ea] p-5 shadow-sm">
+              <div id="admin-section-applicant-onboarding" className="scroll-mt-28 mb-5 rounded-3xl border border-[#eadfc8] bg-gradient-to-br from-white via-white to-[#fbf6ea] p-5 shadow-sm">
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                   <div className="max-w-3xl">
                     <p className="text-xs font-black uppercase tracking-[0.2em] text-[#b98a2f]">Applicant onboarding</p>
@@ -4763,7 +4931,7 @@ export default function AdminTable({
             )}
 
             {showCustomerStatusActions && (
-              <div className="mb-5 rounded-3xl border border-[#eadfc8] bg-white p-5 shadow-sm">
+              <div id="admin-section-status" className="scroll-mt-28 mb-5 rounded-3xl border border-[#eadfc8] bg-white p-5 shadow-sm">
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                   <div className="max-w-2xl">
                     <p className="text-xs font-black uppercase tracking-[0.2em] text-[#b98a2f]">Status + customer update</p>
@@ -4840,7 +5008,7 @@ export default function AdminTable({
             )}
 
             {showFamilyReferralPanel && (
-              <div className="mb-5 rounded-3xl border border-[#eadfc8] bg-gradient-to-br from-white via-white to-[#fbf6ea] p-5 shadow-sm">
+              <div id="admin-section-referrals" className="scroll-mt-28 mb-5 rounded-3xl border border-[#eadfc8] bg-gradient-to-br from-white via-white to-[#fbf6ea] p-5 shadow-sm">
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                   <div className="max-w-3xl">
                     <p className="text-xs font-black uppercase tracking-[0.2em] text-[#b98a2f]">Family referrals</p>
@@ -4933,17 +5101,19 @@ export default function AdminTable({
             )}
 
             {showReviewRequestPanel && (
-              <ReviewRequestPanel
-                selected={selected}
-                onRecordUpdate={(updates) => {
-                  setSelected((prev) => (prev ? { ...prev, ...updates } : prev));
-                  setItems((prev) => prev.map((item) => item.id === selected.id ? { ...item, ...updates } : item));
-                }}
-              />
+              <div id="admin-section-review-request" className="scroll-mt-28">
+                <ReviewRequestPanel
+                  selected={selected}
+                  onRecordUpdate={(updates) => {
+                    setSelected((prev) => (prev ? { ...prev, ...updates } : prev));
+                    setItems((prev) => prev.map((item) => item.id === selected.id ? { ...item, ...updates } : item));
+                  }}
+                />
+              </div>
             )}
 
             {showCommercialQuotePanel && (
-              <div className="mb-5 rounded-3xl border border-cyan-200 bg-cyan-50/45 p-5 shadow-sm">
+              <div id="admin-section-commercial-quote" className="scroll-mt-28 mb-5 rounded-3xl border border-cyan-200 bg-cyan-50/45 p-5 shadow-sm">
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                   <div className="max-w-3xl">
                     <p className="text-xs font-black uppercase tracking-[0.2em] text-[#b98a2f]">Commercial quote workflow</p>
@@ -5189,31 +5359,33 @@ export default function AdminTable({
             )}
 
             {showFamilyPaymentBreakdownPanel && (
-              <FamilyPaymentBreakdownBuilder
-                item={selected}
-                availableCustomerCredits={selectedAvailableCustomerCredits}
-                formatMoney={formatMoney}
-                onSaved={(updates) => {
-                  const savedBreakdown = updates.familyPaymentBreakdown as { customerBreakdownText?: string } | undefined;
-                  setSelected((prev) => (prev ? { ...prev, ...updates } : prev));
-                  if (savedBreakdown?.customerBreakdownText) setIncludeFamilyPaymentBreakdown(true);
-                }}
-                onApplyCheckout={({ amount, title, note }) => {
-                  setCheckoutMode("custom");
-                  setCustomInitialAmount(String(amount));
-                  setCustomInitialTitle(title);
-                  setCustomInitialNote(note);
-                }}
-                onApplyAdditionalPayment={({ amount, reason, note }) => {
-                  setAdditionalPaymentAmount(String(amount));
-                  setAdditionalPaymentReason(reason);
-                  setAdditionalPaymentNote(note);
-                }}
-              />
+              <div id="admin-section-family-breakdown" className="scroll-mt-28">
+                <FamilyPaymentBreakdownBuilder
+                  item={selected}
+                  availableCustomerCredits={selectedAvailableCustomerCredits}
+                  formatMoney={formatMoney}
+                  onSaved={(updates) => {
+                    const savedBreakdown = updates.familyPaymentBreakdown as { customerBreakdownText?: string } | undefined;
+                    setSelected((prev) => (prev ? { ...prev, ...updates } : prev));
+                    if (savedBreakdown?.customerBreakdownText) setIncludeFamilyPaymentBreakdown(true);
+                  }}
+                  onApplyCheckout={({ amount, title, note }) => {
+                    setCheckoutMode("custom");
+                    setCustomInitialAmount(String(amount));
+                    setCustomInitialTitle(title);
+                    setCustomInitialNote(note);
+                  }}
+                  onApplyAdditionalPayment={({ amount, reason, note }) => {
+                    setAdditionalPaymentAmount(String(amount));
+                    setAdditionalPaymentReason(reason);
+                    setAdditionalPaymentNote(note);
+                  }}
+                />
+              </div>
             )}
 
             {showPaymentActions && (
-              <div className="mb-5 rounded-3xl border border-[#d8c18f] bg-[#fbf6ea] p-5 shadow-sm">
+              <div id="admin-section-payment" className="scroll-mt-28 mb-5 rounded-3xl border border-[#d8c18f] bg-[#fbf6ea] p-5 shadow-sm">
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                   <div className="max-w-2xl">
                     <p className="text-xs font-black uppercase tracking-[0.2em] text-[#b98a2f]">{selectedIsCommercial ? "Step 3 — payment" : "Approval + payment"}</p>
@@ -5598,7 +5770,7 @@ export default function AdminTable({
             )}
 
             {showLaundryFinalBalance && (
-              <div className="mb-5 rounded-3xl border border-[#d8c18f] bg-white p-5 shadow-sm">
+              <div id="admin-section-laundry-final" className="scroll-mt-28 mb-5 rounded-3xl border border-[#d8c18f] bg-white p-5 shadow-sm">
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                   <div className="max-w-2xl">
                     <p className="text-xs font-black uppercase tracking-[0.2em] text-[#b98a2f]">
@@ -5791,7 +5963,7 @@ export default function AdminTable({
 
 
             {showPaymentActions && (
-              <div className="mb-5 rounded-3xl border border-[#d8c18f] bg-[#fbf6ea] p-5 shadow-sm">
+              <div id="admin-section-additional-payment" className="scroll-mt-28 mb-5 rounded-3xl border border-[#d8c18f] bg-[#fbf6ea] p-5 shadow-sm">
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                   <div className="max-w-2xl">
                     <p className="text-xs font-black uppercase tracking-[0.2em] text-[#b98a2f]">{selectedIsCommercial ? "Optional later/add-on payment" : "Additional payment"}</p>
@@ -5889,7 +6061,7 @@ export default function AdminTable({
               </div>
             )}
 
-            <div className="space-y-4">
+            <div id="admin-section-uploads" className="scroll-mt-28 space-y-4">
               <div className="grid gap-3 sm:grid-cols-2">
                 <AdminPhotoUploads photos={getPhotoUploads(selected)} />
                 <AdminApplicationDocuments documents={selectedApplicationDocuments} collectionName={collectionName} recordId={selected.id} onOpenDocument={openApplicationDocument} busyDocumentPath={busyDocumentPath} />
