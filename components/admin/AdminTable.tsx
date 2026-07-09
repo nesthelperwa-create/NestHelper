@@ -1101,9 +1101,8 @@ function getRecordDetailFields(collectionName: string, item: AdminDoc | null | u
 
 type AdminWorkflowNavItem = {
   href: string;
-  eyebrow: string;
+  label: string;
   title: string;
-  description: string;
 };
 
 function AdminDetailWorkflowNav({
@@ -1129,121 +1128,47 @@ function AdminDetailWorkflowNav({
 }) {
   const navItems: AdminWorkflowNavItem[] = [];
 
-  navItems.push({
-    href: "#admin-section-snapshot",
-    eyebrow: "1",
-    title: "Review snapshot",
-    description: collectionName === "serviceRequests" ? "Customer, service, timing, address, and key request answers." : "Contact, status, and the most important saved answers.",
-  });
+  navItems.push({ href: "#admin-section-snapshot", label: "1", title: "Review" });
 
   if (showApplicationOnboardingPanel) {
-    navItems.push({
-      href: "#admin-section-applicant-email",
-      eyebrow: "2",
-      title: "Email applicant",
-      description: "Send phone screen, document, or follow-up messages.",
-    });
-    navItems.push({
-      href: "#admin-section-applicant-onboarding",
-      eyebrow: "3",
-      title: "Track onboarding",
-      description: "Status, checklist, fit notes, documents, and approval details.",
-    });
+    navItems.push({ href: "#admin-section-applicant-email", label: "2", title: "Email" });
+    navItems.push({ href: "#admin-section-applicant-onboarding", label: "3", title: "Onboarding" });
   }
 
   if (collectionName === "serviceRequests") {
-    if (showCommercialQuotePanel) {
-      navItems.push({
-        href: "#admin-section-commercial-quote",
-        eyebrow: "2",
-        title: "Commercial quote",
-        description: "Save quote details, email quote, then invoice when approved.",
-      });
-    }
-
-    if (showFamilyPaymentBreakdownPanel) {
-      navItems.push({
-        href: "#admin-section-family-breakdown",
-        eyebrow: "2",
-        title: "Build quote",
-        description: "Prepare the family payment breakdown before sending payment.",
-      });
-    }
-
-    if (showPaymentActions) {
-      navItems.push({
-        href: "#admin-section-payment",
-        eyebrow: "3",
-        title: "Send payment",
-        description: item.service === "laundry-rescue" ? "Create the intro minimum checkout first." : "Choose invoice or quick checkout.",
-      });
-    }
-
-    if (showLaundryFinalBalance) {
-      navItems.push({
-        href: "#admin-section-laundry-final",
-        eyebrow: "4",
-        title: "Laundry final",
-        description: "After dry weight, create the final invoice or auto-charge.",
-      });
-    }
-
-    navItems.push({
-      href: "#admin-section-status",
-      eyebrow: "Status",
-      title: "Update status",
-      description: "Change internal/customer status and choose whether to notify.",
-    });
-
-    if (showFamilyReferralPanel) {
-      navItems.push({
-        href: "#admin-section-referrals",
-        eyebrow: "Optional",
-        title: "Referrals",
-        description: "Create or review family-to-family referral links.",
-      });
-    }
-
-    if (showReviewRequestPanel) {
-      navItems.push({
-        href: "#admin-section-review-request",
-        eyebrow: "After job",
-        title: "Review request",
-        description: "Send Google review request after completion.",
-      });
-    }
+    if (showCommercialQuotePanel) navItems.push({ href: "#admin-section-commercial-quote", label: "2", title: "Quote" });
+    if (showFamilyPaymentBreakdownPanel) navItems.push({ href: "#admin-section-family-breakdown", label: "2", title: "Build quote" });
+    if (showPaymentActions) navItems.push({ href: "#admin-section-payment", label: "3", title: item.service === "laundry-rescue" ? "Deposit" : "Payment" });
+    if (showLaundryFinalBalance) navItems.push({ href: "#admin-section-laundry-final", label: "4", title: "Laundry final" });
+    navItems.push({ href: "#admin-section-status", label: "✓", title: "Status" });
+    if (showFamilyReferralPanel) navItems.push({ href: "#admin-section-referrals", label: "+", title: "Referrals" });
+    if (showReviewRequestPanel) navItems.push({ href: "#admin-section-review-request", label: "★", title: "Review request" });
   }
 
-  navItems.push({
-    href: "#admin-section-uploads",
-    eyebrow: "Files",
-    title: "Photos/docs",
-    description: "Open uploads and full saved answers only when needed.",
-  });
+  navItems.push({ href: "#admin-section-uploads", label: "Files", title: "Photos/docs" });
 
   return (
-    <div className="mb-5 rounded-3xl border border-[#eadfc8] bg-white p-4 shadow-sm sm:p-5">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+    <div className="mb-4 rounded-3xl border border-[#eadfc8] bg-white p-3 shadow-sm sm:p-4">
+      <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-xs font-black uppercase tracking-[0.18em] text-[#b98a2f]">Work order map</p>
-          <h4 className="mt-1 text-xl font-black text-[#075c58]">Use these shortcuts instead of scrolling through everything</h4>
+          <p className="text-[11px] font-black uppercase tracking-[0.18em] text-[#b98a2f]">Shortcut map</p>
+          <h4 className="text-base font-black text-[#075c58] sm:text-lg">Jump to what you need</h4>
         </div>
-        <p className="text-xs font-semibold leading-5 text-slate-500 sm:max-w-xs">
-          Navigation only. It does not send, save, charge, or update anything.
+        <p className="hidden text-xs font-semibold leading-5 text-slate-500 sm:block">
+          Navigation only. No actions run from these shortcuts.
         </p>
       </div>
-      <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
         {navItems.map((navItem) => (
           <a
             key={`${navItem.href}-${navItem.title}`}
             href={navItem.href}
-            className="group rounded-2xl border border-[#eadfc8] bg-[#fbf6ea] p-4 text-left transition hover:-translate-y-0.5 hover:border-[#075c58]/35 hover:bg-white hover:shadow-md"
+            className="flex min-h-14 items-center gap-2 rounded-2xl border border-[#eadfc8] bg-[#fbf6ea] px-3 py-2 text-left transition hover:border-[#075c58]/35 hover:bg-white hover:shadow-sm"
           >
-            <span className="inline-flex rounded-full bg-white px-3 py-1 text-[11px] font-black uppercase tracking-[0.14em] text-[#b98a2f] shadow-sm group-hover:text-[#075c58]">
-              {navItem.eyebrow}
+            <span className="inline-flex h-7 min-w-7 shrink-0 items-center justify-center rounded-full bg-white px-2 text-[10px] font-black uppercase tracking-[0.08em] text-[#b98a2f] shadow-sm">
+              {navItem.label}
             </span>
-            <p className="mt-3 text-sm font-black text-[#075c58]">{navItem.title}</p>
-            <p className="mt-1 text-xs font-semibold leading-5 text-slate-600">{navItem.description}</p>
+            <span className="text-xs font-black leading-4 text-[#075c58] sm:text-sm">{navItem.title}</span>
           </a>
         ))}
       </div>
@@ -1258,7 +1183,7 @@ function AdminDetailSnapshot({ collectionName, item }: { collectionName: string;
   if (!visibleFields.length) return null;
 
   return (
-    <div id="admin-section-snapshot" className="scroll-mt-28 mb-5 rounded-3xl border border-[#eadfc8] bg-[#fbf6ea] p-4 shadow-sm sm:p-5">
+    <div id="admin-section-snapshot" className="scroll-mt-28 mb-4 rounded-3xl border border-[#eadfc8] bg-[#fbf6ea] p-3 shadow-sm sm:p-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <p className="text-xs font-black uppercase tracking-[0.18em] text-[#b98a2f]">Snapshot</p>
@@ -1306,7 +1231,7 @@ function ApplicationQuickRead({ item, documentCount }: { item: AdminDoc; documen
   const statusCount = Object.values((item.onboardingChecklist || {}) as OnboardingChecklist).filter(Boolean).length;
 
   return (
-    <div id="admin-section-quick-read" className="scroll-mt-28 mb-5 grid gap-3 md:grid-cols-4">
+    <div id="admin-section-quick-read" className="scroll-mt-28 mb-4 grid gap-3 md:grid-cols-4">
       <div className="rounded-3xl border border-[#eadfc8] bg-white p-4 shadow-sm md:col-span-2">
         <p className="text-xs font-black uppercase tracking-[0.18em] text-[#b98a2f]">Best quick read</p>
         <p className="mt-2 text-sm font-bold leading-6 text-slate-700">{formatValue("services", serviceValue) || "Review services in full answers."}</p>
@@ -4667,16 +4592,16 @@ export default function AdminTable({
       {selected && (
         <div className="fixed inset-0 z-50 grid place-items-center bg-black/50 p-2 sm:p-4">
           <div className="max-h-[92vh] w-full max-w-6xl overflow-auto rounded-3xl bg-white p-4 shadow-2xl sm:p-6">
-            <div className="sticky top-0 z-20 -mx-4 -mt-4 mb-4 flex items-center justify-between gap-3 border-b border-[#eadfc8] bg-white/95 px-4 py-4 backdrop-blur sm:-mx-6 sm:-mt-6 sm:px-6">
+            <div className="sticky top-0 z-20 -mx-4 -mt-4 mb-3 flex items-center justify-between gap-3 border-b border-[#eadfc8] bg-white/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:-mt-6 sm:mb-4 sm:px-6 sm:py-4">
               <div className="min-w-0">
-                <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#b98a2f]">Admin details</p>
-                <h3 className="truncate text-2xl font-bold text-[#075c58]">{getRecordDisplayName(selected)}</h3>
-                <p className="mt-1 text-xs font-semibold leading-5 text-slate-500">
+                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#b98a2f]">Admin details</p>
+                <h3 className="truncate text-xl font-bold text-[#075c58] sm:text-2xl">{getRecordDisplayName(selected)}</h3>
+                <p className="mt-1 truncate text-xs font-semibold leading-5 text-slate-500">
                   {collectionName === "serviceRequests" ? getCleanServiceLabel(selected) : title} · {getRecordContactLine(selected)}
                 </p>
               </div>
-              <div className="flex flex-wrap items-center justify-end gap-2">
-                <button onClick={() => setSelected(null)} className={getAdminActionClass("quiet")}>Close details</button>
+              <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+                <button onClick={() => setSelected(null)} className={getAdminActionClass("quiet")}>Close</button>
               </div>
             </div>
 
