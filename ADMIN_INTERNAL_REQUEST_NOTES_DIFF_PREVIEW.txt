@@ -1,0 +1,200 @@
+--- before/components/admin/AdminTable.tsx
++++ after/components/admin/AdminTable.tsx
+@@ -1120,6 +1120,7 @@
+   if (collectionName === "serviceRequests") {
+     if (showCommercialQuotePanel) navItems.push({ href: "#admin-section-commercial-quote", label: "2", title: "Quote" });
+     if (showFamilyPaymentBreakdownPanel) navItems.push({ href: "#admin-section-family-breakdown", label: "2", title: "Build quote" });
++    navItems.push({ href: "#admin-section-internal-notes", label: "Note", title: item.service === "laundry-rescue" ? "Bags/notes" : "Admin notes" });
+     if (showPaymentActions) navItems.push({ href: "#admin-section-payment", label: "3", title: item.service === "laundry-rescue" ? "Deposit" : "Payment" });
+     if (showLaundryFinalBalance) navItems.push({ href: "#admin-section-laundry-final", label: "4", title: "Laundry final" });
+     navItems.push({ href: "#admin-section-status", label: "✓", title: "Status" });
+@@ -3018,6 +3019,13 @@
+   const [applicationOnboardingBusy, setApplicationOnboardingBusy] = useState(false);
+   const [applicationOnboardingMessage, setApplicationOnboardingMessage] = useState("");
+   const [applicationOnboardingError, setApplicationOnboardingError] = useState("");
++  const [requestAdminNotes, setRequestAdminNotes] = useState("");
++  const [laundryBagsUsed, setLaundryBagsUsed] = useState("");
++  const [laundryBagsReturned, setLaundryBagsReturned] = useState("");
++  const [laundryBagTrackingNotes, setLaundryBagTrackingNotes] = useState("");
++  const [requestNotesBusy, setRequestNotesBusy] = useState(false);
++  const [requestNotesMessage, setRequestNotesMessage] = useState("");
++  const [requestNotesError, setRequestNotesError] = useState("");
+   const [applicantEmailTemplate, setApplicantEmailTemplate] = useState<ApplicantEmailTemplateKey>("phone-interview");
+   const [applicantEmailSubject, setApplicantEmailSubject] = useState("");
+   const [applicantEmailBody, setApplicantEmailBody] = useState("");
+@@ -3107,6 +3115,12 @@
+     setReliabilityRating(selected?.reliabilityRating ? String(selected.reliabilityRating) : "");
+     setApplicationOnboardingMessage("");
+     setApplicationOnboardingError("");
++    setRequestAdminNotes(selected?.adminNotes ? String(selected.adminNotes) : "");
++    setLaundryBagsUsed(selected?.laundryBagsUsed !== undefined && selected?.laundryBagsUsed !== null ? String(selected.laundryBagsUsed) : "");
++    setLaundryBagsReturned(selected?.laundryBagsReturned !== undefined && selected?.laundryBagsReturned !== null ? String(selected.laundryBagsReturned) : "");
++    setLaundryBagTrackingNotes(selected?.laundryBagTrackingNotes ? String(selected.laundryBagTrackingNotes) : "");
++    setRequestNotesMessage("");
++    setRequestNotesError("");
+     setBusyDocumentPath("");
+     const defaultApplicantTemplate = getApplicantEmailTemplate(collectionName, selected, "phone-interview");
+     setApplicantEmailTemplate("phone-interview");
+@@ -3282,6 +3296,7 @@
+   const laundryEstimatedAdditionalTaxAmount = laundryManualSalesTax && laundryTaxRateNumber > 0 ? Math.max(0, laundrySubtotal * (laundryTaxRateNumber / 100)) : 0;
+   const laundryBalanceDue = laundrySubtotal + laundryDepositTaxCatchUpAmount;
+   const laundryEstimatedFinalTotalWithTax = laundryBalanceDue + laundryEstimatedAdditionalTaxAmount;
++  const laundryBagsStillOut = Math.max(0, Math.round(toNumber(laundryBagsUsed)) - Math.round(toNumber(laundryBagsReturned)));
+ 
+   async function updateStatus(item: AdminDoc, status: string, options?: { notifyCustomer?: boolean; customerNote?: string }) {
+     const token = await firebaseAuth.currentUser?.getIdToken();
+@@ -3381,6 +3396,43 @@
+       setStatusError(error instanceof Error ? error.message : "Unable to update status.");
+     } finally {
+       setStatusBusy(false);
++      setActiveAction("");
++    }
++  }
++
++  async function saveRequestInternalNotes() {
++    if (!selected || collectionName !== "serviceRequests") return;
++
++    setRequestNotesBusy(true);
++    setActiveAction("Saving internal request notes...");
++    setRequestNotesMessage("");
++    setRequestNotesError("");
++
++    try {
++      const token = await firebaseAuth.currentUser?.getIdToken();
++      const res = await fetch("/api/admin/update-request-notes", {
++        method: "POST",
++        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
++        body: JSON.stringify({
++          requestId: selected.id,
++          adminNotes: requestAdminNotes,
++          laundryBagsUsed: selected.service === "laundry-rescue" ? laundryBagsUsed : undefined,
++          laundryBagsReturned: selected.service === "laundry-rescue" ? laundryBagsReturned : undefined,
++          laundryBagTrackingNotes: selected.service === "laundry-rescue" ? laundryBagTrackingNotes : undefined,
++        }),
++      });
++
++      const data = await res.json().catch(() => ({}));
++      if (!res.ok || !data.ok) throw new Error(data.error || "Unable to save internal notes.");
++
++      const updates = data.updates || {};
++      setSelected((prev) => (prev ? { ...prev, ...updates } : prev));
++      setItems((prev) => prev.map((item) => item.id === selected.id ? { ...item, ...updates } : item));
++      setRequestNotesMessage("Internal notes saved.");
++    } catch (error) {
++      setRequestNotesError(error instanceof Error ? error.message : "Unable to save internal notes.");
++    } finally {
++      setRequestNotesBusy(false);
+       setActiveAction("");
+     }
+   }
+@@ -4107,7 +4159,7 @@
+   const selectedAvailableCustomerCredits = getAvailableCustomerCreditsForRequest(selected, customerCredits);
+   const selectedAvailableCustomerCreditTotal = getAvailableCustomerCreditTotal(selectedAvailableCustomerCredits);
+   const selectedOutgoingReferralHistory = getOutgoingReferralHistory(selected);
+-  const anyActionBusy = checkoutBusy || commercialInvoiceBusy || commercialQuoteEmailBusy || familyInvoiceBusy || statusBusy || laundryFinalBusy || additionalPaymentBusy || commercialQuoteBusy || referralBusy || applicationOnboardingBusy || applicantEmailBusy || Boolean(busyDocumentPath);
++  const anyActionBusy = checkoutBusy || commercialInvoiceBusy || commercialQuoteEmailBusy || familyInvoiceBusy || statusBusy || laundryFinalBusy || additionalPaymentBusy || commercialQuoteBusy || referralBusy || applicationOnboardingBusy || requestNotesBusy || applicantEmailBusy || Boolean(busyDocumentPath);
+ 
+   return (
+     <section className="space-y-5">
+@@ -4250,9 +4302,9 @@
+       <AdminActionFeedback
+         busy={anyActionBusy}
+         activeAction={activeAction}
+-        messages={[statusMessage, checkoutMessage, commercialInvoiceMessage, commercialQuoteEmailMessage, familyInvoiceMessage, laundryFinalMessage, additionalPaymentMessage, commercialQuoteMessage, referralMessage, applicantEmailMessage]}
++        messages={[statusMessage, checkoutMessage, commercialInvoiceMessage, commercialQuoteEmailMessage, familyInvoiceMessage, laundryFinalMessage, additionalPaymentMessage, commercialQuoteMessage, referralMessage, requestNotesMessage, applicantEmailMessage]}
+         warnings={[statusWarning]}
+-        errors={[statusError, checkoutError, commercialInvoiceError, commercialQuoteEmailError, familyInvoiceError, laundryFinalError, additionalPaymentError, commercialQuoteError, referralError, applicantEmailError]}
++        errors={[statusError, checkoutError, commercialInvoiceError, commercialQuoteEmailError, familyInvoiceError, laundryFinalError, additionalPaymentError, commercialQuoteError, referralError, requestNotesError, applicantEmailError]}
+       />
+ 
+       <div className="flex flex-col gap-3 rounded-3xl border border-[#eadfc8] bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+@@ -4591,9 +4643,9 @@
+               <AdminActionFeedback
+                 busy={anyActionBusy}
+                 activeAction={activeAction}
+-                messages={[quotePromptMessage, statusMessage, checkoutMessage, commercialInvoiceMessage, commercialQuoteEmailMessage, familyInvoiceMessage, laundryFinalMessage, additionalPaymentMessage, commercialQuoteMessage, referralMessage, applicationOnboardingMessage, applicantEmailMessage]}
++                messages={[quotePromptMessage, statusMessage, checkoutMessage, commercialInvoiceMessage, commercialQuoteEmailMessage, familyInvoiceMessage, laundryFinalMessage, additionalPaymentMessage, commercialQuoteMessage, referralMessage, applicationOnboardingMessage, requestNotesMessage, applicantEmailMessage]}
+                 warnings={[statusWarning]}
+-                errors={[quotePromptError, statusError, checkoutError, commercialInvoiceError, commercialQuoteEmailError, familyInvoiceError, laundryFinalError, additionalPaymentError, commercialQuoteError, referralError, applicationOnboardingError, applicantEmailError, documentOpenError]}
++                errors={[quotePromptError, statusError, checkoutError, commercialInvoiceError, commercialQuoteEmailError, familyInvoiceError, laundryFinalError, additionalPaymentError, commercialQuoteError, referralError, applicationOnboardingError, requestNotesError, applicantEmailError, documentOpenError]}
+               />
+               {collectionName === "serviceRequests" && (
+                 <div className="rounded-3xl border border-[#eadfc8] bg-[#fbf6ea] p-4 shadow-sm">
+@@ -4629,6 +4681,77 @@
+               showFamilyReferralPanel={Boolean(showFamilyReferralPanel)}
+               showReviewRequestPanel={Boolean(showReviewRequestPanel)}
+             />
++
++            {collectionName === "serviceRequests" && (
++              <div id="admin-section-internal-notes" className="scroll-mt-28 mb-5 rounded-3xl border border-[#eadfc8] bg-white p-4 shadow-sm sm:p-5">
++                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
++                  <div>
++                    <p className="text-xs font-black uppercase tracking-[0.18em] text-[#b98a2f]">Internal notes</p>
++                    <h4 className="mt-1 text-lg font-black text-[#075c58]">Private request tracking</h4>
++                    <p className="mt-1 text-xs font-semibold leading-5 text-slate-500">
++                      Admin-only notes. Customers do not see this section.
++                    </p>
++                  </div>
++                  {selected.service === "laundry-rescue" && (
++                    <div className={`rounded-2xl px-4 py-3 text-xs font-black ${laundryBagsStillOut > 0 ? "bg-amber-50 text-amber-800" : "bg-emerald-50 text-emerald-800"}`}>
++                      Bags still out: {laundryBagsStillOut}
++                    </div>
++                  )}
++                </div>
++
++                {selected.service === "laundry-rescue" && (
++                  <div className="mt-4 grid gap-3 sm:grid-cols-3">
++                    <label className="grid gap-2 text-sm font-bold text-slate-700">
++                      Laundry bags used
++                      <input
++                        value={laundryBagsUsed}
++                        onChange={(e) => setLaundryBagsUsed(e.target.value.replace(/[^0-9]/g, "").slice(0, 3))}
++                        inputMode="numeric"
++                        placeholder="Example: 3"
++                        className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
++                      />
++                    </label>
++                    <label className="grid gap-2 text-sm font-bold text-slate-700">
++                      Bags returned
++                      <input
++                        value={laundryBagsReturned}
++                        onChange={(e) => setLaundryBagsReturned(e.target.value.replace(/[^0-9]/g, "").slice(0, 3))}
++                        inputMode="numeric"
++                        placeholder="Example: 1"
++                        className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
++                      />
++                    </label>
++                    <label className="grid gap-2 text-sm font-bold text-slate-700">
++                      Bag note
++                      <input
++                        value={laundryBagTrackingNotes}
++                        onChange={(e) => setLaundryBagTrackingNotes(e.target.value.slice(0, 240))}
++                        placeholder="Example: Need 2 bags back"
++                        className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
++                      />
++                    </label>
++                  </div>
++                )}
++
++                <label className="mt-4 grid gap-2 text-sm font-bold text-slate-700">
++                  Admin notes
++                  <textarea
++                    value={requestAdminNotes}
++                    onChange={(e) => setRequestAdminNotes(e.target.value)}
++                    rows={4}
++                    placeholder={selected.service === "laundry-rescue" ? "Example: Used 3 NestHelper bags. Customer returned 1. Need 2 bags back at delivery." : "Private notes about the request, quote, scheduling, customer preferences, access, or follow-up."}
++                    className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
++                  />
++                </label>
++
++                <div className="mt-4 flex flex-wrap items-center gap-3">
++                  <button type="button" disabled={requestNotesBusy} onClick={saveRequestInternalNotes} className={getAdminActionClass("primary")}>
++                    {requestNotesBusy ? <><ActionSpinner /> Saving...</> : "Save internal notes"}
++                  </button>
++                  <p className="text-xs font-semibold text-slate-500">This saves to the admin record only. It does not email the customer.</p>
++                </div>
++              </div>
++            )}
+             {showApplicationOnboardingPanel && <ApplicationQuickRead item={selected} documentCount={selectedApplicationDocuments.length} />}
+ 
+             {showApplicationOnboardingPanel && (
