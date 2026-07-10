@@ -724,10 +724,10 @@ export default function FamilyPaymentBreakdownBuilder({
     setRefundReason(getString(item.familyRefundTracking?.refundReason));
     setCustomerNotified(Boolean(item.familyRefundTracking?.customerNotified));
     const nextRecurring = (item.familyRecurringPlan || nextSaved.recurringTracking || {}) as Record<string, any>;
-    const nextPlanned cadence = getString(nextRecurring.cadence) || "Every 2 weeks";
+    const nextCadence = getString(nextRecurring.cadence) || "Every 2 weeks";
     setRecurringStatus(getString(nextRecurring.status) || "Not recurring");
-    setRecurringCadence(nextPlanned cadence);
-    setRecurringRate(getString(nextRecurring.rate) || String(getRecurringPresetAmount(getRecommendedRecurringPresetId(item, nextPlanned cadence))));
+    setRecurringCadence(nextCadence);
+    setRecurringRate(getString(nextRecurring.rate) || String(getRecurringPresetAmount(getRecommendedRecurringPresetId(item, nextCadence))));
     setNextVisitDate(getString(nextRecurring.nextVisitDate));
     setRecurringCompletedVisits(getString(nextRecurring.completedVisits) || "0");
     setRecurringMinimumVisits(getString(nextRecurring.minimumVisits) || "2");
