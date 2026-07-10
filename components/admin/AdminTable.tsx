@@ -657,6 +657,54 @@ function ServicePill({ item }: { item: AdminDoc }) {
   );
 }
 
+function getRequestOriginBadges(item: AdminDoc) {
+  const badges: { label: string; title: string; className: string }[] = [];
+  const statusText = String(item.status || item.requestType || "").toLowerCase();
+
+  if (item.isRepeatRequest || item.repeatLaundry || item.repeatFromRequestId || statusText.includes("repeat scheduled")) {
+    badges.push({
+      label: "Repeat",
+      title: "Created from a previous Laundry Rescue request.",
+      className: "border-sky-200 bg-sky-50 text-sky-800",
+    });
+  }
+
+  if (item.isRecurringServiceRequest || statusText.includes("recurring scheduled")) {
+    badges.push({
+      label: "Recurring",
+      title: "Created as part of a recurring service plan.",
+      className: "border-purple-200 bg-purple-50 text-purple-800",
+    });
+  } else if (item.isFollowUpRequest || item.followUpFromRequestId || statusText.includes("follow-up scheduled")) {
+    badges.push({
+      label: "Follow-up",
+      title: "Created from a previous service request.",
+      className: "border-emerald-200 bg-emerald-50 text-emerald-800",
+    });
+  }
+
+  return badges;
+}
+
+function RequestOriginBadges({ item }: { item: AdminDoc }) {
+  const badges = getRequestOriginBadges(item);
+  if (!badges.length) return null;
+
+  return (
+    <div className="flex flex-wrap items-center gap-1.5">
+      {badges.map((badge) => (
+        <span
+          key={badge.label}
+          title={badge.title}
+          className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-black uppercase tracking-wide ${badge.className}`}
+        >
+          {badge.label}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 
 type AdminActionVariant = "primary" | "secondary" | "quiet" | "danger" | "success";
 
@@ -4715,6 +4763,7 @@ export default function AdminTable({
               </div>
               <div className="flex shrink-0 flex-col items-end gap-2">
                 <StatusBadge status={item.status} />
+                <RequestOriginBadges item={item} />
                 <StatusEmailMiniBadge item={item} />
               </div>
             </div>
@@ -4778,7 +4827,12 @@ export default function AdminTable({
             <tbody className="divide-y divide-[#f0e7d7]">
               {pagedItems.map((item) => (
                 <tr key={item.id} className={`transition-colors ${getServiceLook(item).row}`}>
-                  <td className="px-4 py-4"><StatusBadge status={item.status} /></td>
+                  <td className="px-4 py-4">
+                    <div className="flex flex-col items-start gap-2">
+                      <StatusBadge status={item.status} />
+                      <RequestOriginBadges item={item} />
+                    </div>
+                  </td>
                   {columns.map((col) => (
                     <td key={col.key} className="max-w-[220px] truncate px-4 py-4 text-slate-700">{renderAdminCell(col.key, item)}</td>
                   ))}
