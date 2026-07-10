@@ -1,0 +1,333 @@
+--- before/components/admin/AdminTable.tsx
++++ after/components/admin/AdminTable.tsx
+@@ -1214,7 +1214,7 @@
+ 
+   if (collectionName === "serviceRequests") {
+     if (showCommercialQuotePanel) navItems.push({ href: "#admin-section-commercial-quote", label: "2", title: "Quote" });
+-    if (showFamilyPaymentBreakdownPanel) navItems.push({ href: "#admin-section-family-breakdown", label: "2", title: "Build quote" });
++    if (showFamilyPaymentBreakdownPanel) navItems.push({ href: "#admin-section-family-breakdown", label: "2", title: "Build draft" });
+     navItems.push({ href: "#admin-section-internal-notes", label: "Note", title: item.service === "laundry-rescue" ? "Bags/notes" : "Admin notes" });
+     if (item.service === "laundry-rescue") navItems.push({ href: "#admin-section-repeat-laundry", label: "↻", title: "Repeat" });
+     if (item.service !== "laundry-rescue") navItems.push({ href: "#admin-section-recurring-service", label: "↻", title: "Follow-up" });
+@@ -3357,6 +3357,7 @@
+   const [followUpDate, setFollowUpDate] = useState("");
+   const [followUpWindow, setFollowUpWindow] = useState("");
+   const [followUpCadence, setFollowUpCadence] = useState("");
++  const [followUpCreateAs, setFollowUpCreateAs] = useState<"one-time" | "recurring">("one-time");
+   const [followUpServiceTitle, setFollowUpServiceTitle] = useState("");
+   const [followUpAgreedPrice, setFollowUpAgreedPrice] = useState("");
+   const [followUpEstimatedHours, setFollowUpEstimatedHours] = useState("");
+@@ -3480,6 +3481,7 @@
+     setRepeatLaundryError("");
+     setRepeatLaundryCreatedRequestId("");
+     setFollowUpDate("");
++    setFollowUpCreateAs("one-time");
+     setFollowUpWindow(getOriginalRequestAnswer(selected, ["preferredWindow", "preferredTime", "requestedWindow", "requestedTime", "schedulingPreference", "availability", "availableTimes"]));
+     setFollowUpCadence(normalizeFollowUpCadence(
+       getOriginalRequestAnswer(selected, ["maintenanceCadence", "wholeHomeRecurringCadence", "recurringCadence", "recurringResetInterest", "frequency", "cadence"]) ||
+@@ -3902,7 +3904,7 @@
+   async function createFollowUpServiceRequest() {
+     if (!selected || collectionName !== "serviceRequests" || selected.service === "laundry-rescue") return;
+ 
+-    const confirmed = window.confirm("Create a new follow-up / recurring service request? The current request will stay unchanged. The new request will start unpaid.");
++    const confirmed = window.confirm(`Create a new ${followUpCreateAs === "recurring" ? "recurring" : "one-time follow-up"} service request? The current request will stay unchanged. The new request will start unpaid.`);
+     if (!confirmed) return;
+ 
+     setFollowUpBusy(true);
+@@ -5514,7 +5516,19 @@
+                       />
+                     </label>
+                     <label className="grid gap-2 text-sm font-bold text-slate-700">
+-                      Cadence
++                      Create as
++                      <select
++                        value={followUpCreateAs}
++                        onChange={(e) => setFollowUpCreateAs(e.target.value === "recurring" ? "recurring" : "one-time")}
++                        className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-bold text-[#075c58] outline-none focus:border-[#075c58]"
++                      >
++                        <option value="one-time">One-time follow-up</option>
++                        <option value="recurring">Recurring visit</option>
++                      </select>
++                      <span className="text-xs font-semibold leading-5 text-slate-500">Customer cadence can prefill below, but the new request only becomes recurring when you choose Recurring visit here.</span>
++                    </label>
++                    <label className="grid gap-2 text-sm font-bold text-slate-700">
++                      Planned cadence
+                       <select
+                         value={followUpCadence}
+                         onChange={(e) => setFollowUpCadence(e.target.value)}
+@@ -5621,7 +5635,7 @@
+                     </button>
+                   )}
+                   <p className="text-xs font-semibold text-slate-600">
+-                    The new request starts unpaid with payment links, invoice links, and completion history blank.
++                    The new request starts unpaid with payment links, invoice links, and completion history blank. The Create as choice controls whether it is marked one-time or recurring.
+                   </p>
+                 </div>
+               </div>
+
+--- before/components/admin/FamilyPaymentBreakdownBuilder.tsx
++++ after/components/admin/FamilyPaymentBreakdownBuilder.tsx
+@@ -80,7 +80,7 @@
+   },
+   {
+     id: "specific-area-reset-larger-scope",
+-    label: "Specific Area(s) Reset larger-scope quote",
++    label: "Specific Area(s) Reset larger-scope draft estimate",
+     description: "Higher-scope area reset draft estimate for larger spaces, heavier clutter, extra sorting, multiple zones, or longer approved time.",
+     unit: "flat",
+     rate: "449",
+@@ -104,7 +104,7 @@
+   },
+   {
+     id: "move-out-cleaning-larger-scope",
+-    label: "Move-In / Move-Out larger-scope quote",
++    label: "Move-In / Move-Out larger-scope draft estimate",
+     description: "Higher-scope move-in / move-out cleaning draft estimate for larger homes, extra kitchen/bathroom buildup, appliance/cabinet scope, or timing constraints after review.",
+     unit: "flat",
+     rate: "495",
+@@ -693,7 +693,7 @@
+   const [customerNotified, setCustomerNotified] = useState(Boolean(item.familyRefundTracking?.customerNotified));
+   const savedRecurring = (item.familyRecurringPlan || saved.recurringTracking || {}) as Record<string, any>;
+   const [recurringStatus, setRecurringStatus] = useState(getString(savedRecurring.status) || "Not recurring");
+-  const [recurringCadence, setRecurringCadence] = useState(getString(savedRecurring.cadence) || "Every 2 weeks");
++  const [recurringPlanned cadence, setRecurringPlanned cadence] = useState(getString(savedRecurring.cadence) || "Every 2 weeks");
+   const [recurringRate, setRecurringRate] = useState(getString(savedRecurring.rate) || String(getRecurringPresetAmount(getRecommendedRecurringPresetId(item, getString(savedRecurring.cadence) || "Every 2 weeks"))));
+   const [nextVisitDate, setNextVisitDate] = useState(getString(savedRecurring.nextVisitDate));
+   const [recurringCompletedVisits, setRecurringCompletedVisits] = useState(getString(savedRecurring.completedVisits) || "0");
+@@ -724,10 +724,10 @@
+     setRefundReason(getString(item.familyRefundTracking?.refundReason));
+     setCustomerNotified(Boolean(item.familyRefundTracking?.customerNotified));
+     const nextRecurring = (item.familyRecurringPlan || nextSaved.recurringTracking || {}) as Record<string, any>;
+-    const nextCadence = getString(nextRecurring.cadence) || "Every 2 weeks";
++    const nextPlanned cadence = getString(nextRecurring.cadence) || "Every 2 weeks";
+     setRecurringStatus(getString(nextRecurring.status) || "Not recurring");
+-    setRecurringCadence(nextCadence);
+-    setRecurringRate(getString(nextRecurring.rate) || String(getRecurringPresetAmount(getRecommendedRecurringPresetId(item, nextCadence))));
++    setRecurringPlanned cadence(nextPlanned cadence);
++    setRecurringRate(getString(nextRecurring.rate) || String(getRecurringPresetAmount(getRecommendedRecurringPresetId(item, nextPlanned cadence))));
+     setNextVisitDate(getString(nextRecurring.nextVisitDate));
+     setRecurringCompletedVisits(getString(nextRecurring.completedVisits) || "0");
+     setRecurringMinimumVisits(getString(nextRecurring.minimumVisits) || "2");
+@@ -755,7 +755,7 @@
+   const recurringNeedsSafeguard = recurringIsActive && (!recurringFirstVisitCompleted || recurringRateValue <= 0 || !nextVisitDate);
+   const recurringTracking = {
+     status: recurringStatus,
+-    cadence: recurringCadence,
++    cadence: recurringPlanned cadence,
+     rate: Number(recurringRateValue.toFixed(2)),
+     nextVisitDate,
+     completedVisits: recurringCompletedVisitCount,
+@@ -782,7 +782,7 @@
+         recurringTracking,
+         formatMoney,
+       }),
+-    [quoteTitle, serviceLabel, paymentPlan, lineItems, subtotal, discount, amountDueNow, possibleLaterAmount, customerNote, servicePeriodLabel, recurringStatus, recurringCadence, recurringRateValue, nextVisitDate, recurringCompletedVisitCount, recurringMinimumVisitCount, recurringFirstVisitCompleted, recurringCardOnFile, recurringAutoReady, recurringNotes, formatMoney]
++    [quoteTitle, serviceLabel, paymentPlan, lineItems, subtotal, discount, amountDueNow, possibleLaterAmount, customerNote, servicePeriodLabel, recurringStatus, recurringPlanned cadence, recurringRateValue, nextVisitDate, recurringCompletedVisitCount, recurringMinimumVisitCount, recurringFirstVisitCompleted, recurringCardOnFile, recurringAutoReady, recurringNotes, formatMoney]
+   );
+ 
+   function markDirty() {
+@@ -824,14 +824,14 @@
+ 
+   function applyRecurringPlanToBuilder() {
+     if (recurringStatus === "Not recurring") {
+-      setError("Choose an approved/active recurring status before applying a recurring rate.");
++      setError("Activate the recurring plan before applying a future recurring rate.");
+       return;
+     }
+     if (!recurringFirstVisitCompleted) {
+       setError("Fail-safe: complete the first standard-price visit before using recurring pricing.");
+       return;
+     }
+-    const presetId = getRecommendedRecurringPresetId(item, recurringCadence);
++    const presetId = getRecommendedRecurringPresetId(item, recurringPlanned cadence);
+     const preset = FAMILY_PRESETS.find((item) => item.id === presetId);
+     const rate = recurringRateValue || getRecurringPresetAmount(presetId);
+     if (!preset || rate <= 0) {
+@@ -839,13 +839,13 @@
+       return;
+     }
+     markDirty();
+-    setPaymentPlan(getRecurringPlanLabel(recurringCadence));
++    setPaymentPlan(getRecurringPlanLabel(recurringPlanned cadence));
+     setQuoteTitle(`${serviceLabel} recurring reset visit`);
+     setLineItems([createLineFromPreset(presetId, { amount: String(rate), rate: String(rate), note: "Recurring rate applied after first completed standard-price reset." })]);
+     setDiscountCredit("0");
+     setServicePeriodStart(nextVisitDate || servicePeriodStart);
+     setCustomerNote("Recurring reset visit. Recurring pricing is reserved for consistent scope, schedule, service area, and helper availability. Schedule changes, added scope, or early cancellation may return future visits to standard pricing.");
+-    setMessage("Recurring rate applied to this draft. Review, save, then create/send the next payment link or invoice.");
++    setMessage("Future recurring rate applied to this draft estimate. Review, save, then create/send the next payment link or invoice.");
+     setError("");
+   }
+ 
+@@ -854,14 +854,14 @@
+       setError("Recurring checkout blocked: mark first visit completed, choose an active recurring status, set the next visit date, and confirm the recurring rate.");
+       return;
+     }
+-    const note = `Recurring ${recurringCadence.toLowerCase()} reset visit${nextVisitDate ? ` planned for ${nextVisitDate}` : ""}. Recurring pricing applies after the first completed standard-price visit and depends on consistent scope, schedule, service area, and helper availability.`;
++    const note = `Recurring ${recurringPlanned cadence.toLowerCase()} reset visit${nextVisitDate ? ` planned for ${nextVisitDate}` : ""}. Recurring pricing applies after the first completed standard-price visit and depends on consistent scope, schedule, service area, and helper availability.`;
+     onApplyCheckout({ amount: recurringRateValue, title: `${serviceLabel} recurring reset visit`, note });
+     setMessage("Next recurring checkout amount filled. Review the payment card before sending.");
+     setError("");
+   }
+ 
+   function advanceNextVisitDate() {
+-    const nextDate = getNextVisitFromDate(nextVisitDate || servicePeriodStart, recurringCadence);
++    const nextDate = getNextVisitFromDate(nextVisitDate || servicePeriodStart, recurringPlanned cadence);
+     if (!nextDate) {
+       setError("Add a next visit date first, then advance it.");
+       return;
+@@ -1006,7 +1006,7 @@
+       };
+       onSaved(updates);
+       setDirty(false);
+-      setMessage("Family payment breakdown saved.");
++      setMessage("Family draft estimate saved.");
+     } catch (saveError) {
+       setError(saveError instanceof Error ? saveError.message : "Unable to save family payment breakdown.");
+     } finally {
+@@ -1036,7 +1036,7 @@
+           </div>
+           {recurringStatus !== "Not recurring" && (
+             <div className={`rounded-2xl px-4 py-3 text-xs font-black shadow-sm ${recurringNeedsSafeguard ? "bg-amber-50 text-amber-800" : "bg-emerald-50 text-emerald-800"}`}>
+-              Recurring: {recurringStatus} • {recurringCadence} • {formatMoney(recurringRateValue)}/visit
++              Recurring: {recurringStatus} • {recurringPlanned cadence} • {formatMoney(recurringRateValue)}/visit
+               {nextVisitDate && <span className="block">Next: {nextVisitDate}</span>}
+             </div>
+           )}
+@@ -1119,36 +1119,37 @@
+                 <div className="rounded-3xl border border-[#075c58]/18 bg-[#f4fbf8] p-4">
+                   <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                     <div>
+-                      <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Recurring client tracking</p>
+-                      <h5 className="mt-1 text-base font-black text-[#075c58]">Set once, then use one-click next visit checkout</h5>
++                      <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Recurring plan tracking</p>
++                      <h5 className="mt-1 text-base font-black text-[#075c58]">Track future recurring pricing without activating it automatically</h5>
+                       <p className="mt-1 text-sm font-semibold leading-6 text-slate-700">
+-                        This does not create a subscription or auto-bill the family. It saves the recurring plan, guards against early discounts, and lets admin fill the next payment amount quickly.
++                        This does not create a subscription or auto-bill the family. Recurring pricing is only a future draft until Leo/Gen activate it and apply the recurring rate.
+                       </p>
+                     </div>
+                     <div className={`rounded-2xl px-4 py-3 text-xs font-black ${recurringNeedsSafeguard ? "bg-amber-100 text-amber-900" : recurringReadyForNextInvoice ? "bg-emerald-100 text-emerald-900" : "bg-white text-slate-700"}`}>
+-                      {recurringNeedsSafeguard ? "Needs fail-safe review" : recurringReadyForNextInvoice ? "Ready for next recurring payment" : "No auto billing active"}
++                      {recurringNeedsSafeguard ? "Needs fail-safe review" : recurringReadyForNextInvoice ? "Ready for next recurring payment" : "Not activated yet"}
+                     </div>
+                   </div>
+                   <div className="mt-4 grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+                     <label className="grid gap-2 text-sm font-bold text-slate-700">
+-                      Recurring status
++                      Recurring plan
+                       <select value={recurringStatus} onChange={(e) => { markDirty(); setRecurringStatus(e.target.value); }} className="rounded-2xl border border-[#cfe4da] bg-white px-4 py-3 text-sm font-bold text-[#075c58] outline-none focus:border-[#075c58]">
+-                        <option>Not recurring</option>
++                        <option value="Not recurring">Not activated yet</option>
+                         <option>Approved recurring</option>
+                         <option>Recurring active</option>
+                         <option>Paused</option>
+                         <option>Canceled</option>
+                       </select>
++                      <span className="text-xs font-semibold leading-5 text-slate-500">Leave this as “Not activated yet” until the family has approved ongoing service. Planned cadence and rate are notes only until you apply them.</span>
+                     </label>
+                     <label className="grid gap-2 text-sm font-bold text-slate-700">
+-                      Cadence
+-                      <select value={recurringCadence} onChange={(e) => { markDirty(); setRecurringCadence(e.target.value); const presetId = getRecommendedRecurringPresetId(item, e.target.value); setRecurringRate(String(getRecurringPresetAmount(presetId))); }} className="rounded-2xl border border-[#cfe4da] bg-white px-4 py-3 text-sm font-bold text-[#075c58] outline-none focus:border-[#075c58]">
++                      Planned cadence
++                      <select value={recurringPlanned cadence} onChange={(e) => { markDirty(); setRecurringPlanned cadence(e.target.value); const presetId = getRecommendedRecurringPresetId(item, e.target.value); setRecurringRate(String(getRecurringPresetAmount(presetId))); }} className="rounded-2xl border border-[#cfe4da] bg-white px-4 py-3 text-sm font-bold text-[#075c58] outline-none focus:border-[#075c58]">
+                         <option>Every 2 weeks</option>
+                         <option>Weekly</option>
+                       </select>
+                     </label>
+                     <label className="grid gap-2 text-sm font-bold text-slate-700">
+-                      Recurring rate / visit
++                      Future recurring rate / visit
+                       <input value={recurringRate} onChange={(e) => { markDirty(); setRecurringRate(e.target.value); }} inputMode="decimal" className="rounded-2xl border border-[#cfe4da] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]" />
+                     </label>
+                     <label className="grid gap-2 text-sm font-bold text-slate-700">
+@@ -1188,7 +1189,7 @@
+                     </p>
+                   )}
+                   <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+-                    <button type="button" onClick={applyRecurringPlanToBuilder} className={getButtonClass("secondary")}>Apply recurring rate to draft</button>
++                    <button type="button" onClick={applyRecurringPlanToBuilder} className={getButtonClass("secondary")}>Apply future recurring rate to draft</button>
+                     <button type="button" onClick={fillNextRecurringCheckout} className={getButtonClass("primary")}>Fill next recurring checkout</button>
+                     <button type="button" onClick={advanceNextVisitDate} className={getButtonClass("quiet")}>Advance next visit date</button>
+                   </div>
+@@ -1217,7 +1218,7 @@
+                     )}
+                     {referralCreditNeedsAttention && (
+                       <p className="mt-3 rounded-2xl bg-white px-4 py-3 text-xs font-black leading-5 text-amber-900">
+-                        The discount box is lower than the available referral/customer credit. Click Apply credit, then Save family breakdown before sending payment.
++                        The discount box is lower than the available referral/customer credit. Click Apply credit, then Save draft estimate before sending payment.
+                       </p>
+                     )}
+                   </div>
+@@ -1361,7 +1362,7 @@
+                 </div>
+ 
+                 <div className="rounded-3xl border border-[#eadfc8] bg-[#fbf6ea] p-4">
+-                  <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Customer-facing draft breakdown</p>
++                  <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Customer-facing draft estimate</p>
+                   <pre className="mt-3 max-h-[480px] overflow-auto whitespace-pre-wrap rounded-2xl bg-white p-4 text-xs leading-5 text-slate-700">{customerBreakdownText}</pre>
+                   <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                     <button type="button" onClick={copyBreakdown} className={getButtonClass("secondary")}>Copy</button>
+@@ -1374,8 +1375,8 @@
+ 
+                 <div className="rounded-3xl border border-[#eadfc8] bg-white p-4">
+                   <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Save before sending</p>
+-                  <p className="mt-2 text-sm leading-6 text-slate-700">Save the draft before creating a family Stripe invoice or filling checkout. If this request has a referral, the saved breakdown is what keeps the referral credit from being missed.</p>
+-                  <button type="button" onClick={saveDraft} disabled={saving} className={`${getButtonClass("primary")} mt-3 w-full`}>{saving ? <><BuilderSpinner /> Saving...</> : "Save family breakdown"}</button>
++                  <p className="mt-2 text-sm leading-6 text-slate-700">Save the draft estimate before creating a family Stripe invoice or filling checkout. If this request has a referral, the saved breakdown is what keeps the referral credit from being missed.</p>
++                  <button type="button" onClick={saveDraft} disabled={saving} className={`${getButtonClass("primary")} mt-3 w-full`}>{saving ? <><BuilderSpinner /> Saving...</> : "Save draft estimate"}</button>
+                   {message && <p className="mt-3 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">{message}</p>}
+                   {error && <p className="mt-3 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{error}</p>}
+                 </div>
+
+--- before/app/api/admin/create-recurring-service-request/route.ts
++++ after/app/api/admin/create-recurring-service-request/route.ts
+@@ -10,6 +10,7 @@
+   followUpDate?: string;
+   followUpWindow?: string;
+   cadence?: string;
++  followUpCreateAs?: string;
+   serviceTitle?: string;
+   agreedPrice?: string;
+   estimatedHours?: string;
+@@ -154,6 +155,8 @@
+     const followUpDate = getDateInput(body.followUpDate);
+     const followUpWindow = getString(body.followUpWindow).slice(0, 140);
+     const cadence = getString(body.cadence).slice(0, 80) || "One-time follow-up";
++    const followUpCreateAs = getString(body.followUpCreateAs).toLowerCase() === "recurring" ? "recurring" : "one-time";
++    const isRecurringFollowUp = followUpCreateAs === "recurring";
+     const serviceTitle = getString(body.serviceTitle).slice(0, 180);
+     const agreedPrice = getCleanMoney(body.agreedPrice);
+     const estimatedHours = getString(body.estimatedHours).slice(0, 80);
+@@ -222,7 +225,8 @@
+ 
+     const noteLines = [
+       `Follow-up / recurring request created from ${requestId}.`,
+-      cadence ? `Cadence: ${cadence}` : "",
++      `Create as: ${isRecurringFollowUp ? "Recurring visit" : "One-time follow-up"}`,
++      cadence ? `Planned cadence: ${cadence}` : "",
+       finalServiceTitle ? `Service plan: ${finalServiceTitle}` : "",
+       agreedPrice ? `Agreed price: $${agreedPrice}` : "",
+       estimatedHours ? `Estimated helper hours: ${estimatedHours}` : "",
+@@ -238,8 +242,8 @@
+       selectedServiceTitle: finalServiceTitle,
+       serviceTitle: finalServiceTitle,
+       packageType: finalServiceTitle,
+-      requestType: cadence === "One-time follow-up" ? "Follow-up service visit" : "Recurring service visit",
+-      status: cadence === "One-time follow-up" ? "Follow-up Scheduled" : "Recurring Scheduled",
++      requestType: isRecurringFollowUp ? "Recurring service visit" : "Follow-up service visit",
++      status: isRecurringFollowUp ? "Recurring Scheduled" : "Follow-up Scheduled",
+       paymentStatus: "Not Paid",
+       preferredDate: followUpDate,
+       preferredWindow: followUpWindow || getString(source.preferredWindow || source.preferredTime),
+@@ -255,7 +259,8 @@
+       petNotes,
+       specialInstructions,
+       isFollowUpRequest: true,
+-      isRecurringServiceRequest: cadence !== "One-time follow-up",
++      isRecurringServiceRequest: isRecurringFollowUp,
++      followUpCreateAs,
+       followUpFromRequestId: requestId,
+       followUpFromCustomerName: sourceName,
+       followUpFromCustomerEmail: sourceEmail,
+

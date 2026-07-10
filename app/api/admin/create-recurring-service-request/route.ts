@@ -10,6 +10,7 @@ type CreateRecurringServiceBody = {
   followUpDate?: string;
   followUpWindow?: string;
   cadence?: string;
+  followUpCreateAs?: string;
   serviceTitle?: string;
   agreedPrice?: string;
   estimatedHours?: string;
@@ -154,6 +155,8 @@ export async function POST(request: Request) {
     const followUpDate = getDateInput(body.followUpDate);
     const followUpWindow = getString(body.followUpWindow).slice(0, 140);
     const cadence = getString(body.cadence).slice(0, 80) || "One-time follow-up";
+    const followUpCreateAs = getString(body.followUpCreateAs).toLowerCase() === "recurring" ? "recurring" : "one-time";
+    const isRecurringFollowUp = followUpCreateAs === "recurring";
     const serviceTitle = getString(body.serviceTitle).slice(0, 180);
     const agreedPrice = getCleanMoney(body.agreedPrice);
     const estimatedHours = getString(body.estimatedHours).slice(0, 80);
@@ -222,7 +225,8 @@ export async function POST(request: Request) {
 
     const noteLines = [
       `Follow-up / recurring request created from ${requestId}.`,
-      cadence ? `Cadence: ${cadence}` : "",
+      `Create as: ${isRecurringFollowUp ? "Recurring visit" : "One-time follow-up"}`,
+      cadence ? `Planned cadence: ${cadence}` : "",
       finalServiceTitle ? `Service plan: ${finalServiceTitle}` : "",
       agreedPrice ? `Agreed price: $${agreedPrice}` : "",
       estimatedHours ? `Estimated helper hours: ${estimatedHours}` : "",
@@ -238,8 +242,8 @@ export async function POST(request: Request) {
       selectedServiceTitle: finalServiceTitle,
       serviceTitle: finalServiceTitle,
       packageType: finalServiceTitle,
-      requestType: cadence === "One-time follow-up" ? "Follow-up service visit" : "Recurring service visit",
-      status: cadence === "One-time follow-up" ? "Follow-up Scheduled" : "Recurring Scheduled",
+      requestType: isRecurringFollowUp ? "Recurring service visit" : "Follow-up service visit",
+      status: isRecurringFollowUp ? "Recurring Scheduled" : "Follow-up Scheduled",
       paymentStatus: "Not Paid",
       preferredDate: followUpDate,
       preferredWindow: followUpWindow || getString(source.preferredWindow || source.preferredTime),
@@ -255,7 +259,8 @@ export async function POST(request: Request) {
       petNotes,
       specialInstructions,
       isFollowUpRequest: true,
-      isRecurringServiceRequest: cadence !== "One-time follow-up",
+      isRecurringServiceRequest: isRecurringFollowUp,
+      followUpCreateAs,
       followUpFromRequestId: requestId,
       followUpFromCustomerName: sourceName,
       followUpFromCustomerEmail: sourceEmail,

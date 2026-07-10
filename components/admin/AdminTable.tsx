@@ -1214,7 +1214,7 @@ function AdminDetailWorkflowNav({
 
   if (collectionName === "serviceRequests") {
     if (showCommercialQuotePanel) navItems.push({ href: "#admin-section-commercial-quote", label: "2", title: "Quote" });
-    if (showFamilyPaymentBreakdownPanel) navItems.push({ href: "#admin-section-family-breakdown", label: "2", title: "Build quote" });
+    if (showFamilyPaymentBreakdownPanel) navItems.push({ href: "#admin-section-family-breakdown", label: "2", title: "Build draft" });
     navItems.push({ href: "#admin-section-internal-notes", label: "Note", title: item.service === "laundry-rescue" ? "Bags/notes" : "Admin notes" });
     if (item.service === "laundry-rescue") navItems.push({ href: "#admin-section-repeat-laundry", label: "↻", title: "Repeat" });
     if (item.service !== "laundry-rescue") navItems.push({ href: "#admin-section-recurring-service", label: "↻", title: "Follow-up" });
@@ -3357,6 +3357,7 @@ export default function AdminTable({
   const [followUpDate, setFollowUpDate] = useState("");
   const [followUpWindow, setFollowUpWindow] = useState("");
   const [followUpCadence, setFollowUpCadence] = useState("");
+  const [followUpCreateAs, setFollowUpCreateAs] = useState<"one-time" | "recurring">("one-time");
   const [followUpServiceTitle, setFollowUpServiceTitle] = useState("");
   const [followUpAgreedPrice, setFollowUpAgreedPrice] = useState("");
   const [followUpEstimatedHours, setFollowUpEstimatedHours] = useState("");
@@ -3480,6 +3481,7 @@ export default function AdminTable({
     setRepeatLaundryError("");
     setRepeatLaundryCreatedRequestId("");
     setFollowUpDate("");
+    setFollowUpCreateAs("one-time");
     setFollowUpWindow(getOriginalRequestAnswer(selected, ["preferredWindow", "preferredTime", "requestedWindow", "requestedTime", "schedulingPreference", "availability", "availableTimes"]));
     setFollowUpCadence(normalizeFollowUpCadence(
       getOriginalRequestAnswer(selected, ["maintenanceCadence", "wholeHomeRecurringCadence", "recurringCadence", "recurringResetInterest", "frequency", "cadence"]) ||
@@ -3902,7 +3904,7 @@ export default function AdminTable({
   async function createFollowUpServiceRequest() {
     if (!selected || collectionName !== "serviceRequests" || selected.service === "laundry-rescue") return;
 
-    const confirmed = window.confirm("Create a new follow-up / recurring service request? The current request will stay unchanged. The new request will start unpaid.");
+    const confirmed = window.confirm(`Create a new ${followUpCreateAs === "recurring" ? "recurring" : "one-time follow-up"} service request? The current request will stay unchanged. The new request will start unpaid.`);
     if (!confirmed) return;
 
     setFollowUpBusy(true);
@@ -5514,7 +5516,19 @@ export default function AdminTable({
                       />
                     </label>
                     <label className="grid gap-2 text-sm font-bold text-slate-700">
-                      Cadence
+                      Create as
+                      <select
+                        value={followUpCreateAs}
+                        onChange={(e) => setFollowUpCreateAs(e.target.value === "recurring" ? "recurring" : "one-time")}
+                        className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-bold text-[#075c58] outline-none focus:border-[#075c58]"
+                      >
+                        <option value="one-time">One-time follow-up</option>
+                        <option value="recurring">Recurring visit</option>
+                      </select>
+                      <span className="text-xs font-semibold leading-5 text-slate-500">Customer cadence can prefill below, but the new request only becomes recurring when you choose Recurring visit here.</span>
+                    </label>
+                    <label className="grid gap-2 text-sm font-bold text-slate-700">
+                      Planned cadence
                       <select
                         value={followUpCadence}
                         onChange={(e) => setFollowUpCadence(e.target.value)}
@@ -5621,7 +5635,7 @@ export default function AdminTable({
                     </button>
                   )}
                   <p className="text-xs font-semibold text-slate-600">
-                    The new request starts unpaid with payment links, invoice links, and completion history blank.
+                    The new request starts unpaid with payment links, invoice links, and completion history blank. The Create as choice controls whether it is marked one-time or recurring.
                   </p>
                 </div>
               </div>
