@@ -3255,7 +3255,7 @@ export default function AdminTable({
     setFollowUpCadence(selected?.recurringCadence ? String(selected.recurringCadence) : "One-time follow-up");
     setFollowUpServiceTitle(
       getRepeatLaundryOriginalAnswer(selected, ["selectedServiceTitle", "serviceTitle", "packageType", "requestType", "service"]) ||
-      getCleanServiceLabel(selected)
+      (selected ? getCleanServiceLabel(selected) : "")
     );
     setFollowUpAgreedPrice(
       selected?.recurringPrice ? String(selected.recurringPrice) :
