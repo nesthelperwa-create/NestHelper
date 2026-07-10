@@ -1,0 +1,24 @@
+--- before/components/admin/AdminTable.tsx
++++ after/components/admin/AdminTable.tsx
+@@ -4624,9 +4624,9 @@
+       )}
+ 
+       {selected && (
+-        <div className="fixed inset-0 z-50 grid place-items-center bg-black/50 p-2 sm:p-4">
+-          <div className="max-h-[92vh] w-full max-w-6xl overflow-auto rounded-3xl bg-white p-4 shadow-2xl sm:p-6">
+-            <div className="sticky top-0 z-20 -mx-4 -mt-4 mb-3 flex items-center justify-between gap-3 border-b border-[#eadfc8] bg-white/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:-mt-6 sm:mb-4 sm:px-6 sm:py-4">
++        <div className="fixed inset-0 z-[300] overflow-y-auto bg-black/50 px-2 pb-4 pt-2 sm:px-4 sm:py-4">
++          <div className="mx-auto min-h-[calc(100dvh-1rem)] w-full max-w-6xl overflow-visible rounded-3xl bg-white p-4 shadow-2xl sm:min-h-0 sm:max-h-[92dvh] sm:overflow-auto sm:p-6">
++            <div className="sticky top-0 z-30 -mx-4 -mt-4 mb-3 flex items-center justify-between gap-3 rounded-t-3xl border-b border-[#eadfc8] bg-white/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:-mt-6 sm:mb-4 sm:px-6 sm:py-4">
+               <div className="min-w-0">
+                 <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#b98a2f]">Admin details</p>
+                 <h3 className="truncate text-xl font-bold text-[#075c58] sm:text-2xl">{getRecordDisplayName(selected)}</h3>
+@@ -4635,7 +4635,7 @@
+                 </p>
+               </div>
+               <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+-                <button onClick={() => setSelected(null)} className={getAdminActionClass("quiet")}>Close</button>
++                <button onClick={() => setSelected(null)} className={`${getAdminActionClass("quiet")} !min-h-10 !px-4 !py-2 text-xs sm:text-sm`}>Close</button>
+               </div>
+             </div>
+ 
