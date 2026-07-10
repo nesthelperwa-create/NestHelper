@@ -3175,6 +3175,7 @@ export default function AdminTable({
   const [repeatLaundryBusy, setRepeatLaundryBusy] = useState(false);
   const [repeatLaundryMessage, setRepeatLaundryMessage] = useState("");
   const [repeatLaundryError, setRepeatLaundryError] = useState("");
+  const [repeatLaundryCreatedRequestId, setRepeatLaundryCreatedRequestId] = useState("");
   const [followUpDate, setFollowUpDate] = useState("");
   const [followUpWindow, setFollowUpWindow] = useState("");
   const [followUpCadence, setFollowUpCadence] = useState("");
@@ -3190,6 +3191,7 @@ export default function AdminTable({
   const [followUpBusy, setFollowUpBusy] = useState(false);
   const [followUpMessage, setFollowUpMessage] = useState("");
   const [followUpError, setFollowUpError] = useState("");
+  const [followUpCreatedRequestId, setFollowUpCreatedRequestId] = useState("");
   const [applicantEmailTemplate, setApplicantEmailTemplate] = useState<ApplicantEmailTemplateKey>("phone-interview");
   const [applicantEmailSubject, setApplicantEmailSubject] = useState("");
   const [applicantEmailBody, setApplicantEmailBody] = useState("");
@@ -3298,6 +3300,7 @@ export default function AdminTable({
     setRepeatLaundryNote("");
     setRepeatLaundryMessage("");
     setRepeatLaundryError("");
+    setRepeatLaundryCreatedRequestId("");
     setFollowUpDate("");
     setFollowUpWindow(getRepeatLaundryOriginalAnswer(selected, ["preferredWindow", "preferredTime", "requestedWindow", "requestedTime", "schedulingPreference", "availability", "availableTimes"]));
     setFollowUpCadence(selected?.recurringCadence ? String(selected.recurringCadence) : "One-time follow-up");
@@ -3320,6 +3323,7 @@ export default function AdminTable({
     setFollowUpInternalNote("");
     setFollowUpMessage("");
     setFollowUpError("");
+    setFollowUpCreatedRequestId("");
     setBusyDocumentPath("");
     const defaultApplicantTemplate = getApplicantEmailTemplate(collectionName, selected, "phone-interview");
     setApplicantEmailTemplate("phone-interview");
@@ -3599,13 +3603,32 @@ export default function AdminTable({
     }
   }
 
+  function openCreatedServiceRequest(requestId: string, kind: "repeat" | "follow-up") {
+    const nextRequest = items.find((item) => item.id === requestId);
+    if (nextRequest) {
+      setSelected(nextRequest);
+      setQuotePromptMessage("");
+      setQuotePromptError("");
+      setActiveAction("");
+      return;
+    }
+
+    const waitMessage = "The new request was created. If it does not open yet, wait a few seconds for the dashboard list to refresh, then click Open new request again.";
+    if (kind === "repeat") setRepeatLaundryMessage(waitMessage);
+    if (kind === "follow-up") setFollowUpMessage(waitMessage);
+  }
+
   async function createRepeatLaundryRequest() {
     if (!selected || collectionName !== "serviceRequests" || selected.service !== "laundry-rescue") return;
+
+    const confirmed = window.confirm("Create a new repeat Laundry Rescue request? The current completed request will stay unchanged. The new request will start unpaid.");
+    if (!confirmed) return;
 
     setRepeatLaundryBusy(true);
     setActiveAction("Creating repeat laundry request...");
     setRepeatLaundryMessage("");
     setRepeatLaundryError("");
+    setRepeatLaundryCreatedRequestId("");
 
     try {
       const token = await firebaseAuth.currentUser?.getIdToken();
@@ -3631,6 +3654,7 @@ export default function AdminTable({
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.ok) throw new Error(data.error || "Unable to create repeat laundry request.");
 
+      if (data.newRequestId) setRepeatLaundryCreatedRequestId(String(data.newRequestId));
       setRepeatLaundryMessage(`Repeat laundry request created${data.newRequestId ? `: ${data.newRequestId}` : ""}. It will appear as a new request in the dashboard.`);
       if (data.sourceUpdates) {
         setSelected((prev) => (prev ? { ...prev, ...data.sourceUpdates } : prev));
@@ -3647,10 +3671,14 @@ export default function AdminTable({
   async function createFollowUpServiceRequest() {
     if (!selected || collectionName !== "serviceRequests" || selected.service === "laundry-rescue") return;
 
+    const confirmed = window.confirm("Create a new follow-up / recurring service request? The current request will stay unchanged. The new request will start unpaid.");
+    if (!confirmed) return;
+
     setFollowUpBusy(true);
     setActiveAction("Creating follow-up service request...");
     setFollowUpMessage("");
     setFollowUpError("");
+    setFollowUpCreatedRequestId("");
 
     try {
       const token = await firebaseAuth.currentUser?.getIdToken();
@@ -3677,6 +3705,7 @@ export default function AdminTable({
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.ok) throw new Error(data.error || "Unable to create follow-up service request.");
 
+      if (data.newRequestId) setFollowUpCreatedRequestId(String(data.newRequestId));
       setFollowUpMessage(`Follow-up request created${data.newRequestId ? `: ${data.newRequestId}` : ""}. It will appear as a new request in the dashboard.`);
       if (data.sourceUpdates) {
         setSelected((prev) => (prev ? { ...prev, ...data.sourceUpdates } : prev));
@@ -5184,6 +5213,11 @@ export default function AdminTable({
                   <button type="button" disabled={repeatLaundryBusy} onClick={createRepeatLaundryRequest} className={getAdminActionClass("primary")}>
                     {repeatLaundryBusy ? <><ActionSpinner /> Creating...</> : "Create repeat request"}
                   </button>
+                  {repeatLaundryCreatedRequestId && (
+                    <button type="button" onClick={() => openCreatedServiceRequest(repeatLaundryCreatedRequestId, "repeat")} className={getAdminActionClass("secondary")}>
+                      Open new request
+                    </button>
+                  )}
                   <p className="text-xs font-semibold text-slate-600">
                     The new request starts unpaid with dry weight, bag tracking, payment links, and final invoice fields blank.
                   </p>
@@ -5343,6 +5377,11 @@ export default function AdminTable({
                   <button type="button" disabled={followUpBusy} onClick={createFollowUpServiceRequest} className={getAdminActionClass("primary")}>
                     {followUpBusy ? <><ActionSpinner /> Creating...</> : "Create follow-up request"}
                   </button>
+                  {followUpCreatedRequestId && (
+                    <button type="button" onClick={() => openCreatedServiceRequest(followUpCreatedRequestId, "follow-up")} className={getAdminActionClass("secondary")}>
+                      Open new request
+                    </button>
+                  )}
                   <p className="text-xs font-semibold text-slate-600">
                     The new request starts unpaid with payment links, invoice links, and completion history blank.
                   </p>
