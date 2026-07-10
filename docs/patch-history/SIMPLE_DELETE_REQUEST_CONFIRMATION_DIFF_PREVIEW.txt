@@ -1,0 +1,79 @@
+--- before/components/admin/AdminTable.tsx
++++ after/components/admin/AdminTable.tsx
+@@ -3831,6 +3831,55 @@
+     }
+   }
+ 
++  async function deleteSelectedServiceRequest() {
++    if (!selected || collectionName !== "serviceRequests") return;
++
++    const blockedReason = getRecordDeleteBlockReason(collectionName, selected);
++    if (blockedReason) {
++      setStatusError(blockedReason);
++      return;
++    }
++
++    const requestName = String(selected.fullName || selected.name || selected.email || selected.phone || selected.id || "").trim();
++    const requestLabel = [getCleanServiceLabel(selected), requestName].filter(Boolean).join(" — ");
++    const confirmed = window.confirm(
++      `Permanently delete this request?\n\n${requestLabel || selected.id}\n\nThis cannot be undone. Delete should only be used for test, spam, duplicate, or accidental unpaid requests. For real customer records, use Archive instead.\n\nPress OK to delete permanently, or Cancel to keep it.`
++    );
++    if (!confirmed) return;
++
++    setStatusBusy(true);
++    setActiveAction("Deleting request...");
++    setStatusMessage("");
++    setStatusWarning("");
++    setStatusError("");
++    setStatusEmailOutcome(null);
++
++    try {
++      const token = await firebaseAuth.currentUser?.getIdToken();
++      const res = await fetch("/api/admin/delete-record", {
++        method: "POST",
++        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
++        body: JSON.stringify({
++          collection: collectionName,
++          id: selected.id,
++          confirmDeleteTestRecord: true,
++        }),
++      });
++      const data = await res.json().catch(() => ({}));
++      if (!res.ok || !data.ok) throw new Error(data.error || "Unable to delete request.");
++
++      const deletedId = selected.id;
++      setItems((prev) => prev.filter((item) => item.id !== deletedId));
++      setSelected(null);
++      setStatusMessage("Request permanently deleted. Archive remains the safer option for real customer records.");
++    } catch (error) {
++      setStatusError(error instanceof Error ? error.message : "Unable to delete request.");
++    } finally {
++      setStatusBusy(false);
++      setActiveAction("");
++    }
++  }
++
+   function openCreatedServiceRequest(requestId: string, kind: "repeat" | "follow-up") {
+     const nextRequest = items.find((item) => item.id === requestId);
+     if (nextRequest) {
+@@ -5930,8 +5979,19 @@
+                       Archive / hide from active
+                     </button>
+                   )}
++                  {collectionName === "serviceRequests" && (
++                    <button
++                      type="button"
++                      disabled={statusBusy}
++                      onClick={deleteSelectedServiceRequest}
++                      className={getAdminActionClass("danger")}
++                      title="Permanently delete this request after a warning confirmation."
++                    >
++                      Delete request permanently
++                    </button>
++                  )}
+                   <p className="max-w-xl text-xs leading-5 text-slate-500">
+-                    Quote emails can be sent here by choosing Quote Sent. Payment link, invoice, and payment received emails are handled separately by the payment/invoice buttons. Archive keeps the record but removes it from the active work queue.
++                    Quote emails can be sent here by choosing Quote Sent. Payment link, invoice, and payment received emails are handled separately by the payment/invoice buttons. Archive keeps the record but removes it from the active work queue. Delete is only for test, spam, duplicate, or accidental unpaid requests.
+                   </p>
+                 </div>
+ 
