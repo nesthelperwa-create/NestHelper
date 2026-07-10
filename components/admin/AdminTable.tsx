@@ -4273,8 +4273,17 @@ export default function AdminTable({
     }
   }
 
+  function confirmStripeInvoiceCreation(kind: "commercial" | "family", sendEmail: boolean) {
+    const action = sendEmail ? "create and email" : "create";
+    const label = kind === "commercial" ? "Commercial Reset invoice" : "family invoice";
+    return window.confirm(
+      `Confirm ${action} ${label}?\n\nThis creates a formal Stripe invoice/PDF. Stripe invoices may cost more than a simple quick checkout link, so use this only when you intentionally need an itemized invoice record.\n\nUse Cancel if this was clicked by accident.`
+    );
+  }
+
   async function createCommercialInvoice(sendEmail: boolean) {
     if (!selected) return;
+    if (!confirmStripeInvoiceCreation("commercial", sendEmail)) return;
     setCommercialInvoiceBusy(true);
     setActiveAction(sendEmail ? "Creating invoice and sending NestHelper email..." : "Creating Stripe invoice...");
     setCommercialInvoiceMessage("");
@@ -4333,6 +4342,7 @@ export default function AdminTable({
 
   async function createFamilyInvoice(sendEmail: boolean) {
     if (!selected) return;
+    if (selected.service !== "laundry-rescue" && !confirmStripeInvoiceCreation("family", sendEmail)) return;
     setFamilyInvoiceBusy(true);
     setActiveAction(
       selected.service === "laundry-rescue"
@@ -6337,7 +6347,7 @@ export default function AdminTable({
                         <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Recommended for commercial</p>
                         <h5 className="mt-1 text-base font-black text-[#075c58]">Create a Stripe invoice from the saved breakdown</h5>
                         <p className="mt-1 text-sm leading-6 text-slate-700">
-                          Best for commercial customers who expect an itemized invoice/PDF. Save the Quote / Breakdown Builder first, then create the Stripe invoice. When emailing, NestHelper sends the hosted invoice link in a branded email.
+                          Best for commercial customers who expect an itemized invoice/PDF. Save the Quote / Breakdown Builder first, then create the Stripe invoice. When emailing, NestHelper sends the hosted invoice link in a branded email. A confirmation popup appears before creating because Stripe invoices may cost more than quick checkout.
                         </p>
                       </div>
                       <div className="flex flex-col gap-2 sm:flex-row lg:flex-col">
@@ -6379,7 +6389,7 @@ export default function AdminTable({
                         <p className="mt-1 text-sm leading-6 text-slate-700">
                           {selected.service === "laundry-rescue"
                             ? "This uses the saved breakdown amount to create a taxable, non-refundable Laundry Rescue deposit checkout. Stripe asks the customer to choose auto-charge for the final balance or invoice-before-delivery."
-                            : "Use this when you want a formal invoice/PDF instead of only a checkout receipt: Errand Helper, custom family quotes, recurring family help, approved add-ons, or refund/credit documentation."}
+                            : "Use this when you want a formal invoice/PDF instead of only a checkout receipt: Errand Helper, custom family quotes, recurring family help, approved add-ons, or refund/credit documentation. A confirmation popup appears before creating because Stripe invoices may cost more than quick checkout."}
                         </p>
                       </div>
                       <div className="flex flex-col gap-2 sm:flex-row lg:flex-col">
