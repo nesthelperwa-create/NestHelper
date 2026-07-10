@@ -1,0 +1,11 @@
+--- before/components/admin/AdminTable.tsx
++++ after/components/admin/AdminTable.tsx
+@@ -3255,7 +3255,7 @@
+     setFollowUpCadence(selected?.recurringCadence ? String(selected.recurringCadence) : "One-time follow-up");
+     setFollowUpServiceTitle(
+       getRepeatLaundryOriginalAnswer(selected, ["selectedServiceTitle", "serviceTitle", "packageType", "requestType", "service"]) ||
+-      getServiceLabel(getServiceKey(selected))
++      getCleanServiceLabel(getServiceKey(selected))
+     );
+     setFollowUpAgreedPrice(
+       selected?.recurringPrice ? String(selected.recurringPrice) :
