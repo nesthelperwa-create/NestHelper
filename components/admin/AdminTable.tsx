@@ -1122,6 +1122,7 @@ function AdminDetailWorkflowNav({
     if (showFamilyPaymentBreakdownPanel) navItems.push({ href: "#admin-section-family-breakdown", label: "2", title: "Build quote" });
     navItems.push({ href: "#admin-section-internal-notes", label: "Note", title: item.service === "laundry-rescue" ? "Bags/notes" : "Admin notes" });
     if (item.service === "laundry-rescue") navItems.push({ href: "#admin-section-repeat-laundry", label: "↻", title: "Repeat" });
+    if (item.service !== "laundry-rescue") navItems.push({ href: "#admin-section-recurring-service", label: "↻", title: "Follow-up" });
     if (showPaymentActions) navItems.push({ href: "#admin-section-payment", label: "3", title: item.service === "laundry-rescue" ? "Deposit" : "Payment" });
     if (showLaundryFinalBalance) navItems.push({ href: "#admin-section-laundry-final", label: "4", title: "Laundry final" });
     navItems.push({ href: "#admin-section-status", label: "✓", title: "Status" });
@@ -3126,6 +3127,21 @@ export default function AdminTable({
   const [repeatLaundryBusy, setRepeatLaundryBusy] = useState(false);
   const [repeatLaundryMessage, setRepeatLaundryMessage] = useState("");
   const [repeatLaundryError, setRepeatLaundryError] = useState("");
+  const [followUpDate, setFollowUpDate] = useState("");
+  const [followUpWindow, setFollowUpWindow] = useState("");
+  const [followUpCadence, setFollowUpCadence] = useState("");
+  const [followUpServiceTitle, setFollowUpServiceTitle] = useState("");
+  const [followUpAgreedPrice, setFollowUpAgreedPrice] = useState("");
+  const [followUpEstimatedHours, setFollowUpEstimatedHours] = useState("");
+  const [followUpFocusAreas, setFollowUpFocusAreas] = useState("");
+  const [followUpIncludedRooms, setFollowUpIncludedRooms] = useState("");
+  const [followUpSuppliesPreference, setFollowUpSuppliesPreference] = useState("");
+  const [followUpPetNotes, setFollowUpPetNotes] = useState("");
+  const [followUpSpecialInstructions, setFollowUpSpecialInstructions] = useState("");
+  const [followUpInternalNote, setFollowUpInternalNote] = useState("");
+  const [followUpBusy, setFollowUpBusy] = useState(false);
+  const [followUpMessage, setFollowUpMessage] = useState("");
+  const [followUpError, setFollowUpError] = useState("");
   const [applicantEmailTemplate, setApplicantEmailTemplate] = useState<ApplicantEmailTemplateKey>("phone-interview");
   const [applicantEmailSubject, setApplicantEmailSubject] = useState("");
   const [applicantEmailBody, setApplicantEmailBody] = useState("");
@@ -3234,6 +3250,28 @@ export default function AdminTable({
     setRepeatLaundryNote("");
     setRepeatLaundryMessage("");
     setRepeatLaundryError("");
+    setFollowUpDate("");
+    setFollowUpWindow(getRepeatLaundryOriginalAnswer(selected, ["preferredWindow", "preferredTime", "requestedWindow", "requestedTime", "schedulingPreference", "availability", "availableTimes"]));
+    setFollowUpCadence(selected?.recurringCadence ? String(selected.recurringCadence) : "One-time follow-up");
+    setFollowUpServiceTitle(
+      getRepeatLaundryOriginalAnswer(selected, ["selectedServiceTitle", "serviceTitle", "packageType", "requestType", "service"]) ||
+      getServiceLabel(getServiceKey(selected))
+    );
+    setFollowUpAgreedPrice(
+      selected?.recurringPrice ? String(selected.recurringPrice) :
+      selected?.customInitialAmount ? String(selected.customInitialAmount) :
+      selected?.commercialInitialAmount ? String(selected.commercialInitialAmount) :
+      ""
+    );
+    setFollowUpEstimatedHours(getRepeatLaundryOriginalAnswer(selected, ["estimatedHours", "helperHours", "hours", "serviceLength", "visitLength", "timeEstimate"]));
+    setFollowUpFocusAreas(getRepeatLaundryOriginalAnswer(selected, ["focusAreas", "areaFocus", "priorityAreas", "mainPriorities", "cleaningGoals", "specificAreas", "areasToClean", "requestedAreas"]));
+    setFollowUpIncludedRooms(getRepeatLaundryOriginalAnswer(selected, ["includedRooms", "rooms", "bedrooms", "bathrooms", "homeSize", "squareFootage", "sqft", "homeDetails"]));
+    setFollowUpSuppliesPreference(getRepeatLaundryOriginalAnswer(selected, ["suppliesPreference", "customerSupplies", "cleaningSupplies", "supplies", "productsPreference", "productPreference"]));
+    setFollowUpPetNotes(getRepeatLaundryOriginalAnswer(selected, ["petNotes", "pets", "petHair", "animals", "petInfo"]));
+    setFollowUpSpecialInstructions(getRepeatLaundryOriginalAnswer(selected, ["specialInstructions", "notes", "requestDetails", "additionalDetails", "anythingElse", "accessNotes"]));
+    setFollowUpInternalNote("");
+    setFollowUpMessage("");
+    setFollowUpError("");
     setBusyDocumentPath("");
     const defaultApplicantTemplate = getApplicantEmailTemplate(collectionName, selected, "phone-interview");
     setApplicantEmailTemplate("phone-interview");
@@ -3554,6 +3592,52 @@ export default function AdminTable({
       setRepeatLaundryError(error instanceof Error ? error.message : "Unable to create repeat laundry request.");
     } finally {
       setRepeatLaundryBusy(false);
+      setActiveAction("");
+    }
+  }
+
+  async function createFollowUpServiceRequest() {
+    if (!selected || collectionName !== "serviceRequests" || selected.service === "laundry-rescue") return;
+
+    setFollowUpBusy(true);
+    setActiveAction("Creating follow-up service request...");
+    setFollowUpMessage("");
+    setFollowUpError("");
+
+    try {
+      const token = await firebaseAuth.currentUser?.getIdToken();
+      const res = await fetch("/api/admin/create-recurring-service-request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          requestId: selected.id,
+          followUpDate,
+          followUpWindow,
+          cadence: followUpCadence,
+          serviceTitle: followUpServiceTitle,
+          agreedPrice: followUpAgreedPrice,
+          estimatedHours: followUpEstimatedHours,
+          focusAreas: followUpFocusAreas,
+          includedRooms: followUpIncludedRooms,
+          suppliesPreference: followUpSuppliesPreference,
+          petNotes: followUpPetNotes,
+          specialInstructions: followUpSpecialInstructions,
+          internalNote: followUpInternalNote,
+        }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.ok) throw new Error(data.error || "Unable to create follow-up service request.");
+
+      setFollowUpMessage(`Follow-up request created${data.newRequestId ? `: ${data.newRequestId}` : ""}. It will appear as a new request in the dashboard.`);
+      if (data.sourceUpdates) {
+        setSelected((prev) => (prev ? { ...prev, ...data.sourceUpdates } : prev));
+        setItems((prev) => prev.map((item) => item.id === selected.id ? { ...item, ...data.sourceUpdates } : item));
+      }
+    } catch (error) {
+      setFollowUpError(error instanceof Error ? error.message : "Unable to create follow-up service request.");
+    } finally {
+      setFollowUpBusy(false);
       setActiveAction("");
     }
   }
@@ -4317,7 +4401,7 @@ export default function AdminTable({
   const selectedAvailableCustomerCredits = getAvailableCustomerCreditsForRequest(selected, customerCredits);
   const selectedAvailableCustomerCreditTotal = getAvailableCustomerCreditTotal(selectedAvailableCustomerCredits);
   const selectedOutgoingReferralHistory = getOutgoingReferralHistory(selected);
-  const anyActionBusy = checkoutBusy || commercialInvoiceBusy || commercialQuoteEmailBusy || familyInvoiceBusy || statusBusy || laundryFinalBusy || additionalPaymentBusy || commercialQuoteBusy || referralBusy || applicationOnboardingBusy || requestNotesBusy || repeatLaundryBusy || applicantEmailBusy || Boolean(busyDocumentPath);
+  const anyActionBusy = checkoutBusy || commercialInvoiceBusy || commercialQuoteEmailBusy || familyInvoiceBusy || statusBusy || laundryFinalBusy || additionalPaymentBusy || commercialQuoteBusy || referralBusy || applicationOnboardingBusy || requestNotesBusy || repeatLaundryBusy || followUpBusy || applicantEmailBusy || Boolean(busyDocumentPath);
 
   return (
     <section className="space-y-5">
@@ -4460,9 +4544,9 @@ export default function AdminTable({
       <AdminActionFeedback
         busy={anyActionBusy}
         activeAction={activeAction}
-        messages={[statusMessage, checkoutMessage, commercialInvoiceMessage, commercialQuoteEmailMessage, familyInvoiceMessage, laundryFinalMessage, additionalPaymentMessage, commercialQuoteMessage, referralMessage, requestNotesMessage, repeatLaundryMessage, applicantEmailMessage]}
+        messages={[statusMessage, checkoutMessage, commercialInvoiceMessage, commercialQuoteEmailMessage, familyInvoiceMessage, laundryFinalMessage, additionalPaymentMessage, commercialQuoteMessage, referralMessage, requestNotesMessage, repeatLaundryMessage, followUpMessage, applicantEmailMessage]}
         warnings={[statusWarning]}
-        errors={[statusError, checkoutError, commercialInvoiceError, commercialQuoteEmailError, familyInvoiceError, laundryFinalError, additionalPaymentError, commercialQuoteError, referralError, requestNotesError, repeatLaundryError, applicantEmailError]}
+        errors={[statusError, checkoutError, commercialInvoiceError, commercialQuoteEmailError, familyInvoiceError, laundryFinalError, additionalPaymentError, commercialQuoteError, referralError, requestNotesError, repeatLaundryError, followUpError, applicantEmailError]}
       />
 
       <div className="flex flex-col gap-3 rounded-3xl border border-[#eadfc8] bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
@@ -4801,9 +4885,9 @@ export default function AdminTable({
               <AdminActionFeedback
                 busy={anyActionBusy}
                 activeAction={activeAction}
-                messages={[quotePromptMessage, statusMessage, checkoutMessage, commercialInvoiceMessage, commercialQuoteEmailMessage, familyInvoiceMessage, laundryFinalMessage, additionalPaymentMessage, commercialQuoteMessage, referralMessage, applicationOnboardingMessage, requestNotesMessage, repeatLaundryMessage, applicantEmailMessage]}
+                messages={[quotePromptMessage, statusMessage, checkoutMessage, commercialInvoiceMessage, commercialQuoteEmailMessage, familyInvoiceMessage, laundryFinalMessage, additionalPaymentMessage, commercialQuoteMessage, referralMessage, applicationOnboardingMessage, requestNotesMessage, repeatLaundryMessage, followUpMessage, applicantEmailMessage]}
                 warnings={[statusWarning]}
-                errors={[quotePromptError, statusError, checkoutError, commercialInvoiceError, commercialQuoteEmailError, familyInvoiceError, laundryFinalError, additionalPaymentError, commercialQuoteError, referralError, applicationOnboardingError, requestNotesError, repeatLaundryError, applicantEmailError, documentOpenError]}
+                errors={[quotePromptError, statusError, checkoutError, commercialInvoiceError, commercialQuoteEmailError, familyInvoiceError, laundryFinalError, additionalPaymentError, commercialQuoteError, referralError, applicationOnboardingError, requestNotesError, repeatLaundryError, followUpError, applicantEmailError, documentOpenError]}
               />
               {collectionName === "serviceRequests" && (
                 <div className="rounded-3xl border border-[#eadfc8] bg-[#fbf6ea] p-4 shadow-sm">
@@ -5048,6 +5132,165 @@ export default function AdminTable({
                   </button>
                   <p className="text-xs font-semibold text-slate-600">
                     The new request starts unpaid with dry weight, bag tracking, payment links, and final invoice fields blank.
+                  </p>
+                </div>
+              </div>
+            )}
+            {collectionName === "serviceRequests" && selected.service !== "laundry-rescue" && (
+              <div id="admin-section-recurring-service" className="scroll-mt-28 mb-5 rounded-3xl border border-[#eadfc8] bg-[#fbf6ea] p-4 shadow-sm sm:p-5">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <p className="text-xs font-black uppercase tracking-[0.18em] text-[#b98a2f]">Follow-up / recurring visit</p>
+                    <h4 className="mt-1 text-lg font-black text-[#075c58]">Create a new request for the next visit</h4>
+                    <p className="mt-1 text-xs font-semibold leading-5 text-slate-600">
+                      Loads the original service details into editable fields, then creates a fresh request. The old request stays unchanged and customers are not emailed automatically.
+                    </p>
+                  </div>
+                  {selected.latestFollowUpRequestId && (
+                    <div className="rounded-2xl bg-white px-4 py-3 text-xs font-bold text-slate-600">
+                      Last follow-up: <span className="font-black text-[#075c58]">{String(selected.latestFollowUpRequestId)}</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="mt-4 rounded-2xl border border-[#eadfc8] bg-white/80 p-3 sm:p-4">
+                  <p className="text-xs font-black uppercase tracking-[0.18em] text-[#b98a2f]">Next visit details</p>
+                  <p className="mt-1 text-xs font-semibold leading-5 text-slate-600">
+                    Use this for Whole Home Cleaning, Parent Reset, Specific Area Reset, Move-In/Move-Out, Move Prep, Errand Helper, or Commercial follow-up visits.
+                  </p>
+
+                  <div className="mt-4 grid gap-3 md:grid-cols-2">
+                    <label className="grid gap-2 text-sm font-bold text-slate-700">
+                      Next visit date
+                      <input
+                        type="date"
+                        value={followUpDate}
+                        onChange={(e) => setFollowUpDate(e.target.value)}
+                        className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
+                      />
+                    </label>
+                    <label className="grid gap-2 text-sm font-bold text-slate-700">
+                      Preferred window
+                      <input
+                        value={followUpWindow}
+                        onChange={(e) => setFollowUpWindow(e.target.value.slice(0, 140))}
+                        placeholder="Example: Tuesdays around 10 AM"
+                        className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
+                      />
+                    </label>
+                    <label className="grid gap-2 text-sm font-bold text-slate-700">
+                      Service / plan
+                      <input
+                        value={followUpServiceTitle}
+                        onChange={(e) => setFollowUpServiceTitle(e.target.value.slice(0, 180))}
+                        placeholder="Example: Whole Home Cleaning"
+                        className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
+                      />
+                    </label>
+                    <label className="grid gap-2 text-sm font-bold text-slate-700">
+                      Cadence
+                      <select
+                        value={followUpCadence}
+                        onChange={(e) => setFollowUpCadence(e.target.value)}
+                        className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-bold text-[#075c58] outline-none focus:border-[#075c58]"
+                      >
+                        <option value="One-time follow-up">One-time follow-up</option>
+                        <option value="Weekly">Weekly</option>
+                        <option value="Biweekly">Biweekly</option>
+                        <option value="Monthly">Monthly</option>
+                        <option value="As needed">As needed</option>
+                      </select>
+                    </label>
+                    <label className="grid gap-2 text-sm font-bold text-slate-700">
+                      Agreed price
+                      <input
+                        value={followUpAgreedPrice}
+                        onChange={(e) => setFollowUpAgreedPrice(e.target.value.replace(/[^0-9.]/g, "").slice(0, 10))}
+                        inputMode="decimal"
+                        placeholder="Optional"
+                        className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
+                      />
+                    </label>
+                    <label className="grid gap-2 text-sm font-bold text-slate-700">
+                      Estimated helper hours
+                      <input
+                        value={followUpEstimatedHours}
+                        onChange={(e) => setFollowUpEstimatedHours(e.target.value.slice(0, 80))}
+                        placeholder="Example: 3 helper-hours"
+                        className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
+                      />
+                    </label>
+                  </div>
+
+                  <div className="mt-3 grid gap-3 md:grid-cols-2">
+                    <label className="grid gap-2 text-sm font-bold text-slate-700">
+                      Focus areas
+                      <textarea
+                        value={followUpFocusAreas}
+                        onChange={(e) => setFollowUpFocusAreas(e.target.value.slice(0, 500))}
+                        rows={3}
+                        placeholder="Example: kitchen, bathrooms, floors, baseboards"
+                        className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
+                      />
+                    </label>
+                    <label className="grid gap-2 text-sm font-bold text-slate-700">
+                      Rooms / scope included
+                      <textarea
+                        value={followUpIncludedRooms}
+                        onChange={(e) => setFollowUpIncludedRooms(e.target.value.slice(0, 500))}
+                        rows={3}
+                        placeholder="Example: 3 bed / 2 bath, kitchen, living room"
+                        className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
+                      />
+                    </label>
+                    <label className="grid gap-2 text-sm font-bold text-slate-700">
+                      Supplies preference
+                      <input
+                        value={followUpSuppliesPreference}
+                        onChange={(e) => setFollowUpSuppliesPreference(e.target.value.slice(0, 220))}
+                        placeholder="Example: NestHelper supplies / customer supplies"
+                        className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
+                      />
+                    </label>
+                    <label className="grid gap-2 text-sm font-bold text-slate-700">
+                      Pet notes
+                      <input
+                        value={followUpPetNotes}
+                        onChange={(e) => setFollowUpPetNotes(e.target.value.slice(0, 220))}
+                        placeholder="Example: dog in crate, pet hair focus"
+                        className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
+                      />
+                    </label>
+                  </div>
+
+                  <label className="mt-3 grid gap-2 text-sm font-bold text-slate-700">
+                    Special instructions for this visit
+                    <textarea
+                      value={followUpSpecialInstructions}
+                      onChange={(e) => setFollowUpSpecialInstructions(e.target.value.slice(0, 700))}
+                      rows={3}
+                      placeholder="Example: same as last time, but skip the office this week"
+                      className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
+                    />
+                  </label>
+
+                  <label className="mt-3 grid gap-2 text-sm font-bold text-slate-700">
+                    Internal note
+                    <input
+                      value={followUpInternalNote}
+                      onChange={(e) => setFollowUpInternalNote(e.target.value.slice(0, 300))}
+                      placeholder="Optional: customer confirmed recurring by text"
+                      className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
+                    />
+                  </label>
+                </div>
+
+                <div className="mt-4 flex flex-wrap items-center gap-3">
+                  <button type="button" disabled={followUpBusy} onClick={createFollowUpServiceRequest} className={getAdminActionClass("primary")}>
+                    {followUpBusy ? <><ActionSpinner /> Creating...</> : "Create follow-up request"}
+                  </button>
+                  <p className="text-xs font-semibold text-slate-600">
+                    The new request starts unpaid with payment links, invoice links, and completion history blank.
                   </p>
                 </div>
               </div>
