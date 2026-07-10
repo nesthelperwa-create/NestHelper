@@ -51,6 +51,20 @@ function formatMoney(value: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(Number.isFinite(value) ? value : 0);
 }
 
+
+function makeCustomerSafePaymentSummaryText(value: string) {
+  return value
+    .replace(/Customer-facing draft estimate/gi, "Customer-facing payment summary")
+    .replace(/customer-facing draft estimate/gi, "customer-facing payment summary")
+    .replace(/draft estimate/gi, "payment summary")
+    .replace(/draft total/gi, "amount summary")
+    .replace(/payment breakdown/gi, "payment summary")
+    .replace(/quote breakdown/gi, "payment summary")
+    .replace(/review before sending\.?/gi, "Reviewed by NestHelper.")
+    .replace(/reviewed before sending\.?/gi, "Reviewed by NestHelper.")
+    .trim();
+}
+
 function getStripeServiceAddress(data: Record<string, unknown>): Stripe.AddressParam | undefined {
   const line1 = getString(data.serviceAddressLine1) || getString(data.address) || getString(data.serviceAddress) || getString(data.streetAddress);
   const line2 = getString(data.serviceAddressLine2) || getString(data.address2) || getString(data.unit) || getString(data.apartment);
@@ -248,6 +262,7 @@ export async function POST(request: Request) {
     const savedCommercialBreakdownText = isCommercialReset ? getString(savedCommercialBreakdown.customerBreakdownText) : "";
     const savedFamilyBreakdown = (data.familyPaymentBreakdown || {}) as Record<string, unknown>;
     const savedFamilyBreakdownText = !isCommercialReset ? getString(savedFamilyBreakdown.customerBreakdownText) : "";
+    const customerSafeFamilyBreakdownText = makeCustomerSafePaymentSummaryText(savedFamilyBreakdownText);
     const servicePeriodLabel = isCommercialReset
       ? getString(savedCommercialBreakdown.servicePeriodLabel) || formatServicePeriodLabel(savedCommercialBreakdown.servicePeriodStart, savedCommercialBreakdown.servicePeriodEnd)
       : getString(savedFamilyBreakdown.servicePeriodLabel) || formatServicePeriodLabel(savedFamilyBreakdown.servicePeriodStart, savedFamilyBreakdown.servicePeriodEnd);
@@ -436,14 +451,14 @@ export async function POST(request: Request) {
             : isCommercialReset && useCustomInitial && shouldIncludeQuoteBreakdown
               ? savedCommercialBreakdownText
               : !isCommercialReset && shouldIncludeFamilyBreakdown
-                ? [savedFamilyBreakdownText, referralCreditAlreadyDeductedNote].filter(Boolean).join("\n\n")
+                ? [customerSafeFamilyBreakdownText, referralCreditAlreadyDeductedNote].filter(Boolean).join("\n\n")
                 : "",
           quoteBreakdownTitle: isLaundryRescue
             ? "Laundry Rescue deposit and final-balance choice"
             : isCommercialReset
               ? "Commercial Reset quote breakdown"
-              : savedFamilyBreakdownText
-                ? "NestHelper payment breakdown"
+              : customerSafeFamilyBreakdownText
+                ? "NestHelper payment summary"
                 : undefined,
         });
         emailSent = true;
@@ -513,7 +528,7 @@ export async function POST(request: Request) {
       emailError,
       customInitial: useCustomInitial,
       includedQuoteBreakdown: Boolean(isCommercialReset && useCustomInitial && shouldIncludeQuoteBreakdown && savedCommercialBreakdownText),
-      includedFamilyBreakdown: Boolean(!isCommercialReset && shouldIncludeFamilyBreakdown && savedFamilyBreakdownText),
+      includedFamilyBreakdown: Boolean(!isCommercialReset && shouldIncludeFamilyBreakdown && customerSafeFamilyBreakdownText),
       reservedCustomerCredit,
       manualSalesTaxEnabled: manualSalesTax.enabled,
       manualSalesTaxRate: manualSalesTax.rate,

@@ -25,6 +25,93 @@ function escapeHtml(value: unknown) {
     .replaceAll("'", "&#039;");
 }
 
+
+function formatInlineText(value: string) {
+  return escapeHtml(value)
+    .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+    .replace(/\$([0-9,]+(?:\.[0-9]{2})?)/g, "<strong>$$$1</strong>");
+}
+
+function isPaymentSummaryHeading(line: string) {
+  return ["SERVICE DETAILS", "ITEMS INCLUDED", "AMOUNT SUMMARY", "CUSTOMER NOTE", "PLEASE NOTE"].includes(line.trim().toUpperCase());
+}
+
+function cleanCustomerPaymentSummaryText(value: string) {
+  return String(value || "")
+    .replace(/Customer-facing draft estimate/gi, "Customer-facing payment summary")
+    .replace(/draft estimate/gi, "payment summary")
+    .replace(/draft total/gi, "amount summary")
+    .replace(/payment breakdown/gi, "payment summary")
+    .replace(/payment summary/gi, "payment summary")
+    .replace(/Review before sending\.?/gi, "Reviewed by NestHelper.")
+    .replace(/Reviewed before sending\.?/gi, "Reviewed by NestHelper.")
+    .trim();
+}
+
+function renderPaymentSummaryLine(line: string) {
+  if (line.startsWith("•")) {
+    return `<div style="margin:10px 0 12px 0;padding:12px 12px;border-radius:12px;background:#ffffff;border:1px solid #eadfc8;color:#233;line-height:1.55;">
+      <div style="font-weight:800;color:#075c58;margin-bottom:4px;">${formatInlineText(line.replace(/^•\s*/, ""))}</div>
+    </div>`;
+  }
+
+  const labelMatch = line.match(/^([^:]{2,42}):\s*(.*)$/);
+  if (labelMatch) {
+    return `<div style="margin:0 0 9px 0;line-height:1.55;"><strong style="color:#0f4f4a;">${formatInlineText(labelMatch[1])}:</strong> ${formatInlineText(labelMatch[2])}</div>`;
+  }
+
+  return `<p style="margin:0 0 10px 0;line-height:1.6;">${formatInlineText(line)}</p>`;
+}
+
+function buildPaymentSummaryCard(text: string) {
+  const clean = cleanCustomerPaymentSummaryText(text);
+  if (!clean) return "";
+
+  const lines = clean
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  const firstHeadingIndex = lines.findIndex(isPaymentSummaryHeading);
+  const introLines = firstHeadingIndex > 0 ? lines.slice(0, firstHeadingIndex) : [];
+  const sectionLines = firstHeadingIndex >= 0 ? lines.slice(firstHeadingIndex) : lines;
+
+  const sections: Array<{ heading: string; lines: string[] }> = [];
+  let current: { heading: string; lines: string[] } | null = null;
+
+  for (const line of sectionLines) {
+    if (isPaymentSummaryHeading(line)) {
+      if (current) sections.push(current);
+      current = { heading: line.toUpperCase(), lines: [] };
+      continue;
+    }
+
+    if (!current) current = { heading: "PAYMENT SUMMARY", lines: [] };
+    current.lines.push(line);
+  }
+
+  if (current) sections.push(current);
+
+  const introHtml = introLines.length
+    ? `<div style="font-size:15px;line-height:1.55;color:#233;margin:0 0 16px 0;">${introLines.map(formatInlineText).join("<br>")}</div>`
+    : "";
+
+  const sectionHtml = sections.map((section) => {
+    const body = section.lines.map(renderPaymentSummaryLine).join("");
+
+    return `<div style="margin:0 0 18px 0;padding:0 0 4px 0;">
+      <div style="font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#b98a2f;font-weight:900;margin:0 0 10px 0;">${escapeHtml(section.heading)}</div>
+      <div style="font-size:15px;line-height:1.6;color:#233;">${body}</div>
+    </div>`;
+  }).join("");
+
+  return `<div style="margin:0 0 22px 0;padding:18px 16px;border-radius:16px;background:#fbf6ea;border:1px solid #eadfc8;box-sizing:border-box;overflow-wrap:anywhere;word-break:normal;">
+    ${introHtml}
+    ${sectionHtml}
+  </div>`;
+}
+
+
 function buildSummaryRows(rows: Record<string, unknown>) {
   return Object.entries(rows)
     .filter(([, value]) => String(value || "").trim().length > 0)
@@ -69,12 +156,9 @@ export async function sendPaymentLinkEmail({
     "Preferred window": preferredWindow,
     City: city,
   });
-  const cleanQuoteBreakdown = String(quoteBreakdownText || "").trim();
+  const cleanQuoteBreakdown = cleanCustomerPaymentSummaryText(String(quoteBreakdownText || "").trim());
   const quoteBreakdownHtml = cleanQuoteBreakdown
-    ? `<div style="margin:0 0 22px 0;padding:16px 14px;border-radius:14px;background:#fbf6ea;border:1px solid #eadfc8;box-sizing:border-box;overflow-wrap:anywhere;word-break:break-word;">
-        <div style="font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#b98a2f;font-weight:800;margin-bottom:8px;">${escapeHtml(quoteBreakdownTitle || "Quote breakdown")}</div>
-        <div style="white-space:pre-wrap;font-size:14px;line-height:1.55;color:#233;overflow-wrap:anywhere;word-break:break-word;">${escapeHtml(cleanQuoteBreakdown)}</div>
-      </div>`
+    ? `<div style="font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#b98a2f;font-weight:800;margin:0 0 10px 0;">${escapeHtml(quoteBreakdownTitle || "Payment summary")}</div>${buildPaymentSummaryCard(cleanQuoteBreakdown)}`
     : "";
 
   const html = `
@@ -86,7 +170,7 @@ export async function sendPaymentLinkEmail({
         </div>
         <div style="padding:22px 18px;color:#233;line-height:1.6;box-sizing:border-box;overflow-wrap:anywhere;word-break:break-word;">
           <p style="margin:0 0 16px 0;">${escapeHtml(greeting)}</p>
-          <p style="margin:0 0 18px 0;">We reviewed your request and the next step is secure checkout. If a quote breakdown is included below, please review it before paying. Your visit is not confirmed until payment is completed and NestHelper follows up with scheduling details.</p>
+          <p style="margin:0 0 18px 0;">We reviewed your request and the next step is secure checkout. If a payment summary is included below, please review it before paying. Your visit is not confirmed until payment is completed and NestHelper follows up with scheduling details.</p>
           ${summaryRows ? `<div style="width:100%;box-sizing:border-box;border:1px solid #eee;border-radius:14px;overflow:hidden;margin:0 0 22px 0;">${summaryRows}</div>` : ""}
           ${quoteBreakdownHtml}
           <p style="margin:22px 0;"><a href="${escapeHtml(paymentUrl)}" style="display:inline-block;background:#075c58;color:#fff;text-decoration:none;padding:13px 20px;border-radius:999px;font-weight:800;max-width:100%;box-sizing:border-box;white-space:normal;text-align:center;">Pay securely with Stripe</a></p>
@@ -107,11 +191,11 @@ export async function sendPaymentLinkEmail({
 
   const quoteBreakdownTextBlock = cleanQuoteBreakdown ? `
 
-${quoteBreakdownTitle || "Quote breakdown"}:
+${quoteBreakdownTitle || "Payment summary"}:
 ${cleanQuoteBreakdown}` : "";
   const text = `${greeting}
 
-We reviewed your NestHelper request and it is ready for secure checkout. If a quote breakdown is included, please review it before paying. Your visit is not confirmed until payment is completed and NestHelper follows up with scheduling details.
+We reviewed your NestHelper request and it is ready for secure checkout. If a payment summary is included, please review it before paying. Your visit is not confirmed until payment is completed and NestHelper follows up with scheduling details.
 
 Service: ${serviceTitle}
 Request ID: ${requestId}
