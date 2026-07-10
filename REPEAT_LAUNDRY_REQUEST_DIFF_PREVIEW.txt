@@ -1,0 +1,177 @@
+--- before/components/admin/AdminTable.tsx
++++ after/components/admin/AdminTable.tsx
+@@ -1121,6 +1121,7 @@
+     if (showCommercialQuotePanel) navItems.push({ href: "#admin-section-commercial-quote", label: "2", title: "Quote" });
+     if (showFamilyPaymentBreakdownPanel) navItems.push({ href: "#admin-section-family-breakdown", label: "2", title: "Build quote" });
+     navItems.push({ href: "#admin-section-internal-notes", label: "Note", title: item.service === "laundry-rescue" ? "Bags/notes" : "Admin notes" });
++    if (item.service === "laundry-rescue") navItems.push({ href: "#admin-section-repeat-laundry", label: "↻", title: "Repeat" });
+     if (showPaymentActions) navItems.push({ href: "#admin-section-payment", label: "3", title: item.service === "laundry-rescue" ? "Deposit" : "Payment" });
+     if (showLaundryFinalBalance) navItems.push({ href: "#admin-section-laundry-final", label: "4", title: "Laundry final" });
+     navItems.push({ href: "#admin-section-status", label: "✓", title: "Status" });
+@@ -3026,6 +3027,12 @@
+   const [requestNotesBusy, setRequestNotesBusy] = useState(false);
+   const [requestNotesMessage, setRequestNotesMessage] = useState("");
+   const [requestNotesError, setRequestNotesError] = useState("");
++  const [repeatLaundryDate, setRepeatLaundryDate] = useState("");
++  const [repeatLaundryWindow, setRepeatLaundryWindow] = useState("");
++  const [repeatLaundryNote, setRepeatLaundryNote] = useState("");
++  const [repeatLaundryBusy, setRepeatLaundryBusy] = useState(false);
++  const [repeatLaundryMessage, setRepeatLaundryMessage] = useState("");
++  const [repeatLaundryError, setRepeatLaundryError] = useState("");
+   const [applicantEmailTemplate, setApplicantEmailTemplate] = useState<ApplicantEmailTemplateKey>("phone-interview");
+   const [applicantEmailSubject, setApplicantEmailSubject] = useState("");
+   const [applicantEmailBody, setApplicantEmailBody] = useState("");
+@@ -3121,6 +3128,11 @@
+     setLaundryBagTrackingNotes(selected?.laundryBagTrackingNotes ? String(selected.laundryBagTrackingNotes) : "");
+     setRequestNotesMessage("");
+     setRequestNotesError("");
++    setRepeatLaundryDate("");
++    setRepeatLaundryWindow(selected?.preferredWindow ? String(selected.preferredWindow) : selected?.laundryPickupWindow ? String(selected.laundryPickupWindow) : "");
++    setRepeatLaundryNote("");
++    setRepeatLaundryMessage("");
++    setRepeatLaundryError("");
+     setBusyDocumentPath("");
+     const defaultApplicantTemplate = getApplicantEmailTemplate(collectionName, selected, "phone-interview");
+     setApplicantEmailTemplate("phone-interview");
+@@ -3396,6 +3408,43 @@
+       setStatusError(error instanceof Error ? error.message : "Unable to update status.");
+     } finally {
+       setStatusBusy(false);
++      setActiveAction("");
++    }
++  }
++
++  async function createRepeatLaundryRequest() {
++    if (!selected || collectionName !== "serviceRequests" || selected.service !== "laundry-rescue") return;
++
++    setRepeatLaundryBusy(true);
++    setActiveAction("Creating repeat laundry request...");
++    setRepeatLaundryMessage("");
++    setRepeatLaundryError("");
++
++    try {
++      const token = await firebaseAuth.currentUser?.getIdToken();
++      const res = await fetch("/api/admin/create-repeat-laundry-request", {
++        method: "POST",
++        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
++        body: JSON.stringify({
++          requestId: selected.id,
++          preferredDate: repeatLaundryDate,
++          preferredWindow: repeatLaundryWindow,
++          internalNote: repeatLaundryNote,
++        }),
++      });
++
++      const data = await res.json().catch(() => ({}));
++      if (!res.ok || !data.ok) throw new Error(data.error || "Unable to create repeat laundry request.");
++
++      setRepeatLaundryMessage(`Repeat laundry request created${data.newRequestId ? `: ${data.newRequestId}` : ""}. It will appear as a new request in the dashboard.`);
++      if (data.sourceUpdates) {
++        setSelected((prev) => (prev ? { ...prev, ...data.sourceUpdates } : prev));
++        setItems((prev) => prev.map((item) => item.id === selected.id ? { ...item, ...data.sourceUpdates } : item));
++      }
++    } catch (error) {
++      setRepeatLaundryError(error instanceof Error ? error.message : "Unable to create repeat laundry request.");
++    } finally {
++      setRepeatLaundryBusy(false);
+       setActiveAction("");
+     }
+   }
+@@ -4159,7 +4208,7 @@
+   const selectedAvailableCustomerCredits = getAvailableCustomerCreditsForRequest(selected, customerCredits);
+   const selectedAvailableCustomerCreditTotal = getAvailableCustomerCreditTotal(selectedAvailableCustomerCredits);
+   const selectedOutgoingReferralHistory = getOutgoingReferralHistory(selected);
+-  const anyActionBusy = checkoutBusy || commercialInvoiceBusy || commercialQuoteEmailBusy || familyInvoiceBusy || statusBusy || laundryFinalBusy || additionalPaymentBusy || commercialQuoteBusy || referralBusy || applicationOnboardingBusy || requestNotesBusy || applicantEmailBusy || Boolean(busyDocumentPath);
++  const anyActionBusy = checkoutBusy || commercialInvoiceBusy || commercialQuoteEmailBusy || familyInvoiceBusy || statusBusy || laundryFinalBusy || additionalPaymentBusy || commercialQuoteBusy || referralBusy || applicationOnboardingBusy || requestNotesBusy || repeatLaundryBusy || applicantEmailBusy || Boolean(busyDocumentPath);
+ 
+   return (
+     <section className="space-y-5">
+@@ -4302,9 +4351,9 @@
+       <AdminActionFeedback
+         busy={anyActionBusy}
+         activeAction={activeAction}
+-        messages={[statusMessage, checkoutMessage, commercialInvoiceMessage, commercialQuoteEmailMessage, familyInvoiceMessage, laundryFinalMessage, additionalPaymentMessage, commercialQuoteMessage, referralMessage, requestNotesMessage, applicantEmailMessage]}
++        messages={[statusMessage, checkoutMessage, commercialInvoiceMessage, commercialQuoteEmailMessage, familyInvoiceMessage, laundryFinalMessage, additionalPaymentMessage, commercialQuoteMessage, referralMessage, requestNotesMessage, repeatLaundryMessage, applicantEmailMessage]}
+         warnings={[statusWarning]}
+-        errors={[statusError, checkoutError, commercialInvoiceError, commercialQuoteEmailError, familyInvoiceError, laundryFinalError, additionalPaymentError, commercialQuoteError, referralError, requestNotesError, applicantEmailError]}
++        errors={[statusError, checkoutError, commercialInvoiceError, commercialQuoteEmailError, familyInvoiceError, laundryFinalError, additionalPaymentError, commercialQuoteError, referralError, requestNotesError, repeatLaundryError, applicantEmailError]}
+       />
+ 
+       <div className="flex flex-col gap-3 rounded-3xl border border-[#eadfc8] bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+@@ -4643,9 +4692,9 @@
+               <AdminActionFeedback
+                 busy={anyActionBusy}
+                 activeAction={activeAction}
+-                messages={[quotePromptMessage, statusMessage, checkoutMessage, commercialInvoiceMessage, commercialQuoteEmailMessage, familyInvoiceMessage, laundryFinalMessage, additionalPaymentMessage, commercialQuoteMessage, referralMessage, applicationOnboardingMessage, requestNotesMessage, applicantEmailMessage]}
++                messages={[quotePromptMessage, statusMessage, checkoutMessage, commercialInvoiceMessage, commercialQuoteEmailMessage, familyInvoiceMessage, laundryFinalMessage, additionalPaymentMessage, commercialQuoteMessage, referralMessage, applicationOnboardingMessage, requestNotesMessage, repeatLaundryMessage, applicantEmailMessage]}
+                 warnings={[statusWarning]}
+-                errors={[quotePromptError, statusError, checkoutError, commercialInvoiceError, commercialQuoteEmailError, familyInvoiceError, laundryFinalError, additionalPaymentError, commercialQuoteError, referralError, applicationOnboardingError, requestNotesError, applicantEmailError, documentOpenError]}
++                errors={[quotePromptError, statusError, checkoutError, commercialInvoiceError, commercialQuoteEmailError, familyInvoiceError, laundryFinalError, additionalPaymentError, commercialQuoteError, referralError, applicationOnboardingError, requestNotesError, repeatLaundryError, applicantEmailError, documentOpenError]}
+               />
+               {collectionName === "serviceRequests" && (
+                 <div className="rounded-3xl border border-[#eadfc8] bg-[#fbf6ea] p-4 shadow-sm">
+@@ -4749,6 +4798,64 @@
+                     {requestNotesBusy ? <><ActionSpinner /> Saving...</> : "Save internal notes"}
+                   </button>
+                   <p className="text-xs font-semibold text-slate-500">This saves to the admin record only. It does not email the customer.</p>
++                </div>
++              </div>
++            )}
++
++            {collectionName === "serviceRequests" && selected.service === "laundry-rescue" && (
++              <div id="admin-section-repeat-laundry" className="scroll-mt-28 mb-5 rounded-3xl border border-[#eadfc8] bg-[#fbf6ea] p-4 shadow-sm sm:p-5">
++                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
++                  <div>
++                    <p className="text-xs font-black uppercase tracking-[0.18em] text-[#b98a2f]">Repeat laundry</p>
++                    <h4 className="mt-1 text-lg font-black text-[#075c58]">Create a new request for the next pickup</h4>
++                    <p className="mt-1 text-xs font-semibold leading-5 text-slate-600">
++                      Copies this customer, address, access, pickup/return, detergent, and laundry preferences into a fresh Laundry Rescue request. The old request stays as-is.
++                    </p>
++                  </div>
++                  {selected.latestRepeatRequestId && (
++                    <div className="rounded-2xl bg-white px-4 py-3 text-xs font-bold text-slate-600">
++                      Last repeat: <span className="font-black text-[#075c58]">{String(selected.latestRepeatRequestId)}</span>
++                    </div>
++                  )}
++                </div>
++
++                <div className="mt-4 grid gap-3 md:grid-cols-[1fr_1fr_1.4fr]">
++                  <label className="grid gap-2 text-sm font-bold text-slate-700">
++                    Next pickup date
++                    <input
++                      type="date"
++                      value={repeatLaundryDate}
++                      onChange={(e) => setRepeatLaundryDate(e.target.value)}
++                      className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
++                    />
++                  </label>
++                  <label className="grid gap-2 text-sm font-bold text-slate-700">
++                    Pickup window
++                    <input
++                      value={repeatLaundryWindow}
++                      onChange={(e) => setRepeatLaundryWindow(e.target.value.slice(0, 120))}
++                      placeholder="Example: same as last week"
++                      className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
++                    />
++                  </label>
++                  <label className="grid gap-2 text-sm font-bold text-slate-700">
++                    Internal repeat note
++                    <input
++                      value={repeatLaundryNote}
++                      onChange={(e) => setRepeatLaundryNote(e.target.value.slice(0, 240))}
++                      placeholder="Optional: customer confirmed by text"
++                      className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
++                    />
++                  </label>
++                </div>
++
++                <div className="mt-4 flex flex-wrap items-center gap-3">
++                  <button type="button" disabled={repeatLaundryBusy} onClick={createRepeatLaundryRequest} className={getAdminActionClass("primary")}>
++                    {repeatLaundryBusy ? <><ActionSpinner /> Creating...</> : "Create repeat request"}
++                  </button>
++                  <p className="text-xs font-semibold text-slate-600">
++                    The new request starts unpaid with dry weight, bag tracking, payment links, and final invoice fields blank.
++                  </p>
+                 </div>
+               </div>
+             )}
