@@ -56,8 +56,8 @@ const FAMILY_PRESETS = [
   },
   {
     id: "whole-home-reset-reviewed",
-    label: "Whole Home Cleaning reviewed quote",
-    description: "Reviewed whole-home cleaning quote based on square footage, bedrooms/bathrooms, visit type, condition, pets, access, photos, and optional detail add-ons.",
+    label: "Whole Home Cleaning draft estimate",
+    description: "Draft whole-home cleaning estimate based on square footage, bedrooms/bathrooms, visit type, condition, pets, access, photos, and optional detail add-ons. Review before sending.",
     unit: "flat",
     rate: "329",
     amount: "329",
@@ -65,15 +65,15 @@ const FAMILY_PRESETS = [
   {
     id: "whole-home-reset-deep-clean",
     label: "Whole Home Cleaning first-time deep clean",
-    description: "Higher-scope first-time deep clean or full-home reset quote after review.",
+    description: "Higher-scope first-time deep clean or full-home reset draft estimate after review.",
     unit: "flat",
     rate: "449",
     amount: "449",
   },
   {
     id: "specific-area-reset-reviewed",
-    label: "Specific Area(s) Reset reviewed quote",
-    description: "Reviewed quote for selected rooms or focused areas such as kitchen, bathroom(s), pantry, closet, playroom, laundry area, garage, fridge, oven, or a few rooms.",
+    label: "Specific Area(s) Reset draft estimate",
+    description: "Draft estimate for selected rooms or focused areas such as kitchen, bathroom(s), pantry, closet, playroom, laundry area, garage, fridge, oven, or a few rooms. Review before sending.",
     unit: "flat",
     rate: "249",
     amount: "249",
@@ -81,23 +81,23 @@ const FAMILY_PRESETS = [
   {
     id: "specific-area-reset-larger-scope",
     label: "Specific Area(s) Reset larger-scope quote",
-    description: "Higher-scope area reset quote for larger spaces, heavier clutter, extra sorting, multiple zones, or longer approved time.",
+    description: "Higher-scope area reset draft estimate for larger spaces, heavier clutter, extra sorting, multiple zones, or longer approved time.",
     unit: "flat",
     rate: "449",
     amount: "449",
   },
   {
     id: "garage-reset-reviewed",
-    label: "Garage / storage area reviewed quote",
-    description: "Reviewed garage, storage, shed, or heavy-clutter quote based on size, clutter level, sorting needs, access, photos, disposal prep, and safety notes.",
+    label: "Garage / storage area draft estimate",
+    description: "Draft garage, storage, shed, or heavy-clutter estimate based on size, clutter level, sorting needs, access, photos, disposal prep, and safety notes. Review before sending.",
     unit: "flat",
     rate: "349",
     amount: "349",
   },
   {
     id: "move-out-cleaning-reviewed",
-    label: "Move-In / Move-Out Cleaning reviewed quote",
-    description: "Reviewed move-in / move-out cleaning quote based on square footage, bedrooms/bathrooms, empty-home status, condition, photos, and priority areas.",
+    label: "Move-In / Move-Out Cleaning draft estimate",
+    description: "Draft move-in / move-out cleaning estimate based on square footage, bedrooms/bathrooms, empty-home status, condition, photos, and priority areas. Review before sending.",
     unit: "flat",
     rate: "395",
     amount: "395",
@@ -105,7 +105,7 @@ const FAMILY_PRESETS = [
   {
     id: "move-out-cleaning-larger-scope",
     label: "Move-In / Move-Out larger-scope quote",
-    description: "Higher-scope move-in / move-out cleaning quote for larger homes, extra kitchen/bathroom buildup, appliance/cabinet scope, or timing constraints after review.",
+    description: "Higher-scope move-in / move-out cleaning draft estimate for larger homes, extra kitchen/bathroom buildup, appliance/cabinet scope, or timing constraints after review.",
     unit: "flat",
     rate: "495",
     amount: "495",
@@ -370,8 +370,8 @@ function getSuggestedPresetId(item: AdminDoc) {
 function getDefaultPaymentPlan(item: AdminDoc) {
   const raw = String(item.service || item.selectedServiceTitle || item.packageType || "").toLowerCase();
   if (raw.includes("laundry")) return "Laundry Rescue deposit";
-  if (raw.includes("move-prep") || raw.includes("move prep") || raw.includes("home reset")) return "Move Prep & Home Reset reviewed quote";
-  if (raw.includes("whole-home-reset") || raw.includes("whole home")) return "Whole Home Cleaning reviewed quote";
+  if (raw.includes("move-prep") || raw.includes("move prep") || raw.includes("home reset")) return "Move Prep & Home Reset draft estimate";
+  if (raw.includes("whole-home-reset") || raw.includes("whole home")) return "Whole Home Cleaning draft estimate";
   if (raw.includes("specific-area-reset") || raw.includes("specific area") || raw.includes("area reset") || raw.includes("garage reset")) return "One-time specific area reset";
   if (raw.includes("move-out") || raw.includes("move out") || raw.includes("move-in") || raw.includes("move in")) return "One-time move-in / move-out cleaning";
   if (raw.includes("errand")) return "One-time errand helper";
@@ -1063,9 +1063,9 @@ export default function FamilyPaymentBreakdownBuilder({
             <div className="sticky top-0 z-20 rounded-t-[2rem] border-b border-[#eadfc8] bg-white/95 p-4 backdrop-blur sm:p-5">
               <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                 <div>
-                  <p className="text-xs font-black uppercase tracking-[0.2em] text-[#b98a2f]">Family Payment Breakdown Builder</p>
+                  <p className="text-xs font-black uppercase tracking-[0.2em] text-[#b98a2f]">Draft Estimate Builder</p>
                   <h3 className="mt-1 text-2xl font-black text-[#075c58]">{serviceLabel}</h3>
-                  <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-700">This is the family-side version of the Commercial builder. It defaults from the customer’s selected service and current NestHelper pricing, including move prep add-ons, Laundry Rescue minimum/additional weight, and reviewed cleaning quotes. Every line can be edited before saving, sending checkout, or creating a Stripe invoice.</p>
+                  <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-700">This builder creates an internal draft estimate from the customer’s selected service and current NestHelper pricing. Nothing is sent to the customer automatically. Review and edit every line before saving, sending checkout, or creating a Stripe invoice.</p>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <button type="button" onClick={saveDraft} disabled={saving} className={getButtonClass("primary")}>{saving ? <><BuilderSpinner /> Saving...</> : "Save draft"}</button>
@@ -1351,7 +1351,7 @@ export default function FamilyPaymentBreakdownBuilder({
 
               <aside className="space-y-4">
                 <div className="rounded-3xl border border-[#075c58]/20 bg-[#075c58] p-5 text-white shadow-sm">
-                  <p className="text-xs font-black uppercase tracking-[0.18em] text-[#f1c96b]">Calculated total</p>
+                  <p className="text-xs font-black uppercase tracking-[0.18em] text-[#f1c96b]">Draft total</p>
                   <div className="mt-3 space-y-2 text-sm font-bold">
                     <div className="flex justify-between gap-3"><span>Subtotal</span><span>{formatMoney(subtotal)}</span></div>
                     <div className="flex justify-between gap-3"><span>Discount / credit</span><span>-{formatMoney(discount)}</span></div>
@@ -1361,7 +1361,7 @@ export default function FamilyPaymentBreakdownBuilder({
                 </div>
 
                 <div className="rounded-3xl border border-[#eadfc8] bg-[#fbf6ea] p-4">
-                  <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Customer-facing breakdown</p>
+                  <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Customer-facing draft breakdown</p>
                   <pre className="mt-3 max-h-[480px] overflow-auto whitespace-pre-wrap rounded-2xl bg-white p-4 text-xs leading-5 text-slate-700">{customerBreakdownText}</pre>
                   <div className="mt-3 grid gap-2 sm:grid-cols-2">
                     <button type="button" onClick={copyBreakdown} className={getButtonClass("secondary")}>Copy</button>
