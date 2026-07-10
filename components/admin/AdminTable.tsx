@@ -405,14 +405,14 @@ function isPaymentRequestSentText(paymentText: string) {
 
 function isClosedAdminStatus(item: AdminDoc | null | undefined) {
   const status = String(item?.status || "").trim().toLowerCase();
-  return ["completed", "canceled", "cancelled", "declined", "not eligible", "archived"].includes(status);
+  return ["completed", "canceled", "cancelled", "declined", "not eligible", "archived"].includes(status) || status.startsWith("closed") || status.includes("no response");
 }
 
 function getAdminQueueKey(item: AdminDoc | null | undefined) {
   const status = getAdminStatusText(item);
   const paymentText = getAdminPaymentText(item);
   if (status === "completed") return "completed";
-  if (["canceled", "cancelled", "declined", "not eligible", "archived"].includes(status)) return "closed";
+  if (["canceled", "cancelled", "declined", "not eligible", "archived"].includes(status) || status.startsWith("closed") || status.includes("no response")) return "closed";
   if (!status || ["new", "needs info", "follow-up needed", "pending review", "reviewing", "requested"].includes(status) || status.includes("review") || status.includes("follow")) return "needs-review";
   if (paymentText.includes("paid") || status.includes("paid") || status.includes("scheduled") || status.includes("assigned")) return "paid-scheduled";
   if (isPaymentRequestSentAdminStatus(status) || isPaymentRequestSentText(paymentText)) return "payment";
@@ -435,7 +435,7 @@ const ADMIN_QUEUE_OPTIONS = [
   { key: "payment", label: "Invoice / checkout sent", helper: "Waiting payment", accent: "bg-violet-100 text-violet-900 border-violet-300" },
   { key: "paid-scheduled", label: "Paid / scheduled", helper: "Ready to serve", accent: "bg-emerald-100 text-emerald-900 border-emerald-300" },
   { key: "completed", label: "Completed", helper: "Done", accent: "bg-slate-100 text-slate-800 border-slate-300" },
-  { key: "closed", label: "Closed", helper: "Canceled/declined", accent: "bg-rose-100 text-rose-900 border-rose-300" },
+  { key: "closed", label: "Closed", helper: "Canceled/archived", accent: "bg-rose-100 text-rose-900 border-rose-300" },
 ] as const;
 
 function hasOutgoingReferralData(item: AdminDoc | null | undefined) {
@@ -3082,7 +3082,7 @@ export default function AdminTable({
   const [referralFilter, setReferralFilter] = useState("all");
   const [promoFilter, setPromoFilter] = useState("all");
   const [dateFilter, setDateFilter] = useState("all");
-  const [queueFilter, setQueueFilter] = useState("all");
+  const [queueFilter, setQueueFilter] = useState(collectionName === "serviceRequests" ? "active" : "all");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState<"25" | "all">("25");
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -3354,7 +3354,16 @@ export default function AdminTable({
     return Array.from(merged).filter(Boolean).sort((a, b) => a.localeCompare(b));
   }, [items, statuses]);
 
-  const dropdownStatuses = availableStatuses;
+  const dropdownStatuses = collectionName === "serviceRequests"
+    ? Array.from(new Set([
+        ...availableStatuses,
+        "Archived",
+        "Closed - No Response",
+        "Closed - Canceled",
+        "Closed - Not a Fit",
+        "Closed - Duplicate",
+      ]))
+    : availableStatuses;
 
   const queueCounts = useMemo(() => {
     const counts: Record<string, number> = { active: 0, "needs-review": 0, "quote-sent": 0, "needs-payment": 0, payment: 0, "paid-scheduled": 0, completed: 0, closed: 0, all: items.length };
@@ -3597,6 +3606,40 @@ export default function AdminTable({
       }
     } catch (error) {
       setStatusError(error instanceof Error ? error.message : "Unable to update status.");
+    } finally {
+      setStatusBusy(false);
+      setActiveAction("");
+    }
+  }
+
+  async function archiveSelectedServiceRequest() {
+    if (!selected || collectionName !== "serviceRequests") return;
+
+    const confirmed = window.confirm("Archive this request? It will move out of the active work queue, stay saved in admin, and the customer will not be emailed.");
+    if (!confirmed) return;
+
+    setStatusBusy(true);
+    setActiveAction("Archiving request...");
+    setStatusMessage("");
+    setStatusWarning("");
+    setStatusError("");
+    setStatusEmailOutcome(null);
+
+    try {
+      await updateStatus(selected, "Archived", { notifyCustomer: false, customerNote: "" });
+      const archiveUpdates = {
+        status: "Archived",
+        lastStatusEmailDelivery: selected.lastStatusEmailDelivery,
+        lastStatusEmailStatus: selected.lastStatusEmailStatus,
+      };
+
+      setStatusValue("Archived");
+      setNotifyCustomer(false);
+      setSelected((prev) => (prev ? { ...prev, ...archiveUpdates } : prev));
+      setItems((prev) => prev.map((item) => (item.id === selected.id ? { ...item, ...archiveUpdates } : item)));
+      setStatusMessage("Request archived. Customer was not emailed. You can find it under Closed or All.");
+    } catch (error) {
+      setStatusError(error instanceof Error ? error.message : "Unable to archive request.");
     } finally {
       setStatusBusy(false);
       setActiveAction("");
@@ -4533,7 +4576,7 @@ export default function AdminTable({
             <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
               <div>
                 <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Work queue</p>
-                <p className="mt-1 text-sm font-semibold text-slate-600">Showing all records by default. Use the buckets to narrow the list when needed.</p>
+                <p className="mt-1 text-sm font-semibold text-slate-600">Showing active records by default. Archived and canceled leads stay saved under Closed or All.</p>
               </div>
               {queueFilter !== "all" && (
                 <button type="button" onClick={() => setQueueFilter("all")} className={getAdminActionClass("quiet")}>Show all records</button>
@@ -5668,8 +5711,18 @@ export default function AdminTable({
                   >
                     {statusBusy ? <><ActionSpinner /> Updating...</> : notifyCustomer ? "Update status + notify customer" : "Update status only"}
                   </button>
+                  {collectionName === "serviceRequests" && statusValue !== "Archived" && (
+                    <button
+                      type="button"
+                      disabled={statusBusy}
+                      onClick={archiveSelectedServiceRequest}
+                      className={getAdminActionClass("quiet")}
+                    >
+                      Archive / hide from active
+                    </button>
+                  )}
                   <p className="max-w-xl text-xs leading-5 text-slate-500">
-                    Quote emails can be sent here by choosing Quote Sent. Payment link, invoice, and payment received emails are handled separately by the payment/invoice buttons.
+                    Quote emails can be sent here by choosing Quote Sent. Payment link, invoice, and payment received emails are handled separately by the payment/invoice buttons. Archive keeps the record but removes it from the active work queue.
                   </p>
                 </div>
 
