@@ -3029,6 +3029,14 @@ export default function AdminTable({
   const [requestNotesError, setRequestNotesError] = useState("");
   const [repeatLaundryDate, setRepeatLaundryDate] = useState("");
   const [repeatLaundryWindow, setRepeatLaundryWindow] = useState("");
+  const [repeatLaundryPickupSpot, setRepeatLaundryPickupSpot] = useState("");
+  const [repeatLaundryReturnSpot, setRepeatLaundryReturnSpot] = useState("");
+  const [repeatLaundryDetergent, setRepeatLaundryDetergent] = useState("");
+  const [repeatLaundryDryerPreference, setRepeatLaundryDryerPreference] = useState("");
+  const [repeatLaundryFoldPreference, setRepeatLaundryFoldPreference] = useState("");
+  const [repeatLaundryAmount, setRepeatLaundryAmount] = useState("");
+  const [repeatLaundrySpecialInstructions, setRepeatLaundrySpecialInstructions] = useState("");
+  const [repeatLaundryAddOnNote, setRepeatLaundryAddOnNote] = useState("");
   const [repeatLaundryNote, setRepeatLaundryNote] = useState("");
   const [repeatLaundryBusy, setRepeatLaundryBusy] = useState(false);
   const [repeatLaundryMessage, setRepeatLaundryMessage] = useState("");
@@ -3130,6 +3138,14 @@ export default function AdminTable({
     setRequestNotesError("");
     setRepeatLaundryDate("");
     setRepeatLaundryWindow(selected?.preferredWindow ? String(selected.preferredWindow) : selected?.laundryPickupWindow ? String(selected.laundryPickupWindow) : "");
+    setRepeatLaundryPickupSpot(selected?.laundryPickupSpot ? String(selected.laundryPickupSpot) : "");
+    setRepeatLaundryReturnSpot(selected?.laundryReturnSpot ? String(selected.laundryReturnSpot) : "");
+    setRepeatLaundryDetergent(selected?.laundryDetergentPreference ? String(selected.laundryDetergentPreference) : selected?.laundryDetergent ? String(selected.laundryDetergent) : "");
+    setRepeatLaundryDryerPreference(selected?.laundryDryerPreference ? String(selected.laundryDryerPreference) : "");
+    setRepeatLaundryFoldPreference(selected?.laundryFoldPreference ? String(selected.laundryFoldPreference) : "");
+    setRepeatLaundryAmount(selected?.laundryAmount ? String(selected.laundryAmount) : "");
+    setRepeatLaundrySpecialInstructions(selected?.laundrySpecialInstructions ? String(selected.laundrySpecialInstructions) : selected?.laundryNotes ? String(selected.laundryNotes) : "");
+    setRepeatLaundryAddOnNote("");
     setRepeatLaundryNote("");
     setRepeatLaundryMessage("");
     setRepeatLaundryError("");
@@ -3429,6 +3445,14 @@ export default function AdminTable({
           requestId: selected.id,
           preferredDate: repeatLaundryDate,
           preferredWindow: repeatLaundryWindow,
+          laundryPickupSpot: repeatLaundryPickupSpot,
+          laundryReturnSpot: repeatLaundryReturnSpot,
+          laundryDetergentPreference: repeatLaundryDetergent,
+          laundryDryerPreference: repeatLaundryDryerPreference,
+          laundryFoldPreference: repeatLaundryFoldPreference,
+          laundryAmount: repeatLaundryAmount,
+          laundrySpecialInstructions: repeatLaundrySpecialInstructions,
+          laundryAddOnNote: repeatLaundryAddOnNote,
           internalNote: repeatLaundryNote,
         }),
       });
@@ -4819,34 +4843,118 @@ export default function AdminTable({
                   )}
                 </div>
 
-                <div className="mt-4 grid gap-3 md:grid-cols-[1fr_1fr_1.4fr]">
-                  <label className="grid gap-2 text-sm font-bold text-slate-700">
-                    Next pickup date
-                    <input
-                      type="date"
-                      value={repeatLaundryDate}
-                      onChange={(e) => setRepeatLaundryDate(e.target.value)}
+                <div className="mt-4 rounded-2xl border border-[#eadfc8] bg-white/80 p-3 sm:p-4">
+                  <p className="text-xs font-black uppercase tracking-[0.18em] text-[#b98a2f]">Repeat details</p>
+                  <p className="mt-1 text-xs font-semibold leading-5 text-slate-600">
+                    These fields start with the last saved laundry preferences. Update anything that changed for this pickup before creating the new request.
+                  </p>
+
+                  <div className="mt-4 grid gap-3 md:grid-cols-2">
+                    <label className="grid gap-2 text-sm font-bold text-slate-700">
+                      Next pickup date
+                      <input
+                        type="date"
+                        value={repeatLaundryDate}
+                        onChange={(e) => setRepeatLaundryDate(e.target.value)}
+                        className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
+                      />
+                    </label>
+                    <label className="grid gap-2 text-sm font-bold text-slate-700">
+                      Pickup window
+                      <input
+                        value={repeatLaundryWindow}
+                        onChange={(e) => setRepeatLaundryWindow(e.target.value.slice(0, 120))}
+                        placeholder="Example: same as last week"
+                        className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
+                      />
+                    </label>
+                    <label className="grid gap-2 text-sm font-bold text-slate-700">
+                      Pickup spot
+                      <input
+                        value={repeatLaundryPickupSpot}
+                        onChange={(e) => setRepeatLaundryPickupSpot(e.target.value.slice(0, 160))}
+                        placeholder="Example: front door"
+                        className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
+                      />
+                    </label>
+                    <label className="grid gap-2 text-sm font-bold text-slate-700">
+                      Return spot
+                      <input
+                        value={repeatLaundryReturnSpot}
+                        onChange={(e) => setRepeatLaundryReturnSpot(e.target.value.slice(0, 160))}
+                        placeholder="Example: front door"
+                        className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
+                      />
+                    </label>
+                    <label className="grid gap-2 text-sm font-bold text-slate-700">
+                      Detergent preference
+                      <input
+                        value={repeatLaundryDetergent}
+                        onChange={(e) => setRepeatLaundryDetergent(e.target.value.slice(0, 160))}
+                        placeholder="Example: child-safe detergent"
+                        className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
+                      />
+                    </label>
+                    <label className="grid gap-2 text-sm font-bold text-slate-700">
+                      Laundry amount
+                      <input
+                        value={repeatLaundryAmount}
+                        onChange={(e) => setRepeatLaundryAmount(e.target.value.slice(0, 160))}
+                        placeholder="Example: 2 bags"
+                        className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
+                      />
+                    </label>
+                    <label className="grid gap-2 text-sm font-bold text-slate-700">
+                      Drying instructions
+                      <input
+                        value={repeatLaundryDryerPreference}
+                        onChange={(e) => setRepeatLaundryDryerPreference(e.target.value.slice(0, 200))}
+                        placeholder="Example: low heat / hang dry baby clothes"
+                        className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
+                      />
+                    </label>
+                    <label className="grid gap-2 text-sm font-bold text-slate-700">
+                      Folding instructions
+                      <input
+                        value={repeatLaundryFoldPreference}
+                        onChange={(e) => setRepeatLaundryFoldPreference(e.target.value.slice(0, 200))}
+                        placeholder="Example: fold everything"
+                        className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
+                      />
+                    </label>
+                  </div>
+
+                  <label className="mt-3 grid gap-2 text-sm font-bold text-slate-700">
+                    Special instructions for this pickup
+                    <textarea
+                      value={repeatLaundrySpecialInstructions}
+                      onChange={(e) => setRepeatLaundrySpecialInstructions(e.target.value.slice(0, 500))}
+                      rows={3}
+                      placeholder="Example: use child-safe detergent; keep baby clothes separate; no dryer sheets"
                       className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
                     />
                   </label>
-                  <label className="grid gap-2 text-sm font-bold text-slate-700">
-                    Pickup window
-                    <input
-                      value={repeatLaundryWindow}
-                      onChange={(e) => setRepeatLaundryWindow(e.target.value.slice(0, 120))}
-                      placeholder="Example: same as last week"
-                      className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
-                    />
-                  </label>
-                  <label className="grid gap-2 text-sm font-bold text-slate-700">
-                    Internal repeat note
-                    <input
-                      value={repeatLaundryNote}
-                      onChange={(e) => setRepeatLaundryNote(e.target.value.slice(0, 240))}
-                      placeholder="Optional: customer confirmed by text"
-                      className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
-                    />
-                  </label>
+
+                  <div className="mt-3 grid gap-3 md:grid-cols-2">
+                    <label className="grid gap-2 text-sm font-bold text-slate-700">
+                      Add-on / extra item note
+                      <input
+                        value={repeatLaundryAddOnNote}
+                        onChange={(e) => setRepeatLaundryAddOnNote(e.target.value.slice(0, 240))}
+                        placeholder="Optional: comforter, bulky item, extra bags"
+                        className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
+                      />
+                    </label>
+                    <label className="grid gap-2 text-sm font-bold text-slate-700">
+                      Internal repeat note
+                      <input
+                        value={repeatLaundryNote}
+                        onChange={(e) => setRepeatLaundryNote(e.target.value.slice(0, 240))}
+                        placeholder="Optional: customer confirmed by text"
+                        className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
+                      />
+                    </label>
+                  </div>
                 </div>
 
                 <div className="mt-4 flex flex-wrap items-center gap-3">

@@ -9,6 +9,14 @@ type CreateRepeatLaundryBody = {
   requestId?: string;
   preferredDate?: string;
   preferredWindow?: string;
+  laundryPickupSpot?: string;
+  laundryReturnSpot?: string;
+  laundryDetergentPreference?: string;
+  laundryDryerPreference?: string;
+  laundryFoldPreference?: string;
+  laundryAmount?: string;
+  laundrySpecialInstructions?: string;
+  laundryAddOnNote?: string;
   internalNote?: string;
 };
 
@@ -106,6 +114,14 @@ export async function POST(request: Request) {
     const requestId = getString(body.requestId);
     const preferredDate = getDateInput(body.preferredDate);
     const preferredWindow = getString(body.preferredWindow).slice(0, 120);
+    const laundryPickupSpot = getString(body.laundryPickupSpot).slice(0, 160);
+    const laundryReturnSpot = getString(body.laundryReturnSpot).slice(0, 160);
+    const laundryDetergentPreference = getString(body.laundryDetergentPreference).slice(0, 160);
+    const laundryDryerPreference = getString(body.laundryDryerPreference).slice(0, 200);
+    const laundryFoldPreference = getString(body.laundryFoldPreference).slice(0, 200);
+    const laundryAmount = getString(body.laundryAmount).slice(0, 160);
+    const laundrySpecialInstructions = getString(body.laundrySpecialInstructions).slice(0, 500);
+    const laundryAddOnNote = getString(body.laundryAddOnNote).slice(0, 240);
     const internalNote = getString(body.internalNote).slice(0, 240);
 
     if (!requestId) return NextResponse.json({ ok: false, error: "Missing source request ID." }, { status: 400 });
@@ -136,6 +152,12 @@ export async function POST(request: Request) {
     const sourceName = getString(source.fullName || source.name);
     const sourceEmail = getString(source.email);
 
+    const overrideNoteLines = [
+      laundryAddOnNote ? `Add-on / extra item note: ${laundryAddOnNote}` : "",
+      laundrySpecialInstructions ? `This pickup instructions: ${laundrySpecialInstructions}` : "",
+      internalNote ? `Internal note: ${internalNote}` : "",
+    ].filter(Boolean);
+
     Object.assign(newRequest, {
       service: "laundry-rescue",
       selectedServiceTitle: "Laundry Rescue",
@@ -146,6 +168,17 @@ export async function POST(request: Request) {
       laundryPaymentStatus: "Not Paid",
       preferredDate,
       preferredWindow: preferredWindow || getString(source.preferredWindow || source.laundryPickupWindow),
+      laundryPickupWindow: preferredWindow || getString(source.laundryPickupWindow || source.preferredWindow),
+      laundryPickupSpot: laundryPickupSpot || getString(source.laundryPickupSpot),
+      laundryReturnSpot: laundryReturnSpot || getString(source.laundryReturnSpot),
+      laundryDetergentPreference: laundryDetergentPreference || getString(source.laundryDetergentPreference || source.laundryDetergent),
+      laundryDetergent: laundryDetergentPreference || getString(source.laundryDetergent || source.laundryDetergentPreference),
+      laundryDryerPreference: laundryDryerPreference || getString(source.laundryDryerPreference),
+      laundryFoldPreference: laundryFoldPreference || getString(source.laundryFoldPreference),
+      laundryAmount: laundryAmount || getString(source.laundryAmount),
+      laundrySpecialInstructions: laundrySpecialInstructions || getString(source.laundrySpecialInstructions || source.laundryNotes),
+      laundryNotes: laundrySpecialInstructions || getString(source.laundryNotes || source.laundrySpecialInstructions),
+      laundryAddOnNote,
       isRepeatRequest: true,
       repeatLaundry: true,
       repeatFromRequestId: requestId,
@@ -156,7 +189,7 @@ export async function POST(request: Request) {
       repeatInternalNote: internalNote,
       adminNotes: [
         `Repeat Laundry Rescue request created from ${requestId}.`,
-        internalNote ? `Internal note: ${internalNote}` : "",
+        ...overrideNoteLines,
       ].filter(Boolean).join("\n"),
       createdAt: FieldValue.serverTimestamp(),
       submittedAt: FieldValue.serverTimestamp(),
