@@ -1,0 +1,177 @@
+--- before/components/admin/AdminTable.tsx
++++ after/components/admin/AdminTable.tsx
+@@ -3381,6 +3381,9 @@
+   const [documentOpenError, setDocumentOpenError] = useState("");
+   const [quotePromptMessage, setQuotePromptMessage] = useState("");
+   const [quotePromptError, setQuotePromptError] = useState("");
++  const [deleteRecordBusy, setDeleteRecordBusy] = useState(false);
++  const [deleteRecordMessage, setDeleteRecordMessage] = useState("");
++  const [deleteRecordError, setDeleteRecordError] = useState("");
+   const [activeAction, setActiveAction] = useState("");
+ 
+   useEffect(() => {
+@@ -3519,6 +3522,7 @@
+     setDocumentOpenError("");
+     setQuotePromptMessage("");
+     setQuotePromptError("");
++    setDeleteRecordError("");
+     setActiveAction("");
+   }, [selected?.id]);
+ 
+@@ -3827,6 +3831,57 @@
+       setStatusError(error instanceof Error ? error.message : "Unable to archive request.");
+     } finally {
+       setStatusBusy(false);
++      setActiveAction("");
++    }
++  }
++
++  async function deleteSelectedServiceRequest() {
++    if (!selected || collectionName !== "serviceRequests") return;
++
++    const protectedReason = getRecordDeleteBlockReason(collectionName, selected);
++    if (protectedReason) {
++      setDeleteRecordError(protectedReason);
++      return;
++    }
++
++    const requestLabel = [
++      getCleanServiceLabel(selected),
++      String(selected.fullName || selected.name || selected.email || selected.phone || selected.id || "").trim(),
++    ].filter(Boolean).join(" — ");
++
++    const confirmed = window.confirm(
++      `Permanently delete this request?\n\n${requestLabel || selected.id}\n\nThis cannot be undone. Use Delete only for test, spam, duplicate, or accidental unpaid requests. Real customer records should usually be Archived instead.\n\nPress OK to permanently delete, or Cancel to keep it.`
++    );
++    if (!confirmed) return;
++
++    setDeleteRecordBusy(true);
++    setActiveAction("Deleting request...");
++    setDeleteRecordMessage("");
++    setDeleteRecordError("");
++
++    try {
++      const token = await firebaseAuth.currentUser?.getIdToken();
++      const res = await fetch("/api/admin/delete-record", {
++        method: "POST",
++        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
++        body: JSON.stringify({
++          collection: collectionName,
++          id: selected.id,
++          confirmDeleteRecord: true,
++          confirmDeleteTestRecord: true,
++        }),
++      });
++      const data = await res.json().catch(() => ({}));
++      if (!res.ok || !data.ok) throw new Error(data.error || "Unable to delete this request.");
++
++      const deletedId = selected.id;
++      setItems((prev) => prev.filter((item) => item.id !== deletedId));
++      setSelected(null);
++      setDeleteRecordMessage("Request permanently deleted. Use Archive instead for real customer records you may need later.");
++    } catch (error) {
++      setDeleteRecordError(error instanceof Error ? error.message : "Unable to delete this request.");
++    } finally {
++      setDeleteRecordBusy(false);
+       setActiveAction("");
+     }
+   }
+@@ -4729,10 +4784,11 @@
+   const showReviewRequestPanel = Boolean(showPaymentActions);
+   const selectedIsFamilyReferralEligible = isFamilyReferralEligibleRequest(selected);
+   const selectedCanGenerateReferral = Boolean(selectedIsFamilyReferralEligible && isCompletedRequest(selected));
++  const selectedDeleteBlockReason = collectionName === "serviceRequests" ? getRecordDeleteBlockReason(collectionName, selected) : "";
+   const selectedAvailableCustomerCredits = getAvailableCustomerCreditsForRequest(selected, customerCredits);
+   const selectedAvailableCustomerCreditTotal = getAvailableCustomerCreditTotal(selectedAvailableCustomerCredits);
+   const selectedOutgoingReferralHistory = getOutgoingReferralHistory(selected);
+-  const anyActionBusy = checkoutBusy || commercialInvoiceBusy || commercialQuoteEmailBusy || familyInvoiceBusy || statusBusy || laundryFinalBusy || additionalPaymentBusy || commercialQuoteBusy || referralBusy || applicationOnboardingBusy || requestNotesBusy || repeatLaundryBusy || followUpBusy || applicantEmailBusy || Boolean(busyDocumentPath);
++  const anyActionBusy = checkoutBusy || commercialInvoiceBusy || commercialQuoteEmailBusy || familyInvoiceBusy || statusBusy || laundryFinalBusy || additionalPaymentBusy || commercialQuoteBusy || referralBusy || applicationOnboardingBusy || requestNotesBusy || repeatLaundryBusy || followUpBusy || applicantEmailBusy || deleteRecordBusy || Boolean(busyDocumentPath);
+ 
+   return (
+     <section className="space-y-5">
+@@ -4875,9 +4931,9 @@
+       <AdminActionFeedback
+         busy={anyActionBusy}
+         activeAction={activeAction}
+-        messages={[statusMessage, checkoutMessage, commercialInvoiceMessage, commercialQuoteEmailMessage, familyInvoiceMessage, laundryFinalMessage, additionalPaymentMessage, commercialQuoteMessage, referralMessage, requestNotesMessage, repeatLaundryMessage, followUpMessage, applicantEmailMessage]}
++        messages={[statusMessage, checkoutMessage, commercialInvoiceMessage, commercialQuoteEmailMessage, familyInvoiceMessage, laundryFinalMessage, additionalPaymentMessage, commercialQuoteMessage, referralMessage, requestNotesMessage, repeatLaundryMessage, followUpMessage, applicantEmailMessage, deleteRecordMessage]}
+         warnings={[statusWarning]}
+-        errors={[statusError, checkoutError, commercialInvoiceError, commercialQuoteEmailError, familyInvoiceError, laundryFinalError, additionalPaymentError, commercialQuoteError, referralError, requestNotesError, repeatLaundryError, followUpError, applicantEmailError]}
++        errors={[statusError, checkoutError, commercialInvoiceError, commercialQuoteEmailError, familyInvoiceError, laundryFinalError, additionalPaymentError, commercialQuoteError, referralError, requestNotesError, repeatLaundryError, followUpError, applicantEmailError, deleteRecordError]}
+       />
+ 
+       <div className="flex flex-col gap-3 rounded-3xl border border-[#eadfc8] bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+@@ -5222,9 +5278,9 @@
+               <AdminActionFeedback
+                 busy={anyActionBusy}
+                 activeAction={activeAction}
+-                messages={[quotePromptMessage, statusMessage, checkoutMessage, commercialInvoiceMessage, commercialQuoteEmailMessage, familyInvoiceMessage, laundryFinalMessage, additionalPaymentMessage, commercialQuoteMessage, referralMessage, applicationOnboardingMessage, requestNotesMessage, repeatLaundryMessage, followUpMessage, applicantEmailMessage]}
++                messages={[quotePromptMessage, statusMessage, checkoutMessage, commercialInvoiceMessage, commercialQuoteEmailMessage, familyInvoiceMessage, laundryFinalMessage, additionalPaymentMessage, commercialQuoteMessage, referralMessage, applicationOnboardingMessage, requestNotesMessage, repeatLaundryMessage, followUpMessage, applicantEmailMessage, deleteRecordMessage]}
+                 warnings={[statusWarning]}
+-                errors={[quotePromptError, statusError, checkoutError, commercialInvoiceError, commercialQuoteEmailError, familyInvoiceError, laundryFinalError, additionalPaymentError, commercialQuoteError, referralError, applicationOnboardingError, requestNotesError, repeatLaundryError, followUpError, applicantEmailError, documentOpenError]}
++                errors={[quotePromptError, statusError, checkoutError, commercialInvoiceError, commercialQuoteEmailError, familyInvoiceError, laundryFinalError, additionalPaymentError, commercialQuoteError, referralError, applicationOnboardingError, requestNotesError, repeatLaundryError, followUpError, applicantEmailError, documentOpenError, deleteRecordError]}
+               />
+               {collectionName === "serviceRequests" && (
+                 <div className="rounded-3xl border border-[#eadfc8] bg-[#fbf6ea] p-4 shadow-sm">
+@@ -5930,14 +5986,31 @@
+                       Archive / hide from active
+                     </button>
+                   )}
++                  {collectionName === "serviceRequests" && (
++                    <button
++                      type="button"
++                      disabled={deleteRecordBusy || Boolean(selectedDeleteBlockReason)}
++                      onClick={deleteSelectedServiceRequest}
++                      className={getAdminActionClass("danger")}
++                      title={selectedDeleteBlockReason || "Permanently delete this request after a warning confirmation."}
++                    >
++                      {deleteRecordBusy ? <><ActionSpinner /> Deleting...</> : "Delete request permanently"}
++                    </button>
++                  )}
+                   <p className="max-w-xl text-xs leading-5 text-slate-500">
+-                    Quote emails can be sent here by choosing Quote Sent. Payment link, invoice, and payment received emails are handled separately by the payment/invoice buttons. Archive keeps the record but removes it from the active work queue.
++                    Quote emails can be sent here by choosing Quote Sent. Payment link, invoice, and payment received emails are handled separately by the payment/invoice buttons. Archive keeps the record but removes it from the active work queue. Delete is only for test, spam, duplicate, or accidental unpaid requests.
+                   </p>
+                 </div>
+ 
++                {selectedDeleteBlockReason && (
++                  <p className="mt-3 rounded-2xl bg-slate-50 px-4 py-3 text-xs font-bold leading-5 text-slate-600">
++                    Delete disabled: {selectedDeleteBlockReason}
++                  </p>
++                )}
+                 {statusMessage && <p className="mt-3 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">{statusMessage}</p>}
+                 {statusWarning && <p className="mt-3 rounded-2xl bg-amber-50 px-4 py-3 text-sm font-bold text-amber-800">{statusWarning}</p>}
+                 {statusError && <p className="mt-3 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{statusError}</p>}
++                {deleteRecordError && <p className="mt-3 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{deleteRecordError}</p>}
+               </div>
+             )}
+ 
+
+--- before/app/api/admin/delete-record/route.ts
++++ after/app/api/admin/delete-record/route.ts
+@@ -10,6 +10,7 @@
+   collection?: string;
+   id?: string;
+   confirmDeleteTestRecord?: boolean;
++  confirmDeleteRecord?: boolean;
+ };
+ 
+ function getString(value: unknown) {
+@@ -120,14 +121,14 @@
+     if (!isAllowedAdminEmail(decoded.email)) return NextResponse.json({ ok: false }, { status: 403 });
+ 
+     const body = (await request.json().catch(() => ({}))) as DeleteRecordBody;
+-    const { collection, id, confirmDeleteTestRecord } = body;
++    const { collection, id, confirmDeleteTestRecord, confirmDeleteRecord } = body;
+ 
+     if (!collection || !allowedCollections.has(collection)) {
+       return NextResponse.json({ ok: false, error: "Invalid delete request." }, { status: 400 });
+     }
+ 
+-    if (!id || !confirmDeleteTestRecord) {
+-      return NextResponse.json({ ok: false, error: "Bulk delete is disabled. Use normal admin status/archive handling instead." }, { status: 400 });
++    if (!id || (!confirmDeleteTestRecord && !confirmDeleteRecord)) {
++      return NextResponse.json({ ok: false, error: "Delete confirmation is required. Open the record and confirm the delete warning first." }, { status: 400 });
+     }
+ 
+     const db = getFirebaseAdminDb();

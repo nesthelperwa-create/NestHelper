@@ -10,6 +10,7 @@ type DeleteRecordBody = {
   collection?: string;
   id?: string;
   confirmDeleteTestRecord?: boolean;
+  confirmDeleteRecord?: boolean;
 };
 
 function getString(value: unknown) {
@@ -120,14 +121,14 @@ export async function POST(request: Request) {
     if (!isAllowedAdminEmail(decoded.email)) return NextResponse.json({ ok: false }, { status: 403 });
 
     const body = (await request.json().catch(() => ({}))) as DeleteRecordBody;
-    const { collection, id, confirmDeleteTestRecord } = body;
+    const { collection, id, confirmDeleteTestRecord, confirmDeleteRecord } = body;
 
     if (!collection || !allowedCollections.has(collection)) {
       return NextResponse.json({ ok: false, error: "Invalid delete request." }, { status: 400 });
     }
 
-    if (!id || !confirmDeleteTestRecord) {
-      return NextResponse.json({ ok: false, error: "Bulk delete is disabled. Use normal admin status/archive handling instead." }, { status: 400 });
+    if (!id || (!confirmDeleteTestRecord && !confirmDeleteRecord)) {
+      return NextResponse.json({ ok: false, error: "Delete confirmation is required. Open the record and confirm the delete warning first." }, { status: 400 });
     }
 
     const db = getFirebaseAdminDb();
