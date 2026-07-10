@@ -180,6 +180,31 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: false, error: "Use the Repeat Laundry section for Laundry Rescue." }, { status: 400 });
     }
 
+    const sourceEmailForDuplicate = getString(source.email).toLowerCase();
+    const existingFollowUpSnap = await db
+      .collection("serviceRequests")
+      .where("followUpFromRequestId", "==", requestId)
+      .limit(25)
+      .get();
+
+    const duplicateFollowUp = existingFollowUpSnap.docs.find((doc) => {
+      const existing = doc.data() || {};
+      const existingEmail = getString(existing.email || existing.followUpFromCustomerEmail).toLowerCase();
+      const sameCustomer = !sourceEmailForDuplicate || !existingEmail || existingEmail === sourceEmailForDuplicate;
+      return sameCustomer && getString(existing.preferredDate) === followUpDate;
+    });
+
+    if (duplicateFollowUp) {
+      return NextResponse.json(
+        {
+          ok: false,
+          duplicateRequestId: duplicateFollowUp.id,
+          error: "A follow-up / recurring request already exists for this source request and visit date. Open the existing request instead of creating a duplicate.",
+        },
+        { status: 409 }
+      );
+    }
+
     const newRequestRef = db.collection("serviceRequests").doc();
     const nowIso = new Date().toISOString();
     const newRequest: Record<string, unknown> = {};

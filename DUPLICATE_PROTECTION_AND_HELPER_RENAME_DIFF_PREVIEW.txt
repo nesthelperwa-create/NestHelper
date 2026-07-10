@@ -1,0 +1,247 @@
+--- before/components/admin/AdminTable.tsx
++++ after/components/admin/AdminTable.tsx
+@@ -2106,18 +2106,18 @@
+ }
+ 
+ 
+-function normalizeRepeatLaundryFieldKey(key: string) {
++function normalizeOriginalAnswerFieldKey(key: string) {
+   return key.toLowerCase().replace(/[^a-z0-9]/g, "");
+ }
+ 
+-function repeatLaundryValueToText(value: unknown): string {
++function originalAnswerValueToText(value: unknown): string {
+   if (value === undefined || value === null || value === "") return "";
+   if (typeof value === "string") return value.trim();
+   if (typeof value === "number") return Number.isFinite(value) ? String(value) : "";
+   if (typeof value === "boolean") return value ? "Yes" : "No";
+   if (Array.isArray(value)) {
+     return value
+-      .map((entry) => repeatLaundryValueToText(entry))
++      .map((entry) => originalAnswerValueToText(entry))
+       .filter(Boolean)
+       .join(", ");
+   }
+@@ -2125,7 +2125,7 @@
+   if (value && typeof value === "object") {
+     const entries = Object.entries(value as Record<string, unknown>)
+       .map(([key, entry]) => {
+-        const text = repeatLaundryValueToText(entry);
++        const text = originalAnswerValueToText(entry);
+         return text ? `${key}: ${text}` : "";
+       })
+       .filter(Boolean);
+@@ -2134,22 +2134,22 @@
+   return "";
+ }
+ 
+-function findRepeatLaundryValueInObject(value: unknown, wantedKeys: string[], depth = 0): string {
++function findOriginalAnswerValueInObject(value: unknown, wantedKeys: string[], depth = 0): string {
+   if (!value || typeof value !== "object" || depth > 4) return "";
+   if (Array.isArray(value)) {
+     for (const entry of value) {
+-      const nested = findRepeatLaundryValueInObject(entry, wantedKeys, depth + 1);
++      const nested = findOriginalAnswerValueInObject(entry, wantedKeys, depth + 1);
+       if (nested) return nested;
+     }
+     return "";
+   }
+ 
+   const record = value as Record<string, unknown>;
+-  const normalizedWanted = new Set(wantedKeys.map(normalizeRepeatLaundryFieldKey));
++  const normalizedWanted = new Set(wantedKeys.map(normalizeOriginalAnswerFieldKey));
+ 
+   for (const [key, entry] of Object.entries(record)) {
+-    if (normalizedWanted.has(normalizeRepeatLaundryFieldKey(key))) {
+-      const text = repeatLaundryValueToText(entry);
++    if (normalizedWanted.has(normalizeOriginalAnswerFieldKey(key))) {
++      const text = originalAnswerValueToText(entry);
+       if (text) return text;
+     }
+   }
+@@ -2170,14 +2170,14 @@
+   for (const containerKey of likelyContainers) {
+     const nested = record[containerKey];
+     if (!nested) continue;
+-    const text = findRepeatLaundryValueInObject(nested, wantedKeys, depth + 1);
++    const text = findOriginalAnswerValueInObject(nested, wantedKeys, depth + 1);
+     if (text) return text;
+   }
+ 
+   if (depth < 2) {
+     for (const [key, entry] of Object.entries(record)) {
+       if (["photo", "image", "upload", "file", "url", "stripe", "invoice", "checkout", "payment"].some((part) => key.toLowerCase().includes(part))) continue;
+-      const text = findRepeatLaundryValueInObject(entry, wantedKeys, depth + 1);
++      const text = findOriginalAnswerValueInObject(entry, wantedKeys, depth + 1);
+       if (text) return text;
+     }
+   }
+@@ -2185,9 +2185,9 @@
+   return "";
+ }
+ 
+-function getRepeatLaundryOriginalAnswer(item: AdminDoc | null, keys: string[]) {
++function getOriginalRequestAnswer(item: AdminDoc | null, keys: string[]) {
+   if (!item) return "";
+-  return findRepeatLaundryValueInObject(item, keys);
++  return findOriginalAnswerValueInObject(item, keys);
+ }
+ 
+ function getQuotePromptServiceGuidance(item: AdminDoc) {
+@@ -3288,24 +3288,24 @@
+     setRequestNotesMessage("");
+     setRequestNotesError("");
+     setRepeatLaundryDate("");
+-    setRepeatLaundryWindow(getRepeatLaundryOriginalAnswer(selected, ["preferredWindow", "laundryPickupWindow", "preferredTime", "pickupWindow", "pickupTime", "requestedTime", "schedulingPreference"]));
+-    setRepeatLaundryPickupSpot(getRepeatLaundryOriginalAnswer(selected, ["laundryPickupSpot", "pickupSpot", "pickupLocation", "laundryPickupLocation", "pickupInstructions"]));
+-    setRepeatLaundryReturnSpot(getRepeatLaundryOriginalAnswer(selected, ["laundryReturnSpot", "laundryDropoffSpot", "laundryDropOffSpot", "returnSpot", "dropoffSpot", "dropOffSpot", "returnLocation", "laundryReturnLocation"]));
+-    setRepeatLaundryDetergent(getRepeatLaundryOriginalAnswer(selected, ["laundryDetergentPreference", "laundryDetergent", "detergent", "detergentSelection", "customerProvidedDetergent", "customerProvidedDetergentSelected", "productPreference", "soapPreference"]));
+-    setRepeatLaundryDryerPreference(getRepeatLaundryOriginalAnswer(selected, ["laundryDryerPreference", "dryPreference", "dryingPreference", "dryerPreference", "hangDryItems", "delicates"]));
+-    setRepeatLaundryFoldPreference(getRepeatLaundryOriginalAnswer(selected, ["laundryFoldPreference", "foldingPreference", "sortingPreference", "foldPreference"]));
+-    setRepeatLaundryAmount(getRepeatLaundryOriginalAnswer(selected, ["laundryAmount", "laundryBagEstimate", "laundryHamperEstimate", "bagEstimate", "hamperEstimate", "estimatedLaundry", "laundryTypes"]));
+-    setRepeatLaundrySpecialInstructions(getRepeatLaundryOriginalAnswer(selected, ["laundrySpecialInstructions", "laundryNotes", "specialInstructions", "notes", "requestDetails", "laundryAccessNotes", "parkingAccess", "accessNotes"]));
+-    setRepeatLaundryAddOnNote(getRepeatLaundryOriginalAnswer(selected, ["laundryAddOns", "addOns", "addons", "comfortersBedding", "heavyItems", "bulkyItems"]));
++    setRepeatLaundryWindow(getOriginalRequestAnswer(selected, ["preferredWindow", "laundryPickupWindow", "preferredTime", "pickupWindow", "pickupTime", "requestedTime", "schedulingPreference"]));
++    setRepeatLaundryPickupSpot(getOriginalRequestAnswer(selected, ["laundryPickupSpot", "pickupSpot", "pickupLocation", "laundryPickupLocation", "pickupInstructions"]));
++    setRepeatLaundryReturnSpot(getOriginalRequestAnswer(selected, ["laundryReturnSpot", "laundryDropoffSpot", "laundryDropOffSpot", "returnSpot", "dropoffSpot", "dropOffSpot", "returnLocation", "laundryReturnLocation"]));
++    setRepeatLaundryDetergent(getOriginalRequestAnswer(selected, ["laundryDetergentPreference", "laundryDetergent", "detergent", "detergentSelection", "customerProvidedDetergent", "customerProvidedDetergentSelected", "productPreference", "soapPreference"]));
++    setRepeatLaundryDryerPreference(getOriginalRequestAnswer(selected, ["laundryDryerPreference", "dryPreference", "dryingPreference", "dryerPreference", "hangDryItems", "delicates"]));
++    setRepeatLaundryFoldPreference(getOriginalRequestAnswer(selected, ["laundryFoldPreference", "foldingPreference", "sortingPreference", "foldPreference"]));
++    setRepeatLaundryAmount(getOriginalRequestAnswer(selected, ["laundryAmount", "laundryBagEstimate", "laundryHamperEstimate", "bagEstimate", "hamperEstimate", "estimatedLaundry", "laundryTypes"]));
++    setRepeatLaundrySpecialInstructions(getOriginalRequestAnswer(selected, ["laundrySpecialInstructions", "laundryNotes", "specialInstructions", "notes", "requestDetails", "laundryAccessNotes", "parkingAccess", "accessNotes"]));
++    setRepeatLaundryAddOnNote(getOriginalRequestAnswer(selected, ["laundryAddOns", "addOns", "addons", "comfortersBedding", "heavyItems", "bulkyItems"]));
+     setRepeatLaundryNote("");
+     setRepeatLaundryMessage("");
+     setRepeatLaundryError("");
+     setRepeatLaundryCreatedRequestId("");
+     setFollowUpDate("");
+-    setFollowUpWindow(getRepeatLaundryOriginalAnswer(selected, ["preferredWindow", "preferredTime", "requestedWindow", "requestedTime", "schedulingPreference", "availability", "availableTimes"]));
++    setFollowUpWindow(getOriginalRequestAnswer(selected, ["preferredWindow", "preferredTime", "requestedWindow", "requestedTime", "schedulingPreference", "availability", "availableTimes"]));
+     setFollowUpCadence(selected?.recurringCadence ? String(selected.recurringCadence) : "One-time follow-up");
+     setFollowUpServiceTitle(
+-      getRepeatLaundryOriginalAnswer(selected, ["selectedServiceTitle", "serviceTitle", "packageType", "requestType", "service"]) ||
++      getOriginalRequestAnswer(selected, ["selectedServiceTitle", "serviceTitle", "packageType", "requestType", "service"]) ||
+       (selected ? getCleanServiceLabel(selected) : "")
+     );
+     setFollowUpAgreedPrice(
+@@ -3314,12 +3314,12 @@
+       selected?.commercialInitialAmount ? String(selected.commercialInitialAmount) :
+       ""
+     );
+-    setFollowUpEstimatedHours(getRepeatLaundryOriginalAnswer(selected, ["estimatedHours", "helperHours", "hours", "serviceLength", "visitLength", "timeEstimate"]));
+-    setFollowUpFocusAreas(getRepeatLaundryOriginalAnswer(selected, ["focusAreas", "areaFocus", "priorityAreas", "mainPriorities", "cleaningGoals", "specificAreas", "areasToClean", "requestedAreas"]));
+-    setFollowUpIncludedRooms(getRepeatLaundryOriginalAnswer(selected, ["includedRooms", "rooms", "bedrooms", "bathrooms", "homeSize", "squareFootage", "sqft", "homeDetails"]));
+-    setFollowUpSuppliesPreference(getRepeatLaundryOriginalAnswer(selected, ["suppliesPreference", "customerSupplies", "cleaningSupplies", "supplies", "productsPreference", "productPreference"]));
+-    setFollowUpPetNotes(getRepeatLaundryOriginalAnswer(selected, ["petNotes", "pets", "petHair", "animals", "petInfo"]));
+-    setFollowUpSpecialInstructions(getRepeatLaundryOriginalAnswer(selected, ["specialInstructions", "notes", "requestDetails", "additionalDetails", "anythingElse", "accessNotes"]));
++    setFollowUpEstimatedHours(getOriginalRequestAnswer(selected, ["estimatedHours", "helperHours", "hours", "serviceLength", "visitLength", "timeEstimate"]));
++    setFollowUpFocusAreas(getOriginalRequestAnswer(selected, ["focusAreas", "areaFocus", "priorityAreas", "mainPriorities", "cleaningGoals", "specificAreas", "areasToClean", "requestedAreas"]));
++    setFollowUpIncludedRooms(getOriginalRequestAnswer(selected, ["includedRooms", "rooms", "bedrooms", "bathrooms", "homeSize", "squareFootage", "sqft", "homeDetails"]));
++    setFollowUpSuppliesPreference(getOriginalRequestAnswer(selected, ["suppliesPreference", "customerSupplies", "cleaningSupplies", "supplies", "productsPreference", "productPreference"]));
++    setFollowUpPetNotes(getOriginalRequestAnswer(selected, ["petNotes", "pets", "petHair", "animals", "petInfo"]));
++    setFollowUpSpecialInstructions(getOriginalRequestAnswer(selected, ["specialInstructions", "notes", "requestDetails", "additionalDetails", "anythingElse", "accessNotes"]));
+     setFollowUpInternalNote("");
+     setFollowUpMessage("");
+     setFollowUpError("");
+@@ -3652,7 +3652,14 @@
+       });
+ 
+       const data = await res.json().catch(() => ({}));
+-      if (!res.ok || !data.ok) throw new Error(data.error || "Unable to create repeat laundry request.");
++      if (!res.ok || !data.ok) {
++        if (data.duplicateRequestId) {
++          setRepeatLaundryCreatedRequestId(String(data.duplicateRequestId));
++          setRepeatLaundryMessage(data.error || "A repeat request already exists for that source request and pickup date. Open the existing request instead.");
++          return;
++        }
++        throw new Error(data.error || "Unable to create repeat laundry request.");
++      }
+ 
+       if (data.newRequestId) setRepeatLaundryCreatedRequestId(String(data.newRequestId));
+       setRepeatLaundryMessage(`Repeat laundry request created${data.newRequestId ? `: ${data.newRequestId}` : ""}. It will appear as a new request in the dashboard.`);
+@@ -3703,7 +3710,14 @@
+       });
+ 
+       const data = await res.json().catch(() => ({}));
+-      if (!res.ok || !data.ok) throw new Error(data.error || "Unable to create follow-up service request.");
++      if (!res.ok || !data.ok) {
++        if (data.duplicateRequestId) {
++          setFollowUpCreatedRequestId(String(data.duplicateRequestId));
++          setFollowUpMessage(data.error || "A follow-up request already exists for that source request and visit date. Open the existing request instead.");
++          return;
++        }
++        throw new Error(data.error || "Unable to create follow-up service request.");
++      }
+ 
+       if (data.newRequestId) setFollowUpCreatedRequestId(String(data.newRequestId));
+       setFollowUpMessage(`Follow-up request created${data.newRequestId ? `: ${data.newRequestId}` : ""}. It will appear as a new request in the dashboard.`);
+
+--- before/app/api/admin/create-repeat-laundry-request/route.ts
++++ after/app/api/admin/create-repeat-laundry-request/route.ts
+@@ -138,6 +138,31 @@
+     const source = sourceSnap.data() || {};
+     if (getString(source.service) !== "laundry-rescue") {
+       return NextResponse.json({ ok: false, error: "Repeat request creation is only available for Laundry Rescue." }, { status: 400 });
++    }
++
++    const sourceEmailForDuplicate = getString(source.email).toLowerCase();
++    const existingRepeatSnap = await db
++      .collection("serviceRequests")
++      .where("repeatFromRequestId", "==", requestId)
++      .limit(25)
++      .get();
++
++    const duplicateRepeat = existingRepeatSnap.docs.find((doc) => {
++      const existing = doc.data() || {};
++      const existingEmail = getString(existing.email || existing.repeatFromCustomerEmail).toLowerCase();
++      const sameCustomer = !sourceEmailForDuplicate || !existingEmail || existingEmail === sourceEmailForDuplicate;
++      return sameCustomer && getString(existing.preferredDate) === preferredDate;
++    });
++
++    if (duplicateRepeat) {
++      return NextResponse.json(
++        {
++          ok: false,
++          duplicateRequestId: duplicateRepeat.id,
++          error: "A repeat Laundry Rescue request already exists for this source request and pickup date. Open the existing request instead of creating a duplicate.",
++        },
++        { status: 409 }
++      );
+     }
+ 
+     const newRequestRef = db.collection("serviceRequests").doc();
+
+--- before/app/api/admin/create-recurring-service-request/route.ts
++++ after/app/api/admin/create-recurring-service-request/route.ts
+@@ -180,6 +180,31 @@
+       return NextResponse.json({ ok: false, error: "Use the Repeat Laundry section for Laundry Rescue." }, { status: 400 });
+     }
+ 
++    const sourceEmailForDuplicate = getString(source.email).toLowerCase();
++    const existingFollowUpSnap = await db
++      .collection("serviceRequests")
++      .where("followUpFromRequestId", "==", requestId)
++      .limit(25)
++      .get();
++
++    const duplicateFollowUp = existingFollowUpSnap.docs.find((doc) => {
++      const existing = doc.data() || {};
++      const existingEmail = getString(existing.email || existing.followUpFromCustomerEmail).toLowerCase();
++      const sameCustomer = !sourceEmailForDuplicate || !existingEmail || existingEmail === sourceEmailForDuplicate;
++      return sameCustomer && getString(existing.preferredDate) === followUpDate;
++    });
++
++    if (duplicateFollowUp) {
++      return NextResponse.json(
++        {
++          ok: false,
++          duplicateRequestId: duplicateFollowUp.id,
++          error: "A follow-up / recurring request already exists for this source request and visit date. Open the existing request instead of creating a duplicate.",
++        },
++        { status: 409 }
++      );
++    }
++
+     const newRequestRef = db.collection("serviceRequests").doc();
+     const nowIso = new Date().toISOString();
+     const newRequest: Record<string, unknown> = {};

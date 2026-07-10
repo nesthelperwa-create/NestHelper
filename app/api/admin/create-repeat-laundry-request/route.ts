@@ -140,6 +140,31 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: false, error: "Repeat request creation is only available for Laundry Rescue." }, { status: 400 });
     }
 
+    const sourceEmailForDuplicate = getString(source.email).toLowerCase();
+    const existingRepeatSnap = await db
+      .collection("serviceRequests")
+      .where("repeatFromRequestId", "==", requestId)
+      .limit(25)
+      .get();
+
+    const duplicateRepeat = existingRepeatSnap.docs.find((doc) => {
+      const existing = doc.data() || {};
+      const existingEmail = getString(existing.email || existing.repeatFromCustomerEmail).toLowerCase();
+      const sameCustomer = !sourceEmailForDuplicate || !existingEmail || existingEmail === sourceEmailForDuplicate;
+      return sameCustomer && getString(existing.preferredDate) === preferredDate;
+    });
+
+    if (duplicateRepeat) {
+      return NextResponse.json(
+        {
+          ok: false,
+          duplicateRequestId: duplicateRepeat.id,
+          error: "A repeat Laundry Rescue request already exists for this source request and pickup date. Open the existing request instead of creating a duplicate.",
+        },
+        { status: 409 }
+      );
+    }
+
     const newRequestRef = db.collection("serviceRequests").doc();
     const nowIso = new Date().toISOString();
     const newRequest: Record<string, unknown> = {};
