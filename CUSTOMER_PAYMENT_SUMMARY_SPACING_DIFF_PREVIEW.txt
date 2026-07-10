@@ -1,0 +1,173 @@
+--- before/components/admin/FamilyPaymentBreakdownBuilder.tsx
++++ after/components/admin/FamilyPaymentBreakdownBuilder.tsx
+@@ -462,7 +462,7 @@
+   const availableCustomerCredit = getAvailableCustomerCreditAmount(availableCustomerCredits);
+   const totalCredit = referralCredit + availableCustomerCredit;
+   const referralText = totalCredit > 0
+-    ? ` A referral/customer credit of $${totalCredit} has been included in this payment breakdown.`
++    ? ` A referral/customer credit of $${totalCredit} has been included in this payment summary.`
+     : "";
+   return String(item.service || "").includes("laundry")
+     ? `Laundry intro minimum includes pickup, wash, dry, fold, return, and up to about 26.2 lbs. A final balance invoice or payment link may be sent for additional weight, add-ons, bulky items, or approved changes.${referralText}`
+@@ -621,32 +621,54 @@
+   recurringTracking?: Record<string, any>;
+   formatMoney: (value: number) => string;
+ }) {
+-  const lines = lineItems
++  const itemLines = lineItems
+     .filter((line) => calculateLineAmount(line) > 0 || line.label.trim())
+     .map((line) => {
+       const amount = calculateLineAmount(line);
+       const details = [line.description, line.note ? `Note: ${line.note}` : ""].filter(Boolean).join(" ");
+-      return `• ${line.label} — ${formatMoney(amount)}\n  ${formatQuantity(line)}${details ? `\n  ${details}` : ""}`;
++      return [
++        `• ${line.label}`,
++        `  Amount: ${formatMoney(amount)}`,
++        `  Basis: ${formatQuantity(line)}`,
++        details ? `  Details: ${details}` : "",
++      ].filter(Boolean).join("\n");
+     })
+-    .join("\n");
+-
+-  return [
+-    quoteTitle || `${serviceLabel} payment breakdown`,
+-    `Service: ${serviceLabel}`,
+-    `Payment type: ${paymentPlan}`,
+-    servicePeriodLabel ? `Service period: ${servicePeriodLabel}` : "",
+-    recurringTracking?.status && recurringTracking.status !== "Not recurring" ? `Recurring plan: ${recurringTracking.cadence || "Recurring"} at ${formatMoney(cleanNumber(recurringTracking.rate))}/visit` : "",
++    .join("\n\n");
++
++  const recurringLines = [
++    recurringTracking?.status && recurringTracking.status !== "Not recurring"
++      ? `Recurring plan: ${recurringTracking.cadence || "Recurring"} at ${formatMoney(cleanNumber(recurringTracking.rate))}/visit`
++      : "",
+     recurringTracking?.nextVisitDate ? `Next planned visit: ${recurringTracking.nextVisitDate}` : "",
+-    "",
+-    lines,
+-    "",
++  ].filter(Boolean);
++
++  const amountLines = [
+     `Subtotal: ${formatMoney(subtotal)}`,
+     discountCredit > 0 ? `Discount / credit: -${formatMoney(discountCredit)}` : "",
+     `Amount due now: ${formatMoney(amountDueNow)}`,
+     laterAmount > 0 ? `Possible later/add-on amount: ${formatMoney(laterAmount)}` : "Possible later/add-on amount: None listed right now",
+-    customerNote ? `\nCustomer note: ${customerNote}` : "",
++  ].filter(Boolean);
++
++  return [
++    quoteTitle || `${serviceLabel} payment summary`,
+     "",
+-    "This breakdown explains the amount being requested and keeps a record for NestHelper and the customer. Final timing, access, and service notes are confirmed before the visit. Added work, route changes, laundry final balance, or extra time may require a separate approved payment.",
++    "SERVICE DETAILS",
++    `Service: ${serviceLabel}`,
++    `Payment type: ${paymentPlan}`,
++    servicePeriodLabel ? `Service period: ${servicePeriodLabel}` : "",
++    ...recurringLines,
++    "",
++    "ITEMS INCLUDED",
++    itemLines || "No line items listed yet.",
++    "",
++    "AMOUNT SUMMARY",
++    ...amountLines,
++    customerNote ? ["", "CUSTOMER NOTE", customerNote].join("\n") : "",
++    "",
++    "PLEASE NOTE",
++    "This payment summary explains the amount being requested and keeps a record for NestHelper and the customer.",
++    "Final timing, access, and service notes are confirmed before the visit.",
++    "Added work, route changes, laundry final balance, or extra time may require a separate approved payment.",
+   ]
+     .filter((part) => part !== "")
+     .join("\n");
+@@ -668,7 +690,7 @@
+   const saved = (item.familyPaymentBreakdown || {}) as Record<string, any>;
+   const [open, setOpen] = useState(false);
+   const [dirty, setDirty] = useState(false);
+-  const [quoteTitle, setQuoteTitle] = useState(getString(saved.quoteTitle) || `${serviceLabel} payment breakdown`);
++  const [quoteTitle, setQuoteTitle] = useState(getString(saved.quoteTitle) || `${serviceLabel} payment summary`);
+   const [paymentPlan, setPaymentPlan] = useState(getString(saved.paymentPlan) || getDefaultPaymentPlan(item));
+   const [servicePeriodStart, setServicePeriodStart] = useState(getString(saved.servicePeriodStart));
+   const [servicePeriodEnd, setServicePeriodEnd] = useState(getString(saved.servicePeriodEnd));
+@@ -709,7 +731,7 @@
+   useEffect(() => {
+     const nextSaved = (item.familyPaymentBreakdown || {}) as Record<string, any>;
+     const nextServiceLabel = getServiceLabel(item);
+-    setQuoteTitle(getString(nextSaved.quoteTitle) || `${nextServiceLabel} payment breakdown`);
++    setQuoteTitle(getString(nextSaved.quoteTitle) || `${nextServiceLabel} payment summary`);
+     setPaymentPlan(getString(nextSaved.paymentPlan) || getDefaultPaymentPlan(item));
+     setServicePeriodStart(getString(nextSaved.servicePeriodStart));
+     setServicePeriodEnd(getString(nextSaved.servicePeriodEnd));
+@@ -812,7 +834,7 @@
+       return prev && prev.includes(note) ? prev : [prev, note].filter(Boolean).join("\n");
+     });
+     if (!customerNote.toLowerCase().includes("referral credit") && !customerNote.toLowerCase().includes("customer credit")) {
+-      setCustomerNote((prev) => `${prev}${prev.endsWith(" ") ? "" : " "}${totalSuggestedCreditLabel || "Referral/customer credit"} has been included in this payment breakdown.`);
++      setCustomerNote((prev) => `${prev}${prev.endsWith(" ") ? "" : " "}${totalSuggestedCreditLabel || "Referral/customer credit"} has been included in this payment summary.`);
+     }
+     setMessage(`${totalSuggestedCreditLabel || "Referral/customer credit"} applied. Save the family breakdown before creating the invoice or filling checkout.`);
+   }
+@@ -877,7 +899,7 @@
+     if (!window.confirm("Replace current family payment lines with defaults from the customer request?")) return;
+     markDirty();
+     setLineItems(createDefaultLinesFromRequest(item));
+-    setQuoteTitle(`${getServiceLabel(item)} payment breakdown`);
++    setQuoteTitle(`${getServiceLabel(item)} payment summary`);
+     setPaymentPlan(getDefaultPaymentPlan(item));
+     setServicePeriodStart("");
+     setServicePeriodEnd("");
+@@ -892,7 +914,7 @@
+ 
+   async function copyBreakdown() {
+     await navigator.clipboard.writeText(customerBreakdownText);
+-    setMessage("Family breakdown copied.");
++    setMessage("Payment summary copied.");
+   }
+ 
+   function downloadBreakdown() {
+@@ -901,7 +923,7 @@
+     const url = URL.createObjectURL(blob);
+     const link = document.createElement("a");
+     link.href = url;
+-    link.download = `nesthelper-family-breakdown-${item.id}.html`;
++    link.download = `nesthelper-payment-summary-${item.id}.html`;
+     document.body.appendChild(link);
+     link.click();
+     link.remove();
+@@ -970,7 +992,7 @@
+         }),
+       });
+       const data = await res.json().catch(() => ({}));
+-      if (!res.ok || !data.ok) throw new Error(data.error || "Unable to save family payment breakdown.");
++      if (!res.ok || !data.ok) throw new Error(data.error || "Unable to save family payment summary.");
+       const updates = {
+         familyPaymentBreakdown: {
+           quoteTitle,
+@@ -1008,7 +1030,7 @@
+       setDirty(false);
+       setMessage("Family draft estimate saved.");
+     } catch (saveError) {
+-      setError(saveError instanceof Error ? saveError.message : "Unable to save family payment breakdown.");
++      setError(saveError instanceof Error ? saveError.message : "Unable to save family payment summary.");
+     } finally {
+       setSaving(false);
+     }
+@@ -1059,7 +1081,7 @@
+ 
+       {open && (
+         <div className="fixed inset-x-0 bottom-0 top-[4.75rem] z-[120] overflow-y-auto bg-slate-950/70 p-3 sm:top-[5.25rem] sm:p-6" onClick={(e) => e.stopPropagation()}>
+-          <div className="mx-auto mb-8 max-w-6xl rounded-[2rem] bg-white shadow-2xl" role="dialog" aria-modal="true" aria-label="Family payment breakdown builder">
++          <div className="mx-auto mb-8 max-w-6xl rounded-[2rem] bg-white shadow-2xl" role="dialog" aria-modal="true" aria-label="Family payment summary builder">
+             <div className="sticky top-0 z-20 rounded-t-[2rem] border-b border-[#eadfc8] bg-white/95 p-4 backdrop-blur sm:p-5">
+               <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                 <div>
+@@ -1362,8 +1384,8 @@
+                 </div>
+ 
+                 <div className="rounded-3xl border border-[#eadfc8] bg-[#fbf6ea] p-4">
+-                  <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Customer-facing draft estimate</p>
+-                  <pre className="mt-3 max-h-[480px] overflow-auto whitespace-pre-wrap rounded-2xl bg-white p-4 text-xs leading-5 text-slate-700">{customerBreakdownText}</pre>
++                  <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Customer-facing payment summary</p>
++                  <pre className="mt-3 max-h-[520px] overflow-auto whitespace-pre-wrap rounded-2xl bg-white p-5 text-[13px] leading-6 text-slate-700">{customerBreakdownText}</pre>
+                   <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                     <button type="button" onClick={copyBreakdown} className={getButtonClass("secondary")}>Copy</button>
+                     <button type="button" onClick={downloadBreakdown} className={getButtonClass("quiet")}>Download</button>
