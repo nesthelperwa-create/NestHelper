@@ -10,6 +10,7 @@ export type CampaignAttribution = {
 };
 
 const STORAGE_KEY = "nesthelper_campaign_attribution";
+const ATTRIBUTION_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 
 const sourceLabels: Array<[RegExp, string]> = [
   [/google|gbp|business_profile/i, "Google search"],
@@ -35,13 +36,47 @@ function getFirst(params: URLSearchParams, keys: string[]) {
   return "";
 }
 
+function clearStoredAttribution() {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.removeItem(STORAGE_KEY);
+  } catch {
+    // Storage can be unavailable in private browsing. Tracking should never block forms.
+  }
+}
+
+function isStoredAttributionFresh(attribution: Partial<CampaignAttribution>) {
+  if (!attribution.campaignCapturedAtIso) return false;
+  const captured = new Date(attribution.campaignCapturedAtIso).getTime();
+  if (!Number.isFinite(captured)) return false;
+  return Date.now() - captured <= ATTRIBUTION_MAX_AGE_MS;
+}
+
+function shouldClearCampaignAttribution(params: URLSearchParams) {
+  const clearValue = [
+    params.get("clear_campaign"),
+    params.get("clearCampaign"),
+    params.get("clear_utm"),
+    params.get("admin_test"),
+    params.get("test_request"),
+  ].find((value) => value !== null);
+
+  if (!clearValue) return false;
+  return ["1", "true", "yes", "clear", "admin"].includes(clearValue.trim().toLowerCase());
+}
+
 function readStoredAttribution(): Partial<CampaignAttribution> {
   if (typeof window === "undefined") return {};
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return {};
     const parsed = JSON.parse(raw) as Partial<CampaignAttribution>;
-    return parsed && typeof parsed === "object" ? parsed : {};
+    if (!parsed || typeof parsed !== "object") return {};
+    if (!isStoredAttributionFresh(parsed)) {
+      clearStoredAttribution();
+      return {};
+    }
+    return parsed;
   } catch {
     return {};
   }
@@ -71,6 +106,20 @@ export function getCampaignAttributionFromCurrentPage(): CampaignAttribution {
   }
 
   const params = new URLSearchParams(window.location.search);
+  if (shouldClearCampaignAttribution(params)) {
+    clearStoredAttribution();
+    return {
+      campaignSource: "",
+      campaignMedium: "",
+      campaignName: "",
+      campaignContent: "",
+      campaignTerm: "",
+      campaignLandingPage: "",
+      campaignReferrer: "",
+      campaignCapturedAtIso: "",
+    };
+  }
+
   const source = getFirst(params, ["utm_source", "source", "src"]);
   const medium = getFirst(params, ["utm_medium", "medium"]);
   const campaign = getFirst(params, ["utm_campaign", "campaign"]);
@@ -94,6 +143,19 @@ export function getCampaignAttributionFromCurrentPage(): CampaignAttribution {
   }
 
   const stored = readStoredAttribution();
+  if (!stored.campaignSource && !stored.campaignMedium && !stored.campaignName) {
+    return {
+      campaignSource: "",
+      campaignMedium: "",
+      campaignName: "",
+      campaignContent: "",
+      campaignTerm: "",
+      campaignLandingPage: "",
+      campaignReferrer: "",
+      campaignCapturedAtIso: "",
+    };
+  }
+
   return {
     campaignSource: clean(stored.campaignSource),
     campaignMedium: clean(stored.campaignMedium),

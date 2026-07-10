@@ -97,9 +97,22 @@ function formatValue(key: string, value: unknown) {
   if (isPhotoDataField(key) && Array.isArray(value)) return `${value.length} uploaded photo${value.length === 1 ? "" : "s"}`;
   if (Array.isArray(value)) return value.filter(Boolean).join(", ") || "—";
   if (typeof value === "boolean") return value ? "Yes" : "No";
-  if (key.toLowerCase().includes("created") || key.toLowerCase().includes("updated") || key.toLowerCase().includes("paidat")) return formatDate(value);
   if (value === null || value === undefined || value === "") return "—";
-  return String(value);
+
+  const normalizedKey = key.toLowerCase();
+  const stringValue = String(value);
+  const isDateOnly = /^\d{4}-\d{2}-\d{2}$/.test(stringValue);
+  const looksLikeSavedTimestamp =
+    normalizedKey.includes("created") ||
+    normalizedKey.includes("updated") ||
+    normalizedKey.includes("captured") ||
+    normalizedKey.includes("paidat") ||
+    normalizedKey.endsWith("at") ||
+    normalizedKey.endsWith("atiso") ||
+    normalizedKey.includes("timestamp");
+
+  if (looksLikeSavedTimestamp && !isDateOnly) return formatDate(value);
+  return stringValue;
 }
 
 function toNumber(value: unknown) {
@@ -1068,6 +1081,40 @@ const DETAIL_FIELD_LABELS: Record<string, string> = {
   campaignContent: "Campaign content",
   campaignTerm: "Campaign term",
   campaignLandingPage: "Landing page",
+  campaignCapturedAtIso: "Campaign captured",
+  campaignCapturedAt: "Campaign captured",
+  campaignReferrer: "Campaign referrer",
+  requestedAt: "Requested at",
+  createdAt: "Created",
+  updatedAt: "Updated",
+  adminEmailUpdatedAt: "Admin email updated",
+  adminEmailStatus: "Admin email status",
+  adminEmailError: "Admin email error",
+  customerConfirmationStatus: "Customer confirmation",
+  customerConfirmationUpdatedAt: "Customer confirmation updated",
+  customerConfirmationUpdatedAtIso: "Customer confirmation updated",
+  customerConfirmationError: "Customer confirmation error",
+  serviceAddress: "Service address",
+  serviceAddressLine1: "Service address line 1",
+  serviceAddressLine2: "Service address line 2",
+  serviceCity: "Service city",
+  serviceState: "Service state",
+  serviceZip: "Service ZIP",
+  address2: "Address line 2",
+  bedrooms: "Bedrooms",
+  bathrooms: "Bathrooms",
+  bathroomCount: "Bathroom count",
+  squareFootage: "Square footage",
+  homeType: "Home type",
+  homeAreas: "Home areas",
+  homePriorities: "Home priorities",
+  supplyPreference: "Supply preference",
+  schedulingPreference: "Scheduling preference",
+  maintenanceCadence: "Maintenance cadence",
+  photoUploadCount: "Photo upload count",
+  photoUploadSummary: "Photo upload summary",
+  source: "Source",
+  sourceDetails: "Source details",
   availability: "Availability",
   roleFocus: "Primary fit",
   services: "Services",
@@ -1237,22 +1284,79 @@ function AdminDetailSnapshot({ collectionName, item }: { collectionName: string;
   );
 }
 
+function getAdvancedFieldLabel(key: string) {
+  return DETAIL_FIELD_LABELS[key] || humanizeKey(key);
+}
+
+function isAdvancedTrackingField(key: string) {
+  const normalized = normalizedExportKey(key);
+  return normalized.includes("campaign") || normalized.includes("utm") || normalized.includes("referrer") || normalized === "source" || normalized.includes("howfound");
+}
+
+function isAdvancedSystemField(key: string) {
+  const normalized = normalizedExportKey(key);
+  return normalized.includes("adminemail") ||
+    normalized.includes("customerconfirmation") ||
+    normalized.includes("createdat") ||
+    normalized.includes("updatedat") ||
+    normalized.includes("requestedat") ||
+    normalized.includes("submittedat") ||
+    normalized.includes("emailstatus") ||
+    normalized.includes("emailerror");
+}
+
+function sortAdvancedEntries(entries: Array<[string, unknown]>) {
+  return entries.sort(([a], [b]) => getAdvancedFieldLabel(a).localeCompare(getAdvancedFieldLabel(b)));
+}
+
+function AdvancedFieldCard({ fieldKey, value }: { fieldKey: string; value: unknown }) {
+  return (
+    <div className="rounded-2xl border border-[#eadfc8] bg-[#fbf6ea] p-4">
+      <p className="text-xs font-bold uppercase tracking-widest text-[#b98a2f]">{getAdvancedFieldLabel(fieldKey)}</p>
+      <p className="mt-1 whitespace-pre-wrap break-words text-sm text-slate-800">{formatValue(fieldKey, value)}</p>
+    </div>
+  );
+}
+
 function AdminAdvancedRecordDetails({ item }: { item: AdminDoc }) {
-  const entries = Object.entries(item).filter(([key]) => !ADVANCED_FIELD_HIDE_KEYS.has(key) && !isPhotoDataField(key) && !isApplicationDocumentField(key));
+  const entries = Object.entries(item).filter(([key, value]) => !ADVANCED_FIELD_HIDE_KEYS.has(key) && !isPhotoDataField(key) && !isApplicationDocumentField(key) && !isEmptyQuotePromptValue(value));
   if (!entries.length) return null;
+
+  const primaryEntries = sortAdvancedEntries(entries.filter(([key]) => !isAdvancedTrackingField(key) && !isAdvancedSystemField(key)));
+  const trackingEntries = sortAdvancedEntries(entries.filter(([key]) => isAdvancedTrackingField(key)));
+  const systemEntries = sortAdvancedEntries(entries.filter(([key]) => !isAdvancedTrackingField(key) && isAdvancedSystemField(key)));
 
   return (
     <details id="admin-section-advanced" className="scroll-mt-28 rounded-3xl border border-[#eadfc8] bg-white p-4 shadow-sm">
       <summary className="cursor-pointer text-sm font-black text-[#075c58]">Advanced / full saved answers</summary>
-      <p className="mt-2 text-xs leading-5 text-slate-500">Open this only when you need the complete submitted record for troubleshooting or uncommon fields.</p>
-      <div className="mt-4 grid gap-3 sm:grid-cols-2">
-        {entries.map(([key, value]) => (
-          <div key={key} className="rounded-2xl border border-[#eadfc8] bg-[#fbf6ea] p-4">
-            <p className="text-xs font-bold uppercase tracking-widest text-[#b98a2f]">{DETAIL_FIELD_LABELS[key] || key}</p>
-            <p className="mt-1 whitespace-pre-wrap break-words text-sm text-slate-800">{formatValue(key, value)}</p>
+      <p className="mt-2 text-xs leading-5 text-slate-500">Open this only when you need the complete submitted record for troubleshooting or uncommon fields. Tracking and system fields are grouped at the bottom.</p>
+
+      {primaryEntries.length > 0 && (
+        <div className="mt-4">
+          <p className="text-[11px] font-black uppercase tracking-[0.18em] text-[#b98a2f]">Request answers</p>
+          <div className="mt-2 grid gap-3 sm:grid-cols-2">
+            {primaryEntries.map(([key, value]) => <AdvancedFieldCard key={key} fieldKey={key} value={value} />)}
           </div>
-        ))}
-      </div>
+        </div>
+      )}
+
+      {trackingEntries.length > 0 && (
+        <details className="mt-4 rounded-2xl border border-[#eadfc8] bg-white p-3">
+          <summary className="cursor-pointer text-xs font-black uppercase tracking-[0.16em] text-[#075c58]">Tracking / campaign fields</summary>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            {trackingEntries.map(([key, value]) => <AdvancedFieldCard key={key} fieldKey={key} value={value} />)}
+          </div>
+        </details>
+      )}
+
+      {systemEntries.length > 0 && (
+        <details className="mt-3 rounded-2xl border border-[#eadfc8] bg-white p-3">
+          <summary className="cursor-pointer text-xs font-black uppercase tracking-[0.16em] text-[#075c58]">System / email fields</summary>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            {systemEntries.map(([key, value]) => <AdvancedFieldCard key={key} fieldKey={key} value={value} />)}
+          </div>
+        </details>
+      )}
     </details>
   );
 }
@@ -2189,6 +2293,80 @@ function getOriginalRequestAnswer(item: AdminDoc | null, keys: string[]) {
   if (!item) return "";
   return findOriginalAnswerValueInObject(item, keys);
 }
+
+function joinOriginalRequestAnswers(item: AdminDoc | null, keyGroups: string[][], separator = "\n") {
+  const parts: string[] = [];
+  const seen = new Set<string>();
+
+  keyGroups.forEach((keys) => {
+    const value = getOriginalRequestAnswer(item, keys);
+    if (!value) return;
+    const normalized = value.trim().toLowerCase();
+    if (!normalized || normalized === "—" || seen.has(normalized)) return;
+    seen.add(normalized);
+    parts.push(value.trim());
+  });
+
+  return parts.join(separator);
+}
+
+function normalizeFollowUpCadence(value: string) {
+  const text = value.trim();
+  if (!text) return "One-time follow-up";
+  const normalized = text.toLowerCase().replace(/[^a-z0-9]+/g, "");
+  if (["biweekly", "everyotherweek", "every2weeks", "twiceamonth"].includes(normalized)) return "Biweekly";
+  if (normalized.includes("weekly")) return "Weekly";
+  if (normalized.includes("monthly")) return "Monthly";
+  if (normalized.includes("asneeded") || normalized.includes("asrequest")) return "As needed";
+  if (normalized.includes("recurring") || normalized.includes("maintenance")) return "Biweekly";
+  return text;
+}
+
+function buildFollowUpIncludedRooms(item: AdminDoc | null) {
+  const summary = getOriginalRequestAnswer(item, ["roomsAreas", "roomsOrAreas", "areaResetRoomSummary", "areaResetRooms", "movePrepOptionSummary", "homeDetails"]);
+  if (summary) return summary;
+
+  const parts: string[] = [];
+  const homeType = getOriginalRequestAnswer(item, ["homeType", "propertyType"]);
+  const squareFootage = getOriginalRequestAnswer(item, ["squareFootage", "sqft", "homeSize"]);
+  const bedrooms = getOriginalRequestAnswer(item, ["bedrooms", "bedroomCount"]);
+  const bathrooms = getOriginalRequestAnswer(item, ["bathrooms", "bathroomCount"]);
+  const homeAreas = getOriginalRequestAnswer(item, ["homeAreas", "wholeHomeAreas", "selectedAreas"]);
+
+  if (homeType) parts.push(homeType);
+  if (squareFootage) parts.push(`${squareFootage} sq ft`);
+  if (bedrooms) parts.push(bedrooms);
+  if (bathrooms) parts.push(bathrooms);
+  if (homeAreas) parts.push(homeAreas);
+
+  return parts.join(", ");
+}
+
+function buildFollowUpFocusAreas(item: AdminDoc | null) {
+  return joinOriginalRequestAnswers(item, [
+    ["homePriorities", "priorities", "mainPriorities"],
+    ["wholeHomeAddOnSummary", "wholeHomeAddOns", "addOns", "addons"],
+    ["wholeHomeCondition", "condition", "homeCondition"],
+    ["wholeHomeVisitType", "visitType", "cleaningType"],
+    ["areaResetGoalSummary", "areaResetGoals", "focusAreas", "priorityAreas", "requestedAreas"],
+    ["requestDetails", "notes", "specialInstructions"],
+  ]);
+}
+
+function buildFollowUpPetNotes(item: AdminDoc | null) {
+  return joinOriginalRequestAnswers(item, [
+    ["pets", "petInfo", "animals"],
+    ["petDetails", "petNotes", "petHair"],
+  ], " — ");
+}
+
+function buildFollowUpSpecialInstructions(item: AdminDoc | null) {
+  return joinOriginalRequestAnswers(item, [
+    ["specialInstructions", "requestDetails", "additionalDetails", "anythingElse", "notes"],
+    ["parkingAccess", "accessNotes", "entryInstructions", "gateCode"],
+  ]);
+}
+
 
 function getQuotePromptServiceGuidance(item: AdminDoc) {
   const key = getServiceKey(item);
@@ -3303,7 +3481,10 @@ export default function AdminTable({
     setRepeatLaundryCreatedRequestId("");
     setFollowUpDate("");
     setFollowUpWindow(getOriginalRequestAnswer(selected, ["preferredWindow", "preferredTime", "requestedWindow", "requestedTime", "schedulingPreference", "availability", "availableTimes"]));
-    setFollowUpCadence(selected?.recurringCadence ? String(selected.recurringCadence) : "One-time follow-up");
+    setFollowUpCadence(normalizeFollowUpCadence(
+      getOriginalRequestAnswer(selected, ["maintenanceCadence", "wholeHomeRecurringCadence", "recurringCadence", "recurringResetInterest", "frequency", "cadence"]) ||
+      (selected?.recurringCadence ? String(selected.recurringCadence) : "")
+    ));
     setFollowUpServiceTitle(
       getOriginalRequestAnswer(selected, ["selectedServiceTitle", "serviceTitle", "packageType", "requestType", "service"]) ||
       (selected ? getCleanServiceLabel(selected) : "")
@@ -3315,11 +3496,11 @@ export default function AdminTable({
       ""
     );
     setFollowUpEstimatedHours(getOriginalRequestAnswer(selected, ["estimatedHours", "helperHours", "hours", "serviceLength", "visitLength", "timeEstimate"]));
-    setFollowUpFocusAreas(getOriginalRequestAnswer(selected, ["focusAreas", "areaFocus", "priorityAreas", "mainPriorities", "cleaningGoals", "specificAreas", "areasToClean", "requestedAreas"]));
-    setFollowUpIncludedRooms(getOriginalRequestAnswer(selected, ["includedRooms", "rooms", "bedrooms", "bathrooms", "homeSize", "squareFootage", "sqft", "homeDetails"]));
-    setFollowUpSuppliesPreference(getOriginalRequestAnswer(selected, ["suppliesPreference", "customerSupplies", "cleaningSupplies", "supplies", "productsPreference", "productPreference"]));
-    setFollowUpPetNotes(getOriginalRequestAnswer(selected, ["petNotes", "pets", "petHair", "animals", "petInfo"]));
-    setFollowUpSpecialInstructions(getOriginalRequestAnswer(selected, ["specialInstructions", "notes", "requestDetails", "additionalDetails", "anythingElse", "accessNotes"]));
+    setFollowUpFocusAreas(buildFollowUpFocusAreas(selected));
+    setFollowUpIncludedRooms(buildFollowUpIncludedRooms(selected));
+    setFollowUpSuppliesPreference(getOriginalRequestAnswer(selected, ["supplyPreference", "suppliesPreference", "customerSupplies", "cleaningSupplies", "supplies", "productsPreference", "productPreference"]));
+    setFollowUpPetNotes(buildFollowUpPetNotes(selected));
+    setFollowUpSpecialInstructions(buildFollowUpSpecialInstructions(selected));
     setFollowUpInternalNote("");
     setFollowUpMessage("");
     setFollowUpError("");
