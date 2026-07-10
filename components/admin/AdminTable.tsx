@@ -3381,9 +3381,6 @@ export default function AdminTable({
   const [documentOpenError, setDocumentOpenError] = useState("");
   const [quotePromptMessage, setQuotePromptMessage] = useState("");
   const [quotePromptError, setQuotePromptError] = useState("");
-  const [deleteRecordBusy, setDeleteRecordBusy] = useState(false);
-  const [deleteRecordMessage, setDeleteRecordMessage] = useState("");
-  const [deleteRecordError, setDeleteRecordError] = useState("");
   const [activeAction, setActiveAction] = useState("");
 
   useEffect(() => {
@@ -3522,7 +3519,6 @@ export default function AdminTable({
     setDocumentOpenError("");
     setQuotePromptMessage("");
     setQuotePromptError("");
-    setDeleteRecordError("");
     setActiveAction("");
   }, [selected?.id]);
 
@@ -3831,57 +3827,6 @@ export default function AdminTable({
       setStatusError(error instanceof Error ? error.message : "Unable to archive request.");
     } finally {
       setStatusBusy(false);
-      setActiveAction("");
-    }
-  }
-
-  async function deleteSelectedServiceRequest() {
-    if (!selected || collectionName !== "serviceRequests") return;
-
-    const protectedReason = getRecordDeleteBlockReason(collectionName, selected);
-    if (protectedReason) {
-      setDeleteRecordError(protectedReason);
-      return;
-    }
-
-    const requestLabel = [
-      getCleanServiceLabel(selected),
-      String(selected.fullName || selected.name || selected.email || selected.phone || selected.id || "").trim(),
-    ].filter(Boolean).join(" — ");
-
-    const confirmed = window.confirm(
-      `Permanently delete this request?\n\n${requestLabel || selected.id}\n\nThis cannot be undone. Use Delete only for test, spam, duplicate, or accidental unpaid requests. Real customer records should usually be Archived instead.\n\nPress OK to permanently delete, or Cancel to keep it.`
-    );
-    if (!confirmed) return;
-
-    setDeleteRecordBusy(true);
-    setActiveAction("Deleting request...");
-    setDeleteRecordMessage("");
-    setDeleteRecordError("");
-
-    try {
-      const token = await firebaseAuth.currentUser?.getIdToken();
-      const res = await fetch("/api/admin/delete-record", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({
-          collection: collectionName,
-          id: selected.id,
-          confirmDeleteRecord: true,
-          confirmDeleteTestRecord: true,
-        }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok || !data.ok) throw new Error(data.error || "Unable to delete this request.");
-
-      const deletedId = selected.id;
-      setItems((prev) => prev.filter((item) => item.id !== deletedId));
-      setSelected(null);
-      setDeleteRecordMessage("Request permanently deleted. Use Archive instead for real customer records you may need later.");
-    } catch (error) {
-      setDeleteRecordError(error instanceof Error ? error.message : "Unable to delete this request.");
-    } finally {
-      setDeleteRecordBusy(false);
       setActiveAction("");
     }
   }
@@ -4784,11 +4729,10 @@ export default function AdminTable({
   const showReviewRequestPanel = Boolean(showPaymentActions);
   const selectedIsFamilyReferralEligible = isFamilyReferralEligibleRequest(selected);
   const selectedCanGenerateReferral = Boolean(selectedIsFamilyReferralEligible && isCompletedRequest(selected));
-  const selectedDeleteBlockReason = collectionName === "serviceRequests" ? getRecordDeleteBlockReason(collectionName, selected) : "";
   const selectedAvailableCustomerCredits = getAvailableCustomerCreditsForRequest(selected, customerCredits);
   const selectedAvailableCustomerCreditTotal = getAvailableCustomerCreditTotal(selectedAvailableCustomerCredits);
   const selectedOutgoingReferralHistory = getOutgoingReferralHistory(selected);
-  const anyActionBusy = checkoutBusy || commercialInvoiceBusy || commercialQuoteEmailBusy || familyInvoiceBusy || statusBusy || laundryFinalBusy || additionalPaymentBusy || commercialQuoteBusy || referralBusy || applicationOnboardingBusy || requestNotesBusy || repeatLaundryBusy || followUpBusy || applicantEmailBusy || deleteRecordBusy || Boolean(busyDocumentPath);
+  const anyActionBusy = checkoutBusy || commercialInvoiceBusy || commercialQuoteEmailBusy || familyInvoiceBusy || statusBusy || laundryFinalBusy || additionalPaymentBusy || commercialQuoteBusy || referralBusy || applicationOnboardingBusy || requestNotesBusy || repeatLaundryBusy || followUpBusy || applicantEmailBusy || Boolean(busyDocumentPath);
 
   return (
     <section className="space-y-5">
@@ -4931,9 +4875,9 @@ export default function AdminTable({
       <AdminActionFeedback
         busy={anyActionBusy}
         activeAction={activeAction}
-        messages={[statusMessage, checkoutMessage, commercialInvoiceMessage, commercialQuoteEmailMessage, familyInvoiceMessage, laundryFinalMessage, additionalPaymentMessage, commercialQuoteMessage, referralMessage, requestNotesMessage, repeatLaundryMessage, followUpMessage, applicantEmailMessage, deleteRecordMessage]}
+        messages={[statusMessage, checkoutMessage, commercialInvoiceMessage, commercialQuoteEmailMessage, familyInvoiceMessage, laundryFinalMessage, additionalPaymentMessage, commercialQuoteMessage, referralMessage, requestNotesMessage, repeatLaundryMessage, followUpMessage, applicantEmailMessage]}
         warnings={[statusWarning]}
-        errors={[statusError, checkoutError, commercialInvoiceError, commercialQuoteEmailError, familyInvoiceError, laundryFinalError, additionalPaymentError, commercialQuoteError, referralError, requestNotesError, repeatLaundryError, followUpError, applicantEmailError, deleteRecordError]}
+        errors={[statusError, checkoutError, commercialInvoiceError, commercialQuoteEmailError, familyInvoiceError, laundryFinalError, additionalPaymentError, commercialQuoteError, referralError, requestNotesError, repeatLaundryError, followUpError, applicantEmailError]}
       />
 
       <div className="flex flex-col gap-3 rounded-3xl border border-[#eadfc8] bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
@@ -5278,9 +5222,9 @@ export default function AdminTable({
               <AdminActionFeedback
                 busy={anyActionBusy}
                 activeAction={activeAction}
-                messages={[quotePromptMessage, statusMessage, checkoutMessage, commercialInvoiceMessage, commercialQuoteEmailMessage, familyInvoiceMessage, laundryFinalMessage, additionalPaymentMessage, commercialQuoteMessage, referralMessage, applicationOnboardingMessage, requestNotesMessage, repeatLaundryMessage, followUpMessage, applicantEmailMessage, deleteRecordMessage]}
+                messages={[quotePromptMessage, statusMessage, checkoutMessage, commercialInvoiceMessage, commercialQuoteEmailMessage, familyInvoiceMessage, laundryFinalMessage, additionalPaymentMessage, commercialQuoteMessage, referralMessage, applicationOnboardingMessage, requestNotesMessage, repeatLaundryMessage, followUpMessage, applicantEmailMessage]}
                 warnings={[statusWarning]}
-                errors={[quotePromptError, statusError, checkoutError, commercialInvoiceError, commercialQuoteEmailError, familyInvoiceError, laundryFinalError, additionalPaymentError, commercialQuoteError, referralError, applicationOnboardingError, requestNotesError, repeatLaundryError, followUpError, applicantEmailError, documentOpenError, deleteRecordError]}
+                errors={[quotePromptError, statusError, checkoutError, commercialInvoiceError, commercialQuoteEmailError, familyInvoiceError, laundryFinalError, additionalPaymentError, commercialQuoteError, referralError, applicationOnboardingError, requestNotesError, repeatLaundryError, followUpError, applicantEmailError, documentOpenError]}
               />
               {collectionName === "serviceRequests" && (
                 <div className="rounded-3xl border border-[#eadfc8] bg-[#fbf6ea] p-4 shadow-sm">
@@ -5986,31 +5930,14 @@ export default function AdminTable({
                       Archive / hide from active
                     </button>
                   )}
-                  {collectionName === "serviceRequests" && (
-                    <button
-                      type="button"
-                      disabled={deleteRecordBusy || Boolean(selectedDeleteBlockReason)}
-                      onClick={deleteSelectedServiceRequest}
-                      className={getAdminActionClass("danger")}
-                      title={selectedDeleteBlockReason || "Permanently delete this request after a warning confirmation."}
-                    >
-                      {deleteRecordBusy ? <><ActionSpinner /> Deleting...</> : "Delete request permanently"}
-                    </button>
-                  )}
                   <p className="max-w-xl text-xs leading-5 text-slate-500">
-                    Quote emails can be sent here by choosing Quote Sent. Payment link, invoice, and payment received emails are handled separately by the payment/invoice buttons. Archive keeps the record but removes it from the active work queue. Delete is only for test, spam, duplicate, or accidental unpaid requests.
+                    Quote emails can be sent here by choosing Quote Sent. Payment link, invoice, and payment received emails are handled separately by the payment/invoice buttons. Archive keeps the record but removes it from the active work queue.
                   </p>
                 </div>
 
-                {selectedDeleteBlockReason && (
-                  <p className="mt-3 rounded-2xl bg-slate-50 px-4 py-3 text-xs font-bold leading-5 text-slate-600">
-                    Delete disabled: {selectedDeleteBlockReason}
-                  </p>
-                )}
                 {statusMessage && <p className="mt-3 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">{statusMessage}</p>}
                 {statusWarning && <p className="mt-3 rounded-2xl bg-amber-50 px-4 py-3 text-sm font-bold text-amber-800">{statusWarning}</p>}
                 {statusError && <p className="mt-3 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{statusError}</p>}
-                {deleteRecordError && <p className="mt-3 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{deleteRecordError}</p>}
               </div>
             )}
 
