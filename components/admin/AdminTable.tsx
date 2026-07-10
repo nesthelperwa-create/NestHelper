@@ -2056,6 +2056,91 @@ function getRawSubmittedFieldLines(item: AdminDoc) {
   return lines;
 }
 
+
+function normalizeRepeatLaundryFieldKey(key: string) {
+  return key.toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
+function repeatLaundryValueToText(value: unknown): string {
+  if (value === undefined || value === null || value === "") return "";
+  if (typeof value === "string") return value.trim();
+  if (typeof value === "number") return Number.isFinite(value) ? String(value) : "";
+  if (typeof value === "boolean") return value ? "Yes" : "No";
+  if (Array.isArray(value)) {
+    return value
+      .map((entry) => repeatLaundryValueToText(entry))
+      .filter(Boolean)
+      .join(", ");
+  }
+  if (value && typeof value === "object" && "toDate" in value && typeof (value as { toDate?: unknown }).toDate === "function") return "";
+  if (value && typeof value === "object") {
+    const entries = Object.entries(value as Record<string, unknown>)
+      .map(([key, entry]) => {
+        const text = repeatLaundryValueToText(entry);
+        return text ? `${key}: ${text}` : "";
+      })
+      .filter(Boolean);
+    return entries.join("; ");
+  }
+  return "";
+}
+
+function findRepeatLaundryValueInObject(value: unknown, wantedKeys: string[], depth = 0): string {
+  if (!value || typeof value !== "object" || depth > 4) return "";
+  if (Array.isArray(value)) {
+    for (const entry of value) {
+      const nested = findRepeatLaundryValueInObject(entry, wantedKeys, depth + 1);
+      if (nested) return nested;
+    }
+    return "";
+  }
+
+  const record = value as Record<string, unknown>;
+  const normalizedWanted = new Set(wantedKeys.map(normalizeRepeatLaundryFieldKey));
+
+  for (const [key, entry] of Object.entries(record)) {
+    if (normalizedWanted.has(normalizeRepeatLaundryFieldKey(key))) {
+      const text = repeatLaundryValueToText(entry);
+      if (text) return text;
+    }
+  }
+
+  const likelyContainers = [
+    "rawSubmittedFields",
+    "submittedFields",
+    "rawFields",
+    "formData",
+    "formFields",
+    "requestData",
+    "requestFields",
+    "answers",
+    "fields",
+    "payload",
+  ];
+
+  for (const containerKey of likelyContainers) {
+    const nested = record[containerKey];
+    if (!nested) continue;
+    const text = findRepeatLaundryValueInObject(nested, wantedKeys, depth + 1);
+    if (text) return text;
+  }
+
+  if (depth < 2) {
+    for (const [key, entry] of Object.entries(record)) {
+      if (["photo", "image", "upload", "file", "url", "stripe", "invoice", "checkout", "payment"].some((part) => key.toLowerCase().includes(part))) continue;
+      const text = findRepeatLaundryValueInObject(entry, wantedKeys, depth + 1);
+      if (text) return text;
+    }
+  }
+
+  return "";
+}
+
+function getRepeatLaundryOriginalAnswer(item: AdminDoc | null, keys: string[]) {
+  if (!item) return "";
+  return findRepeatLaundryValueInObject(item, keys);
+}
+
 function getQuotePromptServiceGuidance(item: AdminDoc) {
   const key = getServiceKey(item);
   if (key === "family-reset-3hr") return "Parent Reset Plan = flat 3-hour busy-parent room reset for organizing selected family spaces, light cleaning, child-safe disinfecting, and optional simple in-home meal prep support. It is not childcare and not a full-home cleaning.";
@@ -3137,15 +3222,15 @@ export default function AdminTable({
     setRequestNotesMessage("");
     setRequestNotesError("");
     setRepeatLaundryDate("");
-    setRepeatLaundryWindow(selected?.preferredWindow ? String(selected.preferredWindow) : selected?.laundryPickupWindow ? String(selected.laundryPickupWindow) : "");
-    setRepeatLaundryPickupSpot(selected?.laundryPickupSpot ? String(selected.laundryPickupSpot) : "");
-    setRepeatLaundryReturnSpot(selected?.laundryReturnSpot ? String(selected.laundryReturnSpot) : "");
-    setRepeatLaundryDetergent(selected?.laundryDetergentPreference ? String(selected.laundryDetergentPreference) : selected?.laundryDetergent ? String(selected.laundryDetergent) : "");
-    setRepeatLaundryDryerPreference(selected?.laundryDryerPreference ? String(selected.laundryDryerPreference) : "");
-    setRepeatLaundryFoldPreference(selected?.laundryFoldPreference ? String(selected.laundryFoldPreference) : "");
-    setRepeatLaundryAmount(selected?.laundryAmount ? String(selected.laundryAmount) : "");
-    setRepeatLaundrySpecialInstructions(selected?.laundrySpecialInstructions ? String(selected.laundrySpecialInstructions) : selected?.laundryNotes ? String(selected.laundryNotes) : "");
-    setRepeatLaundryAddOnNote("");
+    setRepeatLaundryWindow(getRepeatLaundryOriginalAnswer(selected, ["preferredWindow", "laundryPickupWindow", "preferredTime", "pickupWindow", "pickupTime", "requestedTime", "schedulingPreference"]));
+    setRepeatLaundryPickupSpot(getRepeatLaundryOriginalAnswer(selected, ["laundryPickupSpot", "pickupSpot", "pickupLocation", "laundryPickupLocation", "pickupInstructions"]));
+    setRepeatLaundryReturnSpot(getRepeatLaundryOriginalAnswer(selected, ["laundryReturnSpot", "laundryDropoffSpot", "laundryDropOffSpot", "returnSpot", "dropoffSpot", "dropOffSpot", "returnLocation", "laundryReturnLocation"]));
+    setRepeatLaundryDetergent(getRepeatLaundryOriginalAnswer(selected, ["laundryDetergentPreference", "laundryDetergent", "detergent", "detergentSelection", "customerProvidedDetergent", "customerProvidedDetergentSelected", "productPreference", "soapPreference"]));
+    setRepeatLaundryDryerPreference(getRepeatLaundryOriginalAnswer(selected, ["laundryDryerPreference", "dryPreference", "dryingPreference", "dryerPreference", "hangDryItems", "delicates"]));
+    setRepeatLaundryFoldPreference(getRepeatLaundryOriginalAnswer(selected, ["laundryFoldPreference", "foldingPreference", "sortingPreference", "foldPreference"]));
+    setRepeatLaundryAmount(getRepeatLaundryOriginalAnswer(selected, ["laundryAmount", "laundryBagEstimate", "laundryHamperEstimate", "bagEstimate", "hamperEstimate", "estimatedLaundry", "laundryTypes"]));
+    setRepeatLaundrySpecialInstructions(getRepeatLaundryOriginalAnswer(selected, ["laundrySpecialInstructions", "laundryNotes", "specialInstructions", "notes", "requestDetails", "laundryAccessNotes", "parkingAccess", "accessNotes"]));
+    setRepeatLaundryAddOnNote(getRepeatLaundryOriginalAnswer(selected, ["laundryAddOns", "addOns", "addons", "comfortersBedding", "heavyItems", "bulkyItems"]));
     setRepeatLaundryNote("");
     setRepeatLaundryMessage("");
     setRepeatLaundryError("");
@@ -4833,7 +4918,7 @@ export default function AdminTable({
                     <p className="text-xs font-black uppercase tracking-[0.18em] text-[#b98a2f]">Repeat laundry</p>
                     <h4 className="mt-1 text-lg font-black text-[#075c58]">Create a new request for the next pickup</h4>
                     <p className="mt-1 text-xs font-semibold leading-5 text-slate-600">
-                      Copies this customer, address, access, pickup/return, detergent, and laundry preferences into a fresh Laundry Rescue request. The old request stays as-is.
+                      Loads the original laundry answers into editable fields, then creates a fresh Laundry Rescue request. The old request stays as-is.
                     </p>
                   </div>
                   {selected.latestRepeatRequestId && (
@@ -4846,7 +4931,7 @@ export default function AdminTable({
                 <div className="mt-4 rounded-2xl border border-[#eadfc8] bg-white/80 p-3 sm:p-4">
                   <p className="text-xs font-black uppercase tracking-[0.18em] text-[#b98a2f]">Repeat details</p>
                   <p className="mt-1 text-xs font-semibold leading-5 text-slate-600">
-                    These fields start with the last saved laundry preferences. Update anything that changed for this pickup before creating the new request.
+                    These fields should show the original answers when available, including raw submitted fields. Update anything that changed for this pickup before creating the new request.
                   </p>
 
                   <div className="mt-4 grid gap-3 md:grid-cols-2">
