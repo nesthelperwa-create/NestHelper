@@ -1,0 +1,92 @@
+--- before/components/admin/AdminTable.tsx
++++ after/components/admin/AdminTable.tsx
+@@ -3401,7 +3401,9 @@
+   }, [collectionName, enablePaymentActions]);
+   useEffect(() => {
+     const nextStatus = selected?.status || "New";
+-    const nextMode = guessCheckoutMode(selected);
++    const nextServiceKey = selected ? getServiceKey(selected) : "";
++    const nextRequiresReviewedCheckoutAmount = ["whole-home-reset", "specific-area-reset", "move-out-cleaning", "move-prep-home-reset"].includes(nextServiceKey);
++    const nextMode = nextRequiresReviewedCheckoutAmount ? "custom" : guessCheckoutMode(selected);
+     setCheckoutMode(nextMode);
+     setCheckoutMessage("");
+     setCheckoutError("");
+@@ -4461,10 +4463,10 @@
+         : "";
+       const familyBreakdownNotice = selected.service !== "commercial-reset" && sendEmail
+         ? data.includedFamilyBreakdown
+-          ? " Saved family payment breakdown was included in the customer email."
++          ? " Saved family draft estimate was included in the customer email."
+           : includeFamilyPaymentBreakdown
+-            ? " No saved family payment breakdown was found, so the email only includes the payment link and notes. Save the family breakdown first if you want it included."
+-            : " Family payment breakdown was not included because the checkbox was off."
++            ? " No saved family draft estimate was found, so the email only includes the payment link and notes. Save the draft estimate first if you want it included."
++            : " Family draft estimate was not included because the checkbox was off."
+         : "";
+       const laundryDepositNotice = selected.service === "laundry-rescue"
+         ? laundryManualSalesTax && laundryTaxRateNumber > 0 ? ` Stripe checkout will add manual WA sales tax at ${laundryManualSalesTaxRate}% to the non-refundable intro minimum and ask the customer to choose auto-charge or invoice-before-delivery for the final laundry balance.` : " Stripe checkout will collect the non-refundable intro minimum without sales tax. If sales tax is missed here, the final-balance tool can add a one-time tax catch-up when manual tax is turned on."
+@@ -4706,6 +4708,8 @@
+   );
+   const showLaundryFinalBalance = showPaymentActions && selected?.service === "laundry-rescue";
+   const selectedIsCommercial = isCommercialRequest(selected);
++  const selectedServiceKey = selected ? getServiceKey(selected) : "";
++  const selectedRequiresReviewedCheckoutAmount = ["whole-home-reset", "specific-area-reset", "move-out-cleaning", "move-prep-home-reset"].includes(selectedServiceKey);
+   const isCustomCheckoutMode = checkoutMode === "custom";
+   const hasSavedCommercialQuoteBreakdown = Boolean(selected?.commercialQuoteBreakdown?.customerBreakdownText);
+   const hasSavedFamilyPaymentBreakdown = Boolean(selected?.familyPaymentBreakdown?.customerBreakdownText);
+@@ -6432,8 +6436,8 @@
+                         onChange={(e) => setCheckoutMode(e.target.value as CheckoutMode)}
+                         className="rounded-2xl border border-[#d8c18f] bg-white px-4 py-3 text-sm font-bold text-[#075c58] outline-none focus:border-[#075c58]"
+                       >
+-                        <option value="standard">Standard package price</option>
+-                        <option value="custom">Custom reviewed amount</option>
++                        {!selectedRequiresReviewedCheckoutAmount && <option value="standard">Standard package price</option>}
++                        <option value="custom">{selectedRequiresReviewedCheckoutAmount ? "Reviewed/custom amount" : "Custom reviewed amount"}</option>
+                       </select>
+                     </div>
+                   )}
+@@ -6445,12 +6449,14 @@
+                   {isCustomCheckoutMode && (
+                     <div className="mt-4 rounded-3xl border border-[#eadfc8] bg-[#fbf6ea] p-4">
+                       <div>
+-                        <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">{selectedIsCommercial ? "Quick first-payment checkout" : "Custom quick checkout"}</p>
+-                        <h5 className="mt-1 text-base font-black text-[#075c58]">{selectedIsCommercial ? "Amount the customer pays before scheduling" : "Reviewed custom starting amount"}</h5>
++                        <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">{selectedIsCommercial ? "Quick first-payment checkout" : selectedRequiresReviewedCheckoutAmount ? "Reviewed quick checkout" : "Custom quick checkout"}</p>
++                        <h5 className="mt-1 text-base font-black text-[#075c58]">{selectedIsCommercial ? "Amount the customer pays before scheduling" : selectedRequiresReviewedCheckoutAmount ? "Reviewed/custom starting amount" : "Reviewed custom starting amount"}</h5>
+                         <p className="mt-1 text-sm leading-6 text-slate-700">
+                           {selectedIsCommercial
+                             ? "Use this only when you want a simple checkout link instead of a formal invoice. It should match the approved first-payment amount."
+-                            : "Use this when the first quick checkout should not match the standard package price, such as a custom approved scope, special deposit, extra starting time, or service-area adjustment."}
++                            : selectedRequiresReviewedCheckoutAmount
++                              ? "This service depends on the property, condition, scope, photos, pets, and add-ons, so quick checkout uses a reviewed/custom amount instead of a standard package price."
++                              : "Use this when the first quick checkout should not match the standard package price, such as a custom approved scope, special deposit, extra starting time, or service-area adjustment."}
+                         </p>
+                       </div>
+                       <div className="mt-4 grid gap-3 md:grid-cols-[0.7fr_1.3fr]">
+@@ -6469,7 +6475,7 @@
+                           <input
+                             value={customInitialTitle}
+                             onChange={(e) => setCustomInitialTitle(e.target.value)}
+-                            placeholder={getServiceKey(selected) === "laundry-rescue" ? "Laundry Rescue custom deposit" : getServiceKey(selected) === "commercial-reset" ? "Commercial Reset approved quote" : getServiceKey(selected) === "move-out-cleaning" ? "Move-In / Move-Out Cleaning approved quote" : getServiceKey(selected) === "specific-area-reset" ? "Specific Area(s) Reset approved quote" : getServiceKey(selected) === "whole-home-reset" ? "Whole Home Cleaning approved quote" : getServiceKey(selected) === "family-reset-3hr" ? "Parent Reset Plan checkout" : "Custom checkout"}
++                            placeholder={getServiceKey(selected) === "laundry-rescue" ? "Laundry Rescue custom deposit" : getServiceKey(selected) === "commercial-reset" ? "Commercial Reset approved quote" : getServiceKey(selected) === "move-out-cleaning" ? "Move-In / Move-Out Cleaning reviewed checkout" : getServiceKey(selected) === "specific-area-reset" ? "Specific Area(s) Reset reviewed checkout" : getServiceKey(selected) === "whole-home-reset" ? "Whole Home Cleaning reviewed checkout" : getServiceKey(selected) === "family-reset-3hr" ? "Parent Reset Plan checkout" : "Custom checkout"}
+                             className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]"
+                           />
+                         </label>
+@@ -6523,7 +6529,7 @@
+                           className="mt-1 h-4 w-4 rounded border-[#d8c18f] accent-[#075c58]"
+                         />
+                         <span>
+-                          <span className="block text-[#075c58]">Include saved family payment breakdown in the quick checkout email</span>
++                          <span className="block text-[#075c58]">Include saved family draft estimate in the quick checkout email</span>
+                           <span className="mt-1 block text-xs font-semibold leading-5 text-slate-600">
+                             Use this when you want the customer to see the package, custom amount, recurring plan, laundry note, discount, or credit details before paying by quick checkout.
+                           </span>
+@@ -6531,7 +6537,7 @@
+                       </label>
+                       {!hasSavedFamilyPaymentBreakdown && (
+                         <p className="mt-3 rounded-2xl bg-amber-50 px-4 py-3 text-xs font-bold leading-5 text-amber-800">
+-                          No saved family payment breakdown is available yet. Save the Family Payment Breakdown draft first, then this checkbox will be available.
++                          No saved family draft estimate is available yet. Save the Family Payment Breakdown draft first, then this checkbox will be available.
+                         </p>
+                       )}
+                     </div>
