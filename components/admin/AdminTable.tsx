@@ -4466,17 +4466,17 @@ export default function AdminTable({
       setStatusValue(selected.service === "laundry-rescue" ? "Deposit Checkout Sent" : "Checkout Sent");
       const commercialBreakdownNotice = selected.service === "commercial-reset" && useCustomInitial && sendEmail
         ? data.includedQuoteBreakdown
-          ? " Saved quote breakdown was included in the customer email."
+          ? " Saved quote summary was included in the customer email."
           : includeCommercialQuoteBreakdown
-            ? " No saved quote breakdown was found, so the email only includes the payment link and notes. Save the quote builder draft first if you want the breakdown included."
-            : " Quote breakdown was not included because the checkbox was off."
+            ? " No saved commercial quote summary was found, so the email only includes the payment link and notes. Save the quote builder draft first if you want the breakdown included."
+            : " Quote summary was not included because the checkbox was off."
         : "";
       const familyBreakdownNotice = selected.service !== "commercial-reset" && sendEmail
         ? data.includedFamilyBreakdown
-          ? " Saved family draft estimate was included in the customer email."
+          ? " Saved customer payment summary was included in the customer email."
           : includeFamilyPaymentBreakdown
-            ? " No saved family draft estimate was found, so the email only includes the payment link and notes. Save the draft estimate first if you want it included."
-            : " Family draft estimate was not included because the checkbox was off."
+            ? " No saved customer payment summary was found, so the email only includes the payment link and notes. Save the Draft Estimate Builder first if you want it included."
+            : " Customer payment summary was not included because the checkbox was off."
         : "";
       const laundryDepositNotice = selected.service === "laundry-rescue"
         ? laundryManualSalesTax && laundryTaxRateNumber > 0 ? ` Stripe checkout will add manual WA sales tax at ${laundryManualSalesTaxRate}% to the non-refundable intro minimum and ask the customer to choose auto-charge or invoice-before-delivery for the final laundry balance.` : " Stripe checkout will collect the non-refundable intro minimum without sales tax. If sales tax is missed here, the final-balance tool can add a one-time tax catch-up when manual tax is turned on."
@@ -6025,7 +6025,7 @@ export default function AdminTable({
 
                 {selectedAvailableCustomerCreditTotal > 0 && (
                   <div className="mt-3 rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-bold leading-6 text-emerald-900">
-                    Available saved credit for this customer email: {formatMoney(selectedAvailableCustomerCreditTotal)}. Open the Family Payment Breakdown to apply it before sending checkout or invoice.
+                    Available saved credit for this customer email: {formatMoney(selectedAvailableCustomerCreditTotal)}. Open the Draft Estimate Builder to apply it before sending checkout or invoice.
                   </div>
                 )}
 
@@ -6326,12 +6326,12 @@ export default function AdminTable({
                     <h4 className="mt-1 text-xl font-black text-[#075c58]">Choose invoice or quick checkout</h4>
                     <p className="mt-2 text-sm leading-6 text-slate-700">
                       {selectedIsCommercial
-                        ? "For Commercial Reset, the itemized Stripe invoice from the saved quote breakdown is usually the best option. Use quick checkout only for a simple deposit or first payment that does not need a formal invoice PDF."
-                        : "Use a Stripe invoice when you want the customer to receive an itemized invoice/PDF from the saved Family Payment Breakdown. Use quick checkout for a simple package payment or deposit."}
+                        ? "For Commercial Reset, the itemized Stripe invoice from the saved commercial quote summary is usually the best option. Use quick checkout only for a simple deposit or first payment that does not need a formal invoice PDF."
+                        : "Use a Stripe invoice when you want the customer to receive an itemized invoice/PDF from the saved customer payment summary. Use quick checkout for a simple package payment or deposit."}
                     </p>
                     {selected.service === "laundry-rescue" && (
                       <p className="mt-2 rounded-2xl bg-white px-4 py-3 text-sm font-bold text-[#075c58]">
-                        For Laundry Rescue, both the saved breakdown payment and quick checkout create a deposit checkout so Stripe can ask the customer to choose auto-charge or invoice-before-delivery. After dry weigh-in, use the final balance section below.
+                        For Laundry Rescue, both the saved payment summary amount and quick checkout create a deposit checkout so Stripe can ask the customer to choose auto-charge or invoice-before-delivery. After dry weigh-in, use the final balance section below.
                       </p>
                     )}
                   </div>
@@ -6345,9 +6345,9 @@ export default function AdminTable({
                     <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                       <div className="max-w-2xl">
                         <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Recommended for commercial</p>
-                        <h5 className="mt-1 text-base font-black text-[#075c58]">Create a Stripe invoice from the saved breakdown</h5>
+                        <h5 className="mt-1 text-base font-black text-[#075c58]">Create a Stripe invoice from the saved summary</h5>
                         <p className="mt-1 text-sm leading-6 text-slate-700">
-                          Best for commercial customers who expect an itemized invoice/PDF. Save the Quote / Breakdown Builder first, then create the Stripe invoice. When emailing, NestHelper sends the hosted invoice link in a branded email. A confirmation popup appears before creating because Stripe invoices may cost more than quick checkout.
+                          Best for commercial customers who expect an itemized invoice/PDF. Save the Commercial Quote Builder first, then create the Stripe invoice. When emailing, NestHelper sends the hosted invoice link in a branded email. A confirmation popup appears before creating because Stripe invoices may cost more than quick checkout.
                         </p>
                       </div>
                       <div className="flex flex-col gap-2 sm:flex-row lg:flex-col">
@@ -6360,7 +6360,7 @@ export default function AdminTable({
                       </div>
                     </div>
                     {!hasSavedCommercialQuoteBreakdown && (
-                      <p className="mt-3 rounded-2xl bg-amber-50 px-4 py-3 text-xs font-bold leading-5 text-amber-800">Save the Quote / Breakdown Builder draft first. The invoice uses those saved line items.</p>
+                      <p className="mt-3 rounded-2xl bg-amber-50 px-4 py-3 text-xs font-bold leading-5 text-amber-800">Save the Commercial Quote Builder draft first. The invoice uses those saved line items.</p>
                     )}
                     {(selected.commercialInvoiceUrl || selected.commercialInvoicePdf) && (
                       <div className="mt-4 rounded-2xl border border-cyan-100 bg-cyan-50/50 p-4">
@@ -6385,10 +6385,10 @@ export default function AdminTable({
                     <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                       <div className="max-w-2xl">
                         <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">{selected.service === "laundry-rescue" ? "Laundry deposit approval" : "Optional family invoice"}</p>
-                        <h5 className="mt-1 text-base font-black text-[#075c58]">{selected.service === "laundry-rescue" ? "Create a deposit checkout from the saved laundry breakdown" : "Create a Stripe invoice from the saved family breakdown"}</h5>
+                        <h5 className="mt-1 text-base font-black text-[#075c58]">{selected.service === "laundry-rescue" ? "Create a deposit checkout from the saved laundry payment summary" : "Create a Stripe invoice from the saved customer payment summary"}</h5>
                         <p className="mt-1 text-sm leading-6 text-slate-700">
                           {selected.service === "laundry-rescue"
-                            ? "This uses the saved breakdown amount to create a taxable, non-refundable Laundry Rescue deposit checkout. Stripe asks the customer to choose auto-charge for the final balance or invoice-before-delivery."
+                            ? "This uses the saved payment summary amount to create a taxable, non-refundable Laundry Rescue deposit checkout. Stripe asks the customer to choose auto-charge for the final balance or invoice-before-delivery."
                             : "Use this when you want a formal invoice/PDF instead of only a checkout receipt: Errand Helper, custom family quotes, recurring family help, approved add-ons, or refund/credit documentation. A confirmation popup appears before creating because Stripe invoices may cost more than quick checkout."}
                         </p>
                       </div>
@@ -6402,7 +6402,7 @@ export default function AdminTable({
                       </div>
                     </div>
                     {!hasSavedFamilyPaymentBreakdown && (
-                      <p className="mt-3 rounded-2xl bg-amber-50 px-4 py-3 text-xs font-bold leading-5 text-amber-800">Save the Family Payment Breakdown draft first. For Laundry Rescue, the saved amount becomes the deposit checkout amount; for other services, the invoice uses the saved line items.</p>
+                      <p className="mt-3 rounded-2xl bg-amber-50 px-4 py-3 text-xs font-bold leading-5 text-amber-800">Save the Draft Estimate Builder draft first. For Laundry Rescue, the saved amount becomes the deposit checkout amount; for other services, the invoice uses the saved line items.</p>
                     )}
                     {(selected.familyInvoiceUrl || selected.familyInvoicePdf) && (
                       <div className="mt-4 rounded-2xl border border-cyan-100 bg-cyan-50/50 p-4">
@@ -6434,7 +6434,7 @@ export default function AdminTable({
                     <div className="rounded-2xl bg-[#fbf6ea] px-4 py-3 text-xs font-bold leading-5 text-slate-700 lg:max-w-sm">
                       {selectedIsCommercial
                         ? "Commercial quick checkout uses the custom first-payment amount below. Use the invoice option for formal itemized records."
-                        : "Quick checkout uses the standard package price unless you choose a custom reviewed amount. Invoices use the saved Family Payment Breakdown instead."}
+                        : "Quick checkout uses the standard package price unless you choose a custom reviewed amount. Invoices use the saved customer payment summary instead."}
                     </div>
                   </div>
 
@@ -6514,7 +6514,7 @@ export default function AdminTable({
                           className="mt-1 h-4 w-4 rounded border-[#d8c18f] accent-[#075c58]"
                         />
                         <span>
-                          <span className="block text-[#075c58]">Include saved quote breakdown in the quick checkout email</span>
+                          <span className="block text-[#075c58]">Include saved commercial quote summary in the quick checkout email</span>
                           <span className="mt-1 block text-xs font-semibold leading-5 text-slate-600">
                             This only affects the quick checkout email. For a true itemized customer record, use the Stripe invoice option above instead.
                           </span>
@@ -6522,7 +6522,7 @@ export default function AdminTable({
                       </label>
                       {!hasSavedCommercialQuoteBreakdown && (
                         <p className="mt-3 rounded-2xl bg-amber-50 px-4 py-3 text-xs font-bold leading-5 text-amber-800">
-                          No saved quote breakdown is available yet. Save the Quote / Breakdown Builder draft first, then this checkbox will be available.
+                          No saved commercial quote summary is available yet. Save the Commercial Quote Builder draft first, then this checkbox will be available.
                         </p>
                       )}
                     </div>
@@ -6539,7 +6539,7 @@ export default function AdminTable({
                           className="mt-1 h-4 w-4 rounded border-[#d8c18f] accent-[#075c58]"
                         />
                         <span>
-                          <span className="block text-[#075c58]">Include saved family draft estimate in the quick checkout email</span>
+                          <span className="block text-[#075c58]">Include saved customer payment summary in the quick checkout email</span>
                           <span className="mt-1 block text-xs font-semibold leading-5 text-slate-600">
                             Use this when you want the customer to see the package, custom amount, recurring plan, laundry note, discount, or credit details before paying by quick checkout.
                           </span>
@@ -6547,7 +6547,7 @@ export default function AdminTable({
                       </label>
                       {!hasSavedFamilyPaymentBreakdown && (
                         <p className="mt-3 rounded-2xl bg-amber-50 px-4 py-3 text-xs font-bold leading-5 text-amber-800">
-                          No saved family draft estimate is available yet. Save the Family Payment Breakdown draft first, then this checkbox will be available.
+                          No saved customer payment summary is available yet. Save the Draft Estimate Builder draft first, then this checkbox will be available.
                         </p>
                       )}
                     </div>

@@ -1,0 +1,511 @@
+--- before/components/admin/AdminTable.tsx
++++ after/components/admin/AdminTable.tsx
+@@ -4466,17 +4466,17 @@
+       setStatusValue(selected.service === "laundry-rescue" ? "Deposit Checkout Sent" : "Checkout Sent");
+       const commercialBreakdownNotice = selected.service === "commercial-reset" && useCustomInitial && sendEmail
+         ? data.includedQuoteBreakdown
+-          ? " Saved quote breakdown was included in the customer email."
++          ? " Saved quote summary was included in the customer email."
+           : includeCommercialQuoteBreakdown
+-            ? " No saved quote breakdown was found, so the email only includes the payment link and notes. Save the quote builder draft first if you want the breakdown included."
+-            : " Quote breakdown was not included because the checkbox was off."
++            ? " No saved commercial quote summary was found, so the email only includes the payment link and notes. Save the quote builder draft first if you want the breakdown included."
++            : " Quote summary was not included because the checkbox was off."
+         : "";
+       const familyBreakdownNotice = selected.service !== "commercial-reset" && sendEmail
+         ? data.includedFamilyBreakdown
+-          ? " Saved family draft estimate was included in the customer email."
++          ? " Saved customer payment summary was included in the customer email."
+           : includeFamilyPaymentBreakdown
+-            ? " No saved family draft estimate was found, so the email only includes the payment link and notes. Save the draft estimate first if you want it included."
+-            : " Family draft estimate was not included because the checkbox was off."
++            ? " No saved customer payment summary was found, so the email only includes the payment link and notes. Save the Draft Estimate Builder first if you want it included."
++            : " Customer payment summary was not included because the checkbox was off."
+         : "";
+       const laundryDepositNotice = selected.service === "laundry-rescue"
+         ? laundryManualSalesTax && laundryTaxRateNumber > 0 ? ` Stripe checkout will add manual WA sales tax at ${laundryManualSalesTaxRate}% to the non-refundable intro minimum and ask the customer to choose auto-charge or invoice-before-delivery for the final laundry balance.` : " Stripe checkout will collect the non-refundable intro minimum without sales tax. If sales tax is missed here, the final-balance tool can add a one-time tax catch-up when manual tax is turned on."
+@@ -6025,7 +6025,7 @@
+ 
+                 {selectedAvailableCustomerCreditTotal > 0 && (
+                   <div className="mt-3 rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-bold leading-6 text-emerald-900">
+-                    Available saved credit for this customer email: {formatMoney(selectedAvailableCustomerCreditTotal)}. Open the Family Payment Breakdown to apply it before sending checkout or invoice.
++                    Available saved credit for this customer email: {formatMoney(selectedAvailableCustomerCreditTotal)}. Open the Draft Estimate Builder to apply it before sending checkout or invoice.
+                   </div>
+                 )}
+ 
+@@ -6326,12 +6326,12 @@
+                     <h4 className="mt-1 text-xl font-black text-[#075c58]">Choose invoice or quick checkout</h4>
+                     <p className="mt-2 text-sm leading-6 text-slate-700">
+                       {selectedIsCommercial
+-                        ? "For Commercial Reset, the itemized Stripe invoice from the saved quote breakdown is usually the best option. Use quick checkout only for a simple deposit or first payment that does not need a formal invoice PDF."
+-                        : "Use a Stripe invoice when you want the customer to receive an itemized invoice/PDF from the saved Family Payment Breakdown. Use quick checkout for a simple package payment or deposit."}
++                        ? "For Commercial Reset, the itemized Stripe invoice from the saved commercial quote summary is usually the best option. Use quick checkout only for a simple deposit or first payment that does not need a formal invoice PDF."
++                        : "Use a Stripe invoice when you want the customer to receive an itemized invoice/PDF from the saved customer payment summary. Use quick checkout for a simple package payment or deposit."}
+                     </p>
+                     {selected.service === "laundry-rescue" && (
+                       <p className="mt-2 rounded-2xl bg-white px-4 py-3 text-sm font-bold text-[#075c58]">
+-                        For Laundry Rescue, both the saved breakdown payment and quick checkout create a deposit checkout so Stripe can ask the customer to choose auto-charge or invoice-before-delivery. After dry weigh-in, use the final balance section below.
++                        For Laundry Rescue, both the saved payment summary amount and quick checkout create a deposit checkout so Stripe can ask the customer to choose auto-charge or invoice-before-delivery. After dry weigh-in, use the final balance section below.
+                       </p>
+                     )}
+                   </div>
+@@ -6345,9 +6345,9 @@
+                     <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                       <div className="max-w-2xl">
+                         <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Recommended for commercial</p>
+-                        <h5 className="mt-1 text-base font-black text-[#075c58]">Create a Stripe invoice from the saved breakdown</h5>
++                        <h5 className="mt-1 text-base font-black text-[#075c58]">Create a Stripe invoice from the saved summary</h5>
+                         <p className="mt-1 text-sm leading-6 text-slate-700">
+-                          Best for commercial customers who expect an itemized invoice/PDF. Save the Quote / Breakdown Builder first, then create the Stripe invoice. When emailing, NestHelper sends the hosted invoice link in a branded email. A confirmation popup appears before creating because Stripe invoices may cost more than quick checkout.
++                          Best for commercial customers who expect an itemized invoice/PDF. Save the Commercial Quote Builder first, then create the Stripe invoice. When emailing, NestHelper sends the hosted invoice link in a branded email. A confirmation popup appears before creating because Stripe invoices may cost more than quick checkout.
+                         </p>
+                       </div>
+                       <div className="flex flex-col gap-2 sm:flex-row lg:flex-col">
+@@ -6360,7 +6360,7 @@
+                       </div>
+                     </div>
+                     {!hasSavedCommercialQuoteBreakdown && (
+-                      <p className="mt-3 rounded-2xl bg-amber-50 px-4 py-3 text-xs font-bold leading-5 text-amber-800">Save the Quote / Breakdown Builder draft first. The invoice uses those saved line items.</p>
++                      <p className="mt-3 rounded-2xl bg-amber-50 px-4 py-3 text-xs font-bold leading-5 text-amber-800">Save the Commercial Quote Builder draft first. The invoice uses those saved line items.</p>
+                     )}
+                     {(selected.commercialInvoiceUrl || selected.commercialInvoicePdf) && (
+                       <div className="mt-4 rounded-2xl border border-cyan-100 bg-cyan-50/50 p-4">
+@@ -6385,10 +6385,10 @@
+                     <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                       <div className="max-w-2xl">
+                         <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">{selected.service === "laundry-rescue" ? "Laundry deposit approval" : "Optional family invoice"}</p>
+-                        <h5 className="mt-1 text-base font-black text-[#075c58]">{selected.service === "laundry-rescue" ? "Create a deposit checkout from the saved laundry breakdown" : "Create a Stripe invoice from the saved family breakdown"}</h5>
++                        <h5 className="mt-1 text-base font-black text-[#075c58]">{selected.service === "laundry-rescue" ? "Create a deposit checkout from the saved laundry payment summary" : "Create a Stripe invoice from the saved customer payment summary"}</h5>
+                         <p className="mt-1 text-sm leading-6 text-slate-700">
+                           {selected.service === "laundry-rescue"
+-                            ? "This uses the saved breakdown amount to create a taxable, non-refundable Laundry Rescue deposit checkout. Stripe asks the customer to choose auto-charge for the final balance or invoice-before-delivery."
++                            ? "This uses the saved payment summary amount to create a taxable, non-refundable Laundry Rescue deposit checkout. Stripe asks the customer to choose auto-charge for the final balance or invoice-before-delivery."
+                             : "Use this when you want a formal invoice/PDF instead of only a checkout receipt: Errand Helper, custom family quotes, recurring family help, approved add-ons, or refund/credit documentation. A confirmation popup appears before creating because Stripe invoices may cost more than quick checkout."}
+                         </p>
+                       </div>
+@@ -6402,7 +6402,7 @@
+                       </div>
+                     </div>
+                     {!hasSavedFamilyPaymentBreakdown && (
+-                      <p className="mt-3 rounded-2xl bg-amber-50 px-4 py-3 text-xs font-bold leading-5 text-amber-800">Save the Family Payment Breakdown draft first. For Laundry Rescue, the saved amount becomes the deposit checkout amount; for other services, the invoice uses the saved line items.</p>
++                      <p className="mt-3 rounded-2xl bg-amber-50 px-4 py-3 text-xs font-bold leading-5 text-amber-800">Save the Draft Estimate Builder draft first. For Laundry Rescue, the saved amount becomes the deposit checkout amount; for other services, the invoice uses the saved line items.</p>
+                     )}
+                     {(selected.familyInvoiceUrl || selected.familyInvoicePdf) && (
+                       <div className="mt-4 rounded-2xl border border-cyan-100 bg-cyan-50/50 p-4">
+@@ -6434,7 +6434,7 @@
+                     <div className="rounded-2xl bg-[#fbf6ea] px-4 py-3 text-xs font-bold leading-5 text-slate-700 lg:max-w-sm">
+                       {selectedIsCommercial
+                         ? "Commercial quick checkout uses the custom first-payment amount below. Use the invoice option for formal itemized records."
+-                        : "Quick checkout uses the standard package price unless you choose a custom reviewed amount. Invoices use the saved Family Payment Breakdown instead."}
++                        : "Quick checkout uses the standard package price unless you choose a custom reviewed amount. Invoices use the saved customer payment summary instead."}
+                     </div>
+                   </div>
+ 
+@@ -6514,7 +6514,7 @@
+                           className="mt-1 h-4 w-4 rounded border-[#d8c18f] accent-[#075c58]"
+                         />
+                         <span>
+-                          <span className="block text-[#075c58]">Include saved quote breakdown in the quick checkout email</span>
++                          <span className="block text-[#075c58]">Include saved commercial quote summary in the quick checkout email</span>
+                           <span className="mt-1 block text-xs font-semibold leading-5 text-slate-600">
+                             This only affects the quick checkout email. For a true itemized customer record, use the Stripe invoice option above instead.
+                           </span>
+@@ -6522,7 +6522,7 @@
+                       </label>
+                       {!hasSavedCommercialQuoteBreakdown && (
+                         <p className="mt-3 rounded-2xl bg-amber-50 px-4 py-3 text-xs font-bold leading-5 text-amber-800">
+-                          No saved quote breakdown is available yet. Save the Quote / Breakdown Builder draft first, then this checkbox will be available.
++                          No saved commercial quote summary is available yet. Save the Commercial Quote Builder draft first, then this checkbox will be available.
+                         </p>
+                       )}
+                     </div>
+@@ -6539,7 +6539,7 @@
+                           className="mt-1 h-4 w-4 rounded border-[#d8c18f] accent-[#075c58]"
+                         />
+                         <span>
+-                          <span className="block text-[#075c58]">Include saved family draft estimate in the quick checkout email</span>
++                          <span className="block text-[#075c58]">Include saved customer payment summary in the quick checkout email</span>
+                           <span className="mt-1 block text-xs font-semibold leading-5 text-slate-600">
+                             Use this when you want the customer to see the package, custom amount, recurring plan, laundry note, discount, or credit details before paying by quick checkout.
+                           </span>
+@@ -6547,7 +6547,7 @@
+                       </label>
+                       {!hasSavedFamilyPaymentBreakdown && (
+                         <p className="mt-3 rounded-2xl bg-amber-50 px-4 py-3 text-xs font-bold leading-5 text-amber-800">
+-                          No saved family draft estimate is available yet. Save the Family Payment Breakdown draft first, then this checkbox will be available.
++                          No saved customer payment summary is available yet. Save the Draft Estimate Builder draft first, then this checkbox will be available.
+                         </p>
+                       )}
+                     </div>
+
+--- before/components/admin/FamilyPaymentBreakdownBuilder.tsx
++++ after/components/admin/FamilyPaymentBreakdownBuilder.tsx
+@@ -56,7 +56,7 @@
+   },
+   {
+     id: "whole-home-reset-reviewed",
+-    label: "Whole Home Cleaning draft estimate",
++    label: "Whole Home Cleaning reviewed amount",
+     description: "Draft whole-home cleaning estimate based on square footage, bedrooms/bathrooms, visit type, condition, pets, access, photos, and optional detail add-ons. Review before sending.",
+     unit: "flat",
+     rate: "329",
+@@ -65,30 +65,30 @@
+   {
+     id: "whole-home-reset-deep-clean",
+     label: "Whole Home Cleaning first-time deep clean",
+-    description: "Higher-scope first-time deep clean or full-home reset draft estimate after review.",
++    description: "Higher-scope first-time deep clean or full-home reset reviewed amount after review.",
+     unit: "flat",
+     rate: "449",
+     amount: "449",
+   },
+   {
+     id: "specific-area-reset-reviewed",
+-    label: "Specific Area(s) Reset draft estimate",
+-    description: "Draft estimate for selected rooms or focused areas such as kitchen, bathroom(s), pantry, closet, playroom, laundry area, garage, fridge, oven, or a few rooms. Review before sending.",
++    label: "Specific Area(s) Reset reviewed amount",
++    description: "Reviewed amount for selected rooms or focused areas such as kitchen, bathroom(s), pantry, closet, playroom, laundry area, garage, fridge, oven, or a few rooms. Review before sending.",
+     unit: "flat",
+     rate: "249",
+     amount: "249",
+   },
+   {
+     id: "specific-area-reset-larger-scope",
+-    label: "Specific Area(s) Reset larger-scope draft estimate",
+-    description: "Higher-scope area reset draft estimate for larger spaces, heavier clutter, extra sorting, multiple zones, or longer approved time.",
++    label: "Specific Area(s) Reset larger-scope reviewed amount",
++    description: "Higher-scope area reset reviewed amount for larger spaces, heavier clutter, extra sorting, multiple zones, or longer approved time.",
+     unit: "flat",
+     rate: "449",
+     amount: "449",
+   },
+   {
+     id: "garage-reset-reviewed",
+-    label: "Garage / storage area draft estimate",
++    label: "Garage / storage area reviewed amount",
+     description: "Draft garage, storage, shed, or heavy-clutter estimate based on size, clutter level, sorting needs, access, photos, disposal prep, and safety notes. Review before sending.",
+     unit: "flat",
+     rate: "349",
+@@ -96,7 +96,7 @@
+   },
+   {
+     id: "move-out-cleaning-reviewed",
+-    label: "Move-In / Move-Out Cleaning draft estimate",
++    label: "Move-In / Move-Out Cleaning reviewed amount",
+     description: "Draft move-in / move-out cleaning estimate based on square footage, bedrooms/bathrooms, empty-home status, condition, photos, and priority areas. Review before sending.",
+     unit: "flat",
+     rate: "395",
+@@ -104,8 +104,8 @@
+   },
+   {
+     id: "move-out-cleaning-larger-scope",
+-    label: "Move-In / Move-Out larger-scope draft estimate",
+-    description: "Higher-scope move-in / move-out cleaning draft estimate for larger homes, extra kitchen/bathroom buildup, appliance/cabinet scope, or timing constraints after review.",
++    label: "Move-In / Move-Out larger-scope reviewed amount",
++    description: "Higher-scope move-in / move-out cleaning reviewed amount for larger homes, extra kitchen/bathroom buildup, appliance/cabinet scope, or timing constraints after review.",
+     unit: "flat",
+     rate: "495",
+     amount: "495",
+@@ -370,8 +370,8 @@
+ function getDefaultPaymentPlan(item: AdminDoc) {
+   const raw = String(item.service || item.selectedServiceTitle || item.packageType || "").toLowerCase();
+   if (raw.includes("laundry")) return "Laundry Rescue deposit";
+-  if (raw.includes("move-prep") || raw.includes("move prep") || raw.includes("home reset")) return "Move Prep & Home Reset draft estimate";
+-  if (raw.includes("whole-home-reset") || raw.includes("whole home")) return "Whole Home Cleaning draft estimate";
++  if (raw.includes("move-prep") || raw.includes("move prep") || raw.includes("home reset")) return "Move Prep & Home Reset reviewed amount";
++  if (raw.includes("whole-home-reset") || raw.includes("whole home")) return "Whole Home Cleaning reviewed amount";
+   if (raw.includes("specific-area-reset") || raw.includes("specific area") || raw.includes("area reset") || raw.includes("garage reset")) return "One-time specific area reset";
+   if (raw.includes("move-out") || raw.includes("move out") || raw.includes("move-in") || raw.includes("move in")) return "One-time move-in / move-out cleaning";
+   if (raw.includes("errand")) return "One-time errand helper";
+@@ -867,7 +867,7 @@
+     setDiscountCredit("0");
+     setServicePeriodStart(nextVisitDate || servicePeriodStart);
+     setCustomerNote("Recurring reset visit. Recurring pricing is reserved for consistent scope, schedule, service area, and helper availability. Schedule changes, added scope, or early cancellation may return future visits to standard pricing.");
+-    setMessage("Future recurring rate applied to this draft estimate. Review, save, then create/send the next payment link or invoice.");
++    setMessage("Future recurring rate applied to this builder draft. Review, save, then create/send the next payment link or invoice.");
+     setError("");
+   }
+ 
+@@ -1028,7 +1028,7 @@
+       };
+       onSaved(updates);
+       setDirty(false);
+-      setMessage("Family draft estimate saved.");
++      setMessage("Draft estimate saved.");
+     } catch (saveError) {
+       setError(saveError instanceof Error ? saveError.message : "Unable to save family payment summary.");
+     } finally {
+@@ -1397,7 +1397,7 @@
+ 
+                 <div className="rounded-3xl border border-[#eadfc8] bg-white p-4">
+                   <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Save before sending</p>
+-                  <p className="mt-2 text-sm leading-6 text-slate-700">Save the draft estimate before creating a family Stripe invoice or filling checkout. If this request has a referral, the saved breakdown is what keeps the referral credit from being missed.</p>
++                  <p className="mt-2 text-sm leading-6 text-slate-700">Save the draft estimate before creating a family Stripe invoice or filling checkout. If this request has a referral, the saved customer payment summary is what keeps the referral credit from being missed.</p>
+                   <button type="button" onClick={saveDraft} disabled={saving} className={`${getButtonClass("primary")} mt-3 w-full`}>{saving ? <><BuilderSpinner /> Saving...</> : "Save draft estimate"}</button>
+                   {message && <p className="mt-3 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">{message}</p>}
+                   {error && <p className="mt-3 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{error}</p>}
+
+--- before/lib/sendFamilyInvoiceEmail.ts
++++ after/lib/sendFamilyInvoiceEmail.ts
+@@ -35,6 +35,93 @@
+   if (typeof value !== "number" || !Number.isFinite(value) || value <= 0) return "Shown on invoice";
+   return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(new Date(value * 1000));
+ }
++
++
++function formatInlineText(value: string) {
++  return escapeHtml(value)
++    .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
++    .replace(/\$([0-9,]+(?:\.[0-9]{2})?)/g, "<strong>$$$1</strong>");
++}
++
++function isPaymentSummaryHeading(line: string) {
++  return ["SERVICE DETAILS", "ITEMS INCLUDED", "AMOUNT SUMMARY", "CUSTOMER NOTE", "PLEASE NOTE"].includes(line.trim().toUpperCase());
++}
++
++function cleanCustomerPaymentSummaryText(value: string) {
++  return String(value || "")
++    .replace(/Customer-facing draft estimate/gi, "Customer-facing payment summary")
++    .replace(/draft estimate/gi, "payment summary")
++    .replace(/draft total/gi, "amount summary")
++    .replace(/payment summary/gi, "payment summary")
++    .replace(/payment summary/gi, "payment summary")
++    .replace(/Review before sending\.?/gi, "Reviewed by NestHelper.")
++    .replace(/Reviewed before sending\.?/gi, "Reviewed by NestHelper.")
++    .trim();
++}
++
++function renderPaymentSummaryLine(line: string) {
++  if (line.startsWith("•")) {
++    return `<div style="margin:10px 0 12px 0;padding:12px 12px;border-radius:12px;background:#ffffff;border:1px solid #eadfc8;color:#233;line-height:1.55;">
++      <div style="font-weight:800;color:#075c58;margin-bottom:4px;">${formatInlineText(line.replace(/^•\s*/, ""))}</div>
++    </div>`;
++  }
++
++  const labelMatch = line.match(/^([^:]{2,42}):\s*(.*)$/);
++  if (labelMatch) {
++    return `<div style="margin:0 0 9px 0;line-height:1.55;"><strong style="color:#0f4f4a;">${formatInlineText(labelMatch[1])}:</strong> ${formatInlineText(labelMatch[2])}</div>`;
++  }
++
++  return `<p style="margin:0 0 10px 0;line-height:1.6;">${formatInlineText(line)}</p>`;
++}
++
++function buildPaymentSummaryCard(text: string) {
++  const clean = cleanCustomerPaymentSummaryText(text);
++  if (!clean) return "";
++
++  const lines = clean
++    .split(/\r?\n/)
++    .map((line) => line.trim())
++    .filter(Boolean);
++
++  const firstHeadingIndex = lines.findIndex(isPaymentSummaryHeading);
++  const introLines = firstHeadingIndex > 0 ? lines.slice(0, firstHeadingIndex) : [];
++  const sectionLines = firstHeadingIndex >= 0 ? lines.slice(firstHeadingIndex) : lines;
++
++  const sections: Array<{ heading: string; lines: string[] }> = [];
++  let current: { heading: string; lines: string[] } | null = null;
++
++  for (const line of sectionLines) {
++    if (isPaymentSummaryHeading(line)) {
++      if (current) sections.push(current);
++      current = { heading: line.toUpperCase(), lines: [] };
++      continue;
++    }
++
++    if (!current) current = { heading: "PAYMENT SUMMARY", lines: [] };
++    current.lines.push(line);
++  }
++
++  if (current) sections.push(current);
++
++  const introHtml = introLines.length
++    ? `<div style="font-size:15px;line-height:1.55;color:#233;margin:0 0 16px 0;">${introLines.map(formatInlineText).join("<br>")}</div>`
++    : "";
++
++  const sectionHtml = sections.map((section) => {
++    const body = section.lines.map(renderPaymentSummaryLine).join("");
++
++    return `<div style="margin:0 0 18px 0;padding:0 0 4px 0;">
++      <div style="font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#b98a2f;font-weight:900;margin:0 0 10px 0;">${escapeHtml(section.heading)}</div>
++      <div style="font-size:15px;line-height:1.6;color:#233;">${body}</div>
++    </div>`;
++  }).join("");
++
++  return `<div style="margin:0 0 22px 0;padding:18px 16px;border-radius:16px;background:#fbf6ea;border:1px solid #eadfc8;box-sizing:border-box;overflow-wrap:anywhere;word-break:normal;">
++    ${introHtml}
++    ${sectionHtml}
++  </div>`;
++}
++
+ 
+ function buildSummaryRows(rows: Record<string, unknown>) {
+   return Object.entries(rows)
+@@ -72,7 +159,7 @@
+   }
+ 
+   const greeting = customerName?.trim() ? `Hi ${customerName.trim()},` : "Hi,";
+-  const cleanBreakdown = String(quoteBreakdownText || "").trim();
++  const cleanBreakdown = cleanCustomerPaymentSummaryText(String(quoteBreakdownText || "").trim());
+   const cleanServiceTitle = serviceTitle || "NestHelper service";
+   const summaryRows = buildSummaryRows({
+     "Request ID": requestId,
+@@ -83,10 +170,7 @@
+     "Service period": servicePeriodLabel,
+   });
+   const breakdownHtml = cleanBreakdown
+-    ? `<div style="margin:0 0 22px 0;padding:16px 14px;border-radius:14px;background:#fbf6ea;border:1px solid #eadfc8;box-sizing:border-box;overflow-wrap:anywhere;word-break:break-word;">
+-        <div style="font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#b98a2f;font-weight:800;margin-bottom:8px;">${escapeHtml(quoteTitle || "NestHelper payment breakdown")}</div>
+-        <div style="white-space:pre-wrap;font-size:14px;line-height:1.55;color:#233;overflow-wrap:anywhere;word-break:break-word;">${escapeHtml(cleanBreakdown)}</div>
+-      </div>`
++    ? `<div style="font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#b98a2f;font-weight:800;margin:0 0 10px 0;">${escapeHtml(quoteTitle || "NestHelper payment summary")}</div>${buildPaymentSummaryCard(cleanBreakdown)}`
+     : "";
+ 
+   const pdfLink = invoicePdf
+@@ -102,7 +186,7 @@
+         </div>
+         <div style="padding:22px 18px;color:#233;line-height:1.6;box-sizing:border-box;overflow-wrap:anywhere;word-break:break-word;">
+           <p style="margin:0 0 16px 0;">${escapeHtml(greeting)}</p>
+-          <p style="margin:0 0 18px 0;">Your NestHelper invoice is ready for review and secure payment through Stripe. Please review the service/payment breakdown before paying. Timing, access, and service notes are confirmed by NestHelper.</p>
++          <p style="margin:0 0 18px 0;">Your NestHelper invoice is ready for review and secure payment through Stripe. Please review the service/payment summary before paying. Timing, access, and service notes are confirmed by NestHelper.</p>
+           ${summaryRows ? `<div style="width:100%;box-sizing:border-box;border:1px solid #eee;border-radius:14px;overflow:hidden;margin:0 0 22px 0;">${summaryRows}</div>` : ""}
+           ${breakdownHtml}
+           <p style="margin:22px 0;"><a href="${escapeHtml(invoiceUrl)}" style="display:inline-block;background:#075c58;color:#fff;text-decoration:none;padding:13px 20px;border-radius:999px;font-weight:800;max-width:100%;box-sizing:border-box;white-space:normal;text-align:center;">Review and pay invoice</a></p>
+@@ -121,8 +205,8 @@
+       </div>
+     </div>`;
+ 
+-  const breakdownTextBlock = cleanBreakdown ? `\n\n${quoteTitle || "NestHelper payment breakdown"}:\n${cleanBreakdown}` : "";
+-  const text = `${greeting}\n\nYour NestHelper invoice is ready for review and secure payment through Stripe. Please review the service/payment breakdown before paying.\n\nRequest ID: ${requestId}\nService: ${cleanServiceTitle}\nInvoice number: ${invoiceNumber || "Shown on invoice"}\nAmount due: ${formatCents(amountDueCents)}\nDue date: ${formatDueDate(dueDate)}${servicePeriodLabel ? `
++  const breakdownTextBlock = cleanBreakdown ? `\n\n${quoteTitle || "NestHelper payment summary"}:\n${cleanBreakdown}` : "";
++  const text = `${greeting}\n\nYour NestHelper invoice is ready for review and secure payment through Stripe. Please review the service/payment summary before paying.\n\nRequest ID: ${requestId}\nService: ${cleanServiceTitle}\nInvoice number: ${invoiceNumber || "Shown on invoice"}\nAmount due: ${formatCents(amountDueCents)}\nDue date: ${formatDueDate(dueDate)}${servicePeriodLabel ? `
+ Service period: ${servicePeriodLabel}` : ""}${breakdownTextBlock}\n\nReview and pay invoice: ${invoiceUrl}${invoicePdf ? `\nInvoice PDF: ${invoicePdf}` : ""}\n\nQuestions or changes? Reply to this email or contact us at ${customerSupportEmail}.\n\nNestHelper: ${siteUrl}`;
+ 
+   const resend = new Resend(apiKey);
+
+--- before/lib/sendCommercialInvoiceEmail.ts
++++ after/lib/sendCommercialInvoiceEmail.ts
+@@ -34,6 +34,93 @@
+   if (typeof value !== "number" || !Number.isFinite(value) || value <= 0) return "Shown on invoice";
+   return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(new Date(value * 1000));
+ }
++
++
++function formatInlineText(value: string) {
++  return escapeHtml(value)
++    .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
++    .replace(/\$([0-9,]+(?:\.[0-9]{2})?)/g, "<strong>$$$1</strong>");
++}
++
++function isPaymentSummaryHeading(line: string) {
++  return ["SERVICE DETAILS", "ITEMS INCLUDED", "AMOUNT SUMMARY", "CUSTOMER NOTE", "PLEASE NOTE"].includes(line.trim().toUpperCase());
++}
++
++function cleanCustomerPaymentSummaryText(value: string) {
++  return String(value || "")
++    .replace(/Customer-facing draft estimate/gi, "Customer-facing payment summary")
++    .replace(/draft estimate/gi, "payment summary")
++    .replace(/draft total/gi, "amount summary")
++    .replace(/payment summary/gi, "payment summary")
++    .replace(/payment summary/gi, "payment summary")
++    .replace(/Review before sending\.?/gi, "Reviewed by NestHelper.")
++    .replace(/Reviewed before sending\.?/gi, "Reviewed by NestHelper.")
++    .trim();
++}
++
++function renderPaymentSummaryLine(line: string) {
++  if (line.startsWith("•")) {
++    return `<div style="margin:10px 0 12px 0;padding:12px 12px;border-radius:12px;background:#ffffff;border:1px solid #eadfc8;color:#233;line-height:1.55;">
++      <div style="font-weight:800;color:#075c58;margin-bottom:4px;">${formatInlineText(line.replace(/^•\s*/, ""))}</div>
++    </div>`;
++  }
++
++  const labelMatch = line.match(/^([^:]{2,42}):\s*(.*)$/);
++  if (labelMatch) {
++    return `<div style="margin:0 0 9px 0;line-height:1.55;"><strong style="color:#0f4f4a;">${formatInlineText(labelMatch[1])}:</strong> ${formatInlineText(labelMatch[2])}</div>`;
++  }
++
++  return `<p style="margin:0 0 10px 0;line-height:1.6;">${formatInlineText(line)}</p>`;
++}
++
++function buildPaymentSummaryCard(text: string) {
++  const clean = cleanCustomerPaymentSummaryText(text);
++  if (!clean) return "";
++
++  const lines = clean
++    .split(/\r?\n/)
++    .map((line) => line.trim())
++    .filter(Boolean);
++
++  const firstHeadingIndex = lines.findIndex(isPaymentSummaryHeading);
++  const introLines = firstHeadingIndex > 0 ? lines.slice(0, firstHeadingIndex) : [];
++  const sectionLines = firstHeadingIndex >= 0 ? lines.slice(firstHeadingIndex) : lines;
++
++  const sections: Array<{ heading: string; lines: string[] }> = [];
++  let current: { heading: string; lines: string[] } | null = null;
++
++  for (const line of sectionLines) {
++    if (isPaymentSummaryHeading(line)) {
++      if (current) sections.push(current);
++      current = { heading: line.toUpperCase(), lines: [] };
++      continue;
++    }
++
++    if (!current) current = { heading: "PAYMENT SUMMARY", lines: [] };
++    current.lines.push(line);
++  }
++
++  if (current) sections.push(current);
++
++  const introHtml = introLines.length
++    ? `<div style="font-size:15px;line-height:1.55;color:#233;margin:0 0 16px 0;">${introLines.map(formatInlineText).join("<br>")}</div>`
++    : "";
++
++  const sectionHtml = sections.map((section) => {
++    const body = section.lines.map(renderPaymentSummaryLine).join("");
++
++    return `<div style="margin:0 0 18px 0;padding:0 0 4px 0;">
++      <div style="font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#b98a2f;font-weight:900;margin:0 0 10px 0;">${escapeHtml(section.heading)}</div>
++      <div style="font-size:15px;line-height:1.6;color:#233;">${body}</div>
++    </div>`;
++  }).join("");
++
++  return `<div style="margin:0 0 22px 0;padding:18px 16px;border-radius:16px;background:#fbf6ea;border:1px solid #eadfc8;box-sizing:border-box;overflow-wrap:anywhere;word-break:normal;">
++    ${introHtml}
++    ${sectionHtml}
++  </div>`;
++}
++
+ 
+ function buildSummaryRows(rows: Record<string, unknown>) {
+   return Object.entries(rows)
+@@ -71,7 +158,7 @@
+   }
+ 
+   const greeting = customerName?.trim() ? `Hi ${customerName.trim()},` : "Hi,";
+-  const cleanBreakdown = String(quoteBreakdownText || "").trim();
++  const cleanBreakdown = cleanCustomerPaymentSummaryText(String(quoteBreakdownText || "").trim());
+   const summaryRows = buildSummaryRows({
+     "Request ID": requestId,
+     "Invoice number": invoiceNumber || "Shown on invoice",
+@@ -80,10 +167,7 @@
+     "Service period": servicePeriodLabel,
+   });
+   const breakdownHtml = cleanBreakdown
+-    ? `<div style="margin:0 0 22px 0;padding:16px 14px;border-radius:14px;background:#fbf6ea;border:1px solid #eadfc8;box-sizing:border-box;overflow-wrap:anywhere;word-break:break-word;">
+-        <div style="font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#b98a2f;font-weight:800;margin-bottom:8px;">${escapeHtml(quoteTitle || "Commercial Reset quote breakdown")}</div>
+-        <div style="white-space:pre-wrap;font-size:14px;line-height:1.55;color:#233;overflow-wrap:anywhere;word-break:break-word;">${escapeHtml(cleanBreakdown)}</div>
+-      </div>`
++    ? `<div style="font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#b98a2f;font-weight:800;margin:0 0 10px 0;">${escapeHtml(quoteTitle || "Commercial Reset payment summary")}</div>${buildPaymentSummaryCard(cleanBreakdown)}`
+     : "";
+ 
+   const pdfLink = invoicePdf
+@@ -119,7 +203,7 @@
+       </div>
+     </div>`;
+ 
+-  const breakdownTextBlock = cleanBreakdown ? `\n\n${quoteTitle || "Commercial Reset quote breakdown"}:\n${cleanBreakdown}` : "";
++  const breakdownTextBlock = cleanBreakdown ? `\n\n${quoteTitle || "Commercial Reset payment summary"}:\n${cleanBreakdown}` : "";
+   const text = `${greeting}\n\nYour NestHelper Commercial Reset invoice is ready for review and secure payment through Stripe. Please review the scope and amount before paying. Service is confirmed after payment and scheduling details are finalized by NestHelper.\n\nRequest ID: ${requestId}\nInvoice number: ${invoiceNumber || "Shown on invoice"}\nAmount due: ${formatCents(amountDueCents)}\nDue date: ${formatDueDate(dueDate)}${servicePeriodLabel ? `
+ Service period: ${servicePeriodLabel}` : ""}${breakdownTextBlock}\n\nReview and pay invoice: ${invoiceUrl}${invoicePdf ? `\nInvoice PDF: ${invoicePdf}` : ""}\n\nQuestions or changes? Reply to this email or contact us at ${customerSupportEmail}.\n\nNestHelper: ${siteUrl}`;
+ 

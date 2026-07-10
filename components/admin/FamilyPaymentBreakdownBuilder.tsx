@@ -56,7 +56,7 @@ const FAMILY_PRESETS = [
   },
   {
     id: "whole-home-reset-reviewed",
-    label: "Whole Home Cleaning draft estimate",
+    label: "Whole Home Cleaning reviewed amount",
     description: "Draft whole-home cleaning estimate based on square footage, bedrooms/bathrooms, visit type, condition, pets, access, photos, and optional detail add-ons. Review before sending.",
     unit: "flat",
     rate: "329",
@@ -65,30 +65,30 @@ const FAMILY_PRESETS = [
   {
     id: "whole-home-reset-deep-clean",
     label: "Whole Home Cleaning first-time deep clean",
-    description: "Higher-scope first-time deep clean or full-home reset draft estimate after review.",
+    description: "Higher-scope first-time deep clean or full-home reset reviewed amount after review.",
     unit: "flat",
     rate: "449",
     amount: "449",
   },
   {
     id: "specific-area-reset-reviewed",
-    label: "Specific Area(s) Reset draft estimate",
-    description: "Draft estimate for selected rooms or focused areas such as kitchen, bathroom(s), pantry, closet, playroom, laundry area, garage, fridge, oven, or a few rooms. Review before sending.",
+    label: "Specific Area(s) Reset reviewed amount",
+    description: "Reviewed amount for selected rooms or focused areas such as kitchen, bathroom(s), pantry, closet, playroom, laundry area, garage, fridge, oven, or a few rooms. Review before sending.",
     unit: "flat",
     rate: "249",
     amount: "249",
   },
   {
     id: "specific-area-reset-larger-scope",
-    label: "Specific Area(s) Reset larger-scope draft estimate",
-    description: "Higher-scope area reset draft estimate for larger spaces, heavier clutter, extra sorting, multiple zones, or longer approved time.",
+    label: "Specific Area(s) Reset larger-scope reviewed amount",
+    description: "Higher-scope area reset reviewed amount for larger spaces, heavier clutter, extra sorting, multiple zones, or longer approved time.",
     unit: "flat",
     rate: "449",
     amount: "449",
   },
   {
     id: "garage-reset-reviewed",
-    label: "Garage / storage area draft estimate",
+    label: "Garage / storage area reviewed amount",
     description: "Draft garage, storage, shed, or heavy-clutter estimate based on size, clutter level, sorting needs, access, photos, disposal prep, and safety notes. Review before sending.",
     unit: "flat",
     rate: "349",
@@ -96,7 +96,7 @@ const FAMILY_PRESETS = [
   },
   {
     id: "move-out-cleaning-reviewed",
-    label: "Move-In / Move-Out Cleaning draft estimate",
+    label: "Move-In / Move-Out Cleaning reviewed amount",
     description: "Draft move-in / move-out cleaning estimate based on square footage, bedrooms/bathrooms, empty-home status, condition, photos, and priority areas. Review before sending.",
     unit: "flat",
     rate: "395",
@@ -104,8 +104,8 @@ const FAMILY_PRESETS = [
   },
   {
     id: "move-out-cleaning-larger-scope",
-    label: "Move-In / Move-Out larger-scope draft estimate",
-    description: "Higher-scope move-in / move-out cleaning draft estimate for larger homes, extra kitchen/bathroom buildup, appliance/cabinet scope, or timing constraints after review.",
+    label: "Move-In / Move-Out larger-scope reviewed amount",
+    description: "Higher-scope move-in / move-out cleaning reviewed amount for larger homes, extra kitchen/bathroom buildup, appliance/cabinet scope, or timing constraints after review.",
     unit: "flat",
     rate: "495",
     amount: "495",
@@ -370,8 +370,8 @@ function getSuggestedPresetId(item: AdminDoc) {
 function getDefaultPaymentPlan(item: AdminDoc) {
   const raw = String(item.service || item.selectedServiceTitle || item.packageType || "").toLowerCase();
   if (raw.includes("laundry")) return "Laundry Rescue deposit";
-  if (raw.includes("move-prep") || raw.includes("move prep") || raw.includes("home reset")) return "Move Prep & Home Reset draft estimate";
-  if (raw.includes("whole-home-reset") || raw.includes("whole home")) return "Whole Home Cleaning draft estimate";
+  if (raw.includes("move-prep") || raw.includes("move prep") || raw.includes("home reset")) return "Move Prep & Home Reset reviewed amount";
+  if (raw.includes("whole-home-reset") || raw.includes("whole home")) return "Whole Home Cleaning reviewed amount";
   if (raw.includes("specific-area-reset") || raw.includes("specific area") || raw.includes("area reset") || raw.includes("garage reset")) return "One-time specific area reset";
   if (raw.includes("move-out") || raw.includes("move out") || raw.includes("move-in") || raw.includes("move in")) return "One-time move-in / move-out cleaning";
   if (raw.includes("errand")) return "One-time errand helper";
@@ -867,7 +867,7 @@ export default function FamilyPaymentBreakdownBuilder({
     setDiscountCredit("0");
     setServicePeriodStart(nextVisitDate || servicePeriodStart);
     setCustomerNote("Recurring reset visit. Recurring pricing is reserved for consistent scope, schedule, service area, and helper availability. Schedule changes, added scope, or early cancellation may return future visits to standard pricing.");
-    setMessage("Future recurring rate applied to this draft estimate. Review, save, then create/send the next payment link or invoice.");
+    setMessage("Future recurring rate applied to this builder draft. Review, save, then create/send the next payment link or invoice.");
     setError("");
   }
 
@@ -1028,7 +1028,7 @@ export default function FamilyPaymentBreakdownBuilder({
       };
       onSaved(updates);
       setDirty(false);
-      setMessage("Family draft estimate saved.");
+      setMessage("Draft estimate saved.");
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : "Unable to save family payment summary.");
     } finally {
@@ -1397,7 +1397,7 @@ export default function FamilyPaymentBreakdownBuilder({
 
                 <div className="rounded-3xl border border-[#eadfc8] bg-white p-4">
                   <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Save before sending</p>
-                  <p className="mt-2 text-sm leading-6 text-slate-700">Save the draft estimate before creating a family Stripe invoice or filling checkout. If this request has a referral, the saved breakdown is what keeps the referral credit from being missed.</p>
+                  <p className="mt-2 text-sm leading-6 text-slate-700">Save the draft estimate before creating a family Stripe invoice or filling checkout. If this request has a referral, the saved customer payment summary is what keeps the referral credit from being missed.</p>
                   <button type="button" onClick={saveDraft} disabled={saving} className={`${getButtonClass("primary")} mt-3 w-full`}>{saving ? <><BuilderSpinner /> Saving...</> : "Save draft estimate"}</button>
                   {message && <p className="mt-3 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">{message}</p>}
                   {error && <p className="mt-3 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{error}</p>}
