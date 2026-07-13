@@ -159,17 +159,39 @@ function commercialBreakdownHasTaxableLines(breakdown: Record<string, unknown>) 
   return lines.some((line) => getCommercialLineTaxMode(line) === "taxable");
 }
 
+function statusTextLooksPaid(value: unknown) {
+  const text = getString(value).toLowerCase().replace(/\s+/g, " ");
+  if (!text) return false;
+  if (/\b(unpaid|not paid|no payment|payment due|pending payment)\b/.test(text)) return false;
+  return /\b(paid|payment received|deposit paid|invoice paid|initial paid|additional paid|fully paid|final balance paid)\b/.test(text);
+}
+
 function isRequestAlreadyPaid(data: Record<string, unknown>) {
-  const statusText = [
+  return [
     data.status,
     data.paymentStatus,
     data.checkoutStatus,
     data.laundryPaymentStatus,
     data.familyInvoiceStatus,
     data.invoiceStatus,
-  ].map((value) => getString(value).toLowerCase()).join(" ");
+    data.additionalPaymentStatus,
+    data.commercialInvoiceStatus,
+    data.laundryFinalInvoiceStatus,
+  ].some(statusTextLooksPaid) || Boolean(data.paidAt || data.paymentReceivedAt || data.laundryFinalBalancePaidAt || data.depositPaidAt || data.laundryDepositPaidAt);
+}
 
-  return statusText.includes("paid") || statusText.includes("payment received") || statusText.includes("completed");
+function isRequestClosedOrInactive(data: Record<string, unknown>) {
+  const status = getString(data.status).toLowerCase().replace(/\s+/g, " ");
+  return Boolean(status) && (
+    status === "archived" ||
+    status === "canceled" ||
+    status === "cancelled" ||
+    status === "declined" ||
+    status === "rejected" ||
+    status === "not eligible" ||
+    status.startsWith("closed") ||
+    status.includes("no response")
+  );
 }
 
 function isStripeSessionPaid(session: Stripe.Checkout.Session) {
@@ -447,12 +469,21 @@ export async function GET(_request: Request, context: RouteContext) {
       });
     }
 
+    if (isRequestClosedOrInactive(data)) {
+      return htmlPage({
+        tone: "error",
+        status: 410,
+        title: "This checkout link is no longer active.",
+        text: "This NestHelper request was closed, canceled, or archived. Please text us if you still need help and we can create a fresh request.",
+      });
+    }
+
     const existingSessionId = getString(data.checkoutSessionId);
     if (existingSessionId) {
       try {
         const existingSession = await stripe.checkout.sessions.retrieve(existingSessionId);
         if (isStripeSessionPaid(existingSession)) {
-          await requestRef.update({
+          const paidUpdate: Record<string, unknown> = {
             status: getPaidStatusForRequest(data),
             paymentStatus: getPaidPaymentStatusForRequest(data),
             checkoutStatus: "Paid",
@@ -461,7 +492,17 @@ export async function GET(_request: Request, context: RouteContext) {
             paymentIntentId: typeof existingSession.payment_intent === "string" ? existingSession.payment_intent : "",
             smartCheckoutLastUsedAt: FieldValue.serverTimestamp(),
             updatedAt: FieldValue.serverTimestamp(),
-          });
+          };
+
+          if (getString(data.service) === "laundry-rescue") {
+            paidUpdate.status = "Deposit Paid - Final Pending";
+            paidUpdate.paymentStatus = "Deposit Paid - Final Pending";
+            paidUpdate.laundryPaymentStatus = "Deposit Paid - Final Pending";
+            paidUpdate.laundryDepositStatus = "Deposit Paid";
+            paidUpdate.laundryDepositPaidAt = FieldValue.serverTimestamp();
+          }
+
+          await requestRef.update(paidUpdate);
 
           return htmlPage({
             tone: "success",

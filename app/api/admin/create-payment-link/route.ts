@@ -184,17 +184,39 @@ function getDefaultCustomTitle(serviceTitle: string, isLaundryRescue: boolean) {
   return isLaundryRescue ? "Laundry Rescue custom intro minimum" : `${serviceTitle} custom checkout`;
 }
 
+function statusTextLooksPaid(value: unknown) {
+  const text = getString(value).toLowerCase().replace(/\s+/g, " ");
+  if (!text) return false;
+  if (/\b(unpaid|not paid|no payment|payment due|pending payment)\b/.test(text)) return false;
+  return /\b(paid|payment received|deposit paid|invoice paid|initial paid|additional paid|fully paid|final balance paid)\b/.test(text);
+}
+
 function requestLooksAlreadyPaid(data: Record<string, unknown>) {
-  const statusText = [
+  return [
     data.status,
     data.paymentStatus,
     data.checkoutStatus,
     data.laundryPaymentStatus,
     data.familyInvoiceStatus,
     data.invoiceStatus,
-  ].map((value) => getString(value).toLowerCase()).join(" ");
+    data.additionalPaymentStatus,
+    data.commercialInvoiceStatus,
+    data.laundryFinalInvoiceStatus,
+  ].some(statusTextLooksPaid) || Boolean(data.paidAt || data.paymentReceivedAt || data.laundryFinalBalancePaidAt || data.depositPaidAt || data.laundryDepositPaidAt);
+}
 
-  return statusText.includes("paid") || statusText.includes("payment received") || statusText.includes("completed");
+function requestLooksClosedOrInactive(data: Record<string, unknown>) {
+  const status = getString(data.status).toLowerCase().replace(/\s+/g, " ");
+  return Boolean(status) && (
+    status === "archived" ||
+    status === "canceled" ||
+    status === "cancelled" ||
+    status === "declined" ||
+    status === "rejected" ||
+    status === "not eligible" ||
+    status.startsWith("closed") ||
+    status.includes("no response")
+  );
 }
 
 
@@ -278,6 +300,13 @@ export async function POST(request: Request) {
     if (requestLooksAlreadyPaid(data)) {
       return NextResponse.json(
         { ok: false, error: "This request already looks paid or completed. Do not create another checkout link unless you intentionally create a separate additional-payment request." },
+        { status: 409 }
+      );
+    }
+
+    if (requestLooksClosedOrInactive(data)) {
+      return NextResponse.json(
+        { ok: false, error: "This request is closed, canceled, archived, or inactive. Reopen/create a new request before sending a checkout link." },
         { status: 409 }
       );
     }

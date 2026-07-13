@@ -31,6 +31,13 @@ function hasAnyValue(data: Record<string, unknown>, keys: string[]) {
   });
 }
 
+function statusTextLooksPaid(value: unknown) {
+  const text = String(value || "").trim().toLowerCase().replace(/\s+/g, " ");
+  if (!text) return false;
+  if (/\b(unpaid|not paid|no payment|payment due|pending payment)\b/.test(text)) return false;
+  return /\b(paid|payment received|deposit paid|invoice paid|initial paid|additional paid|fully paid|final balance paid)\b/.test(text);
+}
+
 function getProtectedDeleteReason(collection: string, data: Record<string, unknown>) {
   if (collection !== "serviceRequests") return "";
 
@@ -45,7 +52,17 @@ function getProtectedDeleteReason(collection: string, data: Record<string, unkno
     data.commercialQuoteStatus,
   ].map(lower).join(" ");
 
-  if (statusText.includes("paid") || statusText.includes("completed") || statusText.includes("scheduled")) {
+  if ([
+    data.status,
+    data.paymentStatus,
+    data.checkoutStatus,
+    data.laundryPaymentStatus,
+    data.familyInvoiceStatus,
+    data.invoiceStatus,
+    data.additionalPaymentStatus,
+    data.commercialInvoiceStatus,
+    data.laundryFinalInvoiceStatus,
+  ].some(statusTextLooksPaid) || statusText.includes("completed") || statusText.includes("scheduled")) {
     return "This request looks paid, completed, or scheduled. Keep it for customer/payment records and mark it Canceled or Archived instead.";
   }
 

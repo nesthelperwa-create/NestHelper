@@ -375,6 +375,30 @@ function getAdminPaymentText(item: AdminDoc | null | undefined) {
   ].filter(Boolean).join(" ")).toLowerCase();
 }
 
+function statusTextLooksPaid(value: unknown) {
+  const text = String(value || "").trim().toLowerCase().replace(/\s+/g, " ");
+  if (!text) return false;
+  if (/\b(unpaid|not paid|no payment|payment due|pending payment)\b/.test(text)) return false;
+  return /\b(paid|payment received|deposit paid|invoice paid|initial paid|additional paid|fully paid|final balance paid)\b/.test(text);
+}
+
+function recordLooksPaid(item: AdminDoc | null | undefined) {
+  if (!item) return false;
+  const paymentFields = [
+    item.paymentStatus,
+    item.laundryPaymentStatus,
+    item.familyPaymentStatus,
+    item.familyInvoiceStatus,
+    item.invoiceStatus,
+    item.checkoutStatus,
+    item.additionalPaymentStatus,
+    item.commercialInvoiceStatus,
+    item.laundryFinalInvoiceStatus,
+    item.status,
+  ];
+  return paymentFields.some(statusTextLooksPaid) || Boolean(item.paidAt || item.paymentReceivedAt || item.laundryFinalBalancePaidAt || item.depositPaidAt || item.laundryDepositPaidAt);
+}
+
 function getAdminStatusText(item: AdminDoc | null | undefined) {
   return String(item?.status || "").trim().toLowerCase().replace(/\s+/g, " ");
 }
@@ -427,7 +451,7 @@ function getAdminQueueKey(item: AdminDoc | null | undefined) {
   if (status === "completed") return "completed";
   if (["canceled", "cancelled", "declined", "not eligible", "archived"].includes(status) || status.startsWith("closed") || status.includes("no response")) return "closed";
   if (!status || ["new", "needs info", "follow-up needed", "pending review", "reviewing", "requested"].includes(status) || status.includes("review") || status.includes("follow")) return "needs-review";
-  if (paymentText.includes("paid") || status.includes("paid") || status.includes("scheduled") || status.includes("assigned")) return "paid-scheduled";
+  if (recordLooksPaid(item) || status.includes("scheduled") || status.includes("assigned")) return "paid-scheduled";
   if (isPaymentRequestSentAdminStatus(status) || isPaymentRequestSentText(paymentText)) return "payment";
   if (isQuoteSentAdminStatus(status)) return "quote-sent";
   if (status.includes("approved") || status === "final invoice created") return "needs-payment";
@@ -2965,7 +2989,7 @@ function getPaymentStatusForBookkeeping(item: AdminDoc) {
 
 function isPaidForBookkeeping(item: AdminDoc) {
   const text = getPaymentStatusForBookkeeping(item).toLowerCase();
-  return text.includes("paid") || text.includes("completed") || Boolean(item.paidAt || item.paymentReceivedAt || item.laundryFinalBalancePaidAt);
+  return statusTextLooksPaid(text) || text.includes("completed") || Boolean(item.paidAt || item.paymentReceivedAt || item.laundryFinalBalancePaidAt);
 }
 
 function getPaidDateForBookkeeping(item: AdminDoc) {
@@ -3237,7 +3261,7 @@ function getRecordDeleteBlockReason(collectionName: string, item: AdminDoc | nul
 
   const paymentText = getAdminPaymentText(item);
   const statusText = String(item.status || "").toLowerCase();
-  if (paymentText.includes("paid") || statusText.includes("completed") || statusText.includes("scheduled")) {
+  if (recordLooksPaid(item) || statusText.includes("completed") || statusText.includes("scheduled")) {
     return "This request looks paid, completed, or scheduled. Keep it for customer/payment records and mark it Canceled or Archived instead.";
   }
 
@@ -3629,9 +3653,10 @@ export default function AdminTable({
       }
 
       const paymentStatus = String(item.paymentStatus || item.laundryPaymentStatus || item.additionalPaymentStatus || "").toLowerCase();
-      if (paymentFilter === "paid" && !paymentStatus.includes("paid")) return false;
+      const itemLooksPaid = recordLooksPaid(item);
+      if (paymentFilter === "paid" && !itemLooksPaid) return false;
       if (paymentFilter === "sent" && !(paymentStatus.includes("sent") || paymentStatus.includes("checkout") || paymentStatus.includes("invoice"))) return false;
-      if (paymentFilter === "unpaid" && (paymentStatus.includes("paid") || paymentStatus.includes("sent") || paymentStatus.includes("checkout") || paymentStatus.includes("invoice"))) return false;
+      if (paymentFilter === "unpaid" && (itemLooksPaid || paymentStatus.includes("sent") || paymentStatus.includes("checkout") || paymentStatus.includes("invoice"))) return false;
       if (paymentFilter === "refund" && !JSON.stringify(item).toLowerCase().includes("refund")) return false;
       if (referralFilter === "available-credit") {
         if (!matchesReferralFilter(item, referralFilter) && !getAvailableCustomerCreditsForRequest(item, customerCredits).length) return false;

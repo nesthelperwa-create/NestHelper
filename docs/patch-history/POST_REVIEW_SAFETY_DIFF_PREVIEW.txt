@@ -1,0 +1,259 @@
+--- before/components/admin/AdminTable.tsx
++++ after/components/admin/AdminTable.tsx
+@@ -375,6 +375,30 @@
+   ].filter(Boolean).join(" ")).toLowerCase();
+ }
+ 
++function statusTextLooksPaid(value: unknown) {
++  const text = String(value || "").trim().toLowerCase().replace(/\s+/g, " ");
++  if (!text) return false;
++  if (/\b(unpaid|not paid|no payment|payment due|pending payment)\b/.test(text)) return false;
++  return /\b(paid|payment received|deposit paid|invoice paid|initial paid|additional paid|fully paid|final balance paid)\b/.test(text);
++}
++
++function recordLooksPaid(item: AdminDoc | null | undefined) {
++  if (!item) return false;
++  const paymentFields = [
++    item.paymentStatus,
++    item.laundryPaymentStatus,
++    item.familyPaymentStatus,
++    item.familyInvoiceStatus,
++    item.invoiceStatus,
++    item.checkoutStatus,
++    item.additionalPaymentStatus,
++    item.commercialInvoiceStatus,
++    item.laundryFinalInvoiceStatus,
++    item.status,
++  ];
++  return paymentFields.some(statusTextLooksPaid) || Boolean(item.paidAt || item.paymentReceivedAt || item.laundryFinalBalancePaidAt || item.depositPaidAt || item.laundryDepositPaidAt);
++}
++
+ function getAdminStatusText(item: AdminDoc | null | undefined) {
+   return String(item?.status || "").trim().toLowerCase().replace(/\s+/g, " ");
+ }
+@@ -427,7 +451,7 @@
+   if (status === "completed") return "completed";
+   if (["canceled", "cancelled", "declined", "not eligible", "archived"].includes(status) || status.startsWith("closed") || status.includes("no response")) return "closed";
+   if (!status || ["new", "needs info", "follow-up needed", "pending review", "reviewing", "requested"].includes(status) || status.includes("review") || status.includes("follow")) return "needs-review";
+-  if (paymentText.includes("paid") || status.includes("paid") || status.includes("scheduled") || status.includes("assigned")) return "paid-scheduled";
++  if (recordLooksPaid(item) || status.includes("scheduled") || status.includes("assigned")) return "paid-scheduled";
+   if (isPaymentRequestSentAdminStatus(status) || isPaymentRequestSentText(paymentText)) return "payment";
+   if (isQuoteSentAdminStatus(status)) return "quote-sent";
+   if (status.includes("approved") || status === "final invoice created") return "needs-payment";
+@@ -2965,7 +2989,7 @@
+ 
+ function isPaidForBookkeeping(item: AdminDoc) {
+   const text = getPaymentStatusForBookkeeping(item).toLowerCase();
+-  return text.includes("paid") || text.includes("completed") || Boolean(item.paidAt || item.paymentReceivedAt || item.laundryFinalBalancePaidAt);
++  return statusTextLooksPaid(text) || text.includes("completed") || Boolean(item.paidAt || item.paymentReceivedAt || item.laundryFinalBalancePaidAt);
+ }
+ 
+ function getPaidDateForBookkeeping(item: AdminDoc) {
+@@ -3237,7 +3261,7 @@
+ 
+   const paymentText = getAdminPaymentText(item);
+   const statusText = String(item.status || "").toLowerCase();
+-  if (paymentText.includes("paid") || statusText.includes("completed") || statusText.includes("scheduled")) {
++  if (recordLooksPaid(item) || statusText.includes("completed") || statusText.includes("scheduled")) {
+     return "This request looks paid, completed, or scheduled. Keep it for customer/payment records and mark it Canceled or Archived instead.";
+   }
+ 
+@@ -3629,9 +3653,10 @@
+       }
+ 
+       const paymentStatus = String(item.paymentStatus || item.laundryPaymentStatus || item.additionalPaymentStatus || "").toLowerCase();
+-      if (paymentFilter === "paid" && !paymentStatus.includes("paid")) return false;
++      const itemLooksPaid = recordLooksPaid(item);
++      if (paymentFilter === "paid" && !itemLooksPaid) return false;
+       if (paymentFilter === "sent" && !(paymentStatus.includes("sent") || paymentStatus.includes("checkout") || paymentStatus.includes("invoice"))) return false;
+-      if (paymentFilter === "unpaid" && (paymentStatus.includes("paid") || paymentStatus.includes("sent") || paymentStatus.includes("checkout") || paymentStatus.includes("invoice"))) return false;
++      if (paymentFilter === "unpaid" && (itemLooksPaid || paymentStatus.includes("sent") || paymentStatus.includes("checkout") || paymentStatus.includes("invoice"))) return false;
+       if (paymentFilter === "refund" && !JSON.stringify(item).toLowerCase().includes("refund")) return false;
+       if (referralFilter === "available-credit") {
+         if (!matchesReferralFilter(item, referralFilter) && !getAvailableCustomerCreditsForRequest(item, customerCredits).length) return false;
+
+--- before/app/api/admin/delete-record/route.ts
++++ after/app/api/admin/delete-record/route.ts
+@@ -31,6 +31,13 @@
+   });
+ }
+ 
++function statusTextLooksPaid(value: unknown) {
++  const text = String(value || "").trim().toLowerCase().replace(/\s+/g, " ");
++  if (!text) return false;
++  if (/\b(unpaid|not paid|no payment|payment due|pending payment)\b/.test(text)) return false;
++  return /\b(paid|payment received|deposit paid|invoice paid|initial paid|additional paid|fully paid|final balance paid)\b/.test(text);
++}
++
+ function getProtectedDeleteReason(collection: string, data: Record<string, unknown>) {
+   if (collection !== "serviceRequests") return "";
+ 
+@@ -45,7 +52,17 @@
+     data.commercialQuoteStatus,
+   ].map(lower).join(" ");
+ 
+-  if (statusText.includes("paid") || statusText.includes("completed") || statusText.includes("scheduled")) {
++  if ([
++    data.status,
++    data.paymentStatus,
++    data.checkoutStatus,
++    data.laundryPaymentStatus,
++    data.familyInvoiceStatus,
++    data.invoiceStatus,
++    data.additionalPaymentStatus,
++    data.commercialInvoiceStatus,
++    data.laundryFinalInvoiceStatus,
++  ].some(statusTextLooksPaid) || statusText.includes("completed") || statusText.includes("scheduled")) {
+     return "This request looks paid, completed, or scheduled. Keep it for customer/payment records and mark it Canceled or Archived instead.";
+   }
+ 
+
+--- before/app/api/admin/create-payment-link/route.ts
++++ after/app/api/admin/create-payment-link/route.ts
+@@ -184,17 +184,39 @@
+   return isLaundryRescue ? "Laundry Rescue custom intro minimum" : `${serviceTitle} custom checkout`;
+ }
+ 
++function statusTextLooksPaid(value: unknown) {
++  const text = getString(value).toLowerCase().replace(/\s+/g, " ");
++  if (!text) return false;
++  if (/\b(unpaid|not paid|no payment|payment due|pending payment)\b/.test(text)) return false;
++  return /\b(paid|payment received|deposit paid|invoice paid|initial paid|additional paid|fully paid|final balance paid)\b/.test(text);
++}
++
+ function requestLooksAlreadyPaid(data: Record<string, unknown>) {
+-  const statusText = [
++  return [
+     data.status,
+     data.paymentStatus,
+     data.checkoutStatus,
+     data.laundryPaymentStatus,
+     data.familyInvoiceStatus,
+     data.invoiceStatus,
+-  ].map((value) => getString(value).toLowerCase()).join(" ");
+-
+-  return statusText.includes("paid") || statusText.includes("payment received") || statusText.includes("completed");
++    data.additionalPaymentStatus,
++    data.commercialInvoiceStatus,
++    data.laundryFinalInvoiceStatus,
++  ].some(statusTextLooksPaid) || Boolean(data.paidAt || data.paymentReceivedAt || data.laundryFinalBalancePaidAt || data.depositPaidAt || data.laundryDepositPaidAt);
++}
++
++function requestLooksClosedOrInactive(data: Record<string, unknown>) {
++  const status = getString(data.status).toLowerCase().replace(/\s+/g, " ");
++  return Boolean(status) && (
++    status === "archived" ||
++    status === "canceled" ||
++    status === "cancelled" ||
++    status === "declined" ||
++    status === "rejected" ||
++    status === "not eligible" ||
++    status.startsWith("closed") ||
++    status.includes("no response")
++  );
+ }
+ 
+ 
+@@ -278,6 +300,13 @@
+     if (requestLooksAlreadyPaid(data)) {
+       return NextResponse.json(
+         { ok: false, error: "This request already looks paid or completed. Do not create another checkout link unless you intentionally create a separate additional-payment request." },
++        { status: 409 }
++      );
++    }
++
++    if (requestLooksClosedOrInactive(data)) {
++      return NextResponse.json(
++        { ok: false, error: "This request is closed, canceled, archived, or inactive. Reopen/create a new request before sending a checkout link." },
+         { status: 409 }
+       );
+     }
+
+--- before/app/pay/[token]/route.ts
++++ after/app/pay/[token]/route.ts
+@@ -159,17 +159,39 @@
+   return lines.some((line) => getCommercialLineTaxMode(line) === "taxable");
+ }
+ 
++function statusTextLooksPaid(value: unknown) {
++  const text = getString(value).toLowerCase().replace(/\s+/g, " ");
++  if (!text) return false;
++  if (/\b(unpaid|not paid|no payment|payment due|pending payment)\b/.test(text)) return false;
++  return /\b(paid|payment received|deposit paid|invoice paid|initial paid|additional paid|fully paid|final balance paid)\b/.test(text);
++}
++
+ function isRequestAlreadyPaid(data: Record<string, unknown>) {
+-  const statusText = [
++  return [
+     data.status,
+     data.paymentStatus,
+     data.checkoutStatus,
+     data.laundryPaymentStatus,
+     data.familyInvoiceStatus,
+     data.invoiceStatus,
+-  ].map((value) => getString(value).toLowerCase()).join(" ");
+-
+-  return statusText.includes("paid") || statusText.includes("payment received") || statusText.includes("completed");
++    data.additionalPaymentStatus,
++    data.commercialInvoiceStatus,
++    data.laundryFinalInvoiceStatus,
++  ].some(statusTextLooksPaid) || Boolean(data.paidAt || data.paymentReceivedAt || data.laundryFinalBalancePaidAt || data.depositPaidAt || data.laundryDepositPaidAt);
++}
++
++function isRequestClosedOrInactive(data: Record<string, unknown>) {
++  const status = getString(data.status).toLowerCase().replace(/\s+/g, " ");
++  return Boolean(status) && (
++    status === "archived" ||
++    status === "canceled" ||
++    status === "cancelled" ||
++    status === "declined" ||
++    status === "rejected" ||
++    status === "not eligible" ||
++    status.startsWith("closed") ||
++    status.includes("no response")
++  );
+ }
+ 
+ function isStripeSessionPaid(session: Stripe.Checkout.Session) {
+@@ -447,12 +469,21 @@
+       });
+     }
+ 
++    if (isRequestClosedOrInactive(data)) {
++      return htmlPage({
++        tone: "error",
++        status: 410,
++        title: "This checkout link is no longer active.",
++        text: "This NestHelper request was closed, canceled, or archived. Please text us if you still need help and we can create a fresh request.",
++      });
++    }
++
+     const existingSessionId = getString(data.checkoutSessionId);
+     if (existingSessionId) {
+       try {
+         const existingSession = await stripe.checkout.sessions.retrieve(existingSessionId);
+         if (isStripeSessionPaid(existingSession)) {
+-          await requestRef.update({
++          const paidUpdate: Record<string, unknown> = {
+             status: getPaidStatusForRequest(data),
+             paymentStatus: getPaidPaymentStatusForRequest(data),
+             checkoutStatus: "Paid",
+@@ -461,7 +492,17 @@
+             paymentIntentId: typeof existingSession.payment_intent === "string" ? existingSession.payment_intent : "",
+             smartCheckoutLastUsedAt: FieldValue.serverTimestamp(),
+             updatedAt: FieldValue.serverTimestamp(),
+-          });
++          };
++
++          if (getString(data.service) === "laundry-rescue") {
++            paidUpdate.status = "Deposit Paid - Final Pending";
++            paidUpdate.paymentStatus = "Deposit Paid - Final Pending";
++            paidUpdate.laundryPaymentStatus = "Deposit Paid - Final Pending";
++            paidUpdate.laundryDepositStatus = "Deposit Paid";
++            paidUpdate.laundryDepositPaidAt = FieldValue.serverTimestamp();
++          }
++
++          await requestRef.update(paidUpdate);
+ 
+           return htmlPage({
+             tone: "success",
