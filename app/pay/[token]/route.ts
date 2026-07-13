@@ -172,6 +172,18 @@ function isRequestAlreadyPaid(data: Record<string, unknown>) {
   return statusText.includes("paid") || statusText.includes("payment received") || statusText.includes("completed");
 }
 
+function isStripeSessionPaid(session: Stripe.Checkout.Session) {
+  return session.payment_status === "paid" || session.status === "complete";
+}
+
+function getPaidStatusForRequest(data: Record<string, unknown>) {
+  return getString(data.service) === "laundry-rescue" ? "Deposit Paid" : "Paid";
+}
+
+function getPaidPaymentStatusForRequest(data: Record<string, unknown>) {
+  return getString(data.service) === "laundry-rescue" ? "Deposit Paid" : "Paid";
+}
+
 function isStripeSessionUsable(session: Stripe.Checkout.Session) {
   const now = Math.floor(Date.now() / 1000);
   return Boolean(
@@ -439,6 +451,25 @@ export async function GET(_request: Request, context: RouteContext) {
     if (existingSessionId) {
       try {
         const existingSession = await stripe.checkout.sessions.retrieve(existingSessionId);
+        if (isStripeSessionPaid(existingSession)) {
+          await requestRef.update({
+            status: getPaidStatusForRequest(data),
+            paymentStatus: getPaidPaymentStatusForRequest(data),
+            checkoutStatus: "Paid",
+            paidAt: FieldValue.serverTimestamp(),
+            paidSessionId: existingSession.id,
+            paymentIntentId: typeof existingSession.payment_intent === "string" ? existingSession.payment_intent : "",
+            smartCheckoutLastUsedAt: FieldValue.serverTimestamp(),
+            updatedAt: FieldValue.serverTimestamp(),
+          });
+
+          return htmlPage({
+            tone: "success",
+            title: "This request is already paid.",
+            text: "Thanks — this NestHelper checkout was already completed. We will follow up with scheduling or service details.",
+          });
+        }
+
         if (isStripeSessionUsable(existingSession) && existingSession.url) {
           return NextResponse.redirect(existingSession.url, { status: 303 });
         }

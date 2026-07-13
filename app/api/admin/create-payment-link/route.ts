@@ -184,6 +184,19 @@ function getDefaultCustomTitle(serviceTitle: string, isLaundryRescue: boolean) {
   return isLaundryRescue ? "Laundry Rescue custom intro minimum" : `${serviceTitle} custom checkout`;
 }
 
+function requestLooksAlreadyPaid(data: Record<string, unknown>) {
+  const statusText = [
+    data.status,
+    data.paymentStatus,
+    data.checkoutStatus,
+    data.laundryPaymentStatus,
+    data.familyInvoiceStatus,
+    data.invoiceStatus,
+  ].map((value) => getString(value).toLowerCase()).join(" ");
+
+  return statusText.includes("paid") || statusText.includes("payment received") || statusText.includes("completed");
+}
+
 
 const COMMERCIAL_TAXABLE_PRESETS = new Set([
   "firstTimeReset",
@@ -261,6 +274,14 @@ export async function POST(request: Request) {
     const data = requestSnap.data() || {};
     const serviceId = getString(data.service);
     const serviceTitle = getString(data.selectedServiceTitle) || services.find((item) => item.id === serviceId)?.title || serviceId || "NestHelper service";
+
+    if (requestLooksAlreadyPaid(data)) {
+      return NextResponse.json(
+        { ok: false, error: "This request already looks paid or completed. Do not create another checkout link unless you intentionally create a separate additional-payment request." },
+        { status: 409 }
+      );
+    }
+
     const isLaundryRescue = serviceId === "laundry-rescue";
     const isCommercialReset = serviceId === "commercial-reset";
     const savedCommercialBreakdown = (data.commercialQuoteBreakdown || {}) as Record<string, unknown>;
