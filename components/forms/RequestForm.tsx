@@ -845,14 +845,12 @@ export function RequestForm() {
   const requestedService = normalizeServiceParam(params.get("service") || "");
   const requestedReferralCode = normalizeReferralInput(params.get("ref") || params.get("referral") || params.get("referralCode") || "");
   const [form, setForm] = useState({
-    ...mergeCampaignAttribution({
-      ...defaultState,
-      service: requestedService,
-      supplyPreference: getServiceCategory(requestedService) === "movePrep" ? "Not sure yet" : defaultState.supplyPreference,
-      incomingReferralCode: requestedReferralCode,
-      incomingReferralProgram: requestedReferralCode ? "family-to-family" : "",
-      incomingReferralLandingPage: requestedReferralCode ? "/referrals" : "",
-    }),
+    ...defaultState,
+    service: requestedService,
+    supplyPreference: getServiceCategory(requestedService) === "movePrep" ? "Not sure yet" : defaultState.supplyPreference,
+    incomingReferralCode: requestedReferralCode,
+    incomingReferralProgram: requestedReferralCode ? "family-to-family" : "",
+    incomingReferralLandingPage: requestedReferralCode ? "/referrals" : "",
   });
   const [status, setStatus] = useState<Status>("idle");
   const [message, setMessage] = useState("");
@@ -883,7 +881,13 @@ export function RequestForm() {
   const showHowFoundUsDetails = shouldShowHowFoundUsDetails(form.howFoundUs);
 
   useEffect(() => {
-    setForm((prev) => mergeCampaignAttribution(prev));
+    setForm((prev) => {
+      try {
+        return mergeCampaignAttribution(prev);
+      } catch {
+        return prev;
+      }
+    });
   }, []);
 
   function update(name: keyof RequestFormState, value: unknown) {

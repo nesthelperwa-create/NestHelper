@@ -36,6 +36,22 @@ function getFirst(params: URLSearchParams, keys: string[]) {
   return "";
 }
 
+function hasAnyParam(params: URLSearchParams, keys: string[]) {
+  return keys.some((key) => Boolean(clean(params.get(key))));
+}
+
+function getGoogleAdsDetailText(params: URLSearchParams) {
+  const details = [
+    getFirst(params, ["gad_source"]) ? `gad_source=${getFirst(params, ["gad_source"])}` : "",
+    getFirst(params, ["gad_campaignid"]) ? `campaign_id=${getFirst(params, ["gad_campaignid"])}` : "",
+    getFirst(params, ["gad_adgroupid"]) ? `adgroup_id=${getFirst(params, ["gad_adgroupid"])}` : "",
+    getFirst(params, ["gclid"]) ? `gclid=${getFirst(params, ["gclid"]).slice(0, 80)}` : "",
+    getFirst(params, ["gbraid"]) ? `gbraid=${getFirst(params, ["gbraid"]).slice(0, 80)}` : "",
+    getFirst(params, ["wbraid"]) ? `wbraid=${getFirst(params, ["wbraid"]).slice(0, 80)}` : "",
+  ].filter(Boolean);
+  return details.join("; ");
+}
+
 function clearStoredAttribution() {
   if (typeof window === "undefined") return;
   try {
@@ -120,12 +136,15 @@ export function getCampaignAttributionFromCurrentPage(): CampaignAttribution {
     };
   }
 
-  const source = getFirst(params, ["utm_source", "source", "src"]);
-  const medium = getFirst(params, ["utm_medium", "medium"]);
-  const campaign = getFirst(params, ["utm_campaign", "campaign"]);
-  const content = getFirst(params, ["utm_content", "content"]);
+  const googleAdsParamKeys = ["gclid", "gbraid", "wbraid", "gad_source", "gad_campaignid", "gad_adgroupid"];
+  const hasGoogleAdsParams = hasAnyParam(params, googleAdsParamKeys);
+  const source = getFirst(params, ["utm_source", "source", "src"]) || (hasGoogleAdsParams ? "google-ads" : "");
+  const medium = getFirst(params, ["utm_medium", "medium"]) || (hasGoogleAdsParams ? "cpc" : "");
+  const campaign = getFirst(params, ["utm_campaign", "campaign"]) || getFirst(params, ["gad_campaignid"]);
+  const googleAdsDetailText = getGoogleAdsDetailText(params);
+  const content = getFirst(params, ["utm_content", "content", "gad_adgroupid"]) || googleAdsDetailText;
   const term = getFirst(params, ["utm_term", "term"]);
-  const hasUrlCampaign = Boolean(source || medium || campaign || content || term);
+  const hasUrlCampaign = Boolean(source || medium || campaign || content || term || hasGoogleAdsParams);
 
   if (hasUrlCampaign) {
     const next: CampaignAttribution = {
@@ -189,17 +208,21 @@ export function getCampaignDetailText(attribution: Partial<CampaignAttribution>)
 }
 
 export function mergeCampaignAttribution<T extends { howFoundUs?: string; howFoundUsDetails?: string }>(form: T): T {
-  const attribution = getCampaignAttributionFromCurrentPage();
-  if (!attribution.campaignSource && !attribution.campaignMedium && !attribution.campaignName) return form;
+  try {
+    const attribution = getCampaignAttributionFromCurrentPage();
+    if (!attribution.campaignSource && !attribution.campaignMedium && !attribution.campaignName) return form;
 
-  const inferredHowFoundUs = form.howFoundUs || getHowFoundUsFromCampaign(attribution);
-  const details = getCampaignDetailText(attribution);
-  const mergedDetails = form.howFoundUsDetails || details;
+    const inferredHowFoundUs = form.howFoundUs || getHowFoundUsFromCampaign(attribution);
+    const details = getCampaignDetailText(attribution);
+    const mergedDetails = form.howFoundUsDetails || details;
 
-  return {
-    ...form,
-    ...attribution,
-    howFoundUs: inferredHowFoundUs,
-    howFoundUsDetails: mergedDetails,
-  };
+    return {
+      ...form,
+      ...attribution,
+      howFoundUs: inferredHowFoundUs,
+      howFoundUsDetails: mergedDetails,
+    };
+  } catch {
+    return form;
+  }
 }
