@@ -1,0 +1,185 @@
+--- before/components/admin/AdminTable.tsx
++++ after/components/admin/AdminTable.tsx
+@@ -881,30 +881,19 @@
+   children: React.ReactNode;
+   tone?: "white" | "cream" | "gold" | "blue" | "gradient";
+ }) {
+-  const toneClass =
+-    tone === "gold"
+-      ? "border-[#d8c18f] bg-[#fbf6ea]"
+-      : tone === "blue"
+-        ? "border-cyan-200 bg-cyan-50/45"
+-        : tone === "cream"
+-          ? "border-[#eadfc8] bg-[#fbf6ea]"
+-          : tone === "gradient"
+-            ? "border-[#eadfc8] bg-gradient-to-br from-white via-white to-[#fbf6ea]"
+-            : "border-[#eadfc8] bg-white";
+-
+   return (
+-    <details id={id} className={`group scroll-mt-28 mb-5 w-full max-w-full overflow-hidden rounded-3xl border shadow-sm ${toneClass}`}>
+-      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 outline-none transition hover:bg-white/60 focus-visible:ring-4 focus-visible:ring-[#075c58]/15 sm:px-5 sm:py-4 [&::-webkit-details-marker]:hidden">
++    <details id={id} className="group scroll-mt-28 mb-4 w-full max-w-full overflow-hidden rounded-3xl border border-[#eadfc8] bg-white shadow-sm">
++      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 outline-none transition hover:bg-[#fbf6ea] focus-visible:ring-4 focus-visible:ring-[#075c58]/15 sm:px-5 sm:py-4 [&::-webkit-details-marker]:hidden">
+         <span className="min-w-0">
+           <span className="block text-[11px] font-black uppercase tracking-[0.18em] text-[#b98a2f]">{eyebrow}</span>
+-          {title && <span className="mt-1 block break-words text-base font-black leading-5 text-[#075c58] sm:text-lg">{title}</span>}
++          {title && <span className="mt-1 block break-words text-[15px] font-black leading-5 text-[#075c58] sm:text-base">{title}</span>}
+         </span>
+-        <span className="shrink-0 rounded-full border border-[#d8c18f] bg-white px-3 py-1 text-[11px] font-black text-slate-600 shadow-sm">
++        <span className="inline-flex shrink-0 items-center justify-center rounded-full border border-[#d8c18f] bg-[#fbf6ea] px-3 py-1 text-[11px] font-black uppercase tracking-[0.06em] text-slate-700 shadow-sm">
+           <span className="group-open:hidden">Open</span>
+           <span className="hidden group-open:inline">Close</span>
+         </span>
+       </summary>
+-      <div className="border-t border-[#eadfc8] bg-white/65 px-3 py-4 sm:px-5 sm:py-5">
++      <div className="border-t border-[#eadfc8] bg-white px-3 py-4 sm:px-5 sm:py-5">
+         {children}
+       </div>
+     </details>
+@@ -1316,9 +1305,9 @@
+               const target = document.querySelector(navItem.href);
+               if (target instanceof HTMLDetailsElement) target.open = true;
+             }}
+-            className="flex min-h-14 items-center gap-2 rounded-2xl border border-[#eadfc8] bg-[#fbf6ea] px-3 py-2 text-left transition hover:border-[#075c58]/35 hover:bg-white hover:shadow-sm"
++            className="flex min-h-14 items-center gap-2 rounded-2xl border border-[#eadfc8] bg-white px-3 py-2 text-left transition hover:border-[#075c58]/35 hover:bg-[#fbf6ea] hover:shadow-sm"
+           >
+-            <span className="inline-flex h-7 min-w-7 shrink-0 items-center justify-center rounded-full bg-white px-2 text-[10px] font-black uppercase tracking-[0.08em] text-[#b98a2f] shadow-sm">
++            <span className="inline-flex h-7 min-w-7 shrink-0 items-center justify-center rounded-full border border-[#d8c18f] bg-[#fbf6ea] px-2 text-[10px] font-black uppercase tracking-[0.08em] text-[#b98a2f] shadow-sm">
+               {navItem.label}
+             </span>
+             <span className="text-xs font-black leading-4 text-[#075c58] sm:text-sm">{navItem.title}</span>
+@@ -1336,7 +1325,7 @@
+   if (!visibleFields.length) return null;
+ 
+   return (
+-    <AdminCollapsibleSection id="admin-section-snapshot" eyebrow="Snapshot" title="Review the customer/request basics" tone="cream">
++    <AdminCollapsibleSection id="admin-section-snapshot" eyebrow="Snapshot" title="Review the customer/request basics">
+       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+         <div className="min-w-0">
+           <p className="text-xs font-black uppercase tracking-[0.18em] text-[#b98a2f]">Snapshot</p>
+@@ -5390,7 +5379,7 @@
+             {showApplicationOnboardingPanel && <ApplicationQuickRead item={selected} documentCount={selectedApplicationDocuments.length} />}
+ 
+             {showApplicationOnboardingPanel && (
+-              <AdminCollapsibleSection id="admin-section-applicant-email" eyebrow="Applicant email" title="Send applicant communication" tone="white">
++              <AdminCollapsibleSection id="admin-section-applicant-email" eyebrow="Applicant email" title="Send applicant communication">
+                 <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                   <div className="max-w-3xl">
+                     <p className="text-xs font-black uppercase tracking-[0.2em] text-[#b98a2f]">Applicant email</p>
+@@ -5490,7 +5479,7 @@
+             )}
+ 
+             {showApplicationOnboardingPanel && (
+-              <AdminCollapsibleSection id="admin-section-applicant-onboarding" eyebrow="Applicant onboarding" title="Track helper/partner onboarding" tone="gradient">
++              <AdminCollapsibleSection id="admin-section-applicant-onboarding" eyebrow="Applicant onboarding" title="Track helper/partner onboarding">
+                 <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                   <div className="max-w-3xl">
+                     <p className="text-xs font-black uppercase tracking-[0.2em] text-[#b98a2f]">Applicant onboarding</p>
+@@ -5588,7 +5577,7 @@
+             )}
+ 
+             {showCommercialQuotePanel && (
+-              <AdminCollapsibleSection id="admin-section-commercial-quote" eyebrow="Commercial quote" title="Build and send commercial quote details" tone="blue">
++              <AdminCollapsibleSection id="admin-section-commercial-quote" eyebrow="Commercial quote" title="Build and send commercial quote details">
+                 <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                   <div className="max-w-3xl">
+                     <p className="text-xs font-black uppercase tracking-[0.2em] text-[#b98a2f]">Commercial quote workflow</p>
+@@ -5834,7 +5823,7 @@
+             )}
+ 
+             {showFamilyPaymentBreakdownPanel && (
+-              <AdminCollapsibleSection id="admin-section-family-breakdown" eyebrow="Draft estimate builder" title="Build the customer payment summary" tone="white">
++              <AdminCollapsibleSection id="admin-section-family-breakdown" eyebrow="Draft estimate builder" title="Build the customer payment summary">
+                 <FamilyPaymentBreakdownBuilder
+                   item={selected}
+                   availableCustomerCredits={selectedAvailableCustomerCredits}
+@@ -5860,7 +5849,7 @@
+             )}
+ 
+             {collectionName === "serviceRequests" && (
+-              <AdminCollapsibleSection id="admin-section-internal-notes" eyebrow="Internal notes" title="Private request tracking" tone="white">
++              <AdminCollapsibleSection id="admin-section-internal-notes" eyebrow="Internal notes" title="Private request tracking">
+                 <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                   <div>
+                     <p className="text-xs font-black uppercase tracking-[0.18em] text-[#b98a2f]">Internal notes</p>
+@@ -5931,7 +5920,7 @@
+             )}
+ 
+             {collectionName === "serviceRequests" && selected.service === "laundry-rescue" && (
+-              <AdminCollapsibleSection id="admin-section-repeat-laundry" eyebrow="Repeat laundry" title="Create the next Laundry Rescue pickup" tone="cream">
++              <AdminCollapsibleSection id="admin-section-repeat-laundry" eyebrow="Repeat laundry" title="Create the next Laundry Rescue pickup">
+                 <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                   <div>
+                     <p className="text-xs font-black uppercase tracking-[0.18em] text-[#b98a2f]">Repeat laundry</p>
+@@ -6078,7 +6067,7 @@
+             )}
+ 
+             {collectionName === "serviceRequests" && selected.service !== "laundry-rescue" && (
+-              <AdminCollapsibleSection id="admin-section-recurring-service" eyebrow="Follow-up / recurring" title="Create a new follow-up request" tone="cream">
++              <AdminCollapsibleSection id="admin-section-recurring-service" eyebrow="Follow-up / recurring" title="Create a new follow-up request">
+                 <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                   <div>
+                     <p className="text-xs font-black uppercase tracking-[0.18em] text-[#b98a2f]">Follow-up / recurring visit</p>
+@@ -6255,7 +6244,7 @@
+             )}
+ 
+             {showPaymentActions && (
+-              <AdminCollapsibleSection id="admin-section-payment" eyebrow="Payment / smart checkout" title="Create invoice or smart checkout" tone="gold">
++              <AdminCollapsibleSection id="admin-section-payment" eyebrow="Payment / smart checkout" title="Create invoice or smart checkout">
+                 <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                   <div className="max-w-2xl">
+                     <p className="text-xs font-black uppercase tracking-[0.2em] text-[#b98a2f]">{selectedIsCommercial ? "Step 3 — payment" : "Approval + payment"}</p>
+@@ -6691,7 +6680,7 @@
+             )}
+ 
+             {showLaundryFinalBalance && (
+-              <AdminCollapsibleSection id="admin-section-laundry-final" eyebrow="Laundry final balance" title="Handle final laundry invoice or auto-charge" tone="white">
++              <AdminCollapsibleSection id="admin-section-laundry-final" eyebrow="Laundry final balance" title="Handle final laundry invoice or auto-charge">
+                 <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                   <div className="max-w-2xl">
+                     <p className="text-xs font-black uppercase tracking-[0.2em] text-[#b98a2f]">
+@@ -6883,7 +6872,7 @@
+             )}
+ 
+             {showPaymentActions && (
+-              <AdminCollapsibleSection id="admin-section-additional-payment" eyebrow="Additional payment" title="Create add-on or balance payment" tone="gold">
++              <AdminCollapsibleSection id="admin-section-additional-payment" eyebrow="Additional payment" title="Create add-on or balance payment">
+                 <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                   <div className="max-w-2xl">
+                     <p className="text-xs font-black uppercase tracking-[0.2em] text-[#b98a2f]">{selectedIsCommercial ? "Optional later/add-on payment" : "Additional payment"}</p>
+@@ -6982,7 +6971,7 @@
+             )}
+ 
+             {showCustomerStatusActions && (
+-              <AdminCollapsibleSection id="admin-section-status" eyebrow="Status + customer update" title="Update status or notify customer" tone="white">
++              <AdminCollapsibleSection id="admin-section-status" eyebrow="Status + customer update" title="Update status or notify customer">
+                 <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                   <div className="max-w-2xl">
+                     <p className="text-xs font-black uppercase tracking-[0.2em] text-[#b98a2f]">Status + customer update</p>
+@@ -7080,7 +7069,7 @@
+             )}
+ 
+             {showFamilyReferralPanel && (
+-              <AdminCollapsibleSection id="admin-section-referrals" eyebrow="Family referrals" title="Generate and track referral links" tone="gradient">
++              <AdminCollapsibleSection id="admin-section-referrals" eyebrow="Family referrals" title="Generate and track referral links">
+                 <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                   <div className="max-w-3xl">
+                     <p className="text-xs font-black uppercase tracking-[0.2em] text-[#b98a2f]">Family referrals</p>
+@@ -7173,7 +7162,7 @@
+             )}
+ 
+             {showReviewRequestPanel && (
+-              <AdminCollapsibleSection id="admin-section-review-request" eyebrow="Review request" title="Ask for a customer review" tone="white">
++              <AdminCollapsibleSection id="admin-section-review-request" eyebrow="Review request" title="Ask for a customer review">
+                 <ReviewRequestPanel
+                   selected={selected}
+                   onRecordUpdate={(updates) => {
+@@ -7184,7 +7173,7 @@
+               </AdminCollapsibleSection>
+             )}
+ 
+-            <AdminCollapsibleSection id="admin-section-uploads" eyebrow="Photos, docs + full answers" title="Review uploads and advanced saved answers" tone="white">
++            <AdminCollapsibleSection id="admin-section-uploads" eyebrow="Photos, docs + full answers" title="Review uploads and advanced saved answers">
+               <div className="grid gap-3 sm:grid-cols-2">
+                 <AdminPhotoUploads photos={getPhotoUploads(selected)} />
+                 <AdminApplicationDocuments documents={selectedApplicationDocuments} collectionName={collectionName} recordId={selected.id} onOpenDocument={openApplicationDocument} busyDocumentPath={busyDocumentPath} />
