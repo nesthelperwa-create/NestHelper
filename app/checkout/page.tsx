@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { PageHero } from "@/components/PageHero";
+import type { ReactNode } from "react";
+import { AlertTriangle, CheckCircle2, Clock3, Home, Mail, Phone, ShieldCheck } from "lucide-react";
 import { services } from "@/lib/services";
-
+import { siteConfig } from "@/lib/siteConfig";
 
 export const metadata: Metadata = {
   title: "NestHelper Checkout Status",
@@ -69,7 +70,7 @@ const baseSuccessContent: Record<PaymentType, SuccessContent> = {
       "You receive any prep notes for access, pets, parking, or service-specific details.",
       "Your request is handled by a NestHelper checked helper or approved partner provider.",
     ],
-    closing: "You can close this tab. A NestHelper confirmation/follow-up message will come by email, text, or both.",
+    closing: "You can close this tab. A NestHelper confirmation or follow-up message will come by email, text, or both.",
   },
   custom_initial: {
     eyebrow: "Payment received",
@@ -87,14 +88,14 @@ const baseSuccessContent: Record<PaymentType, SuccessContent> = {
   laundry_deposit: {
     eyebrow: "Laundry deposit received",
     title: "Your Laundry Rescue deposit was successful.",
-    text: "Thanks — your non-refundable Laundry Rescue intro minimum was received. The $59 minimum includes pickup, wash, dry, fold, return, and up to about 26.2 lbs. We’ll dry-weigh laundry at pickup and handle any additional weight or approved add-ons using the option you selected during checkout: auto-charge after review or invoice-before-delivery.",
+    text: "Thanks — your non-refundable Laundry Rescue intro minimum was received. The $59 minimum includes pickup, wash, dry, fold, return, and up to about 26.2 lbs.",
     status: "Deposit paid ✓",
     steps: [
       "NestHelper confirms the pickup window, pickup spot, and laundry notes.",
       "Laundry is dry-weighed at pickup. Additional laundry above about 26.2 lbs is $2.25/lb.",
       "If you selected auto-charge, NestHelper may charge the saved payment method after additional weight, tax, and approved add-ons are confirmed. If you selected invoice-before-delivery, a final invoice link is sent before delivery.",
     ],
-    note: "This minimum is non-refundable and includes pickup, wash, dry, fold, return, and up to about 26.2 lbs of laundry. Additional laundry, add-ons, bulky items, rush options, or extra work can change the final balance. Laundry is not released until the final balance is fully paid.",
+    note: "This minimum includes pickup, wash, dry, fold, return, and up to about 26.2 lbs of laundry. Additional laundry, add-ons, bulky items, rush options, or extra work can change the final balance. Laundry is not released until the final balance is fully paid.",
     closing: "You can close this tab. Watch for Laundry Rescue pickup details from NestHelper.",
   },
   laundry_final_balance: {
@@ -202,13 +203,70 @@ const cancelledContent: Record<PaymentType, { title: string; text: string }> = {
   },
 };
 
-function Step({ number, children }: { number: number; children: React.ReactNode }) {
+function CheckoutShell({ children }: { children: ReactNode }) {
+  return (
+    <section className="relative isolate overflow-hidden px-4 py-10 sm:px-6 sm:py-16 lg:px-8">
+      <div className="absolute inset-0 -z-10 bg-[url('/assets/backgrounds/warm-mint-gradient.png')] bg-cover opacity-70" />
+      <div className="absolute inset-0 -z-10 bg-white/58" />
+      <div className="absolute -left-24 top-10 -z-10 h-72 w-72 rounded-full bg-nest-mint/65 blur-3xl" />
+      <div className="absolute -right-24 bottom-10 -z-10 h-72 w-72 rounded-full bg-nest-gold/20 blur-3xl" />
+      {children}
+    </section>
+  );
+}
+
+function BrandHeader() {
+  return (
+    <div className="flex items-center justify-center gap-3">
+      <img src={siteConfig.assets.icon} alt="" className="h-12 w-12 rounded-2xl object-contain" />
+      <div className="text-left">
+        <p className="text-xl font-black leading-none tracking-tight text-nest-teal">NestHelper</p>
+        <p className="mt-1 text-[11px] font-black uppercase tracking-[0.18em] text-nest-ink/45">Secure checkout</p>
+      </div>
+    </div>
+  );
+}
+
+function IconBadge({ tone }: { tone: "success" | "warning" | "neutral" }) {
+  const className =
+    tone === "warning"
+      ? "bg-amber-50 text-amber-700"
+      : tone === "success"
+        ? "bg-nest-mint text-nest-teal"
+        : "bg-nest-cream text-nest-teal";
+
+  const Icon = tone === "warning" ? AlertTriangle : tone === "success" ? CheckCircle2 : Clock3;
+
+  return (
+    <div className={`mx-auto mt-7 flex h-16 w-16 items-center justify-center rounded-full shadow-sm ${className}`}>
+      <Icon className="h-8 w-8" />
+    </div>
+  );
+}
+
+function PrimaryLink({ href, children }: { href: string; children: ReactNode }) {
+  return (
+    <Link href={href} className="rounded-full bg-nest-teal px-5 py-3 text-center font-black text-white shadow-soft transition hover:-translate-y-0.5 hover:shadow-lg">
+      {children}
+    </Link>
+  );
+}
+
+function SecondaryLink({ href, children }: { href: string; children: ReactNode }) {
+  return (
+    <Link href={href} className="rounded-full border border-nest-teal/20 bg-white px-5 py-3 text-center font-black text-nest-teal transition hover:-translate-y-0.5 hover:shadow-lg">
+      {children}
+    </Link>
+  );
+}
+
+function Step({ number, children }: { number: number; children: ReactNode }) {
   return (
     <li className="flex gap-3 rounded-2xl bg-nest-cream p-4 text-left">
       <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-nest-teal text-sm font-black text-white">
         {number}
       </span>
-      <span className="font-semibold text-nest-ink/80">{children}</span>
+      <span className="font-semibold leading-6 text-nest-ink/80">{children}</span>
     </li>
   );
 }
@@ -224,62 +282,53 @@ export default async function CheckoutPage({ searchParams }: CheckoutPageProps) 
 
   if (success) {
     return (
-      <>
-        <section className="relative overflow-hidden bg-gradient-to-br from-[#075c58] via-[#0b6f69] to-[#073f3c] px-4 py-20 text-white sm:px-6 lg:px-8">
-          <div className="absolute -left-20 top-10 h-56 w-56 rounded-full bg-white/10 blur-3xl" />
-          <div className="absolute -right-16 bottom-8 h-64 w-64 rounded-full bg-nest-gold/20 blur-3xl" />
-          <div className="relative mx-auto max-w-4xl text-center">
-            <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-white text-5xl shadow-2xl shadow-black/20">
-              ✓
-            </div>
-            <p className="text-sm font-black uppercase tracking-[0.28em] text-nest-gold">{content.eyebrow}</p>
-            <h1 className="mt-4 text-4xl font-black leading-tight sm:text-5xl">{content.title}</h1>
-            <p className="mx-auto mt-5 max-w-2xl text-lg font-semibold leading-8 text-white/85">
-              {content.text}
-            </p>
-          </div>
-        </section>
+      <CheckoutShell>
+        <div className="mx-auto max-w-5xl overflow-hidden rounded-[2.5rem] border border-white/70 bg-white/86 p-5 text-center shadow-soft backdrop-blur sm:p-8 lg:p-10">
+          <BrandHeader />
+          <IconBadge tone="success" />
 
-        <section className="mx-auto max-w-5xl px-4 py-14 sm:px-6 lg:px-8">
-          <div className="grid gap-6 lg:grid-cols-[1.2fr_.8fr]">
-            <div className="rounded-[2rem] border border-nest-gold/20 bg-white p-7 shadow-soft">
-              <h2 className="text-center text-2xl font-black text-nest-teal">What happens next</h2>
+          <p className="mt-6 text-xs font-black uppercase tracking-[0.22em] text-nest-gold">{content.eyebrow}</p>
+          <h1 className="mx-auto mt-4 max-w-3xl text-balance text-3xl font-black tracking-tight text-nest-teal sm:text-5xl">
+            {content.title}
+          </h1>
+          <p className="mx-auto mt-5 max-w-2xl text-base font-semibold leading-7 text-nest-ink/75 sm:text-lg sm:leading-8">
+            {content.text}
+          </p>
+
+          <div className="mx-auto mt-8 grid max-w-4xl gap-5 text-left lg:grid-cols-[1.25fr_.75fr]">
+            <div className="rounded-[1.75rem] border border-nest-teal/12 bg-white/82 p-5 shadow-sm">
+              <h2 className="text-center text-xl font-black text-nest-teal sm:text-2xl">What happens next</h2>
               <ol className="mt-5 grid gap-3">
                 {content.steps.map((step, index) => (
                   <Step key={step} number={index + 1}>{step}</Step>
                 ))}
               </ol>
               {content.note ? (
-                <div className="mt-7 rounded-2xl bg-nest-gold/10 p-5 text-sm font-semibold leading-7 text-nest-ink/75">
+                <div className="mt-5 rounded-2xl bg-nest-gold/10 p-4 text-sm font-semibold leading-7 text-nest-ink/75">
                   {content.note}
                 </div>
               ) : null}
             </div>
 
-            <aside className="rounded-[2rem] border border-nest-gold/20 bg-nest-cream p-7 text-center shadow-soft">
-              <h2 className="text-2xl font-black text-nest-teal">Payment status</h2>
-              <div className="mt-5 rounded-2xl bg-white p-5">
-                <p className="text-sm font-black uppercase tracking-[0.2em] text-nest-gold">Status</p>
-                <p className="mt-2 text-3xl font-black text-nest-teal">{content.status}</p>
-                {sessionId ? (
-                  <p className="mt-3 break-all text-xs font-semibold text-nest-ink/50">Stripe session: {sessionId}</p>
-                ) : null}
-              </div>
+            <aside className="rounded-[1.75rem] border border-nest-teal/12 bg-nest-cream p-5 text-center shadow-sm">
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-nest-gold">Status</p>
+              <p className="mt-2 text-2xl font-black text-nest-teal">{content.status}</p>
+              {sessionId ? (
+                <p className="mt-3 break-all text-xs font-semibold text-nest-ink/45">Stripe session: {sessionId}</p>
+              ) : null}
+
               <p className="mt-5 text-sm font-semibold leading-7 text-nest-ink/70">
                 {content.closing}
               </p>
-              <div className="mt-6 grid gap-3">
-                <Link href="/" className="rounded-full bg-nest-teal px-5 py-3 text-center font-black text-white shadow-soft transition hover:-translate-y-0.5 hover:shadow-lg">
-                  Back to home
-                </Link>
-                <Link href="/contact" className="rounded-full border border-nest-teal/20 bg-white px-5 py-3 text-center font-black text-nest-teal transition hover:-translate-y-0.5 hover:shadow-lg">
-                  Contact NestHelper
-                </Link>
+
+              <div className="mt-5 grid gap-3">
+                <PrimaryLink href="/">Back to home</PrimaryLink>
+                <SecondaryLink href="/contact">Contact NestHelper</SecondaryLink>
               </div>
             </aside>
           </div>
-        </section>
-      </>
+        </div>
+      </CheckoutShell>
     );
   }
 
@@ -287,41 +336,69 @@ export default async function CheckoutPage({ searchParams }: CheckoutPageProps) 
     const cancelledCopy = cancelledContent[paymentType];
 
     return (
-      <>
-        <PageHero
-          eyebrow="Checkout not completed"
-          title={cancelledCopy.title}
-          text={cancelledCopy.text}
-        />
-        <section className="mx-auto max-w-3xl px-4 py-14 text-center sm:px-6 lg:px-8">
-          <div className="rounded-[2rem] border border-nest-gold/20 bg-white p-7 shadow-soft">
-            <h2 className="text-2xl font-black text-nest-teal">Need help?</h2>
-            <p className="mt-3 font-semibold leading-7 text-nest-ink/70">
-              Reply to your NestHelper checkout email or contact us if the payment link is not working.
-            </p>
-            <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
-              <Link href="/contact" className="rounded-full bg-nest-teal px-5 py-3 font-black text-white shadow-soft transition hover:-translate-y-0.5 hover:shadow-lg">
-                Contact NestHelper
-              </Link>
-              <Link href="/" className="rounded-full border border-nest-teal/20 bg-white px-5 py-3 font-black text-nest-teal transition hover:-translate-y-0.5 hover:shadow-lg">
-                Back to home
-              </Link>
+      <CheckoutShell>
+        <div className="mx-auto max-w-3xl overflow-hidden rounded-[2.5rem] border border-white/70 bg-white/86 p-5 text-center shadow-soft backdrop-blur sm:p-8 lg:p-10">
+          <BrandHeader />
+          <IconBadge tone="warning" />
+
+          <p className="mt-6 text-xs font-black uppercase tracking-[0.22em] text-nest-gold">Checkout not completed</p>
+          <h1 className="mx-auto mt-4 max-w-2xl text-balance text-3xl font-black tracking-tight text-nest-teal sm:text-5xl">
+            {cancelledCopy.title}
+          </h1>
+          <p className="mx-auto mt-5 max-w-2xl text-base font-semibold leading-7 text-nest-ink/75 sm:text-lg sm:leading-8">
+            {cancelledCopy.text}
+          </p>
+
+          <div className="mt-8 grid gap-4 rounded-[1.75rem] border border-nest-teal/12 bg-white/72 p-5 text-left shadow-sm sm:grid-cols-2">
+            <div className="flex gap-3">
+              <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-nest-mint text-nest-teal">
+                <Mail className="h-5 w-5" />
+              </span>
+              <div>
+                <p className="font-black text-nest-teal">Use the same email link</p>
+                <p className="mt-1 text-sm font-semibold leading-6 text-nest-ink/70">
+                  Return to your NestHelper checkout email or text thread when you are ready.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-nest-mint text-nest-teal">
+                <Phone className="h-5 w-5" />
+              </span>
+              <div>
+                <p className="font-black text-nest-teal">Need help?</p>
+                <p className="mt-1 text-sm font-semibold leading-6 text-nest-ink/70">
+                  Text NestHelper at {siteConfig.phone}, and we can check the payment link.
+                </p>
+              </div>
             </div>
           </div>
-        </section>
-      </>
+
+          <div className="mx-auto mt-8 flex max-w-sm flex-col justify-center gap-3 sm:max-w-none sm:flex-row">
+            <PrimaryLink href="/contact">Contact NestHelper</PrimaryLink>
+            <SecondaryLink href="/">Back home</SecondaryLink>
+          </div>
+        </div>
+      </CheckoutShell>
     );
   }
 
   return (
-    <>
-      <PageHero
-        eyebrow="Checkout Flow"
-        title="Payment happens after approval."
-        text="NestHelper uses a request-first flow so customers only pay after service area, scope, safety, staffing, promo code, and pricing have been reviewed."
-      />
-      <section className="mx-auto max-w-5xl px-4 py-14 sm:px-6 lg:px-8">
-        <div className="grid gap-6 md:grid-cols-2">
+    <CheckoutShell>
+      <div className="mx-auto max-w-5xl overflow-hidden rounded-[2.5rem] border border-white/70 bg-white/86 p-5 text-center shadow-soft backdrop-blur sm:p-8 lg:p-10">
+        <BrandHeader />
+        <IconBadge tone="neutral" />
+
+        <p className="mt-6 text-xs font-black uppercase tracking-[0.22em] text-nest-gold">Request-first checkout</p>
+        <h1 className="mx-auto mt-4 max-w-3xl text-balance text-3xl font-black tracking-tight text-nest-teal sm:text-5xl">
+          Payment happens after approval.
+        </h1>
+        <p className="mx-auto mt-5 max-w-2xl text-base font-semibold leading-7 text-nest-ink/75 sm:text-lg sm:leading-8">
+          NestHelper reviews service area, scope, safety, staffing, promo code, and pricing before sending a secure checkout link.
+        </p>
+
+        <div className="mt-8 grid gap-5 text-left md:grid-cols-2">
           <Flow
             title="Regular services"
             steps={[
@@ -344,21 +421,25 @@ export default async function CheckoutPage({ searchParams }: CheckoutPageProps) 
             ]}
           />
         </div>
-        <div className="mt-8 rounded-[2rem] border border-nest-gold/20 bg-nest-gold/10 p-6 text-center">
-          <h2 className="text-2xl font-black text-nest-teal">Request-first checkout</h2>
-          <p className="mx-auto mt-2 max-w-3xl text-nest-ink/75">
-            Customers submit a request first. NestHelper reviews the request and sends a secure checkout link only after the service is approved.
-          </p>
+
+        <div className="mx-auto mt-8 flex max-w-sm flex-col justify-center gap-3 sm:max-w-none sm:flex-row">
+          <PrimaryLink href="/request">Request help</PrimaryLink>
+          <SecondaryLink href="/">Back home</SecondaryLink>
         </div>
-      </section>
-    </>
+      </div>
+    </CheckoutShell>
   );
 }
 
 function Flow({ title, steps }: { title: string; steps: string[] }) {
   return (
-    <div className="rounded-[2rem] bg-white p-6 shadow-soft">
-      <h2 className="text-center text-2xl font-black text-nest-teal">{title}</h2>
+    <div className="rounded-[1.75rem] border border-nest-teal/12 bg-white/82 p-5 shadow-sm">
+      <div className="flex items-center gap-3">
+        <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-nest-mint text-nest-teal">
+          {title === "Laundry Rescue" ? <ShieldCheck className="h-5 w-5" /> : <Home className="h-5 w-5" />}
+        </span>
+        <h2 className="text-xl font-black text-nest-teal">{title}</h2>
+      </div>
       <ol className="mt-5 grid gap-3">
         {steps.map((s, i) => (
           <Step key={s} number={i + 1}>{s}</Step>

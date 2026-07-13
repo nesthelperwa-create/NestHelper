@@ -1,0 +1,630 @@
+--- before/app/pay/[token]/route.ts
++++ after/app/pay/[token]/route.ts
+@@ -225,11 +225,255 @@
+   return saved > 0 ? saved : 59;
+ }
+ 
++function escapeHtml(value: string) {
++  return value
++    .replaceAll("&", "&amp;")
++    .replaceAll("<", "&lt;")
++    .replaceAll(">", "&gt;")
++    .replaceAll('"', "&quot;")
++    .replaceAll("'", "&#39;");
++}
++
+ function htmlPage({
+   title,
+   text,
+   status = 200,
+   tone = "neutral",
++}: {
++  title: string;
++  text: string;
++  status?: number;
++  tone?: "neutral" | "success" | "error";
++}) {
++  const safeTitle = escapeHtml(title);
++  const safeText = escapeHtml(text);
++  const isSuccess = tone === "success";
++  const isError = tone === "error";
++  const accent = isError ? "#9f2f1f" : isSuccess ? "#075c58" : "#075c58";
++  const icon = isError ? "!" : isSuccess ? "✓" : "i";
++  const statusLabel = isError ? "Checkout needs review" : isSuccess ? "Checkout handled" : "Checkout status";
++
++  return new NextResponse(`<!doctype html>
++<html lang="en">
++<head>
++  <meta charset="utf-8" />
++  <meta name="robots" content="noindex,nofollow" />
++  <meta name="viewport" content="width=device-width, initial-scale=1" />
++  <title>NestHelper Checkout</title>
++  <style>
++    :root {
++      --teal: #075c58;
++      --teal-dark: #064844;
++      --gold: #b98a2f;
++      --cream: #fbf6ea;
++      --ink: #243232;
++      --muted: #5b6a79;
++      --border: #eadfc8;
++    }
++
++    * { box-sizing: border-box; }
++
++    body {
++      margin: 0;
++      min-height: 100vh;
++      color: var(--ink);
++      font-family: Arial, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
++      background:
++        radial-gradient(circle at 18% 14%, rgba(117, 194, 177, .28), transparent 32%),
++        radial-gradient(circle at 88% 20%, rgba(185, 138, 47, .18), transparent 28%),
++        var(--cream);
++    }
++
++    main {
++      min-height: 100vh;
++      display: flex;
++      align-items: center;
++      justify-content: center;
++      padding: 28px 14px;
++    }
++
++    .card {
++      width: min(100%, 680px);
++      overflow: hidden;
++      border: 1px solid rgba(234, 223, 200, .95);
++      border-radius: 34px;
++      background: rgba(255, 255, 255, .9);
++      box-shadow: 0 18px 42px rgba(15, 23, 42, .10);
++      backdrop-filter: blur(10px);
++    }
++
++    .brand {
++      display: flex;
++      align-items: center;
++      gap: 12px;
++      padding: 18px 22px;
++      border-bottom: 1px solid var(--border);
++      background: rgba(255, 255, 255, .78);
++    }
++
++    .brand img {
++      width: 44px;
++      height: 44px;
++      object-fit: contain;
++      border-radius: 14px;
++    }
++
++    .brand-title {
++      margin: 0;
++      color: var(--teal);
++      font-size: 20px;
++      font-weight: 900;
++      letter-spacing: -.03em;
++      line-height: 1;
++    }
++
++    .brand-subtitle {
++      margin: 4px 0 0;
++      color: var(--muted);
++      font-size: 12px;
++      font-weight: 800;
++      letter-spacing: .10em;
++      text-transform: uppercase;
++    }
++
++    .content {
++      padding: 26px 22px 24px;
++      text-align: center;
++    }
++
++    .icon {
++      display: inline-flex;
++      width: 64px;
++      height: 64px;
++      align-items: center;
++      justify-content: center;
++      border-radius: 999px;
++      background: ${isError ? "rgba(159, 47, 31, .10)" : "rgba(117, 194, 177, .24)"};
++      color: ${accent};
++      font-size: 32px;
++      font-weight: 900;
++      box-shadow: inset 0 0 0 1px rgba(7, 92, 88, .08);
++    }
++
++    .eyebrow {
++      margin: 18px 0 0;
++      color: var(--gold);
++      font-size: 12px;
++      font-weight: 900;
++      letter-spacing: .20em;
++      text-transform: uppercase;
++    }
++
++    h1 {
++      margin: 12px auto 0;
++      max-width: 540px;
++      color: ${accent};
++      font-size: clamp(32px, 8vw, 52px);
++      line-height: 1.02;
++      letter-spacing: -.05em;
++    }
++
++    .message {
++      margin: 16px auto 0;
++      max-width: 560px;
++      color: rgba(36, 50, 50, .76);
++      font-size: clamp(16px, 4.1vw, 19px);
++      font-weight: 700;
++      line-height: 1.75;
++    }
++
++    .status {
++      margin: 22px auto 0;
++      max-width: 460px;
++      border: 1px solid var(--border);
++      border-radius: 24px;
++      background: var(--cream);
++      padding: 14px 16px;
++      color: var(--teal);
++      font-size: 14px;
++      font-weight: 900;
++    }
++
++    .footer {
++      margin-top: 22px;
++      color: rgba(36, 50, 50, .68);
++      font-size: 14px;
++      font-weight: 700;
++      line-height: 1.7;
++    }
++
++    .footer a {
++      color: var(--teal);
++      font-weight: 900;
++      text-decoration: none;
++    }
++
++    .actions {
++      margin-top: 20px;
++      display: flex;
++      justify-content: center;
++    }
++
++    .button {
++      display: inline-flex;
++      align-items: center;
++      justify-content: center;
++      min-height: 46px;
++      border-radius: 999px;
++      background: var(--teal);
++      color: white;
++      padding: 12px 20px;
++      font-size: 14px;
++      font-weight: 900;
++      text-decoration: none;
++      box-shadow: 0 10px 22px rgba(7, 92, 88, .18);
++    }
++
++    @media (max-width: 520px) {
++      main { align-items: flex-start; padding-top: 22px; }
++      .card { border-radius: 28px; }
++      .brand { padding: 16px 18px; }
++      .brand img { width: 40px; height: 40px; }
++      .brand-title { font-size: 18px; }
++      .content { padding: 24px 18px 22px; }
++      .icon { width: 58px; height: 58px; font-size: 28px; }
++      .message { line-height: 1.65; }
++    }
++  </style>
++</head>
++<body>
++  <main>
++    <section class="card" aria-labelledby="checkout-title">
++      <div class="brand">
++        <img src="/assets/brand/nesthelper-icon.png" alt="" />
++        <div>
++          <p class="brand-title">NestHelper</p>
++          <p class="brand-subtitle">Secure checkout</p>
++        </div>
++      </div>
++
++      <div class="content">
++        <div class="icon" aria-hidden="true">${icon}</div>
++        <p class="eyebrow">NestHelper checkout</p>
++        <h1 id="checkout-title">${safeTitle}</h1>
++        <p class="message">${safeText}</p>
++        <div class="status">${statusLabel}</div>
++        <p class="footer">
++          Questions? Text NestHelper at <a href="sms:+14257901330">425-790-1330</a>.
++        </p>
++        <div class="actions">
++          <a class="button" href="/">Back to NestHelper</a>
++        </div>
++      </div>
++    </section>
++  </main>
++</body>
++</html>`, {
++    status,
++    headers: {
++      "content-type": "text/html; charset=utf-8",
++    },
++  });
+ }: {
+   title: string;
+   text: string;
+@@ -464,8 +708,8 @@
+     if (isRequestAlreadyPaid(data)) {
+       return htmlPage({
+         tone: "success",
+-        title: "This request already looks paid.",
+-        text: "Thanks — this NestHelper request already appears paid or completed. If you think this is wrong, text us and we’ll check it.",
++        title: "This checkout is already complete.",
++        text: "Thanks — this NestHelper checkout already appears paid or completed. We’ll follow up with scheduling or service details. If you think this is wrong, text us and we’ll check it.",
+       });
+     }
+ 
+@@ -474,7 +718,7 @@
+         tone: "error",
+         status: 410,
+         title: "This checkout link is no longer active.",
+-        text: "This NestHelper request was closed, canceled, or archived. Please text us if you still need help and we can create a fresh request.",
++        text: "This NestHelper request was closed, canceled, or archived. Please text us if you still need help and we can review the next step.",
+       });
+     }
+ 
+@@ -506,8 +750,8 @@
+ 
+           return htmlPage({
+             tone: "success",
+-            title: "This request is already paid.",
+-            text: "Thanks — this NestHelper checkout was already completed. We will follow up with scheduling or service details.",
++            title: "This checkout is already complete.",
++            text: "Thanks — this NestHelper checkout was already completed. We’ll follow up with scheduling or service details.",
+           });
+         }
+ 
+
+--- before/app/checkout/page.tsx
++++ after/app/checkout/page.tsx
+@@ -1,8 +1,9 @@
+ import type { Metadata } from "next";
+ import Link from "next/link";
+-import { PageHero } from "@/components/PageHero";
++import type { ReactNode } from "react";
++import { AlertTriangle, CheckCircle2, Clock3, Home, Mail, Phone, ShieldCheck } from "lucide-react";
+ import { services } from "@/lib/services";
+-
++import { siteConfig } from "@/lib/siteConfig";
+ 
+ export const metadata: Metadata = {
+   title: "NestHelper Checkout Status",
+@@ -69,7 +70,7 @@
+       "You receive any prep notes for access, pets, parking, or service-specific details.",
+       "Your request is handled by a NestHelper checked helper or approved partner provider.",
+     ],
+-    closing: "You can close this tab. A NestHelper confirmation/follow-up message will come by email, text, or both.",
++    closing: "You can close this tab. A NestHelper confirmation or follow-up message will come by email, text, or both.",
+   },
+   custom_initial: {
+     eyebrow: "Payment received",
+@@ -87,14 +88,14 @@
+   laundry_deposit: {
+     eyebrow: "Laundry deposit received",
+     title: "Your Laundry Rescue deposit was successful.",
+-    text: "Thanks — your non-refundable Laundry Rescue intro minimum was received. The $59 minimum includes pickup, wash, dry, fold, return, and up to about 26.2 lbs. We’ll dry-weigh laundry at pickup and handle any additional weight or approved add-ons using the option you selected during checkout: auto-charge after review or invoice-before-delivery.",
++    text: "Thanks — your non-refundable Laundry Rescue intro minimum was received. The $59 minimum includes pickup, wash, dry, fold, return, and up to about 26.2 lbs.",
+     status: "Deposit paid ✓",
+     steps: [
+       "NestHelper confirms the pickup window, pickup spot, and laundry notes.",
+       "Laundry is dry-weighed at pickup. Additional laundry above about 26.2 lbs is $2.25/lb.",
+       "If you selected auto-charge, NestHelper may charge the saved payment method after additional weight, tax, and approved add-ons are confirmed. If you selected invoice-before-delivery, a final invoice link is sent before delivery.",
+     ],
+-    note: "This minimum is non-refundable and includes pickup, wash, dry, fold, return, and up to about 26.2 lbs of laundry. Additional laundry, add-ons, bulky items, rush options, or extra work can change the final balance. Laundry is not released until the final balance is fully paid.",
++    note: "This minimum includes pickup, wash, dry, fold, return, and up to about 26.2 lbs of laundry. Additional laundry, add-ons, bulky items, rush options, or extra work can change the final balance. Laundry is not released until the final balance is fully paid.",
+     closing: "You can close this tab. Watch for Laundry Rescue pickup details from NestHelper.",
+   },
+   laundry_final_balance: {
+@@ -202,13 +203,70 @@
+   },
+ };
+ 
+-function Step({ number, children }: { number: number; children: React.ReactNode }) {
++function CheckoutShell({ children }: { children: ReactNode }) {
++  return (
++    <section className="relative isolate overflow-hidden px-4 py-10 sm:px-6 sm:py-16 lg:px-8">
++      <div className="absolute inset-0 -z-10 bg-[url('/assets/backgrounds/warm-mint-gradient.png')] bg-cover opacity-70" />
++      <div className="absolute inset-0 -z-10 bg-white/58" />
++      <div className="absolute -left-24 top-10 -z-10 h-72 w-72 rounded-full bg-nest-mint/65 blur-3xl" />
++      <div className="absolute -right-24 bottom-10 -z-10 h-72 w-72 rounded-full bg-nest-gold/20 blur-3xl" />
++      {children}
++    </section>
++  );
++}
++
++function BrandHeader() {
++  return (
++    <div className="flex items-center justify-center gap-3">
++      <img src={siteConfig.assets.icon} alt="" className="h-12 w-12 rounded-2xl object-contain" />
++      <div className="text-left">
++        <p className="text-xl font-black leading-none tracking-tight text-nest-teal">NestHelper</p>
++        <p className="mt-1 text-[11px] font-black uppercase tracking-[0.18em] text-nest-ink/45">Secure checkout</p>
++      </div>
++    </div>
++  );
++}
++
++function IconBadge({ tone }: { tone: "success" | "warning" | "neutral" }) {
++  const className =
++    tone === "warning"
++      ? "bg-amber-50 text-amber-700"
++      : tone === "success"
++        ? "bg-nest-mint text-nest-teal"
++        : "bg-nest-cream text-nest-teal";
++
++  const Icon = tone === "warning" ? AlertTriangle : tone === "success" ? CheckCircle2 : Clock3;
++
++  return (
++    <div className={`mx-auto mt-7 flex h-16 w-16 items-center justify-center rounded-full shadow-sm ${className}`}>
++      <Icon className="h-8 w-8" />
++    </div>
++  );
++}
++
++function PrimaryLink({ href, children }: { href: string; children: ReactNode }) {
++  return (
++    <Link href={href} className="rounded-full bg-nest-teal px-5 py-3 text-center font-black text-white shadow-soft transition hover:-translate-y-0.5 hover:shadow-lg">
++      {children}
++    </Link>
++  );
++}
++
++function SecondaryLink({ href, children }: { href: string; children: ReactNode }) {
++  return (
++    <Link href={href} className="rounded-full border border-nest-teal/20 bg-white px-5 py-3 text-center font-black text-nest-teal transition hover:-translate-y-0.5 hover:shadow-lg">
++      {children}
++    </Link>
++  );
++}
++
++function Step({ number, children }: { number: number; children: ReactNode }) {
+   return (
+     <li className="flex gap-3 rounded-2xl bg-nest-cream p-4 text-left">
+       <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-nest-teal text-sm font-black text-white">
+         {number}
+       </span>
+-      <span className="font-semibold text-nest-ink/80">{children}</span>
++      <span className="font-semibold leading-6 text-nest-ink/80">{children}</span>
+     </li>
+   );
+ }
+@@ -224,62 +282,53 @@
+ 
+   if (success) {
+     return (
+-      <>
+-        <section className="relative overflow-hidden bg-gradient-to-br from-[#075c58] via-[#0b6f69] to-[#073f3c] px-4 py-20 text-white sm:px-6 lg:px-8">
+-          <div className="absolute -left-20 top-10 h-56 w-56 rounded-full bg-white/10 blur-3xl" />
+-          <div className="absolute -right-16 bottom-8 h-64 w-64 rounded-full bg-nest-gold/20 blur-3xl" />
+-          <div className="relative mx-auto max-w-4xl text-center">
+-            <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-white text-5xl shadow-2xl shadow-black/20">
+-              ✓
+-            </div>
+-            <p className="text-sm font-black uppercase tracking-[0.28em] text-nest-gold">{content.eyebrow}</p>
+-            <h1 className="mt-4 text-4xl font-black leading-tight sm:text-5xl">{content.title}</h1>
+-            <p className="mx-auto mt-5 max-w-2xl text-lg font-semibold leading-8 text-white/85">
+-              {content.text}
+-            </p>
+-          </div>
+-        </section>
+-
+-        <section className="mx-auto max-w-5xl px-4 py-14 sm:px-6 lg:px-8">
+-          <div className="grid gap-6 lg:grid-cols-[1.2fr_.8fr]">
+-            <div className="rounded-[2rem] border border-nest-gold/20 bg-white p-7 shadow-soft">
+-              <h2 className="text-center text-2xl font-black text-nest-teal">What happens next</h2>
++      <CheckoutShell>
++        <div className="mx-auto max-w-5xl overflow-hidden rounded-[2.5rem] border border-white/70 bg-white/86 p-5 text-center shadow-soft backdrop-blur sm:p-8 lg:p-10">
++          <BrandHeader />
++          <IconBadge tone="success" />
++
++          <p className="mt-6 text-xs font-black uppercase tracking-[0.22em] text-nest-gold">{content.eyebrow}</p>
++          <h1 className="mx-auto mt-4 max-w-3xl text-balance text-3xl font-black tracking-tight text-nest-teal sm:text-5xl">
++            {content.title}
++          </h1>
++          <p className="mx-auto mt-5 max-w-2xl text-base font-semibold leading-7 text-nest-ink/75 sm:text-lg sm:leading-8">
++            {content.text}
++          </p>
++
++          <div className="mx-auto mt-8 grid max-w-4xl gap-5 text-left lg:grid-cols-[1.25fr_.75fr]">
++            <div className="rounded-[1.75rem] border border-nest-teal/12 bg-white/82 p-5 shadow-sm">
++              <h2 className="text-center text-xl font-black text-nest-teal sm:text-2xl">What happens next</h2>
+               <ol className="mt-5 grid gap-3">
+                 {content.steps.map((step, index) => (
+                   <Step key={step} number={index + 1}>{step}</Step>
+                 ))}
+               </ol>
+               {content.note ? (
+-                <div className="mt-7 rounded-2xl bg-nest-gold/10 p-5 text-sm font-semibold leading-7 text-nest-ink/75">
++                <div className="mt-5 rounded-2xl bg-nest-gold/10 p-4 text-sm font-semibold leading-7 text-nest-ink/75">
+                   {content.note}
+                 </div>
+               ) : null}
+             </div>
+ 
+-            <aside className="rounded-[2rem] border border-nest-gold/20 bg-nest-cream p-7 text-center shadow-soft">
+-              <h2 className="text-2xl font-black text-nest-teal">Payment status</h2>
+-              <div className="mt-5 rounded-2xl bg-white p-5">
+-                <p className="text-sm font-black uppercase tracking-[0.2em] text-nest-gold">Status</p>
+-                <p className="mt-2 text-3xl font-black text-nest-teal">{content.status}</p>
+-                {sessionId ? (
+-                  <p className="mt-3 break-all text-xs font-semibold text-nest-ink/50">Stripe session: {sessionId}</p>
+-                ) : null}
+-              </div>
++            <aside className="rounded-[1.75rem] border border-nest-teal/12 bg-nest-cream p-5 text-center shadow-sm">
++              <p className="text-xs font-black uppercase tracking-[0.18em] text-nest-gold">Status</p>
++              <p className="mt-2 text-2xl font-black text-nest-teal">{content.status}</p>
++              {sessionId ? (
++                <p className="mt-3 break-all text-xs font-semibold text-nest-ink/45">Stripe session: {sessionId}</p>
++              ) : null}
++
+               <p className="mt-5 text-sm font-semibold leading-7 text-nest-ink/70">
+                 {content.closing}
+               </p>
+-              <div className="mt-6 grid gap-3">
+-                <Link href="/" className="rounded-full bg-nest-teal px-5 py-3 text-center font-black text-white shadow-soft transition hover:-translate-y-0.5 hover:shadow-lg">
+-                  Back to home
+-                </Link>
+-                <Link href="/contact" className="rounded-full border border-nest-teal/20 bg-white px-5 py-3 text-center font-black text-nest-teal transition hover:-translate-y-0.5 hover:shadow-lg">
+-                  Contact NestHelper
+-                </Link>
++
++              <div className="mt-5 grid gap-3">
++                <PrimaryLink href="/">Back to home</PrimaryLink>
++                <SecondaryLink href="/contact">Contact NestHelper</SecondaryLink>
+               </div>
+             </aside>
+           </div>
+-        </section>
+-      </>
++        </div>
++      </CheckoutShell>
+     );
+   }
+ 
+@@ -287,41 +336,69 @@
+     const cancelledCopy = cancelledContent[paymentType];
+ 
+     return (
+-      <>
+-        <PageHero
+-          eyebrow="Checkout not completed"
+-          title={cancelledCopy.title}
+-          text={cancelledCopy.text}
+-        />
+-        <section className="mx-auto max-w-3xl px-4 py-14 text-center sm:px-6 lg:px-8">
+-          <div className="rounded-[2rem] border border-nest-gold/20 bg-white p-7 shadow-soft">
+-            <h2 className="text-2xl font-black text-nest-teal">Need help?</h2>
+-            <p className="mt-3 font-semibold leading-7 text-nest-ink/70">
+-              Reply to your NestHelper checkout email or contact us if the payment link is not working.
+-            </p>
+-            <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
+-              <Link href="/contact" className="rounded-full bg-nest-teal px-5 py-3 font-black text-white shadow-soft transition hover:-translate-y-0.5 hover:shadow-lg">
+-                Contact NestHelper
+-              </Link>
+-              <Link href="/" className="rounded-full border border-nest-teal/20 bg-white px-5 py-3 font-black text-nest-teal transition hover:-translate-y-0.5 hover:shadow-lg">
+-                Back to home
+-              </Link>
++      <CheckoutShell>
++        <div className="mx-auto max-w-3xl overflow-hidden rounded-[2.5rem] border border-white/70 bg-white/86 p-5 text-center shadow-soft backdrop-blur sm:p-8 lg:p-10">
++          <BrandHeader />
++          <IconBadge tone="warning" />
++
++          <p className="mt-6 text-xs font-black uppercase tracking-[0.22em] text-nest-gold">Checkout not completed</p>
++          <h1 className="mx-auto mt-4 max-w-2xl text-balance text-3xl font-black tracking-tight text-nest-teal sm:text-5xl">
++            {cancelledCopy.title}
++          </h1>
++          <p className="mx-auto mt-5 max-w-2xl text-base font-semibold leading-7 text-nest-ink/75 sm:text-lg sm:leading-8">
++            {cancelledCopy.text}
++          </p>
++
++          <div className="mt-8 grid gap-4 rounded-[1.75rem] border border-nest-teal/12 bg-white/72 p-5 text-left shadow-sm sm:grid-cols-2">
++            <div className="flex gap-3">
++              <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-nest-mint text-nest-teal">
++                <Mail className="h-5 w-5" />
++              </span>
++              <div>
++                <p className="font-black text-nest-teal">Use the same email link</p>
++                <p className="mt-1 text-sm font-semibold leading-6 text-nest-ink/70">
++                  Return to your NestHelper checkout email or text thread when you are ready.
++                </p>
++              </div>
++            </div>
++
++            <div className="flex gap-3">
++              <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-nest-mint text-nest-teal">
++                <Phone className="h-5 w-5" />
++              </span>
++              <div>
++                <p className="font-black text-nest-teal">Need help?</p>
++                <p className="mt-1 text-sm font-semibold leading-6 text-nest-ink/70">
++                  Text NestHelper at {siteConfig.phone}, and we can check the payment link.
++                </p>
++              </div>
+             </div>
+           </div>
+-        </section>
+-      </>
++
++          <div className="mx-auto mt-8 flex max-w-sm flex-col justify-center gap-3 sm:max-w-none sm:flex-row">
++            <PrimaryLink href="/contact">Contact NestHelper</PrimaryLink>
++            <SecondaryLink href="/">Back home</SecondaryLink>
++          </div>
++        </div>
++      </CheckoutShell>
+     );
+   }
+ 
+   return (
+-    <>
+-      <PageHero
+-        eyebrow="Checkout Flow"
+-        title="Payment happens after approval."
+-        text="NestHelper uses a request-first flow so customers only pay after service area, scope, safety, staffing, promo code, and pricing have been reviewed."
+-      />
+-      <section className="mx-auto max-w-5xl px-4 py-14 sm:px-6 lg:px-8">
+-        <div className="grid gap-6 md:grid-cols-2">
++    <CheckoutShell>
++      <div className="mx-auto max-w-5xl overflow-hidden rounded-[2.5rem] border border-white/70 bg-white/86 p-5 text-center shadow-soft backdrop-blur sm:p-8 lg:p-10">
++        <BrandHeader />
++        <IconBadge tone="neutral" />
++
++        <p className="mt-6 text-xs font-black uppercase tracking-[0.22em] text-nest-gold">Request-first checkout</p>
++        <h1 className="mx-auto mt-4 max-w-3xl text-balance text-3xl font-black tracking-tight text-nest-teal sm:text-5xl">
++          Payment happens after approval.
++        </h1>
++        <p className="mx-auto mt-5 max-w-2xl text-base font-semibold leading-7 text-nest-ink/75 sm:text-lg sm:leading-8">
++          NestHelper reviews service area, scope, safety, staffing, promo code, and pricing before sending a secure checkout link.
++        </p>
++
++        <div className="mt-8 grid gap-5 text-left md:grid-cols-2">
+           <Flow
+             title="Regular services"
+             steps={[
+@@ -344,21 +421,25 @@
+             ]}
+           />
+         </div>
+-        <div className="mt-8 rounded-[2rem] border border-nest-gold/20 bg-nest-gold/10 p-6 text-center">
+-          <h2 className="text-2xl font-black text-nest-teal">Request-first checkout</h2>
+-          <p className="mx-auto mt-2 max-w-3xl text-nest-ink/75">
+-            Customers submit a request first. NestHelper reviews the request and sends a secure checkout link only after the service is approved.
+-          </p>
++
++        <div className="mx-auto mt-8 flex max-w-sm flex-col justify-center gap-3 sm:max-w-none sm:flex-row">
++          <PrimaryLink href="/request">Request help</PrimaryLink>
++          <SecondaryLink href="/">Back home</SecondaryLink>
+         </div>
+-      </section>
+-    </>
++      </div>
++    </CheckoutShell>
+   );
+ }
+ 
+ function Flow({ title, steps }: { title: string; steps: string[] }) {
+   return (
+-    <div className="rounded-[2rem] bg-white p-6 shadow-soft">
+-      <h2 className="text-center text-2xl font-black text-nest-teal">{title}</h2>
++    <div className="rounded-[1.75rem] border border-nest-teal/12 bg-white/82 p-5 shadow-sm">
++      <div className="flex items-center gap-3">
++        <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-nest-mint text-nest-teal">
++          {title === "Laundry Rescue" ? <ShieldCheck className="h-5 w-5" /> : <Home className="h-5 w-5" />}
++        </span>
++        <h2 className="text-xl font-black text-nest-teal">{title}</h2>
++      </div>
+       <ol className="mt-5 grid gap-3">
+         {steps.map((s, i) => (
+           <Step key={s} number={i + 1}>{s}</Step>

@@ -225,11 +225,255 @@ function getLaundryDepositAmount(data: Record<string, unknown>) {
   return saved > 0 ? saved : 59;
 }
 
+function escapeHtml(value: string) {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
 function htmlPage({
   title,
   text,
   status = 200,
   tone = "neutral",
+}: {
+  title: string;
+  text: string;
+  status?: number;
+  tone?: "neutral" | "success" | "error";
+}) {
+  const safeTitle = escapeHtml(title);
+  const safeText = escapeHtml(text);
+  const isSuccess = tone === "success";
+  const isError = tone === "error";
+  const accent = isError ? "#9f2f1f" : isSuccess ? "#075c58" : "#075c58";
+  const icon = isError ? "!" : isSuccess ? "✓" : "i";
+  const statusLabel = isError ? "Checkout needs review" : isSuccess ? "Checkout handled" : "Checkout status";
+
+  return new NextResponse(`<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="robots" content="noindex,nofollow" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>NestHelper Checkout</title>
+  <style>
+    :root {
+      --teal: #075c58;
+      --teal-dark: #064844;
+      --gold: #b98a2f;
+      --cream: #fbf6ea;
+      --ink: #243232;
+      --muted: #5b6a79;
+      --border: #eadfc8;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      font-family: Arial, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at 18% 14%, rgba(117, 194, 177, .28), transparent 32%),
+        radial-gradient(circle at 88% 20%, rgba(185, 138, 47, .18), transparent 28%),
+        var(--cream);
+    }
+
+    main {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 28px 14px;
+    }
+
+    .card {
+      width: min(100%, 680px);
+      overflow: hidden;
+      border: 1px solid rgba(234, 223, 200, .95);
+      border-radius: 34px;
+      background: rgba(255, 255, 255, .9);
+      box-shadow: 0 18px 42px rgba(15, 23, 42, .10);
+      backdrop-filter: blur(10px);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 18px 22px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(255, 255, 255, .78);
+    }
+
+    .brand img {
+      width: 44px;
+      height: 44px;
+      object-fit: contain;
+      border-radius: 14px;
+    }
+
+    .brand-title {
+      margin: 0;
+      color: var(--teal);
+      font-size: 20px;
+      font-weight: 900;
+      letter-spacing: -.03em;
+      line-height: 1;
+    }
+
+    .brand-subtitle {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .10em;
+      text-transform: uppercase;
+    }
+
+    .content {
+      padding: 26px 22px 24px;
+      text-align: center;
+    }
+
+    .icon {
+      display: inline-flex;
+      width: 64px;
+      height: 64px;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      background: ${isError ? "rgba(159, 47, 31, .10)" : "rgba(117, 194, 177, .24)"};
+      color: ${accent};
+      font-size: 32px;
+      font-weight: 900;
+      box-shadow: inset 0 0 0 1px rgba(7, 92, 88, .08);
+    }
+
+    .eyebrow {
+      margin: 18px 0 0;
+      color: var(--gold);
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: .20em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 12px auto 0;
+      max-width: 540px;
+      color: ${accent};
+      font-size: clamp(32px, 8vw, 52px);
+      line-height: 1.02;
+      letter-spacing: -.05em;
+    }
+
+    .message {
+      margin: 16px auto 0;
+      max-width: 560px;
+      color: rgba(36, 50, 50, .76);
+      font-size: clamp(16px, 4.1vw, 19px);
+      font-weight: 700;
+      line-height: 1.75;
+    }
+
+    .status {
+      margin: 22px auto 0;
+      max-width: 460px;
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      background: var(--cream);
+      padding: 14px 16px;
+      color: var(--teal);
+      font-size: 14px;
+      font-weight: 900;
+    }
+
+    .footer {
+      margin-top: 22px;
+      color: rgba(36, 50, 50, .68);
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 1.7;
+    }
+
+    .footer a {
+      color: var(--teal);
+      font-weight: 900;
+      text-decoration: none;
+    }
+
+    .actions {
+      margin-top: 20px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 46px;
+      border-radius: 999px;
+      background: var(--teal);
+      color: white;
+      padding: 12px 20px;
+      font-size: 14px;
+      font-weight: 900;
+      text-decoration: none;
+      box-shadow: 0 10px 22px rgba(7, 92, 88, .18);
+    }
+
+    @media (max-width: 520px) {
+      main { align-items: flex-start; padding-top: 22px; }
+      .card { border-radius: 28px; }
+      .brand { padding: 16px 18px; }
+      .brand img { width: 40px; height: 40px; }
+      .brand-title { font-size: 18px; }
+      .content { padding: 24px 18px 22px; }
+      .icon { width: 58px; height: 58px; font-size: 28px; }
+      .message { line-height: 1.65; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="card" aria-labelledby="checkout-title">
+      <div class="brand">
+        <img src="/assets/brand/nesthelper-icon.png" alt="" />
+        <div>
+          <p class="brand-title">NestHelper</p>
+          <p class="brand-subtitle">Secure checkout</p>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="icon" aria-hidden="true">${icon}</div>
+        <p class="eyebrow">NestHelper checkout</p>
+        <h1 id="checkout-title">${safeTitle}</h1>
+        <p class="message">${safeText}</p>
+        <div class="status">${statusLabel}</div>
+        <p class="footer">
+          Questions? Text NestHelper at <a href="sms:+14257901330">425-790-1330</a>.
+        </p>
+        <div class="actions">
+          <a class="button" href="/">Back to NestHelper</a>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>`, {
+    status,
+    headers: {
+      "content-type": "text/html; charset=utf-8",
+    },
+  });
 }: {
   title: string;
   text: string;
@@ -464,8 +708,8 @@ export async function GET(_request: Request, context: RouteContext) {
     if (isRequestAlreadyPaid(data)) {
       return htmlPage({
         tone: "success",
-        title: "This request already looks paid.",
-        text: "Thanks — this NestHelper request already appears paid or completed. If you think this is wrong, text us and we’ll check it.",
+        title: "This checkout is already complete.",
+        text: "Thanks — this NestHelper checkout already appears paid or completed. We’ll follow up with scheduling or service details. If you think this is wrong, text us and we’ll check it.",
       });
     }
 
@@ -474,7 +718,7 @@ export async function GET(_request: Request, context: RouteContext) {
         tone: "error",
         status: 410,
         title: "This checkout link is no longer active.",
-        text: "This NestHelper request was closed, canceled, or archived. Please text us if you still need help and we can create a fresh request.",
+        text: "This NestHelper request was closed, canceled, or archived. Please text us if you still need help and we can review the next step.",
       });
     }
 
@@ -506,8 +750,8 @@ export async function GET(_request: Request, context: RouteContext) {
 
           return htmlPage({
             tone: "success",
-            title: "This request is already paid.",
-            text: "Thanks — this NestHelper checkout was already completed. We will follow up with scheduling or service details.",
+            title: "This checkout is already complete.",
+            text: "Thanks — this NestHelper checkout was already completed. We’ll follow up with scheduling or service details.",
           });
         }
 
