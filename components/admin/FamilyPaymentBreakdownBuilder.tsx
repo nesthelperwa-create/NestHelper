@@ -1080,37 +1080,38 @@ export default function FamilyPaymentBreakdownBuilder({
       {error && <p className="mt-3 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{error}</p>}
 
       {open && (
-        <div className="fixed inset-x-0 bottom-0 top-[4.75rem] z-[120] overflow-y-auto bg-slate-950/70 p-3 sm:top-[5.25rem] sm:p-6" onClick={(e) => e.stopPropagation()}>
-          <div className="mx-auto mb-8 max-w-6xl rounded-[2rem] bg-white shadow-2xl" role="dialog" aria-modal="true" aria-label="Family payment summary builder">
-            <div className="sticky top-0 z-20 rounded-t-[2rem] border-b border-[#eadfc8] bg-white/95 p-4 backdrop-blur sm:p-5">
-              <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                <div>
-                  <p className="text-xs font-black uppercase tracking-[0.2em] text-[#b98a2f]">Draft Estimate Builder</p>
-                  <h3 className="mt-1 text-2xl font-black text-[#075c58]">{serviceLabel}</h3>
-                  <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-700">This builder creates an internal draft estimate from the customer’s selected service and current NestHelper pricing. Nothing is sent to the customer automatically. Review and edit every line before saving, sending checkout, or creating a Stripe invoice.</p>
+        <div className="fixed inset-x-0 bottom-0 top-[4.25rem] z-[120] overflow-y-auto overflow-x-hidden bg-slate-950/70 p-2 sm:top-[5.25rem] sm:p-6" onClick={(e) => e.stopPropagation()}>
+          <div className="mx-auto mb-8 w-full max-w-6xl overflow-hidden rounded-[1.5rem] bg-white shadow-2xl sm:rounded-[2rem]" role="dialog" aria-modal="true" aria-label="Family payment summary builder">
+            <div className="sticky top-0 z-20 rounded-t-[1.5rem] border-b border-[#eadfc8] bg-white/95 p-3 backdrop-blur sm:rounded-t-[2rem] sm:p-5">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#b98a2f] sm:text-xs sm:tracking-[0.2em]">Draft Estimate Builder</p>
+                  <h3 className="mt-1 min-w-0 break-words text-xl font-black leading-tight text-[#075c58] sm:text-2xl">{serviceLabel}</h3>
+                  <p className="mt-2 hidden max-w-3xl text-sm leading-6 text-slate-700 sm:block">This builder creates an internal draft estimate from the customer’s selected service and current NestHelper pricing. Nothing is sent to the customer automatically. Review and edit every line before saving, sending checkout, or creating a Stripe invoice.</p>
                 </div>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
                   <button type="button" onClick={saveDraft} disabled={saving} className={getButtonClass("primary")}>{saving ? <><BuilderSpinner /> Saving...</> : "Save draft"}</button>
                   <button type="button" onClick={attemptClose} className={getButtonClass("quiet")}>Close</button>
                 </div>
               </div>
+              <p className="mt-2 text-xs font-semibold leading-5 text-slate-600 sm:hidden">Internal only. Save before checkout or invoice.</p>
             </div>
 
-            <div className="grid gap-5 p-4 sm:p-5 lg:grid-cols-[1.25fr_0.75fr]">
-              <div className="space-y-5">
-                <div className="rounded-3xl border border-[#eadfc8] bg-white p-4">
+            <div className="grid min-w-0 grid-cols-1 gap-4 p-3 sm:gap-5 sm:p-5 lg:grid-cols-[1.25fr_0.75fr]">
+              <div className="min-w-0 space-y-4 sm:space-y-5">
+                <div className="min-w-0 max-w-full overflow-hidden rounded-3xl border border-[#eadfc8] bg-white p-3 sm:p-4">
                   <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Recurring safeguards</p>
                   <div className="mt-3 space-y-2 text-sm font-bold leading-6 text-slate-700">
                     <p>Status: <span className="text-[#075c58]">{recurringStatus}</span></p>
                     <p>Rate: <span className="text-[#075c58]">{recurringRateValue > 0 ? `${formatMoney(recurringRateValue)}/visit` : "Not set"}</span></p>
                     <p>Next visit: <span className="text-[#075c58]">{nextVisitDate || "Not set"}</span></p>
                     <p>First visit completed: <span className={recurringFirstVisitCompleted ? "text-emerald-700" : "text-amber-700"}>{recurringFirstVisitCompleted ? "Yes" : "No"}</span></p>
-                    <p className="rounded-2xl bg-[#fbf6ea] p-3 text-xs leading-5">No automatic subscription is created. Admin still reviews before sending payment, but saved recurring details make the next invoice/check-out faster and safer.</p>
+                    <p className="max-w-full overflow-hidden rounded-2xl bg-[#fbf6ea] p-3 text-xs leading-5 break-words">No automatic subscription is created. Admin still reviews before sending payment, but saved recurring details make the next invoice/check-out faster and safer.</p>
                   </div>
                 </div>
 
-                <div className="rounded-3xl border border-[#eadfc8] bg-[#fbf6ea] p-4">
-                  <div className="grid gap-3 md:grid-cols-2">
+                <div className="min-w-0 max-w-full overflow-hidden rounded-3xl border border-[#eadfc8] bg-[#fbf6ea] p-3 sm:p-4">
+                  <div className="grid min-w-0 grid-cols-1 gap-3 md:grid-cols-2">
                     <label className="grid gap-2 text-sm font-bold text-slate-700">
                       Breakdown title
                       <input value={quoteTitle} onChange={(e) => { markDirty(); setQuoteTitle(e.target.value); }} className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]" />

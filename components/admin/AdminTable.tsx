@@ -1263,20 +1263,20 @@ function AdminDetailSnapshot({ collectionName, item }: { collectionName: string;
   if (!visibleFields.length) return null;
 
   return (
-    <div id="admin-section-snapshot" className="scroll-mt-28 mb-4 rounded-3xl border border-[#eadfc8] bg-[#fbf6ea] p-3 shadow-sm sm:p-5">
+    <div id="admin-section-snapshot" className="scroll-mt-28 mb-4 w-full max-w-full overflow-hidden rounded-3xl border border-[#eadfc8] bg-[#fbf6ea] p-3 shadow-sm sm:p-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <p className="text-xs font-black uppercase tracking-[0.18em] text-[#b98a2f]">Snapshot</p>
-          <h4 className="mt-1 truncate text-xl font-black text-[#075c58]">{getRecordDisplayName(item)}</h4>
-          <p className="mt-1 text-sm font-semibold text-slate-600">{getRecordContactLine(item)}</p>
+          <h4 className="mt-1 min-w-0 break-words text-xl font-black text-[#075c58] sm:truncate">{getRecordDisplayName(item)}</h4>
+          <p className="mt-1 min-w-0 break-words text-sm font-semibold text-slate-600">{getRecordContactLine(item)}</p>
         </div>
         <StatusBadge status={item.status} />
       </div>
-      <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="mt-4 grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
         {visibleFields.map(({ key, label, value }) => (
-          <div key={key} className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3">
-            <p className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-500">{label}</p>
-            <p className="mt-1 whitespace-pre-wrap break-words text-sm font-bold text-slate-800">{formatValue(key, value)}</p>
+          <div key={key} className="min-w-0 max-w-full overflow-hidden rounded-2xl border border-[#eadfc8] bg-white px-4 py-3">
+            <p className="min-w-0 break-words text-[11px] font-black uppercase tracking-[0.14em] text-slate-500">{label}</p>
+            <p className="mt-1 min-w-0 whitespace-pre-wrap break-words text-sm font-bold text-slate-800">{formatValue(key, value)}</p>
           </div>
         ))}
       </div>
@@ -1311,9 +1311,9 @@ function sortAdvancedEntries(entries: Array<[string, unknown]>) {
 
 function AdvancedFieldCard({ fieldKey, value }: { fieldKey: string; value: unknown }) {
   return (
-    <div className="rounded-2xl border border-[#eadfc8] bg-[#fbf6ea] p-4">
-      <p className="text-xs font-bold uppercase tracking-widest text-[#b98a2f]">{getAdvancedFieldLabel(fieldKey)}</p>
-      <p className="mt-1 whitespace-pre-wrap break-words text-sm text-slate-800">{formatValue(fieldKey, value)}</p>
+    <div className="min-w-0 max-w-full overflow-hidden rounded-2xl border border-[#eadfc8] bg-[#fbf6ea] p-4">
+      <p className="min-w-0 break-words text-xs font-bold uppercase tracking-widest text-[#b98a2f]">{getAdvancedFieldLabel(fieldKey)}</p>
+      <p className="mt-1 min-w-0 whitespace-pre-wrap break-words text-sm text-slate-800">{formatValue(fieldKey, value)}</p>
     </div>
   );
 }
@@ -1327,14 +1327,14 @@ function AdminAdvancedRecordDetails({ item }: { item: AdminDoc }) {
   const systemEntries = sortAdvancedEntries(entries.filter(([key]) => !isAdvancedTrackingField(key) && isAdvancedSystemField(key)));
 
   return (
-    <details id="admin-section-advanced" className="scroll-mt-28 rounded-3xl border border-[#eadfc8] bg-white p-4 shadow-sm">
+    <details id="admin-section-advanced" className="scroll-mt-28 w-full max-w-full overflow-hidden rounded-3xl border border-[#eadfc8] bg-white p-3 shadow-sm sm:p-4">
       <summary className="cursor-pointer text-sm font-black text-[#075c58]">Advanced / full saved answers</summary>
       <p className="mt-2 text-xs leading-5 text-slate-500">Open this only when you need the complete submitted record for troubleshooting or uncommon fields. Tracking and system fields are grouped at the bottom.</p>
 
       {primaryEntries.length > 0 && (
         <div className="mt-4">
           <p className="text-[11px] font-black uppercase tracking-[0.18em] text-[#b98a2f]">Request answers</p>
-          <div className="mt-2 grid gap-3 sm:grid-cols-2">
+          <div className="mt-2 grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2">
             {primaryEntries.map(([key, value]) => <AdvancedFieldCard key={key} fieldKey={key} value={value} />)}
           </div>
         </div>
@@ -1343,7 +1343,7 @@ function AdminAdvancedRecordDetails({ item }: { item: AdminDoc }) {
       {trackingEntries.length > 0 && (
         <details className="mt-4 rounded-2xl border border-[#eadfc8] bg-white p-3">
           <summary className="cursor-pointer text-xs font-black uppercase tracking-[0.16em] text-[#075c58]">Tracking / campaign fields</summary>
-          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          <div className="mt-3 grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2">
             {trackingEntries.map(([key, value]) => <AdvancedFieldCard key={key} fieldKey={key} value={value} />)}
           </div>
         </details>
@@ -1352,7 +1352,7 @@ function AdminAdvancedRecordDetails({ item }: { item: AdminDoc }) {
       {systemEntries.length > 0 && (
         <details className="mt-3 rounded-2xl border border-[#eadfc8] bg-white p-3">
           <summary className="cursor-pointer text-xs font-black uppercase tracking-[0.16em] text-[#075c58]">System / email fields</summary>
-          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          <div className="mt-3 grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2">
             {systemEntries.map(([key, value]) => <AdvancedFieldCard key={key} fieldKey={key} value={value} />)}
           </div>
         </details>
@@ -5254,8 +5254,8 @@ export default function AdminTable({
       )}
 
       {selected && (
-        <div className="fixed inset-0 z-[300] overflow-y-auto bg-black/50 px-2 pb-4 pt-2 sm:px-4 sm:py-4">
-          <div className="mx-auto min-h-[calc(100dvh-1rem)] w-full max-w-6xl overflow-visible rounded-3xl bg-white p-4 shadow-2xl sm:min-h-0 sm:max-h-[92dvh] sm:overflow-auto sm:p-6">
+        <div className="fixed inset-0 z-[300] overflow-y-auto overflow-x-hidden bg-black/50 px-2 pb-4 pt-2 sm:px-4 sm:py-4">
+          <div className="mx-auto min-h-[calc(100dvh-1rem)] w-full max-w-6xl overflow-hidden rounded-3xl bg-white p-3 shadow-2xl sm:min-h-0 sm:max-h-[92dvh] sm:overflow-auto sm:p-6">
             <div className="sticky top-0 z-30 -mx-4 -mt-4 mb-3 flex items-center justify-between gap-3 rounded-t-3xl border-b border-[#eadfc8] bg-white/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:-mt-6 sm:mb-4 sm:px-6 sm:py-4">
               <div className="min-w-0">
                 <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#b98a2f]">Admin details</p>
