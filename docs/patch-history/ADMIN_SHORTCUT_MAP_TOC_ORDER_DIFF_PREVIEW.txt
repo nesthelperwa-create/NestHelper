@@ -1,0 +1,2414 @@
+--- before/components/admin/AdminTable.tsx
++++ after/components/admin/AdminTable.tsx
+@@ -1273,6 +1273,7 @@
+     if (item.service !== "laundry-rescue") navItems.push({ href: "#admin-section-recurring-service", label: "↻", title: "Follow-up" });
+     if (showPaymentActions) navItems.push({ href: "#admin-section-payment", label: "3", title: item.service === "laundry-rescue" ? "Deposit" : "Payment" });
+     if (showLaundryFinalBalance) navItems.push({ href: "#admin-section-laundry-final", label: "4", title: "Laundry final" });
++    if (showPaymentActions) navItems.push({ href: "#admin-section-additional-payment", label: "Add", title: "Add'l pay" });
+     navItems.push({ href: "#admin-section-status", label: "✓", title: "Status" });
+     if (showFamilyReferralPanel) navItems.push({ href: "#admin-section-referrals", label: "+", title: "Referrals" });
+     if (showReviewRequestPanel) navItems.push({ href: "#admin-section-review-request", label: "★", title: "Review request" });
+@@ -1284,11 +1285,11 @@
+     <div className="mb-4 rounded-3xl border border-[#eadfc8] bg-white p-3 shadow-sm sm:p-4">
+       <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+         <div>
+-          <p className="text-[11px] font-black uppercase tracking-[0.18em] text-[#b98a2f]">Shortcut map</p>
+-          <h4 className="text-base font-black text-[#075c58] sm:text-lg">Jump to what you need</h4>
++          <p className="text-[11px] font-black uppercase tracking-[0.18em] text-[#b98a2f]">Shortcut map / table of contents</p>
++          <h4 className="text-base font-black text-[#075c58] sm:text-lg">Open the section you need</h4>
+         </div>
+         <p className="hidden text-xs font-semibold leading-5 text-slate-500 sm:block">
+-          Navigation only. No actions run from these shortcuts.
++          Tap a shortcut to open that section and jump there. No actions run from this map.
+         </p>
+       </div>
+       <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+@@ -5356,7 +5357,6 @@
+               </details>
+             </div>
+ 
+-            <AdminDetailSnapshot collectionName={collectionName} item={selected} />
+             <AdminDetailWorkflowNav
+               collectionName={collectionName}
+               item={selected}
+@@ -5368,6 +5368,480 @@
+               showFamilyReferralPanel={Boolean(showFamilyReferralPanel)}
+               showReviewRequestPanel={Boolean(showReviewRequestPanel)}
+             />
++
++            <AdminDetailSnapshot collectionName={collectionName} item={selected} />
++
++            {showApplicationOnboardingPanel && <ApplicationQuickRead item={selected} documentCount={selectedApplicationDocuments.length} />}
++
++            {showApplicationOnboardingPanel && (
++              <AdminCollapsibleSection id="admin-section-applicant-email" eyebrow="Applicant email" title="Send applicant communication" tone="white">
++                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
++                  <div className="max-w-3xl">
++                    <p className="text-xs font-black uppercase tracking-[0.2em] text-[#b98a2f]">Applicant email</p>
++                    <h4 className="mt-1 text-xl font-black text-[#075c58]">Write and send an email from the dashboard</h4>
++                    <p className="mt-2 text-sm leading-6 text-slate-700">
++                      Sends to <span className="font-black text-[#075c58]">{getApplicantEmailAddress(selected) || "no email on file"}</span>. Use the template, edit the message, then send. Replies should go back to the NestHelper inbox.
++                    </p>
++                  </div>
++                  {selected.applicantEmailLastSentAt && (
++                    <div className="rounded-2xl bg-[#fbf6ea] px-4 py-3 text-xs font-bold text-slate-700">
++                      Last sent: {formatDate(selected.applicantEmailLastSentAt)}
++                      {selected.applicantEmailLastSubject && <span className="mt-1 block text-[#075c58]">{String(selected.applicantEmailLastSubject)}</span>}
++                      <span className={`mt-2 inline-flex rounded-full px-3 py-1 text-[11px] font-black ${getApplicantEmailStatusClass(selected.applicantEmailLastDeliveryStatus)}`}>
++                        {getApplicantEmailStatusLabel(selected)}
++                      </span>
++                      {selected.applicantEmailLastStatusAtIso && <span className="mt-1 block text-[11px] text-slate-500">Updated: {formatDate(selected.applicantEmailLastStatusAtIso)}</span>}
++                    </div>
++                  )}
++                </div>
++
++                <div className="mt-4 grid gap-3 md:grid-cols-[240px_1fr]">
++                  <label className="grid gap-2 text-sm font-bold text-slate-700">
++                    Template
++                    <select
++                      value={applicantEmailTemplate}
++                      onChange={(e) => applyApplicantEmailTemplate(e.target.value as ApplicantEmailTemplateKey)}
++                      className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-bold text-[#075c58] outline-none focus:border-[#075c58]"
++                    >
++                      <option value="phone-interview">Phone interview request</option>
++                      <option value="needs-documents">Request more info/docs</option>
++                      <option value="not-selected">Not moving forward</option>
++                      <option value="custom">Custom / keep my edits</option>
++                    </select>
++                  </label>
++                  <label className="grid gap-2 text-sm font-bold text-slate-700">
++                    Subject
++                    <input
++                      value={applicantEmailSubject}
++                      onChange={(e) => {
++                        setApplicantEmailTemplate("custom");
++                        setApplicantEmailSubject(e.target.value);
++                      }}
++                      placeholder="Email subject"
++                      className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
++                    />
++                  </label>
++                </div>
++
++                <label className="mt-3 grid gap-2 text-sm font-bold text-slate-700">
++                  Message
++                  <textarea
++                    value={applicantEmailBody}
++                    onChange={(e) => {
++                      setApplicantEmailTemplate("custom");
++                      setApplicantEmailBody(e.target.value);
++                    }}
++                    rows={11}
++                    placeholder="Write the email message here."
++                    className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal leading-6 text-slate-800 outline-none focus:border-[#075c58]"
++                  />
++                </label>
++
++                <div className="mt-4 flex flex-wrap items-center gap-3">
++                  <button type="button" disabled={applicantEmailBusy || !getApplicantEmailAddress(selected) || !applicantEmailSubject.trim() || !applicantEmailBody.trim()} onClick={sendApplicantEmail} className={getAdminActionClass("primary")}>
++                    {applicantEmailBusy ? <><ActionSpinner /> Sending...</> : "Send applicant email"}
++                  </button>
++                  <button type="button" disabled={applicantEmailBusy} onClick={() => applyApplicantEmailTemplate("phone-interview")} className={getAdminActionClass("quiet")}>
++                    Reset phone interview template
++                  </button>
++                  <p className="text-xs font-semibold text-slate-500">Review before sending. This sends a real email through Resend.</p>
++                </div>
++
++                {applicantEmailMessage && <p className="mt-3 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">{applicantEmailMessage}</p>}
++                {applicantEmailError && <p className="mt-3 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{applicantEmailError}</p>}
++
++                {getApplicantEmailStatusHistory(selected).length > 0 && (
++                  <div className="mt-4 rounded-2xl border border-[#eadfc8] bg-[#fbf6ea] p-4">
++                    <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
++                      <p className="text-xs font-black uppercase tracking-[0.18em] text-[#b98a2f]">Email status log</p>
++                      <p className="text-xs font-semibold text-slate-500">Auto-updates after Resend webhook events.</p>
++                    </div>
++                    <div className="mt-3 grid gap-2">
++                      {getApplicantEmailStatusHistory(selected).slice(0, 6).map((entry, index) => (
++                        <div key={`${entry.resendId || "email"}-${entry.type || entry.status || index}-${entry.atIso || index}`} className="rounded-2xl bg-white px-4 py-3 text-xs text-slate-700 shadow-sm">
++                          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
++                            <span className={`inline-flex w-fit rounded-full px-3 py-1 text-[11px] font-black ${getApplicantEmailStatusClass(entry.status)}`}>{entry.statusLabel || entry.status || "Email event"}</span>
++                            <span className="font-semibold text-slate-500">{formatDate(entry.atIso || entry.statusAtIso)}</span>
++                          </div>
++                          {entry.subject && <p className="mt-2 font-bold text-[#075c58]">{String(entry.subject)}</p>}
++                          {entry.reason && <p className="mt-1 font-semibold text-red-700">Reason: {String(entry.reason)}</p>}
++                        </div>
++                      ))}
++                    </div>
++                  </div>
++                )}
++              </AdminCollapsibleSection>
++            )}
++
++            {showApplicationOnboardingPanel && (
++              <AdminCollapsibleSection id="admin-section-applicant-onboarding" eyebrow="Applicant onboarding" title="Track helper/partner onboarding" tone="gradient">
++                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
++                  <div className="max-w-3xl">
++                    <p className="text-xs font-black uppercase tracking-[0.2em] text-[#b98a2f]">Applicant onboarding</p>
++                    <h4 className="mt-1 text-xl font-black text-[#075c58]">Track documents, screening, fit, and approval notes</h4>
++                    <p className="mt-2 text-sm leading-6 text-slate-700">
++                      This is admin-only. Use it to move helpers/partners from application to phone screen, documents, background check, approved, backup list, rejected, or archived.
++                    </p>
++                  </div>
++                  <StatusBadge status={applicationStatus} />
++                </div>
++
++                <div className="mt-4 grid gap-3 md:grid-cols-2">
++                  <label className="grid gap-2 text-sm font-bold text-slate-700">
++                    Application status
++                    <select
++                      value={applicationStatus}
++                      onChange={(e) => setApplicationStatus(e.target.value)}
++                      className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-bold text-[#075c58] outline-none focus:border-[#075c58]"
++                    >
++                      {Array.from(new Set([...APPLICATION_STATUS_OPTIONS, ...dropdownStatuses])).map((status) => <option key={status}>{status}</option>)}
++                    </select>
++                  </label>
++
++                  <label className="grid gap-2 text-sm font-bold text-slate-700">
++                    Reliability / fit rating
++                    <select
++                      value={reliabilityRating}
++                      onChange={(e) => setReliabilityRating(e.target.value)}
++                      className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-bold text-[#075c58] outline-none focus:border-[#075c58]"
++                    >
++                      <option value="">Not rated yet</option>
++                      <option>Excellent fit</option>
++                      <option>Good fit</option>
++                      <option>Backup / limited fit</option>
++                      <option>Needs more review</option>
++                      <option>Do not assign</option>
++                    </select>
++                  </label>
++                </div>
++
++                <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
++                  {APPLICATION_CHECKLIST_ITEMS.map((item) => (
++                    <label key={item.key} className={`flex items-center gap-3 rounded-2xl border p-3 text-sm font-bold transition ${onboardingChecklist[item.key] ? "border-emerald-200 bg-emerald-50 text-emerald-900" : "border-[#eadfc8] bg-white text-slate-700"}`}>
++                      <input
++                        type="checkbox"
++                        checked={Boolean(onboardingChecklist[item.key])}
++                        onChange={(e) => toggleOnboardingChecklist(item.key, e.target.checked)}
++                        className="h-5 w-5 rounded border-[#075c58] accent-[#075c58]"
++                      />
++                      {item.label}
++                    </label>
++                  ))}
++                </div>
++
++                <details className="mt-4 rounded-3xl border border-[#eadfc8] bg-white p-4">
++                  <summary className="cursor-pointer text-sm font-black text-[#075c58]">Notes, fit, concerns, and approved bio</summary>
++                  <div className="mt-4 grid gap-3 md:grid-cols-2">
++                    <label className="grid gap-2 text-sm font-bold text-slate-700">
++                      Best-fit services
++                      <textarea value={bestFitServices} onChange={(e) => setBestFitServices(e.target.value)} rows={3} placeholder="Example: Laundry, organizing, family reset, backup errand helper." className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]" />
++                    </label>
++                    <label className="grid gap-2 text-sm font-bold text-slate-700">
++                      Strengths
++                      <textarea value={strengths} onChange={(e) => setStrengths(e.target.value)} rows={3} placeholder="What seems strong about this applicant?" className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]" />
++                    </label>
++                    <label className="grid gap-2 text-sm font-bold text-slate-700">
++                      Concerns / follow-up needed
++                      <textarea value={concerns} onChange={(e) => setConcerns(e.target.value)} rows={3} placeholder="Questions, gaps, schedule limits, or documents still needed." className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]" />
++                    </label>
++                    <label className="grid gap-2 text-sm font-bold text-slate-700">
++                      Do-not-assign notes
++                      <textarea value={doNotAssignNotes} onChange={(e) => setDoNotAssignNotes(e.target.value)} rows={3} placeholder="Only use for important internal restrictions." className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]" />
++                    </label>
++                    <label className="grid gap-2 text-sm font-bold text-slate-700 md:col-span-2">
++                      Internal notes
++                      <textarea value={internalNotes} onChange={(e) => setInternalNotes(e.target.value)} rows={4} placeholder="Phone screen notes, references, document review notes, assignment preferences, etc." className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]" />
++                    </label>
++                    <label className="grid gap-2 text-sm font-bold text-slate-700 md:col-span-2">
++                      Customer-facing approved bio draft
++                      <textarea value={approvedBio} onChange={(e) => setApprovedBio(e.target.value)} rows={3} placeholder="Optional bio if this helper/partner is approved later." className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]" />
++                    </label>
++                  </div>
++                </details>
++
++                <div className="mt-4 flex flex-wrap items-center gap-3">
++                  <button type="button" disabled={applicationOnboardingBusy} onClick={saveApplicationOnboarding} className={getAdminActionClass("primary")}>
++                    {applicationOnboardingBusy ? <><ActionSpinner /> Saving...</> : "Save onboarding details"}
++                  </button>
++                  <p className="text-xs font-semibold text-slate-500">This only updates the admin record. Use the applicant email box above to send a real email.</p>
++                </div>
++
++                {applicationOnboardingMessage && <p className="mt-3 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">{applicationOnboardingMessage}</p>}
++                {applicationOnboardingError && <p className="mt-3 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{applicationOnboardingError}</p>}
++              </AdminCollapsibleSection>
++            )}
++
++            {showCommercialQuotePanel && (
++              <AdminCollapsibleSection id="admin-section-commercial-quote" eyebrow="Commercial quote" title="Build and send commercial quote details" tone="blue">
++                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
++                  <div className="max-w-3xl">
++                    <p className="text-xs font-black uppercase tracking-[0.2em] text-[#b98a2f]">Commercial quote workflow</p>
++                    <h4 className="mt-1 text-xl font-black text-[#075c58]">Review, quote, then invoice when approved</h4>
++                    <p className="mt-2 text-sm leading-6 text-slate-700">
++                      This section is for Commercial Reset only. Review the request, build and save a customer-ready quote, email the quote by itself if the customer needs to approve first, then create the Stripe invoice once they are ready to pay.
++                    </p>
++                  </div>
++                  <StatusBadge status={getCommercialQuoteStatus(selected)} />
++                </div>
++
++                <div className="mt-4 grid gap-3 md:grid-cols-4">
++                  <div className="rounded-2xl border border-cyan-200 bg-white p-4">
++                    <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Step 1</p>
++                    <p className="mt-1 text-sm font-black text-[#075c58]">Review the request</p>
++                    <p className="mt-1 text-xs leading-5 text-slate-600">Check the space type, size, bathrooms, photos, timing, and requested priorities.</p>
++                  </div>
++                  <div className="rounded-2xl border border-cyan-200 bg-white p-4">
++                    <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Step 2</p>
++                    <p className="mt-1 text-sm font-black text-[#075c58]">Prepare the quote</p>
++                    <p className="mt-1 text-xs leading-5 text-slate-600">Use sq-ft pricing when possible, then add recurring, turnover, or reviewed add-on lines as needed.</p>
++                  </div>
++                  <div className="rounded-2xl border border-cyan-200 bg-white p-4">
++                    <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Step 3</p>
++                    <p className="mt-1 text-sm font-black text-[#075c58]">Email quote or invoice</p>
++                    <p className="mt-1 text-xs leading-5 text-slate-600">Send the quote only for approval, or create a Stripe invoice when the customer is ready to pay.</p>
++                  </div>
++                  <div className="rounded-2xl border border-cyan-200 bg-white p-4">
++                    <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Optional</p>
++                    <p className="mt-1 text-sm font-black text-[#075c58]">Add-on balance</p>
++                    <p className="mt-1 text-xs leading-5 text-slate-600">Use only for customer-approved extras, floor work, linen handling, or added scope.</p>
++                  </div>
++                </div>
++
++                <div className="mt-4 rounded-3xl border border-cyan-200 bg-white p-4">
++                  <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
++                    <div>
++                      <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Request snapshot</p>
++                      <h5 className="mt-1 text-base font-black text-[#075c58]">Key details to check before quoting</h5>
++                    </div>
++                    <p className="rounded-full bg-cyan-50 px-3 py-1 text-xs font-black uppercase tracking-[0.14em] text-cyan-800">Commercial</p>
++                  </div>
++                  <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
++                    <div className="rounded-2xl border border-cyan-100 bg-cyan-50/40 p-4">
++                      <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Space type</p>
++                      <p className="mt-1 text-sm font-bold text-[#075c58]">{formatValue("businessType", selected.businessType)}</p>
++                      <p className="mt-1 text-xs font-semibold text-slate-600">Frequency: {formatValue("frequency", selected.frequency)}</p>
++                    </div>
++                    <div className="rounded-2xl border border-cyan-100 bg-cyan-50/40 p-4">
++                      <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Size + layout</p>
++                      <p className="mt-1 text-sm font-bold text-[#075c58]">{formatValue("squareFootage", selected.squareFootage)}</p>
++                      <p className="mt-1 text-xs font-semibold text-slate-600">Restrooms: {formatValue("bathrooms", selected.bathrooms)} · Kitchens/breakrooms: {formatValue("kitchens", selected.kitchens)} · Showers: {formatValue("showers", selected.showers)}</p>
++                    </div>
++                    <div className="rounded-2xl border border-cyan-100 bg-cyan-50/40 p-4">
++                      <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Condition</p>
++                      <p className="mt-1 text-sm font-bold text-[#075c58]">{formatValue("spaceCondition", selected.spaceCondition)}</p>
++                      <p className="mt-1 text-xs font-semibold text-slate-600">Traffic: {formatValue("trafficLevel", selected.trafficLevel)}</p>
++                    </div>
++                    <div className="rounded-2xl border border-cyan-100 bg-cyan-50/40 p-4">
++                      <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Customer estimate</p>
++                      <p className="mt-1 text-sm font-bold text-[#075c58]">{formatValue("customerEstimatePrimaryRange", selected.customerEstimatePrimaryRange)}</p>
++                      <p className="mt-1 text-xs font-semibold text-slate-600">
++                        {selected.customerEstimateMonthlyRange ? `Monthly: ${formatValue("customerEstimateMonthlyRange", selected.customerEstimateMonthlyRange)}` : "Planning range shown on request form when enough details were entered."}
++                      </p>
++                      {selected.customerEstimateAddOnRange && (
++                        <p className="mt-1 text-xs font-semibold text-slate-600">Add-ons: {formatValue("customerEstimateAddOnRange", selected.customerEstimateAddOnRange)}</p>
++                      )}
++                    </div>
++                  </div>
++
++                  {(selected.carpetArea || selected.carpetAreaClearance || selected.hardFloorArea || selected.hardFloorAreaClearance || selected.spotTreatmentCount || selected.upholsteryScope || selected.upholsteryCondition || selected.glassScope || selected.glassAccess) && (
++                    <div className="mt-4 rounded-3xl border border-cyan-200 bg-white p-4">
++                      <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Add-on estimate details</p>
++                      <div className="mt-3 grid gap-3 md:grid-cols-2">
++                        {selected.carpetArea && (
++                          <div className="rounded-2xl border border-cyan-100 bg-cyan-50/40 p-4 text-xs font-semibold leading-5 text-slate-600">
++                            <span className="font-black text-[#075c58]">Carpet:</span> {formatValue("carpetArea", selected.carpetArea)}{selected.carpetCondition ? ` · ${formatValue("carpetCondition", selected.carpetCondition)}` : ""}{selected.carpetAreaClearance ? ` · Clearance: ${formatValue("carpetAreaClearance", selected.carpetAreaClearance)}` : ""}
++                          </div>
++                        )}
++                        {selected.spotTreatmentCount && (
++                          <div className="rounded-2xl border border-cyan-100 bg-cyan-50/40 p-4 text-xs font-semibold leading-5 text-slate-600">
++                            <span className="font-black text-[#075c58]">Spot treatment:</span> {formatValue("spotTreatmentCount", selected.spotTreatmentCount)}
++                          </div>
++                        )}
++                        {selected.hardFloorArea && (
++                          <div className="rounded-2xl border border-cyan-100 bg-cyan-50/40 p-4 text-xs font-semibold leading-5 text-slate-600">
++                            <span className="font-black text-[#075c58]">Hard floors:</span> {formatValue("hardFloorArea", selected.hardFloorArea)}{selected.hardFloorMaterial ? ` · ${formatValue("hardFloorMaterial", selected.hardFloorMaterial)}` : ""}{selected.hardFloorCondition ? ` · ${formatValue("hardFloorCondition", selected.hardFloorCondition)}` : ""}{selected.hardFloorAreaClearance ? ` · Clearance: ${formatValue("hardFloorAreaClearance", selected.hardFloorAreaClearance)}` : ""}
++                          </div>
++                        )}
++                        {selected.upholsteryScope && (
++                          <div className="rounded-2xl border border-cyan-100 bg-cyan-50/40 p-4 text-xs font-semibold leading-5 text-slate-600">
++                            <span className="font-black text-[#075c58]">Upholstery:</span> {formatValue("upholsteryScope", selected.upholsteryScope)}{selected.upholsteryCondition ? ` · ${formatValue("upholsteryCondition", selected.upholsteryCondition)}` : ""}
++                          </div>
++                        )}
++                        {selected.glassScope && (
++                          <div className="rounded-2xl border border-cyan-100 bg-cyan-50/40 p-4 text-xs font-semibold leading-5 text-slate-600">
++                            <span className="font-black text-[#075c58]">Interior glass:</span> {formatValue("glassScope", selected.glassScope)}{selected.glassAccess ? ` · Access: ${formatValue("glassAccess", selected.glassAccess)}` : ""}
++                          </div>
++                        )}
++                      </div>
++                    </div>
++                  )}
++                </div>
++
++                <div className="mt-4">
++                  <CommercialQuoteBreakdownBuilder
++                    item={selected}
++                    formatMoney={formatMoney}
++                    onSaved={(updates) => {
++                      const savedBreakdown = updates.commercialQuoteBreakdown as { customerBreakdownText?: string } | undefined;
++                      setSelected((prev) => (prev ? { ...prev, ...updates } : prev));
++                      if (updates.commercialInitialAmount !== undefined) setCommercialInitialAmount(String(updates.commercialInitialAmount));
++                      if (updates.commercialAdditionalAmount !== undefined) setCommercialAdditionalAmount(String(updates.commercialAdditionalAmount));
++                      if (updates.commercialQuoteStatus) setCommercialQuoteStatus(String(updates.commercialQuoteStatus));
++                      if (updates.commercialQuoteType) setCommercialQuoteType(String(updates.commercialQuoteType));
++                      if (updates.commercialCustomerQuoteNote) setCommercialCustomerQuoteNote(String(updates.commercialCustomerQuoteNote));
++                      if (updates.commercialInternalQuoteNotes) setCommercialInternalQuoteNotes(String(updates.commercialInternalQuoteNotes));
++                      if (savedBreakdown?.customerBreakdownText) setIncludeCommercialQuoteBreakdown(true);
++                      if (updates.status) setStatusValue(String(updates.status));
++                    }}
++                    onApplyFirstPayment={applyCommercialQuoteBuilderFirstPayment}
++                    onApplyAdditionalPayment={applyCommercialQuoteBuilderAdditionalPayment}
++                  />
++                </div>
++
++                <div className="mt-4 rounded-3xl border border-cyan-200 bg-white p-4">
++                  <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Step 2 — Prepare quote</p>
++                  <h5 className="mt-1 text-base font-black text-[#075c58]">What are you offering the customer?</h5>
++                  <p className="mt-1 text-sm leading-6 text-slate-700">
++                    Enter the amount you want to collect before work is scheduled. Add a later amount only if there is an approved add-on or balance.
++                  </p>
++
++                  <div className="mt-4 grid gap-3 md:grid-cols-2">
++                    <label className="grid gap-2 text-sm font-bold text-slate-700">
++                      Quote progress
++                      <select
++                        value={commercialQuoteStatus}
++                        onChange={(e) => setCommercialQuoteStatus(e.target.value)}
++                        className="rounded-2xl border border-cyan-200 bg-white px-4 py-3 text-sm font-bold text-[#075c58] outline-none focus:border-[#075c58]"
++                      >
++                        {COMMERCIAL_QUOTE_STATUSES.map((status) => <option key={status}>{status}</option>)}
++                      </select>
++                    </label>
++                    <label className="grid gap-2 text-sm font-bold text-slate-700">
++                      Pricing style
++                      <select
++                        value={commercialQuoteType}
++                        onChange={(e) => setCommercialQuoteType(e.target.value)}
++                        className="rounded-2xl border border-cyan-200 bg-white px-4 py-3 text-sm font-bold text-[#075c58] outline-none focus:border-[#075c58]"
++                      >
++                        {COMMERCIAL_QUOTE_TYPES.map((type) => <option key={type}>{type}</option>)}
++                      </select>
++                    </label>
++                  </div>
++
++                  <div className="mt-4 grid gap-3 md:grid-cols-2">
++                    <label className="grid gap-2 text-sm font-bold text-slate-700">
++                      Amount to collect now
++                      <input
++                        value={commercialInitialAmount}
++                        onChange={(e) => setCommercialInitialAmount(e.target.value)}
++                        inputMode="decimal"
++                        placeholder="199"
++                        className="rounded-2xl border border-cyan-200 bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]"
++                      />
++                      <span className="text-xs font-semibold leading-5 text-slate-500">Use this for the first approved visit, first turnover, deposit, or first recurring-plan payment.</span>
++                    </label>
++                    <label className="grid gap-2 text-sm font-bold text-slate-700">
++                      Later/add-on amount, optional
++                      <input
++                        value={commercialAdditionalAmount}
++                        onChange={(e) => setCommercialAdditionalAmount(e.target.value)}
++                        inputMode="decimal"
++                        placeholder="0"
++                        className="rounded-2xl border border-cyan-200 bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]"
++                      />
++                      <span className="text-xs font-semibold leading-5 text-slate-500">Leave blank/0 unless the customer approved extra add-ons, specialty floor work, linens, or added scope.</span>
++                    </label>
++                  </div>
++
++                  <label className="mt-4 grid gap-2 text-sm font-bold text-slate-700">
++                    Customer quote message
++                    <textarea
++                      value={commercialCustomerQuoteNote}
++                      onChange={(e) => setCommercialCustomerQuoteNote(e.target.value)}
++                      rows={3}
++                      placeholder="Example: Approved Commercial Reset quote based on the submitted square footage range, restrooms, breakroom, and listed priorities. Specialty add-ons are reviewed before any additional charge."
++                      className="rounded-2xl border border-cyan-200 bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
++                    />
++                    <span className="text-xs font-semibold leading-5 text-slate-500">This can be copied into the Stripe checkout note so the customer understands what the payment is for.</span>
++                  </label>
++
++                  <label className="mt-4 grid gap-2 text-sm font-bold text-slate-700">
++                    Private admin notes
++                    <textarea
++                      value={commercialInternalQuoteNotes}
++                      onChange={(e) => setCommercialInternalQuoteNotes(e.target.value)}
++                      rows={3}
++                      placeholder="Private notes: walkthrough needed, Eastside/Northshore assignment, supply considerations, floor add-ons, tight turnover window, or pricing logic."
++                      className="rounded-2xl border border-cyan-200 bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
++                    />
++                  </label>
++
++                  <div className="mt-4 grid gap-3 lg:grid-cols-4">
++                    <button
++                      type="button"
++                      disabled={commercialQuoteBusy}
++                      onClick={saveCommercialQuote}
++                      className={getAdminActionClass("primary")}
++                    >
++                      {commercialQuoteBusy ? <><ActionSpinner /> Saving...</> : "1. Save quote details"}
++                    </button>
++                    <button
++                      type="button"
++                      disabled={commercialQuoteEmailBusy || !hasSavedCommercialQuoteBreakdown}
++                      onClick={emailCommercialQuoteOnly}
++                      className={getAdminActionClass("success")}
++                    >
++                      {commercialQuoteEmailBusy ? <><ActionSpinner /> Emailing...</> : "Email quote only"}
++                    </button>
++                    <button
++                      type="button"
++                      onClick={applyCommercialInitialToCheckout}
++                      className={getAdminActionClass("secondary")}
++                    >
++                      2. Fill first payment link
++                    </button>
++                    <button
++                      type="button"
++                      onClick={applyCommercialAdditionalToPayment}
++                      className={getAdminActionClass("quiet")}
++                    >
++                      Fill optional add-on link
++                    </button>
++                  </div>
++
++                  {commercialQuoteMessage && <p className="mt-3 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">{commercialQuoteMessage}</p>}
++                  {commercialQuoteError && <p className="mt-3 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{commercialQuoteError}</p>}
++                  {commercialQuoteEmailMessage && <p className="mt-3 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">{commercialQuoteEmailMessage}</p>}
++                  {commercialQuoteEmailError && <p className="mt-3 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{commercialQuoteEmailError}</p>}
++                </div>
++              </AdminCollapsibleSection>
++            )}
++
++            {showFamilyPaymentBreakdownPanel && (
++              <AdminCollapsibleSection id="admin-section-family-breakdown" eyebrow="Draft estimate builder" title="Build the customer payment summary" tone="white">
++                <FamilyPaymentBreakdownBuilder
++                  item={selected}
++                  availableCustomerCredits={selectedAvailableCustomerCredits}
++                  formatMoney={formatMoney}
++                  onSaved={(updates) => {
++                    const savedBreakdown = updates.familyPaymentBreakdown as { customerBreakdownText?: string } | undefined;
++                    setSelected((prev) => (prev ? { ...prev, ...updates } : prev));
++                    if (savedBreakdown?.customerBreakdownText) setIncludeFamilyPaymentBreakdown(true);
++                  }}
++                  onApplyCheckout={({ amount, title, note }) => {
++                    setCheckoutMode("custom");
++                    setCustomInitialAmount(String(amount));
++                    setCustomInitialTitle(title);
++                    setCustomInitialNote(note);
++                  }}
++                  onApplyAdditionalPayment={({ amount, reason, note }) => {
++                    setAdditionalPaymentAmount(String(amount));
++                    setAdditionalPaymentReason(reason);
++                    setAdditionalPaymentNote(note);
++                  }}
++                />
++              </AdminCollapsibleSection>
++            )}
+ 
+             {collectionName === "serviceRequests" && (
+               <AdminCollapsibleSection id="admin-section-internal-notes" eyebrow="Internal notes" title="Private request tracking" tone="white">
+@@ -5586,6 +6060,7 @@
+                 </div>
+               </AdminCollapsibleSection>
+             )}
++
+             {collectionName === "serviceRequests" && selected.service !== "laundry-rescue" && (
+               <AdminCollapsibleSection id="admin-section-recurring-service" eyebrow="Follow-up / recurring" title="Create a new follow-up request" tone="cream">
+                 <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+@@ -5762,203 +6237,731 @@
+                 </div>
+               </AdminCollapsibleSection>
+             )}
+-            {showApplicationOnboardingPanel && <ApplicationQuickRead item={selected} documentCount={selectedApplicationDocuments.length} />}
+-
+-            {showApplicationOnboardingPanel && (
+-              <AdminCollapsibleSection id="admin-section-applicant-email" eyebrow="Applicant email" title="Send applicant communication" tone="white">
++
++            {showPaymentActions && (
++              <AdminCollapsibleSection id="admin-section-payment" eyebrow="Payment / smart checkout" title="Create invoice or smart checkout" tone="gold">
++                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
++                  <div className="max-w-2xl">
++                    <p className="text-xs font-black uppercase tracking-[0.2em] text-[#b98a2f]">{selectedIsCommercial ? "Step 3 — payment" : "Approval + payment"}</p>
++                    <h4 className="mt-1 text-xl font-black text-[#075c58]">Choose invoice or quick checkout</h4>
++                    <p className="mt-2 text-sm leading-6 text-slate-700">
++                      {selectedIsCommercial
++                        ? "For Commercial Reset, the itemized Stripe invoice from the saved commercial quote summary is usually the best option. Use quick checkout only for a simple deposit or first payment that does not need a formal invoice PDF."
++                        : "Use a Stripe invoice when you want the customer to receive an itemized invoice/PDF from the saved customer payment summary. Use quick checkout for a simple package payment or deposit."}
++                    </p>
++                    {selected.service === "laundry-rescue" && (
++                      <p className="mt-2 rounded-2xl bg-white px-4 py-3 text-sm font-bold text-[#075c58]">
++                        For Laundry Rescue, both the saved payment summary amount and quick checkout create a deposit checkout so Stripe can ask the customer to choose auto-charge or invoice-before-delivery. After dry weigh-in, use the final balance section below.
++                      </p>
++                    )}
++                  </div>
++                  <div className="rounded-2xl border border-[#d8c18f] bg-white px-4 py-3 text-sm font-bold text-[#075c58] lg:max-w-sm">
++                    Invoices use saved builder line items. Quick checkout uses the price mode/custom amount in the quick checkout box.
++                  </div>
++                </div>
++
++                {selectedIsCommercial && (
++                  <div className="mt-4 rounded-3xl border border-cyan-200 bg-white p-4">
++                    <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
++                      <div className="max-w-2xl">
++                        <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Recommended for commercial</p>
++                        <h5 className="mt-1 text-base font-black text-[#075c58]">Create a Stripe invoice from the saved summary</h5>
++                        <p className="mt-1 text-sm leading-6 text-slate-700">
++                          Best for commercial customers who expect an itemized invoice/PDF. Save the Commercial Quote Builder first, then create the Stripe invoice. When emailing, NestHelper sends the hosted invoice link in a branded email. A confirmation popup appears before creating because Stripe invoices may cost more than quick checkout.
++                        </p>
++                      </div>
++                      <div className="flex flex-col gap-2 sm:flex-row lg:flex-col">
++                        <button type="button" disabled={commercialInvoiceBusy || !hasSavedCommercialQuoteBreakdown} onClick={() => createCommercialInvoice(true)} className={getAdminActionClass("primary")}>
++                          {commercialInvoiceBusy ? <><ActionSpinner /> Creating...</> : "Create + email invoice link"}
++                        </button>
++                        <button type="button" disabled={commercialInvoiceBusy || !hasSavedCommercialQuoteBreakdown} onClick={() => createCommercialInvoice(false)} className={getAdminActionClass("secondary")}>
++                          Create invoice only
++                        </button>
++                      </div>
++                    </div>
++                    {!hasSavedCommercialQuoteBreakdown && (
++                      <p className="mt-3 rounded-2xl bg-amber-50 px-4 py-3 text-xs font-bold leading-5 text-amber-800">Save the Commercial Quote Builder draft first. The invoice uses those saved line items.</p>
++                    )}
++                    {(selected.commercialInvoiceUrl || selected.commercialInvoicePdf) && (
++                      <div className="mt-4 rounded-2xl border border-cyan-100 bg-cyan-50/50 p-4">
++                        <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Current commercial invoice</p>
++                        {selected.commercialInvoiceEmailWarning && <p className="mt-2 rounded-2xl bg-amber-50 px-3 py-2 text-xs font-bold text-amber-800">{selected.commercialInvoiceEmailWarning}</p>}
++                        {selected.commercialInvoiceServicePeriodLabel && <p className="mt-2 text-xs font-bold text-slate-600">Service period: {selected.commercialInvoiceServicePeriodLabel}</p>}
++                        {selected.commercialInvoiceUrl && <p className="mt-2 break-all text-sm text-[#075c58]">{selected.commercialInvoiceUrl}</p>}
++                        <div className="mt-3 flex flex-wrap gap-2">
++                          {selected.commercialInvoiceUrl && <a href={selected.commercialInvoiceUrl} target="_blank" rel="noreferrer" className="rounded-full bg-[#075c58] px-4 py-2 text-xs font-black text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-[#064b48]">Open invoice</a>}
++                          {selected.commercialInvoicePdf && <a href={selected.commercialInvoicePdf} target="_blank" rel="noreferrer" className="rounded-full border border-[#075c58] bg-white px-4 py-2 text-xs font-black text-[#075c58] transition hover:bg-[#f4ecdc]">Open PDF</a>}
++                          {selected.commercialInvoiceUrl && <button type="button" onClick={() => copyToClipboard(selected.commercialInvoiceUrl || "")} className="rounded-full border border-[#075c58] bg-white px-4 py-2 text-xs font-black text-[#075c58] transition hover:bg-[#f4ecdc]">Copy invoice link</button>}
++                        </div>
++                      </div>
++                    )}
++                    {commercialInvoiceMessage && <p className="mt-3 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">{commercialInvoiceMessage}</p>}
++                    {commercialInvoiceError && <p className="mt-3 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{commercialInvoiceError}</p>}
++                  </div>
++                )}
++
++                {!selectedIsCommercial && (
++                  <div className="mt-4 rounded-3xl border border-cyan-200 bg-white p-4">
++                    <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
++                      <div className="max-w-2xl">
++                        <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">{selected.service === "laundry-rescue" ? "Laundry deposit approval" : "Optional family invoice"}</p>
++                        <h5 className="mt-1 text-base font-black text-[#075c58]">{selected.service === "laundry-rescue" ? "Create a deposit checkout from the saved laundry payment summary" : "Create a Stripe invoice from the saved customer payment summary"}</h5>
++                        <p className="mt-1 text-sm leading-6 text-slate-700">
++                          {selected.service === "laundry-rescue"
++                            ? "This uses the saved payment summary amount to create a taxable, non-refundable Laundry Rescue deposit checkout. Stripe asks the customer to choose auto-charge for the final balance or invoice-before-delivery."
++                            : "Use this when you want a formal invoice/PDF instead of only a checkout receipt: Errand Helper, custom family quotes, recurring family help, approved add-ons, or refund/credit documentation. A confirmation popup appears before creating because Stripe invoices may cost more than quick checkout."}
++                        </p>
++                      </div>
++                      <div className="flex flex-col gap-2 sm:flex-row lg:flex-col">
++                        <button type="button" disabled={familyInvoiceBusy || !hasSavedFamilyPaymentBreakdown} onClick={() => createFamilyInvoice(true)} className={getAdminActionClass("primary")}>
++                          {familyInvoiceBusy ? <><ActionSpinner /> Creating...</> : selected.service === "laundry-rescue" ? "Create + email laundry deposit checkout" : "Create + email family invoice"}
++                        </button>
++                        <button type="button" disabled={familyInvoiceBusy || !hasSavedFamilyPaymentBreakdown} onClick={() => createFamilyInvoice(false)} className={getAdminActionClass("secondary")}>
++                          {selected.service === "laundry-rescue" ? "Create laundry deposit checkout only" : "Create family invoice only"}
++                        </button>
++                      </div>
++                    </div>
++                    {!hasSavedFamilyPaymentBreakdown && (
++                      <p className="mt-3 rounded-2xl bg-amber-50 px-4 py-3 text-xs font-bold leading-5 text-amber-800">Save the Draft Estimate Builder draft first. For Laundry Rescue, the saved amount becomes the deposit checkout amount; for other services, the invoice uses the saved line items.</p>
++                    )}
++                    {(selected.familyInvoiceUrl || selected.familyInvoicePdf) && (
++                      <div className="mt-4 rounded-2xl border border-cyan-100 bg-cyan-50/50 p-4">
++                        <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">{selected.service === "laundry-rescue" ? "Current laundry deposit checkout" : "Current family invoice"}</p>
++                        {selected.familyInvoiceEmailWarning && <p className="mt-2 rounded-2xl bg-amber-50 px-3 py-2 text-xs font-bold text-amber-800">{selected.familyInvoiceEmailWarning}</p>}
++                        {selected.familyInvoiceServicePeriodLabel && <p className="mt-2 text-xs font-bold text-slate-600">Service period: {selected.familyInvoiceServicePeriodLabel}</p>}
++                        {selected.familyInvoiceUrl && <p className="mt-2 break-all text-sm text-[#075c58]">{selected.familyInvoiceUrl}</p>}
++                        <div className="mt-3 flex flex-wrap gap-2">
++                          {selected.familyInvoiceUrl && <a href={selected.familyInvoiceUrl} target="_blank" rel="noreferrer" className="rounded-full bg-[#075c58] px-4 py-2 text-xs font-black text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-[#064b48]">{selected.service === "laundry-rescue" ? "Open checkout" : "Open invoice"}</a>}
++                          {selected.familyInvoicePdf && <a href={selected.familyInvoicePdf} target="_blank" rel="noreferrer" className="rounded-full border border-[#075c58] bg-white px-4 py-2 text-xs font-black text-[#075c58] transition hover:bg-[#f4ecdc]">Open PDF</a>}
++                          {selected.familyInvoiceUrl && <button type="button" onClick={() => copyToClipboard(selected.familyInvoiceUrl || "")} className="rounded-full border border-[#075c58] bg-white px-4 py-2 text-xs font-black text-[#075c58] transition hover:bg-[#f4ecdc]">{selected.service === "laundry-rescue" ? "Copy checkout link" : "Copy invoice link"}</button>}
++                        </div>
++                      </div>
++                    )}
++                    {familyInvoiceMessage && <p className="mt-3 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">{familyInvoiceMessage}</p>}
++                    {familyInvoiceError && <p className="mt-3 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{familyInvoiceError}</p>}
++                  </div>
++                )}
++
++                <div className="mt-4 rounded-3xl border border-[#d8c18f] bg-white p-4">
++                  <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
++                    <div className="max-w-2xl">
++                      <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Quick checkout</p>
++                      <h5 className="mt-1 text-base font-black text-[#075c58]">Create a smart non-invoice checkout link</h5>
++                      <p className="mt-1 text-sm leading-6 text-slate-700">
++                        Smart checkout is best for simple package payments, deposits, or small custom payments. The customer receives a NestHelper link that opens Stripe securely and can refresh the Stripe checkout if it expires.
++                      </p>
++                    </div>
++                    <div className="rounded-2xl bg-[#fbf6ea] px-4 py-3 text-xs font-bold leading-5 text-slate-700 lg:max-w-sm">
++                      {selectedIsCommercial
++                        ? "Commercial smart checkout uses the custom first-payment amount below. Use the invoice option for formal itemized records."
++                        : selected.service === "laundry-rescue"
++                          ? "Laundry Rescue smart checkout uses the standard $59 intro minimum by default. Use Advanced only if you intentionally approved a different deposit amount."
++                          : "Smart checkout uses the standard package price unless you choose a custom reviewed amount. Invoices use the saved customer payment summary instead."}
++                    </div>
++                  </div>
++
++                  {!selectedIsCommercial && selected.service !== "laundry-rescue" && (
++                    <div className="mt-4 grid gap-2 sm:max-w-sm">
++                      <label className="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Smart checkout amount</label>
++                      <select
++                        value={checkoutMode}
++                        onChange={(e) => setCheckoutMode(e.target.value as CheckoutMode)}
++                        className="rounded-2xl border border-[#d8c18f] bg-white px-4 py-3 text-sm font-bold text-[#075c58] outline-none focus:border-[#075c58]"
++                      >
++                        {!selectedRequiresReviewedCheckoutAmount && <option value="standard">Standard package price</option>}
++                        <option value="custom">{selectedRequiresReviewedCheckoutAmount ? "Reviewed/custom amount" : "Custom reviewed amount"}</option>
++                      </select>
++                    </div>
++                  )}
++
++                  {!selectedIsCommercial && selected.service === "laundry-rescue" && (
++                    <div className="mt-4 rounded-3xl border border-[#eadfc8] bg-[#fbf6ea] p-4">
++                      <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Laundry smart checkout amount</p>
++                      <h5 className="mt-1 text-base font-black text-[#075c58]">
++                        {isCustomCheckoutMode ? "Advanced custom deposit selected" : "Standard $59 intro minimum selected"}
++                      </h5>
++                      <p className="mt-1 text-sm font-semibold leading-6 text-slate-700">
++                        {isCustomCheckoutMode
++                          ? "Use this only when Leo/Gen intentionally approved a different Laundry Rescue deposit amount. The final balance is still handled after dry weigh-in."
++                          : "This is the normal Laundry Rescue flow: collect the standard intro minimum now, then handle any final balance after dry weigh-in."}
++                      </p>
++                      <div className="mt-3 flex flex-wrap gap-2">
++                        {isCustomCheckoutMode ? (
++                          <button
++                            type="button"
++                            onClick={() => setCheckoutMode("standard")}
++                            className="rounded-full border border-[#075c58] bg-white px-4 py-2 text-xs font-black text-[#075c58] transition hover:bg-[#f4ecdc]"
++                          >
++                            Use standard $59 intro minimum
++                          </button>
++                        ) : (
++                          <button
++                            type="button"
++                            onClick={() => setCheckoutMode("custom")}
++                            className="rounded-full border border-[#d8c18f] bg-white px-4 py-2 text-xs font-black text-slate-700 transition hover:border-[#075c58] hover:text-[#075c58]"
++                          >
++                            Advanced: use custom deposit amount
++                          </button>
++                        )}
++                      </div>
++                    </div>
++                  )}
++
++                  {selectedIsCommercial && (
++                    <input type="hidden" value={checkoutMode} readOnly aria-hidden="true" />
++                  )}
++
++                  {isCustomCheckoutMode && (
++                    <div className="mt-4 rounded-3xl border border-[#eadfc8] bg-[#fbf6ea] p-4">
++                      <div>
++                        <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">{selectedIsCommercial ? "Smart first-payment checkout" : selected.service === "laundry-rescue" ? "Advanced custom laundry deposit" : selectedRequiresReviewedCheckoutAmount ? "Reviewed smart checkout" : "Custom smart checkout"}</p>
++                        <h5 className="mt-1 text-base font-black text-[#075c58]">{selectedIsCommercial ? "Amount the customer pays before scheduling" : selected.service === "laundry-rescue" ? "Custom deposit amount" : selectedRequiresReviewedCheckoutAmount ? "Reviewed/custom starting amount" : "Reviewed custom starting amount"}</h5>
++                        <p className="mt-1 text-sm leading-6 text-slate-700">
++                          {selectedIsCommercial
++                            ? "Use this only when you want a simple checkout link instead of a formal invoice. It should match the approved first-payment amount."
++                            : selected.service === "laundry-rescue"
++                              ? "Advanced only: use this if you intentionally approved a Laundry Rescue deposit other than the standard $59 intro minimum. Final balance still happens after dry weigh-in."
++                              : selectedRequiresReviewedCheckoutAmount
++                                ? "This service depends on the property, condition, scope, photos, pets, and add-ons, so smart checkout uses a reviewed/custom amount instead of a standard package price."
++                                : "Use this when the first smart checkout should not match the standard package price, such as a custom approved scope, special deposit, extra starting time, or service-area adjustment."}
++                        </p>
++                      </div>
++                      <div className="mt-4 grid gap-3 md:grid-cols-[0.7fr_1.3fr]">
++                        <label className="grid gap-2 text-sm font-bold text-slate-700">
++                          {selectedIsCommercial ? "Amount to collect now" : selected.service === "laundry-rescue" ? "Custom deposit amount" : "Amount"}
++                          <input
++                            value={customInitialAmount}
++                            onChange={(e) => setCustomInitialAmount(e.target.value)}
++                            inputMode="decimal"
++                            placeholder={selected.service === "laundry-rescue" ? "59" : "199"}
++                            className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]"
++                          />
++                        </label>
++                        <label className="grid gap-2 text-sm font-bold text-slate-700">
++                          Checkout title
++                          <input
++                            value={customInitialTitle}
++                            onChange={(e) => setCustomInitialTitle(e.target.value)}
++                            placeholder={getServiceKey(selected) === "laundry-rescue" ? "Laundry Rescue custom deposit" : getServiceKey(selected) === "commercial-reset" ? "Commercial Reset approved quote" : getServiceKey(selected) === "move-out-cleaning" ? "Move-In / Move-Out Cleaning reviewed checkout" : getServiceKey(selected) === "specific-area-reset" ? "Specific Area(s) Reset reviewed checkout" : getServiceKey(selected) === "whole-home-reset" ? "Whole Home Cleaning reviewed checkout" : getServiceKey(selected) === "family-reset-3hr" ? "Parent Reset Plan checkout" : "Custom checkout"}
++                            className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]"
++                          />
++                        </label>
++                      </div>
++                      <label className="mt-3 grid gap-2 text-sm font-bold text-slate-700">
++                        Optional customer note
++                        <textarea
++                          value={customInitialNote}
++                          onChange={(e) => setCustomInitialNote(e.target.value)}
++                          rows={3}
++                          placeholder={selectedIsCommercial ? "Example: Approved Commercial Reset first payment. Add-ons or scope changes are reviewed before any additional charge." : "Example: Custom approved starting amount for 3.5 hours after request review. Any additional approved time or mileage would be billed separately."}
++                          className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
++                        />
++                      </label>
++                    </div>
++                  )}
++
++                  {selectedIsCommercial && isCustomCheckoutMode && (
++                    <div className="mt-4 rounded-3xl border border-[#d8c18f] bg-[#fbf6ea] p-4">
++                      <label className="flex gap-3 text-sm font-bold text-slate-700">
++                        <input
++                          type="checkbox"
++                          checked={includeCommercialQuoteBreakdown}
++                          onChange={(e) => setIncludeCommercialQuoteBreakdown(e.target.checked)}
++                          disabled={!hasSavedCommercialQuoteBreakdown}
++                          className="mt-1 h-4 w-4 rounded border-[#d8c18f] accent-[#075c58]"
++                        />
++                        <span>
++                          <span className="block text-[#075c58]">Include saved commercial quote summary in the quick checkout email</span>
++                          <span className="mt-1 block text-xs font-semibold leading-5 text-slate-600">
++                            This only affects the smart checkout email. For a true itemized customer record, use the Stripe invoice option above instead.
++                          </span>
++                        </span>
++                      </label>
++                      {!hasSavedCommercialQuoteBreakdown && (
++                        <p className="mt-3 rounded-2xl bg-amber-50 px-4 py-3 text-xs font-bold leading-5 text-amber-800">
++                          No saved commercial quote summary is available yet. Save the Commercial Quote Builder draft first, then this checkbox will be available.
++                        </p>
++                      )}
++                    </div>
++                  )}
++
++                  {!selectedIsCommercial && (
++                    <div className="mt-4 rounded-3xl border border-[#d8c18f] bg-[#fbf6ea] p-4">
++                      <label className="flex gap-3 text-sm font-bold text-slate-700">
++                        <input
++                          type="checkbox"
++                          checked={includeFamilyPaymentBreakdown}
++                          onChange={(e) => setIncludeFamilyPaymentBreakdown(e.target.checked)}
++                          disabled={!hasSavedFamilyPaymentBreakdown}
++                          className="mt-1 h-4 w-4 rounded border-[#d8c18f] accent-[#075c58]"
++                        />
++                        <span>
++                          <span className="block text-[#075c58]">Include saved customer payment summary in the quick checkout email</span>
++                          <span className="mt-1 block text-xs font-semibold leading-5 text-slate-600">
++                            Use this when you want the customer to see the package, custom amount, recurring plan, laundry note, discount, or credit details before paying by smart checkout.
++                          </span>
++                        </span>
++                      </label>
++                      {!hasSavedFamilyPaymentBreakdown && (
++                        <p className="mt-3 rounded-2xl bg-amber-50 px-4 py-3 text-xs font-bold leading-5 text-amber-800">
++                          No saved customer payment summary is available yet. Save the Draft Estimate Builder draft first, then this checkbox will be available.
++                        </p>
++                      )}
++                    </div>
++                  )}
++
++                  {selected.service === "laundry-rescue" && (
++                    <div className="mt-4 rounded-3xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm leading-6 text-rose-900">
++                      <p className="font-black text-rose-950">Laundry deposit checkout note</p>
++                      <p className="mt-1 font-semibold">
++                        This creates the non-refundable, taxable Laundry Rescue intro minimum checkout. The $59 minimum includes pickup, wash, dry, fold, return, and up to about 26.2 lbs. Stripe will ask the customer to choose auto-charge or invoice-before-delivery for any additional weight/add-ons.
++                      </p>
++                    </div>
++                  )}
++
++                  {selected.service === "laundry-rescue" && (
++                    <div className="mt-4 rounded-3xl border border-[#eadfc8] bg-white px-4 py-3 text-sm leading-6 text-slate-700">
++                      <label className="flex items-start gap-3 font-bold text-slate-800">
++                        <input
++                          type="checkbox"
++                          checked={laundryManualSalesTax}
++                          onChange={(e) => setLaundryManualSalesTax(e.target.checked)}
++                          className="mt-1 h-4 w-4 accent-[#075c58]"
++                        />
++                        <span>
++                          Apply manual WA sales tax
++                          <span className="mt-1 block text-xs font-semibold leading-5 text-slate-600">
++                            Use this for Laundry Rescue checkout and final balance. Verify the local tax rate before sending.
++                          </span>
++                        </span>
++                      </label>
++                      {laundryManualSalesTax && (
++                        <div className="mt-3 space-y-3">
++                          <div className="grid gap-3 sm:grid-cols-2">
++                            <label className="grid gap-2 text-sm font-bold text-slate-700">
++                              Tax lookup ZIP
++                              <input
++                                value={laundryTaxLookupZip}
++                                onChange={(e) => setLaundryTaxLookupZip(e.target.value.replace(/[^0-9-]/g, "").slice(0, 10))}
++                                inputMode="numeric"
++                                placeholder="From request"
++                                className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]"
++                              />
++                              <span className="text-[11px] font-bold leading-4 text-slate-500">
++                                Auto-filled from the request. Edit only if the service ZIP is wrong.
++                              </span>
++                            </label>
++                            <label className="grid gap-2 text-sm font-bold text-slate-700">
++                              Sales tax rate %
++                              <input
++                                value={laundryManualSalesTaxRate}
++                                onChange={(e) => setLaundryManualSalesTaxRate(e.target.value)}
++                                inputMode="decimal"
++                                placeholder="Example: 10.3"
++                                className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]"
++                              />
++                              <span className="text-[11px] font-bold leading-4 text-slate-500">
++                                The lookup can fill this for you. Review before sending.
++                              </span>
++                            </label>
++                          </div>
++
++                          <div className="rounded-2xl bg-[#fbf6ea] px-4 py-3 text-xs font-bold leading-5 text-slate-600">
++                            <p>
++                              Use “Lookup + fill rate” to pull the WA DOR rate from the request address/ZIP. If the lookup cannot match cleanly, use the DOR page or copy the address and enter the rate manually.
++                            </p>
++                            {laundryTaxLookupAddress && (
++                              <p className="mt-2 text-slate-700">
++                                Request address: <span className="font-black text-[#075c58]">{laundryTaxLookupAddress}</span>
++                              </p>
++                            )}
++                            <div className="mt-3 grid gap-2 sm:grid-cols-3">
++                              <button
++                                type="button"
++                                onClick={lookupLaundryTaxRateFromDor}
++                                disabled={laundryTaxLookupBusy || !laundryTaxLookupZip}
++                                className="inline-flex min-h-10 items-center justify-center rounded-2xl bg-[#075c58] px-4 py-2 text-xs font-black text-white shadow-sm transition hover:bg-[#064b48] disabled:cursor-not-allowed disabled:opacity-50"
++                              >
++                                {laundryTaxLookupBusy ? <><ActionSpinner /> Looking up...</> : "Lookup + fill rate"}
++                              </button>
++                              <button
++                                type="button"
++                                onClick={() => {
++                                  if (laundryDorLookupUrl) window.open(laundryDorLookupUrl, "_blank", "noopener,noreferrer");
++                                }}
++                                disabled={!laundryDorLookupUrl}
++                                className="inline-flex min-h-10 items-center justify-center rounded-2xl border border-[#d8c18f] bg-white px-4 py-2 text-xs font-black text-slate-700 shadow-sm transition hover:border-[#075c58] hover:text-[#075c58] disabled:cursor-not-allowed disabled:opacity-50"
++                              >
++                                Open DOR page
++                              </button>
++                              <button
++                                type="button"
++                                onClick={async () => {
++                                  if (!laundryTaxLookupCopyText) return;
++                                  await copyPlainTextToClipboard(laundryTaxLookupCopyText);
++                                  setCheckoutMessage("WA DOR tax lookup address copied.");
++                                }}
++                                disabled={!laundryTaxLookupCopyText}
++                                className="inline-flex min-h-10 items-center justify-center rounded-2xl border border-[#d8c18f] bg-white px-4 py-2 text-xs font-black text-slate-700 shadow-sm transition hover:border-[#075c58] hover:text-[#075c58] disabled:cursor-not-allowed disabled:opacity-50"
++                              >
++                                Copy address
++                              </button>
++                            </div>
++                            <p className="mt-3">
++                              Failsafe: if the $59 intro minimum is taxed now, the final invoice taxes only additional weight/add-ons. If the intro minimum was paid without tax, the final invoice can add a one-time catch-up for the missed $59 tax without charging the $59 again.
++                            </p>
++                          </div>
++                        </div>
++                      )}
++                    </div>
++                  )}
++
++                  <div className="mt-4 grid gap-3 md:grid-cols-2">
++                    <button
++                      type="button"
++                      disabled={checkoutBusy}
++                      onClick={() => createPaymentLink(true)}
++                      className={getAdminActionClass("primary")}
++                    >
++                      {checkoutBusy
++                        ? <><ActionSpinner /> Creating...</>
++                        : selectedIsCommercial
++                          ? "Create + email smart first-payment checkout link"
++                          : selected.service === "laundry-rescue"
++                            ? "Create + email smart intro minimum checkout link"
++                            : "Create + email smart checkout link"}
++                    </button>
++                    <button
++                      type="button"
++                      disabled={checkoutBusy}
++                      onClick={() => createPaymentLink(false)}
++                      className={getAdminActionClass("secondary")}
++                    >
++                      {selectedIsCommercial
++                        ? "Create smart first-payment checkout link only"
++                        : selected.service === "laundry-rescue"
++                          ? "Create smart intro minimum checkout link only"
++                          : "Create smart checkout link only"}
++                    </button>
++                  </div>
++                </div>
++
++                {selected.checkoutUrl && (
++                  <div className="mt-4 rounded-2xl border border-[#eadfc8] bg-white p-4">
++                    <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Current customer checkout link</p>
++                    <p className="mt-1 text-xs font-bold leading-5 text-slate-600">Send the NestHelper customer checkout link when possible. It opens Stripe securely and can refresh the Stripe checkout session if it expires.</p>
++                    <p className="mt-2 break-all text-sm text-[#075c58]">{selected.checkoutUrl}</p>
++                    <div className="mt-3 flex flex-wrap gap-2">
++                      <a href={selected.checkoutUrl} target="_blank" rel="noreferrer" className="rounded-full bg-[#075c58] px-4 py-2 text-xs font-black text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-[#064b48]">Open customer checkout link</a>
++                      <button type="button" onClick={() => copyToClipboard(selected.checkoutUrl || "")} className="rounded-full border border-[#075c58] bg-white px-4 py-2 text-xs font-black text-[#075c58] transition hover:bg-[#f4ecdc]">Copy customer checkout link</button>
++                    </div>
++                    {selected.stripeCheckoutUrl && selected.stripeCheckoutUrl !== selected.checkoutUrl && (
++                      <div className="mt-4 rounded-2xl bg-slate-50 px-4 py-3">
++                        <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Backup raw Stripe URL</p>
++                        <p className="mt-1 text-xs font-semibold leading-5 text-slate-600">Backup only. This raw Stripe session still expires; the customer checkout link above is the better link to send.</p>
++                        <p className="mt-2 break-all text-xs text-slate-600">{selected.stripeCheckoutUrl}</p>
++                        <div className="mt-3 flex flex-wrap gap-2">
++                          <a href={selected.stripeCheckoutUrl} target="_blank" rel="noreferrer" className="rounded-full border border-[#075c58] bg-white px-4 py-2 text-xs font-black text-[#075c58] transition hover:bg-[#f4ecdc]">Open raw Stripe link</a>
++                          <button type="button" onClick={() => copyToClipboard(selected.stripeCheckoutUrl || "")} className="rounded-full border border-[#d8c18f] bg-white px-4 py-2 text-xs font-black text-slate-700 transition hover:border-[#075c58] hover:text-[#075c58]">Copy raw Stripe link</button>
++                        </div>
++                      </div>
++                    )}
++                  </div>
++                )}
++
++                {checkoutMessage && <p className="mt-3 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">{checkoutMessage}</p>}
++                {checkoutError && <p className="mt-3 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{checkoutError}</p>}
++              </AdminCollapsibleSection>
++            )}
++
++            {showLaundryFinalBalance && (
++              <AdminCollapsibleSection id="admin-section-laundry-final" eyebrow="Laundry final balance" title="Handle final laundry invoice or auto-charge" tone="white">
+                 <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+-                  <div className="max-w-3xl">
+-                    <p className="text-xs font-black uppercase tracking-[0.2em] text-[#b98a2f]">Applicant email</p>
+-                    <h4 className="mt-1 text-xl font-black text-[#075c58]">Write and send an email from the dashboard</h4>
++                  <div className="max-w-2xl">
++                    <p className="text-xs font-black uppercase tracking-[0.2em] text-[#b98a2f]">
++                      {laundryAutoChargeAuthorized ? "Laundry auto-charge final balance" : "Laundry final balance"}
++                    </p>
++                    <h4 className="mt-1 text-xl font-black text-[#075c58]">
++                      {laundryAutoChargeAuthorized ? "Create invoice + auto-charge saved card" : "Send final invoice before delivery"}
++                    </h4>
+                     <p className="mt-2 text-sm leading-6 text-slate-700">
+-                      Sends to <span className="font-black text-[#075c58]">{getApplicantEmailAddress(selected) || "no email on file"}</span>. Use the template, edit the message, then send. Replies should go back to the NestHelper inbox.
++                      {laundryAutoChargeAuthorized
++                        ? "The customer chose auto-charge during intro-minimum checkout. Enter the dry weight, additional lb rate, add-ons, and minimum already paid; NestHelper creates an itemized Stripe invoice for additional weight/add-ons and charges the saved payment method instead of showing a manual sender section."
++                        : "The customer chose invoice-before-delivery, or no auto-charge authorization is saved. Enter the dry weight, additional lb rate, add-ons, and minimum already paid; NestHelper creates a Stripe invoice with line-item details for additional weight/add-ons only."}
+                     </p>
+                   </div>
+-                  {selected.applicantEmailLastSentAt && (
+-                    <div className="rounded-2xl bg-[#fbf6ea] px-4 py-3 text-xs font-bold text-slate-700">
+-                      Last sent: {formatDate(selected.applicantEmailLastSentAt)}
+-                      {selected.applicantEmailLastSubject && <span className="mt-1 block text-[#075c58]">{String(selected.applicantEmailLastSubject)}</span>}
+-                      <span className={`mt-2 inline-flex rounded-full px-3 py-1 text-[11px] font-black ${getApplicantEmailStatusClass(selected.applicantEmailLastDeliveryStatus)}`}>
+-                        {getApplicantEmailStatusLabel(selected)}
+-                      </span>
+-                      {selected.applicantEmailLastStatusAtIso && <span className="mt-1 block text-[11px] text-slate-500">Updated: {formatDate(selected.applicantEmailLastStatusAtIso)}</span>}
++                  <StatusBadge status={String(selected.laundryPaymentStatus || selected.paymentStatus || selected.status || "New")} />
++                </div>
++
++                <div className="mt-4 grid gap-3 md:grid-cols-2">
++                  <div className="rounded-2xl border border-[#eadfc8] bg-[#fbf6ea] p-4 text-sm leading-6 text-slate-700">
++                    <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Customer final-payment choice</p>
++                    <p className="mt-1 font-black text-[#075c58]">{selected.laundryFinalPaymentPreferenceLabel || "Not captured yet"}</p>
++                    <p className="mt-1 text-xs font-semibold text-slate-600">
++                      The intro minimum is non-refundable and taxable. The final invoice charges additional laundry/add-ons. If manual tax is on and the intro minimum was not taxed, it adds a one-time tax catch-up without charging the $59 again.
++                    </p>
++                  </div>
++                  {laundryAutoChargeAuthorized ? (
++                    <div className={`rounded-2xl border p-4 text-sm leading-6 ${laundryAutoChargeReady ? "border-emerald-100 bg-emerald-50 text-emerald-900" : "border-amber-200 bg-amber-50 text-amber-900"}`}>
++                      <p className="text-xs font-black uppercase tracking-[0.16em]">Auto-charge status</p>
++                      <p className="mt-1 font-black">{laundryAutoChargeReady ? "Saved Stripe payment method ready" : "Auto-charge was selected, but the saved card is missing"}</p>
++                      <p className="mt-1 text-xs font-semibold">
++                        {laundryAutoChargeReady
++                          ? "The final action below will create the invoice and charge the saved card. Do not send a separate final invoice unless auto-charge fails."
++                          : selected.laundryAutoChargeError || "Use a manual invoice or have the customer re-authorize the laundry deposit checkout before auto-charging."}
++                      </p>
++                    </div>
++                  ) : (
++                    <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900">
++                      <p className="text-xs font-black uppercase tracking-[0.16em]">Hold until paid</p>
++                      <p className="mt-1 font-black">Send the final invoice before delivery</p>
++                      <p className="mt-1 text-xs font-semibold">Use the final invoice buttons below. Laundry should not be released until the invoice is fully paid.</p>
+                     </div>
+                   )}
+                 </div>
+ 
+-                <div className="mt-4 grid gap-3 md:grid-cols-[240px_1fr]">
++                {laundryFinalAlreadyPaid && (
++                  <p className="mt-4 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">
++                    This request already shows the final laundry balance as paid. Do not create another final invoice or auto-charge unless you intentionally need a correction.
++                  </p>
++                )}
++
++                <div className="mt-4 grid gap-3 md:grid-cols-4">
+                   <label className="grid gap-2 text-sm font-bold text-slate-700">
+-                    Template
+-                    <select
+-                      value={applicantEmailTemplate}
+-                      onChange={(e) => applyApplicantEmailTemplate(e.target.value as ApplicantEmailTemplateKey)}
+-                      className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-bold text-[#075c58] outline-none focus:border-[#075c58]"
+-                    >
+-                      <option value="phone-interview">Phone interview request</option>
+-                      <option value="needs-documents">Request more info/docs</option>
+-                      <option value="not-selected">Not moving forward</option>
+-                      <option value="custom">Custom / keep my edits</option>
+-                    </select>
++                    Dry weight lbs
++                    <input
++                      value={laundryDryWeightLbs}
++                      onChange={(e) => setLaundryDryWeightLbs(e.target.value)}
++                      inputMode="decimal"
++                      placeholder="24"
++                      className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]"
++                    />
+                   </label>
+                   <label className="grid gap-2 text-sm font-bold text-slate-700">
+-                    Subject
++                    Additional lb rate
+                     <input
+-                      value={applicantEmailSubject}
+-                      onChange={(e) => {
+-                        setApplicantEmailTemplate("custom");
+-                        setApplicantEmailSubject(e.target.value);
+-                      }}
+-                      placeholder="Email subject"
+-                      className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
++                      value={laundryRatePerLb}
++                      onChange={(e) => setLaundryRatePerLb(e.target.value)}
++                      inputMode="decimal"
++                      className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]"
++                    />
++                  </label>
++                  <label className="grid gap-2 text-sm font-bold text-slate-700">
++                    Add-ons / bulky
++                    <input
++                      value={laundryAddOnsAmount}
++                      onChange={(e) => setLaundryAddOnsAmount(e.target.value)}
++                      inputMode="decimal"
++                      placeholder="0"
++                      className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]"
++                    />
++                  </label>
++                  <label className="grid gap-2 text-sm font-bold text-slate-700">
++                    Minimum already paid
++                    <input
++                      value={laundryDepositCredit}
++                      onChange={(e) => setLaundryDepositCredit(e.target.value)}
++                      inputMode="decimal"
++                      className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]"
+                     />
+                   </label>
+                 </div>
+ 
+-                <label className="mt-3 grid gap-2 text-sm font-bold text-slate-700">
+-                  Message
++                <p className="mt-3 rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-xs font-bold leading-5 text-slate-600">
++                  The $59 Laundry Rescue intro minimum already includes pickup, wash, dry, fold, return, and up to about 26.2 lbs. This final-balance tool charges only additional laundry above the included weight, plus approved add-ons or bulky items. If manual tax is on and the intro minimum was not taxed, it adds a one-time tax catch-up without charging the $59 again.
++                </p>
++
++                <div className="mt-3 rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-xs font-bold leading-5 text-slate-600">
++                  <p className="font-black uppercase tracking-[0.14em] text-[#b98a2f]">Laundry tax failsafe</p>
++                  <p className="mt-1">
++                    {laundryManualSalesTax && laundryTaxRateNumber > 0
++                      ? laundryDepositTaxAlreadyCollected
++                        ? `Intro minimum tax already appears collected (${formatMoney(laundryDepositTaxCollectedAmount)}). Final invoice will tax only additional weight/add-ons.`
++                        : `Intro minimum tax does not appear collected. Final invoice will add about ${formatMoney(laundryDepositTaxCatchUpAmount)} tax catch-up for the $59 minimum, plus estimated tax on additional items.`
++                      : "Manual sales tax is off or no rate is entered. No tax catch-up or final sales tax will be added."}
++                  </p>
++                </div>
++
++                <div className="mt-4 grid gap-3 rounded-2xl bg-[#fbf6ea] p-4 text-sm md:grid-cols-4">
++                  <div>
++                    <p className="font-black uppercase tracking-[0.14em] text-[#b98a2f]">Additional total before tax</p>
++                    <p className="mt-1 text-xl font-black text-[#075c58]">{formatMoney(laundrySubtotal)}</p>
++                  </div>
++                  <div>
++                    <p className="font-black uppercase tracking-[0.14em] text-[#b98a2f]">Included weight</p>
++                    <p className="mt-1 text-xl font-black text-[#075c58]">{laundryIncludedWeightLbs.toFixed(1)} lb</p>
++                  </div>
++                  <div>
++                    <p className="font-black uppercase tracking-[0.14em] text-[#b98a2f]">Final taxable balance</p>
++                    <p className="mt-1 text-xl font-black text-[#075c58]">{formatMoney(laundryBalanceDue)}</p>
++                  </div>
++                  <div>
++                    <p className="font-black uppercase tracking-[0.14em] text-[#b98a2f]">Estimated total w/ tax</p>
++                    <p className="mt-1 text-xl font-black text-[#075c58]">{formatMoney(laundryEstimatedFinalTotalWithTax)}</p>
++                  </div>
++                </div>
++
++                <label className="mt-4 grid gap-2 text-sm font-bold text-slate-700">
++                  Optional final balance note
+                   <textarea
+-                    value={applicantEmailBody}
+-                    onChange={(e) => {
+-                      setApplicantEmailTemplate("custom");
+-                      setApplicantEmailBody(e.target.value);
+-                    }}
+-                    rows={11}
+-                    placeholder="Write the email message here."
+-                    className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal leading-6 text-slate-800 outline-none focus:border-[#075c58]"
++                    value={laundryFinalNote}
++                    onChange={(e) => setLaundryFinalNote(e.target.value)}
++                    placeholder="Example: 32 lbs dry weight, fragrance-free detergent, low heat dry. $59 minimum already includes up to about 26.2 lbs."
++                    rows={3}
++                    className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
+                   />
+                 </label>
+ 
+-                <div className="mt-4 flex flex-wrap items-center gap-3">
+-                  <button type="button" disabled={applicantEmailBusy || !getApplicantEmailAddress(selected) || !applicantEmailSubject.trim() || !applicantEmailBody.trim()} onClick={sendApplicantEmail} className={getAdminActionClass("primary")}>
+-                    {applicantEmailBusy ? <><ActionSpinner /> Sending...</> : "Send applicant email"}
+-                  </button>
+-                  <button type="button" disabled={applicantEmailBusy} onClick={() => applyApplicantEmailTemplate("phone-interview")} className={getAdminActionClass("quiet")}>
+-                    Reset phone interview template
+-                  </button>
+-                  <p className="text-xs font-semibold text-slate-500">Review before sending. This sends a real email through Resend.</p>
+-                </div>
+-
+-                {applicantEmailMessage && <p className="mt-3 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">{applicantEmailMessage}</p>}
+-                {applicantEmailError && <p className="mt-3 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{applicantEmailError}</p>}
+-
+-                {getApplicantEmailStatusHistory(selected).length > 0 && (
++                {laundryAutoChargeAuthorized ? (
++                  <div className="mt-4">
++                    <button
++                      type="button"
++                      disabled={laundryFinalBusy || laundryFinalAlreadyPaid || !laundryAutoChargeReady}
++                      onClick={() => createLaundryFinalBalance(false)}
++                      className={getAdminActionClass("primary")}
++                    >
++                      {laundryFinalBusy ? <><ActionSpinner /> Charging...</> : "Create invoice + auto-charge saved card"}
++                    </button>
++                    {!laundryAutoChargeReady && (
++                      <p className="mt-2 text-xs font-bold text-amber-800">Auto-charge is not ready, so the charge button is disabled to avoid a failed or duplicate billing attempt.</p>
++                    )}
++                  </div>
++                ) : (
++                  <div className="mt-4 grid gap-3 md:grid-cols-2">
++                    <button
++                      type="button"
++                      disabled={laundryFinalBusy || laundryFinalAlreadyPaid}
++                      onClick={() => createLaundryFinalBalance(true)}
++                      className={getAdminActionClass("primary")}
++                    >
++                      {laundryFinalBusy ? <><ActionSpinner /> Creating...</> : "Create + email final invoice"}
++                    </button>
++                    <button
++                      type="button"
++                      disabled={laundryFinalBusy || laundryFinalAlreadyPaid}
++                      onClick={() => createLaundryFinalBalance(false)}
++                      className={getAdminActionClass("secondary")}
++                    >
++                      Create final invoice only
++                    </button>
++                  </div>
++                )}
++
++                {selected.laundryFinalCheckoutUrl && (
+                   <div className="mt-4 rounded-2xl border border-[#eadfc8] bg-[#fbf6ea] p-4">
+-                    <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+-                      <p className="text-xs font-black uppercase tracking-[0.18em] text-[#b98a2f]">Email status log</p>
+-                      <p className="text-xs font-semibold text-slate-500">Auto-updates after Resend webhook events.</p>
+-                    </div>
+-                    <div className="mt-3 grid gap-2">
+-                      {getApplicantEmailStatusHistory(selected).slice(0, 6).map((entry, index) => (
+-                        <div key={`${entry.resendId || "email"}-${entry.type || entry.status || index}-${entry.atIso || index}`} className="rounded-2xl bg-white px-4 py-3 text-xs text-slate-700 shadow-sm">
+-                          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+-                            <span className={`inline-flex w-fit rounded-full px-3 py-1 text-[11px] font-black ${getApplicantEmailStatusClass(entry.status)}`}>{entry.statusLabel || entry.status || "Email event"}</span>
+-                            <span className="font-semibold text-slate-500">{formatDate(entry.atIso || entry.statusAtIso)}</span>
+-                          </div>
+-                          {entry.subject && <p className="mt-2 font-bold text-[#075c58]">{String(entry.subject)}</p>}
+-                          {entry.reason && <p className="mt-1 font-semibold text-red-700">Reason: {String(entry.reason)}</p>}
+-                        </div>
+-                      ))}
++                    <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Current final balance invoice / receipt link</p>
++                    <p className="mt-2 break-all text-sm text-[#075c58]">{selected.laundryFinalCheckoutUrl}</p>
++                    <div className="mt-3 flex flex-wrap gap-2">
++                      <a href={selected.laundryFinalCheckoutUrl} target="_blank" rel="noreferrer" className="rounded-full bg-[#075c58] px-4 py-2 text-xs font-black text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-[#064b48]">Open final invoice</a>
++                      <button type="button" onClick={() => copyLaundryLink(selected.laundryFinalCheckoutUrl || "")} className="rounded-full border border-[#075c58] bg-white px-4 py-2 text-xs font-black text-[#075c58] transition hover:bg-[#f4ecdc]">Copy link</button>
++                      {selected.laundryFinalInvoicePdf && (
++                        <a href={selected.laundryFinalInvoicePdf} target="_blank" rel="noreferrer" className="rounded-full border border-[#075c58] bg-white px-4 py-2 text-xs font-black text-[#075c58] transition hover:bg-[#f4ecdc]">Open PDF</a>
++                      )}
+                     </div>
+                   </div>
+                 )}
++
++                {laundryFinalMessage && <p className="mt-3 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">{laundryFinalMessage}</p>}
++                {laundryFinalError && <p className="mt-3 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{laundryFinalError}</p>}
+               </AdminCollapsibleSection>
+             )}
+ 
+-            {showApplicationOnboardingPanel && (
+-              <AdminCollapsibleSection id="admin-section-applicant-onboarding" eyebrow="Applicant onboarding" title="Track helper/partner onboarding" tone="gradient">
++            {showPaymentActions && (
++              <AdminCollapsibleSection id="admin-section-additional-payment" eyebrow="Additional payment" title="Create add-on or balance payment" tone="gold">
+                 <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+-                  <div className="max-w-3xl">
+-                    <p className="text-xs font-black uppercase tracking-[0.2em] text-[#b98a2f]">Applicant onboarding</p>
+-                    <h4 className="mt-1 text-xl font-black text-[#075c58]">Track documents, screening, fit, and approval notes</h4>
++                  <div className="max-w-2xl">
++                    <p className="text-xs font-black uppercase tracking-[0.2em] text-[#b98a2f]">{selectedIsCommercial ? "Optional later/add-on payment" : "Additional payment"}</p>
++                    <h4 className="mt-1 text-xl font-black text-[#075c58]">{selectedIsCommercial ? "Send only if the customer approves extra commercial scope" : "Send an extra Stripe link for approved add-ons"}</h4>
+                     <p className="mt-2 text-sm leading-6 text-slate-700">
+-                      This is admin-only. Use it to move helpers/partners from application to phone screen, documents, background check, approved, backup list, rejected, or archived.
++                      {selectedIsCommercial
++                        ? "Use this after the first payment only for approved add-ons, floor/carpet work, linen/restock handling, recurring-plan changes, or added scope. Do not use it as an open-ended hourly charge."
++                        : "Use this after the first payment if the job needs approved extra hours, extra miles, route changes, or another added balance. This creates a separate Stripe Checkout link tied to the same request."}
+                     </p>
+                   </div>
+-                  <StatusBadge status={applicationStatus} />
++                  <StatusBadge status={String(selected.additionalPaymentStatus || "Optional")} />
+                 </div>
+ 
+                 <div className="mt-4 grid gap-3 md:grid-cols-2">
+                   <label className="grid gap-2 text-sm font-bold text-slate-700">
+-                    Application status
++                    Additional amount
++                    <input
++                      value={additionalPaymentAmount}
++                      onChange={(e) => setAdditionalPaymentAmount(e.target.value)}
++                      inputMode="decimal"
++                      placeholder="35"
++                      className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]"
++                    />
++                  </label>
++                  <label className="grid gap-2 text-sm font-bold text-slate-700">
++                    Reason
+                     <select
+-                      value={applicationStatus}
+-                      onChange={(e) => setApplicationStatus(e.target.value)}
++                      value={additionalPaymentReason}
++                      onChange={(e) => setAdditionalPaymentReason(e.target.value)}
+                       className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-bold text-[#075c58] outline-none focus:border-[#075c58]"
+                     >
+-                      {Array.from(new Set([...APPLICATION_STATUS_OPTIONS, ...dropdownStatuses])).map((status) => <option key={status}>{status}</option>)}
+-                    </select>
+-                  </label>
+-
+-                  <label className="grid gap-2 text-sm font-bold text-slate-700">
+-                    Reliability / fit rating
+-                    <select
+-                      value={reliabilityRating}
+-                      onChange={(e) => setReliabilityRating(e.target.value)}
+-                      className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-bold text-[#075c58] outline-none focus:border-[#075c58]"
+-                    >
+-                      <option value="">Not rated yet</option>
+-                      <option>Excellent fit</option>
+-                      <option>Good fit</option>
+-                      <option>Backup / limited fit</option>
+-                      <option>Needs more review</option>
+-                      <option>Do not assign</option>
++                      {isCommercialRequest(selected) ? (
++                        <>
++                          <option>Commercial approved add-on / additional scope</option>
++                          <option>Specialty floor or carpet add-on</option>
++                          <option>Short-term rental linen / restock add-on</option>
++                          <option>Recurring plan adjustment</option>
++                          <option>Other approved commercial balance</option>
++                        </>
++                      ) : (
++                        <>
++                          <option>Additional hours</option>
++                          <option>Extra miles / route time</option>
++                          <option>Additional approved task / add-on</option>
++                          <option>Other approved balance</option>
++                        </>
++                      )}
+                     </select>
+                   </label>
+                 </div>
+ 
+-                <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+-                  {APPLICATION_CHECKLIST_ITEMS.map((item) => (
+-                    <label key={item.key} className={`flex items-center gap-3 rounded-2xl border p-3 text-sm font-bold transition ${onboardingChecklist[item.key] ? "border-emerald-200 bg-emerald-50 text-emerald-900" : "border-[#eadfc8] bg-white text-slate-700"}`}>
+-                      <input
+-                        type="checkbox"
+-                        checked={Boolean(onboardingChecklist[item.key])}
+-                        onChange={(e) => toggleOnboardingChecklist(item.key, e.target.checked)}
+-                        className="h-5 w-5 rounded border-[#075c58] accent-[#075c58]"
+-                      />
+-                      {item.label}
+-                    </label>
+-                  ))}
++                <label className="mt-4 grid gap-2 text-sm font-bold text-slate-700">
++                  Optional customer note
++                  <textarea
++                    value={additionalPaymentNote}
++                    onChange={(e) => setAdditionalPaymentNote(e.target.value)}
++                    placeholder="Example: Additional 30 minutes approved by text for extra folding and toy reset. Original payment has already been credited."
++                    rows={3}
++                    className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
++                  />
++                </label>
++
++                <div className="mt-4 grid gap-3 md:grid-cols-2">
++                  <button
++                    type="button"
++                    disabled={additionalPaymentBusy}
++                    onClick={() => createAdditionalPayment(true)}
++                    className={getAdminActionClass("primary")}
++                  >
++                    {additionalPaymentBusy ? <><ActionSpinner /> Creating...</> : "Create + email additional payment link"}
++                  </button>
++                  <button
++                    type="button"
++                    disabled={additionalPaymentBusy}
++                    onClick={() => createAdditionalPayment(false)}
++                    className={getAdminActionClass("secondary")}
++                  >
++                    Create additional link only
++                  </button>
+                 </div>
+ 
+-                <details className="mt-4 rounded-3xl border border-[#eadfc8] bg-white p-4">
+-                  <summary className="cursor-pointer text-sm font-black text-[#075c58]">Notes, fit, concerns, and approved bio</summary>
+-                  <div className="mt-4 grid gap-3 md:grid-cols-2">
+-                    <label className="grid gap-2 text-sm font-bold text-slate-700">
+-                      Best-fit services
+-                      <textarea value={bestFitServices} onChange={(e) => setBestFitServices(e.target.value)} rows={3} placeholder="Example: Laundry, organizing, family reset, backup errand helper." className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]" />
+-                    </label>
+-                    <label className="grid gap-2 text-sm font-bold text-slate-700">
+-                      Strengths
+-                      <textarea value={strengths} onChange={(e) => setStrengths(e.target.value)} rows={3} placeholder="What seems strong about this applicant?" className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]" />
+-                    </label>
+-                    <label className="grid gap-2 text-sm font-bold text-slate-700">
+-                      Concerns / follow-up needed
+-                      <textarea value={concerns} onChange={(e) => setConcerns(e.target.value)} rows={3} placeholder="Questions, gaps, schedule limits, or documents still needed." className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]" />
+-                    </label>
+-                    <label className="grid gap-2 text-sm font-bold text-slate-700">
+-                      Do-not-assign notes
+-                      <textarea value={doNotAssignNotes} onChange={(e) => setDoNotAssignNotes(e.target.value)} rows={3} placeholder="Only use for important internal restrictions." className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]" />
+-                    </label>
+-                    <label className="grid gap-2 text-sm font-bold text-slate-700 md:col-span-2">
+-                      Internal notes
+-                      <textarea value={internalNotes} onChange={(e) => setInternalNotes(e.target.value)} rows={4} placeholder="Phone screen notes, references, document review notes, assignment preferences, etc." className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]" />
+-                    </label>
+-                    <label className="grid gap-2 text-sm font-bold text-slate-700 md:col-span-2">
+-                      Customer-facing approved bio draft
+-                      <textarea value={approvedBio} onChange={(e) => setApprovedBio(e.target.value)} rows={3} placeholder="Optional bio if this helper/partner is approved later." className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]" />
+-                    </label>
++                {selected.additionalPaymentCheckoutUrl && (
++                  <div className="mt-4 rounded-2xl border border-[#eadfc8] bg-white p-4">
++                    <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Current additional payment link</p>
++                    <p className="mt-2 break-all text-sm text-[#075c58]">{selected.additionalPaymentCheckoutUrl}</p>
++                    <div className="mt-3 flex flex-wrap gap-2">
++                      <a href={selected.additionalPaymentCheckoutUrl} target="_blank" rel="noreferrer" className="rounded-full bg-[#075c58] px-4 py-2 text-xs font-black text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-[#064b48]">Open additional checkout</a>
++                      <button type="button" onClick={() => copyAdditionalPaymentLink(selected.additionalPaymentCheckoutUrl || "")} className="rounded-full border border-[#075c58] bg-white px-4 py-2 text-xs font-black text-[#075c58] transition hover:bg-[#f4ecdc]">Copy link</button>
++                    </div>
+                   </div>
+-                </details>
+-
+-                <div className="mt-4 flex flex-wrap items-center gap-3">
+-                  <button type="button" disabled={applicationOnboardingBusy} onClick={saveApplicationOnboarding} className={getAdminActionClass("primary")}>
+-                    {applicationOnboardingBusy ? <><ActionSpinner /> Saving...</> : "Save onboarding details"}
+-                  </button>
+-                  <p className="text-xs font-semibold text-slate-500">This only updates the admin record. Use the applicant email box above to send a real email.</p>
+-                </div>
+-
+-                {applicationOnboardingMessage && <p className="mt-3 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">{applicationOnboardingMessage}</p>}
+-                {applicationOnboardingError && <p className="mt-3 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{applicationOnboardingError}</p>}
++                )}
++
++                {additionalPaymentMessage && <p className="mt-3 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">{additionalPaymentMessage}</p>}
++                {additionalPaymentError && <p className="mt-3 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{additionalPaymentError}</p>}
+               </AdminCollapsibleSection>
+             )}
+ 
+@@ -6165,1006 +7168,6 @@
+               </AdminCollapsibleSection>
+             )}
+ 
+-            {showCommercialQuotePanel && (
+-              <AdminCollapsibleSection id="admin-section-commercial-quote" eyebrow="Commercial quote" title="Build and send commercial quote details" tone="blue">
+-                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+-                  <div className="max-w-3xl">
+-                    <p className="text-xs font-black uppercase tracking-[0.2em] text-[#b98a2f]">Commercial quote workflow</p>
+-                    <h4 className="mt-1 text-xl font-black text-[#075c58]">Review, quote, then invoice when approved</h4>
+-                    <p className="mt-2 text-sm leading-6 text-slate-700">
+-                      This section is for Commercial Reset only. Review the request, build and save a customer-ready quote, email the quote by itself if the customer needs to approve first, then create the Stripe invoice once they are ready to pay.
+-                    </p>
+-                  </div>
+-                  <StatusBadge status={getCommercialQuoteStatus(selected)} />
+-                </div>
+-
+-                <div className="mt-4 grid gap-3 md:grid-cols-4">
+-                  <div className="rounded-2xl border border-cyan-200 bg-white p-4">
+-                    <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Step 1</p>
+-                    <p className="mt-1 text-sm font-black text-[#075c58]">Review the request</p>
+-                    <p className="mt-1 text-xs leading-5 text-slate-600">Check the space type, size, bathrooms, photos, timing, and requested priorities.</p>
+-                  </div>
+-                  <div className="rounded-2xl border border-cyan-200 bg-white p-4">
+-                    <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Step 2</p>
+-                    <p className="mt-1 text-sm font-black text-[#075c58]">Prepare the quote</p>
+-                    <p className="mt-1 text-xs leading-5 text-slate-600">Use sq-ft pricing when possible, then add recurring, turnover, or reviewed add-on lines as needed.</p>
+-                  </div>
+-                  <div className="rounded-2xl border border-cyan-200 bg-white p-4">
+-                    <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Step 3</p>
+-                    <p className="mt-1 text-sm font-black text-[#075c58]">Email quote or invoice</p>
+-                    <p className="mt-1 text-xs leading-5 text-slate-600">Send the quote only for approval, or create a Stripe invoice when the customer is ready to pay.</p>
+-                  </div>
+-                  <div className="rounded-2xl border border-cyan-200 bg-white p-4">
+-                    <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Optional</p>
+-                    <p className="mt-1 text-sm font-black text-[#075c58]">Add-on balance</p>
+-                    <p className="mt-1 text-xs leading-5 text-slate-600">Use only for customer-approved extras, floor work, linen handling, or added scope.</p>
+-                  </div>
+-                </div>
+-
+-                <div className="mt-4 rounded-3xl border border-cyan-200 bg-white p-4">
+-                  <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+-                    <div>
+-                      <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Request snapshot</p>
+-                      <h5 className="mt-1 text-base font-black text-[#075c58]">Key details to check before quoting</h5>
+-                    </div>
+-                    <p className="rounded-full bg-cyan-50 px-3 py-1 text-xs font-black uppercase tracking-[0.14em] text-cyan-800">Commercial</p>
+-                  </div>
+-                  <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+-                    <div className="rounded-2xl border border-cyan-100 bg-cyan-50/40 p-4">
+-                      <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Space type</p>
+-                      <p className="mt-1 text-sm font-bold text-[#075c58]">{formatValue("businessType", selected.businessType)}</p>
+-                      <p className="mt-1 text-xs font-semibold text-slate-600">Frequency: {formatValue("frequency", selected.frequency)}</p>
+-                    </div>
+-                    <div className="rounded-2xl border border-cyan-100 bg-cyan-50/40 p-4">
+-                      <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Size + layout</p>
+-                      <p className="mt-1 text-sm font-bold text-[#075c58]">{formatValue("squareFootage", selected.squareFootage)}</p>
+-                      <p className="mt-1 text-xs font-semibold text-slate-600">Restrooms: {formatValue("bathrooms", selected.bathrooms)} · Kitchens/breakrooms: {formatValue("kitchens", selected.kitchens)} · Showers: {formatValue("showers", selected.showers)}</p>
+-                    </div>
+-                    <div className="rounded-2xl border border-cyan-100 bg-cyan-50/40 p-4">
+-                      <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Condition</p>
+-                      <p className="mt-1 text-sm font-bold text-[#075c58]">{formatValue("spaceCondition", selected.spaceCondition)}</p>
+-                      <p className="mt-1 text-xs font-semibold text-slate-600">Traffic: {formatValue("trafficLevel", selected.trafficLevel)}</p>
+-                    </div>
+-                    <div className="rounded-2xl border border-cyan-100 bg-cyan-50/40 p-4">
+-                      <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Customer estimate</p>
+-                      <p className="mt-1 text-sm font-bold text-[#075c58]">{formatValue("customerEstimatePrimaryRange", selected.customerEstimatePrimaryRange)}</p>
+-                      <p className="mt-1 text-xs font-semibold text-slate-600">
+-                        {selected.customerEstimateMonthlyRange ? `Monthly: ${formatValue("customerEstimateMonthlyRange", selected.customerEstimateMonthlyRange)}` : "Planning range shown on request form when enough details were entered."}
+-                      </p>
+-                      {selected.customerEstimateAddOnRange && (
+-                        <p className="mt-1 text-xs font-semibold text-slate-600">Add-ons: {formatValue("customerEstimateAddOnRange", selected.customerEstimateAddOnRange)}</p>
+-                      )}
+-                    </div>
+-                  </div>
+-
+-                  {(selected.carpetArea || selected.carpetAreaClearance || selected.hardFloorArea || selected.hardFloorAreaClearance || selected.spotTreatmentCount || selected.upholsteryScope || selected.upholsteryCondition || selected.glassScope || selected.glassAccess) && (
+-                    <div className="mt-4 rounded-3xl border border-cyan-200 bg-white p-4">
+-                      <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Add-on estimate details</p>
+-                      <div className="mt-3 grid gap-3 md:grid-cols-2">
+-                        {selected.carpetArea && (
+-                          <div className="rounded-2xl border border-cyan-100 bg-cyan-50/40 p-4 text-xs font-semibold leading-5 text-slate-600">
+-                            <span className="font-black text-[#075c58]">Carpet:</span> {formatValue("carpetArea", selected.carpetArea)}{selected.carpetCondition ? ` · ${formatValue("carpetCondition", selected.carpetCondition)}` : ""}{selected.carpetAreaClearance ? ` · Clearance: ${formatValue("carpetAreaClearance", selected.carpetAreaClearance)}` : ""}
+-                          </div>
+-                        )}
+-                        {selected.spotTreatmentCount && (
+-                          <div className="rounded-2xl border border-cyan-100 bg-cyan-50/40 p-4 text-xs font-semibold leading-5 text-slate-600">
+-                            <span className="font-black text-[#075c58]">Spot treatment:</span> {formatValue("spotTreatmentCount", selected.spotTreatmentCount)}
+-                          </div>
+-                        )}
+-                        {selected.hardFloorArea && (
+-                          <div className="rounded-2xl border border-cyan-100 bg-cyan-50/40 p-4 text-xs font-semibold leading-5 text-slate-600">
+-                            <span className="font-black text-[#075c58]">Hard floors:</span> {formatValue("hardFloorArea", selected.hardFloorArea)}{selected.hardFloorMaterial ? ` · ${formatValue("hardFloorMaterial", selected.hardFloorMaterial)}` : ""}{selected.hardFloorCondition ? ` · ${formatValue("hardFloorCondition", selected.hardFloorCondition)}` : ""}{selected.hardFloorAreaClearance ? ` · Clearance: ${formatValue("hardFloorAreaClearance", selected.hardFloorAreaClearance)}` : ""}
+-                          </div>
+-                        )}
+-                        {selected.upholsteryScope && (
+-                          <div className="rounded-2xl border border-cyan-100 bg-cyan-50/40 p-4 text-xs font-semibold leading-5 text-slate-600">
+-                            <span className="font-black text-[#075c58]">Upholstery:</span> {formatValue("upholsteryScope", selected.upholsteryScope)}{selected.upholsteryCondition ? ` · ${formatValue("upholsteryCondition", selected.upholsteryCondition)}` : ""}
+-                          </div>
+-                        )}
+-                        {selected.glassScope && (
+-                          <div className="rounded-2xl border border-cyan-100 bg-cyan-50/40 p-4 text-xs font-semibold leading-5 text-slate-600">
+-                            <span className="font-black text-[#075c58]">Interior glass:</span> {formatValue("glassScope", selected.glassScope)}{selected.glassAccess ? ` · Access: ${formatValue("glassAccess", selected.glassAccess)}` : ""}
+-                          </div>
+-                        )}
+-                      </div>
+-                    </div>
+-                  )}
+-                </div>
+-
+-                <div className="mt-4">
+-                  <CommercialQuoteBreakdownBuilder
+-                    item={selected}
+-                    formatMoney={formatMoney}
+-                    onSaved={(updates) => {
+-                      const savedBreakdown = updates.commercialQuoteBreakdown as { customerBreakdownText?: string } | undefined;
+-                      setSelected((prev) => (prev ? { ...prev, ...updates } : prev));
+-                      if (updates.commercialInitialAmount !== undefined) setCommercialInitialAmount(String(updates.commercialInitialAmount));
+-                      if (updates.commercialAdditionalAmount !== undefined) setCommercialAdditionalAmount(String(updates.commercialAdditionalAmount));
+-                      if (updates.commercialQuoteStatus) setCommercialQuoteStatus(String(updates.commercialQuoteStatus));
+-                      if (updates.commercialQuoteType) setCommercialQuoteType(String(updates.commercialQuoteType));
+-                      if (updates.commercialCustomerQuoteNote) setCommercialCustomerQuoteNote(String(updates.commercialCustomerQuoteNote));
+-                      if (updates.commercialInternalQuoteNotes) setCommercialInternalQuoteNotes(String(updates.commercialInternalQuoteNotes));
+-                      if (savedBreakdown?.customerBreakdownText) setIncludeCommercialQuoteBreakdown(true);
+-                      if (updates.status) setStatusValue(String(updates.status));
+-                    }}
+-                    onApplyFirstPayment={applyCommercialQuoteBuilderFirstPayment}
+-                    onApplyAdditionalPayment={applyCommercialQuoteBuilderAdditionalPayment}
+-                  />
+-                </div>
+-
+-                <div className="mt-4 rounded-3xl border border-cyan-200 bg-white p-4">
+-                  <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Step 2 — Prepare quote</p>
+-                  <h5 className="mt-1 text-base font-black text-[#075c58]">What are you offering the customer?</h5>
+-                  <p className="mt-1 text-sm leading-6 text-slate-700">
+-                    Enter the amount you want to collect before work is scheduled. Add a later amount only if there is an approved add-on or balance.
+-                  </p>
+-
+-                  <div className="mt-4 grid gap-3 md:grid-cols-2">
+-                    <label className="grid gap-2 text-sm font-bold text-slate-700">
+-                      Quote progress
+-                      <select
+-                        value={commercialQuoteStatus}
+-                        onChange={(e) => setCommercialQuoteStatus(e.target.value)}
+-                        className="rounded-2xl border border-cyan-200 bg-white px-4 py-3 text-sm font-bold text-[#075c58] outline-none focus:border-[#075c58]"
+-                      >
+-                        {COMMERCIAL_QUOTE_STATUSES.map((status) => <option key={status}>{status}</option>)}
+-                      </select>
+-                    </label>
+-                    <label className="grid gap-2 text-sm font-bold text-slate-700">
+-                      Pricing style
+-                      <select
+-                        value={commercialQuoteType}
+-                        onChange={(e) => setCommercialQuoteType(e.target.value)}
+-                        className="rounded-2xl border border-cyan-200 bg-white px-4 py-3 text-sm font-bold text-[#075c58] outline-none focus:border-[#075c58]"
+-                      >
+-                        {COMMERCIAL_QUOTE_TYPES.map((type) => <option key={type}>{type}</option>)}
+-                      </select>
+-                    </label>
+-                  </div>
+-
+-                  <div className="mt-4 grid gap-3 md:grid-cols-2">
+-                    <label className="grid gap-2 text-sm font-bold text-slate-700">
+-                      Amount to collect now
+-                      <input
+-                        value={commercialInitialAmount}
+-                        onChange={(e) => setCommercialInitialAmount(e.target.value)}
+-                        inputMode="decimal"
+-                        placeholder="199"
+-                        className="rounded-2xl border border-cyan-200 bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]"
+-                      />
+-                      <span className="text-xs font-semibold leading-5 text-slate-500">Use this for the first approved visit, first turnover, deposit, or first recurring-plan payment.</span>
+-                    </label>
+-                    <label className="grid gap-2 text-sm font-bold text-slate-700">
+-                      Later/add-on amount, optional
+-                      <input
+-                        value={commercialAdditionalAmount}
+-                        onChange={(e) => setCommercialAdditionalAmount(e.target.value)}
+-                        inputMode="decimal"
+-                        placeholder="0"
+-                        className="rounded-2xl border border-cyan-200 bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]"
+-                      />
+-                      <span className="text-xs font-semibold leading-5 text-slate-500">Leave blank/0 unless the customer approved extra add-ons, specialty floor work, linens, or added scope.</span>
+-                    </label>
+-                  </div>
+-
+-                  <label className="mt-4 grid gap-2 text-sm font-bold text-slate-700">
+-                    Customer quote message
+-                    <textarea
+-                      value={commercialCustomerQuoteNote}
+-                      onChange={(e) => setCommercialCustomerQuoteNote(e.target.value)}
+-                      rows={3}
+-                      placeholder="Example: Approved Commercial Reset quote based on the submitted square footage range, restrooms, breakroom, and listed priorities. Specialty add-ons are reviewed before any additional charge."
+-                      className="rounded-2xl border border-cyan-200 bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
+-                    />
+-                    <span className="text-xs font-semibold leading-5 text-slate-500">This can be copied into the Stripe checkout note so the customer understands what the payment is for.</span>
+-                  </label>
+-
+-                  <label className="mt-4 grid gap-2 text-sm font-bold text-slate-700">
+-                    Private admin notes
+-                    <textarea
+-                      value={commercialInternalQuoteNotes}
+-                      onChange={(e) => setCommercialInternalQuoteNotes(e.target.value)}
+-                      rows={3}
+-                      placeholder="Private notes: walkthrough needed, Eastside/Northshore assignment, supply considerations, floor add-ons, tight turnover window, or pricing logic."
+-                      className="rounded-2xl border border-cyan-200 bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
+-                    />
+-                  </label>
+-
+-                  <div className="mt-4 grid gap-3 lg:grid-cols-4">
+-                    <button
+-                      type="button"
+-                      disabled={commercialQuoteBusy}
+-                      onClick={saveCommercialQuote}
+-                      className={getAdminActionClass("primary")}
+-                    >
+-                      {commercialQuoteBusy ? <><ActionSpinner /> Saving...</> : "1. Save quote details"}
+-                    </button>
+-                    <button
+-                      type="button"
+-                      disabled={commercialQuoteEmailBusy || !hasSavedCommercialQuoteBreakdown}
+-                      onClick={emailCommercialQuoteOnly}
+-                      className={getAdminActionClass("success")}
+-                    >
+-                      {commercialQuoteEmailBusy ? <><ActionSpinner /> Emailing...</> : "Email quote only"}
+-                    </button>
+-                    <button
+-                      type="button"
+-                      onClick={applyCommercialInitialToCheckout}
+-                      className={getAdminActionClass("secondary")}
+-                    >
+-                      2. Fill first payment link
+-                    </button>
+-                    <button
+-                      type="button"
+-                      onClick={applyCommercialAdditionalToPayment}
+-                      className={getAdminActionClass("quiet")}
+-                    >
+-                      Fill optional add-on link
+-                    </button>
+-                  </div>
+-
+-                  {commercialQuoteMessage && <p className="mt-3 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">{commercialQuoteMessage}</p>}
+-                  {commercialQuoteError && <p className="mt-3 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{commercialQuoteError}</p>}
+-                  {commercialQuoteEmailMessage && <p className="mt-3 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">{commercialQuoteEmailMessage}</p>}
+-                  {commercialQuoteEmailError && <p className="mt-3 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{commercialQuoteEmailError}</p>}
+-                </div>
+-              </AdminCollapsibleSection>
+-            )}
+-
+-            {showFamilyPaymentBreakdownPanel && (
+-              <AdminCollapsibleSection id="admin-section-family-breakdown" eyebrow="Draft estimate builder" title="Build the customer payment summary" tone="white">
+-                <FamilyPaymentBreakdownBuilder
+-                  item={selected}
+-                  availableCustomerCredits={selectedAvailableCustomerCredits}
+-                  formatMoney={formatMoney}
+-                  onSaved={(updates) => {
+-                    const savedBreakdown = updates.familyPaymentBreakdown as { customerBreakdownText?: string } | undefined;
+-                    setSelected((prev) => (prev ? { ...prev, ...updates } : prev));
+-                    if (savedBreakdown?.customerBreakdownText) setIncludeFamilyPaymentBreakdown(true);
+-                  }}
+-                  onApplyCheckout={({ amount, title, note }) => {
+-                    setCheckoutMode("custom");
+-                    setCustomInitialAmount(String(amount));
+-                    setCustomInitialTitle(title);
+-                    setCustomInitialNote(note);
+-                  }}
+-                  onApplyAdditionalPayment={({ amount, reason, note }) => {
+-                    setAdditionalPaymentAmount(String(amount));
+-                    setAdditionalPaymentReason(reason);
+-                    setAdditionalPaymentNote(note);
+-                  }}
+-                />
+-              </AdminCollapsibleSection>
+-            )}
+-
+-            {showPaymentActions && (
+-              <AdminCollapsibleSection id="admin-section-payment" eyebrow="Payment / smart checkout" title="Create invoice or smart checkout" tone="gold">
+-                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+-                  <div className="max-w-2xl">
+-                    <p className="text-xs font-black uppercase tracking-[0.2em] text-[#b98a2f]">{selectedIsCommercial ? "Step 3 — payment" : "Approval + payment"}</p>
+-                    <h4 className="mt-1 text-xl font-black text-[#075c58]">Choose invoice or quick checkout</h4>
+-                    <p className="mt-2 text-sm leading-6 text-slate-700">
+-                      {selectedIsCommercial
+-                        ? "For Commercial Reset, the itemized Stripe invoice from the saved commercial quote summary is usually the best option. Use quick checkout only for a simple deposit or first payment that does not need a formal invoice PDF."
+-                        : "Use a Stripe invoice when you want the customer to receive an itemized invoice/PDF from the saved customer payment summary. Use quick checkout for a simple package payment or deposit."}
+-                    </p>
+-                    {selected.service === "laundry-rescue" && (
+-                      <p className="mt-2 rounded-2xl bg-white px-4 py-3 text-sm font-bold text-[#075c58]">
+-                        For Laundry Rescue, both the saved payment summary amount and quick checkout create a deposit checkout so Stripe can ask the customer to choose auto-charge or invoice-before-delivery. After dry weigh-in, use the final balance section below.
+-                      </p>
+-                    )}
+-                  </div>
+-                  <div className="rounded-2xl border border-[#d8c18f] bg-white px-4 py-3 text-sm font-bold text-[#075c58] lg:max-w-sm">
+-                    Invoices use saved builder line items. Quick checkout uses the price mode/custom amount in the quick checkout box.
+-                  </div>
+-                </div>
+-
+-                {selectedIsCommercial && (
+-                  <div className="mt-4 rounded-3xl border border-cyan-200 bg-white p-4">
+-                    <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+-                      <div className="max-w-2xl">
+-                        <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Recommended for commercial</p>
+-                        <h5 className="mt-1 text-base font-black text-[#075c58]">Create a Stripe invoice from the saved summary</h5>
+-                        <p className="mt-1 text-sm leading-6 text-slate-700">
+-                          Best for commercial customers who expect an itemized invoice/PDF. Save the Commercial Quote Builder first, then create the Stripe invoice. When emailing, NestHelper sends the hosted invoice link in a branded email. A confirmation popup appears before creating because Stripe invoices may cost more than quick checkout.
+-                        </p>
+-                      </div>
+-                      <div className="flex flex-col gap-2 sm:flex-row lg:flex-col">
+-                        <button type="button" disabled={commercialInvoiceBusy || !hasSavedCommercialQuoteBreakdown} onClick={() => createCommercialInvoice(true)} className={getAdminActionClass("primary")}>
+-                          {commercialInvoiceBusy ? <><ActionSpinner /> Creating...</> : "Create + email invoice link"}
+-                        </button>
+-                        <button type="button" disabled={commercialInvoiceBusy || !hasSavedCommercialQuoteBreakdown} onClick={() => createCommercialInvoice(false)} className={getAdminActionClass("secondary")}>
+-                          Create invoice only
+-                        </button>
+-                      </div>
+-                    </div>
+-                    {!hasSavedCommercialQuoteBreakdown && (
+-                      <p className="mt-3 rounded-2xl bg-amber-50 px-4 py-3 text-xs font-bold leading-5 text-amber-800">Save the Commercial Quote Builder draft first. The invoice uses those saved line items.</p>
+-                    )}
+-                    {(selected.commercialInvoiceUrl || selected.commercialInvoicePdf) && (
+-                      <div className="mt-4 rounded-2xl border border-cyan-100 bg-cyan-50/50 p-4">
+-                        <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Current commercial invoice</p>
+-                        {selected.commercialInvoiceEmailWarning && <p className="mt-2 rounded-2xl bg-amber-50 px-3 py-2 text-xs font-bold text-amber-800">{selected.commercialInvoiceEmailWarning}</p>}
+-                        {selected.commercialInvoiceServicePeriodLabel && <p className="mt-2 text-xs font-bold text-slate-600">Service period: {selected.commercialInvoiceServicePeriodLabel}</p>}
+-                        {selected.commercialInvoiceUrl && <p className="mt-2 break-all text-sm text-[#075c58]">{selected.commercialInvoiceUrl}</p>}
+-                        <div className="mt-3 flex flex-wrap gap-2">
+-                          {selected.commercialInvoiceUrl && <a href={selected.commercialInvoiceUrl} target="_blank" rel="noreferrer" className="rounded-full bg-[#075c58] px-4 py-2 text-xs font-black text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-[#064b48]">Open invoice</a>}
+-                          {selected.commercialInvoicePdf && <a href={selected.commercialInvoicePdf} target="_blank" rel="noreferrer" className="rounded-full border border-[#075c58] bg-white px-4 py-2 text-xs font-black text-[#075c58] transition hover:bg-[#f4ecdc]">Open PDF</a>}
+-                          {selected.commercialInvoiceUrl && <button type="button" onClick={() => copyToClipboard(selected.commercialInvoiceUrl || "")} className="rounded-full border border-[#075c58] bg-white px-4 py-2 text-xs font-black text-[#075c58] transition hover:bg-[#f4ecdc]">Copy invoice link</button>}
+-                        </div>
+-                      </div>
+-                    )}
+-                    {commercialInvoiceMessage && <p className="mt-3 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">{commercialInvoiceMessage}</p>}
+-                    {commercialInvoiceError && <p className="mt-3 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{commercialInvoiceError}</p>}
+-                  </div>
+-                )}
+-
+-                {!selectedIsCommercial && (
+-                  <div className="mt-4 rounded-3xl border border-cyan-200 bg-white p-4">
+-                    <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+-                      <div className="max-w-2xl">
+-                        <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">{selected.service === "laundry-rescue" ? "Laundry deposit approval" : "Optional family invoice"}</p>
+-                        <h5 className="mt-1 text-base font-black text-[#075c58]">{selected.service === "laundry-rescue" ? "Create a deposit checkout from the saved laundry payment summary" : "Create a Stripe invoice from the saved customer payment summary"}</h5>
+-                        <p className="mt-1 text-sm leading-6 text-slate-700">
+-                          {selected.service === "laundry-rescue"
+-                            ? "This uses the saved payment summary amount to create a taxable, non-refundable Laundry Rescue deposit checkout. Stripe asks the customer to choose auto-charge for the final balance or invoice-before-delivery."
+-                            : "Use this when you want a formal invoice/PDF instead of only a checkout receipt: Errand Helper, custom family quotes, recurring family help, approved add-ons, or refund/credit documentation. A confirmation popup appears before creating because Stripe invoices may cost more than quick checkout."}
+-                        </p>
+-                      </div>
+-                      <div className="flex flex-col gap-2 sm:flex-row lg:flex-col">
+-                        <button type="button" disabled={familyInvoiceBusy || !hasSavedFamilyPaymentBreakdown} onClick={() => createFamilyInvoice(true)} className={getAdminActionClass("primary")}>
+-                          {familyInvoiceBusy ? <><ActionSpinner /> Creating...</> : selected.service === "laundry-rescue" ? "Create + email laundry deposit checkout" : "Create + email family invoice"}
+-                        </button>
+-                        <button type="button" disabled={familyInvoiceBusy || !hasSavedFamilyPaymentBreakdown} onClick={() => createFamilyInvoice(false)} className={getAdminActionClass("secondary")}>
+-                          {selected.service === "laundry-rescue" ? "Create laundry deposit checkout only" : "Create family invoice only"}
+-                        </button>
+-                      </div>
+-                    </div>
+-                    {!hasSavedFamilyPaymentBreakdown && (
+-                      <p className="mt-3 rounded-2xl bg-amber-50 px-4 py-3 text-xs font-bold leading-5 text-amber-800">Save the Draft Estimate Builder draft first. For Laundry Rescue, the saved amount becomes the deposit checkout amount; for other services, the invoice uses the saved line items.</p>
+-                    )}
+-                    {(selected.familyInvoiceUrl || selected.familyInvoicePdf) && (
+-                      <div className="mt-4 rounded-2xl border border-cyan-100 bg-cyan-50/50 p-4">
+-                        <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">{selected.service === "laundry-rescue" ? "Current laundry deposit checkout" : "Current family invoice"}</p>
+-                        {selected.familyInvoiceEmailWarning && <p className="mt-2 rounded-2xl bg-amber-50 px-3 py-2 text-xs font-bold text-amber-800">{selected.familyInvoiceEmailWarning}</p>}
+-                        {selected.familyInvoiceServicePeriodLabel && <p className="mt-2 text-xs font-bold text-slate-600">Service period: {selected.familyInvoiceServicePeriodLabel}</p>}
+-                        {selected.familyInvoiceUrl && <p className="mt-2 break-all text-sm text-[#075c58]">{selected.familyInvoiceUrl}</p>}
+-                        <div className="mt-3 flex flex-wrap gap-2">
+-                          {selected.familyInvoiceUrl && <a href={selected.familyInvoiceUrl} target="_blank" rel="noreferrer" className="rounded-full bg-[#075c58] px-4 py-2 text-xs font-black text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-[#064b48]">{selected.service === "laundry-rescue" ? "Open checkout" : "Open invoice"}</a>}
+-                          {selected.familyInvoicePdf && <a href={selected.familyInvoicePdf} target="_blank" rel="noreferrer" className="rounded-full border border-[#075c58] bg-white px-4 py-2 text-xs font-black text-[#075c58] transition hover:bg-[#f4ecdc]">Open PDF</a>}
+-                          {selected.familyInvoiceUrl && <button type="button" onClick={() => copyToClipboard(selected.familyInvoiceUrl || "")} className="rounded-full border border-[#075c58] bg-white px-4 py-2 text-xs font-black text-[#075c58] transition hover:bg-[#f4ecdc]">{selected.service === "laundry-rescue" ? "Copy checkout link" : "Copy invoice link"}</button>}
+-                        </div>
+-                      </div>
+-                    )}
+-                    {familyInvoiceMessage && <p className="mt-3 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">{familyInvoiceMessage}</p>}
+-                    {familyInvoiceError && <p className="mt-3 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{familyInvoiceError}</p>}
+-                  </div>
+-                )}
+-
+-                <div className="mt-4 rounded-3xl border border-[#d8c18f] bg-white p-4">
+-                  <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+-                    <div className="max-w-2xl">
+-                      <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Quick checkout</p>
+-                      <h5 className="mt-1 text-base font-black text-[#075c58]">Create a smart non-invoice checkout link</h5>
+-                      <p className="mt-1 text-sm leading-6 text-slate-700">
+-                        Smart checkout is best for simple package payments, deposits, or small custom payments. The customer receives a NestHelper link that opens Stripe securely and can refresh the Stripe checkout if it expires.
+-                      </p>
+-                    </div>
+-                    <div className="rounded-2xl bg-[#fbf6ea] px-4 py-3 text-xs font-bold leading-5 text-slate-700 lg:max-w-sm">
+-                      {selectedIsCommercial
+-                        ? "Commercial smart checkout uses the custom first-payment amount below. Use the invoice option for formal itemized records."
+-                        : selected.service === "laundry-rescue"
+-                          ? "Laundry Rescue smart checkout uses the standard $59 intro minimum by default. Use Advanced only if you intentionally approved a different deposit amount."
+-                          : "Smart checkout uses the standard package price unless you choose a custom reviewed amount. Invoices use the saved customer payment summary instead."}
+-                    </div>
+-                  </div>
+-
+-                  {!selectedIsCommercial && selected.service !== "laundry-rescue" && (
+-                    <div className="mt-4 grid gap-2 sm:max-w-sm">
+-                      <label className="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Smart checkout amount</label>
+-                      <select
+-                        value={checkoutMode}
+-                        onChange={(e) => setCheckoutMode(e.target.value as CheckoutMode)}
+-                        className="rounded-2xl border border-[#d8c18f] bg-white px-4 py-3 text-sm font-bold text-[#075c58] outline-none focus:border-[#075c58]"
+-                      >
+-                        {!selectedRequiresReviewedCheckoutAmount && <option value="standard">Standard package price</option>}
+-                        <option value="custom">{selectedRequiresReviewedCheckoutAmount ? "Reviewed/custom amount" : "Custom reviewed amount"}</option>
+-                      </select>
+-                    </div>
+-                  )}
+-
+-                  {!selectedIsCommercial && selected.service === "laundry-rescue" && (
+-                    <div className="mt-4 rounded-3xl border border-[#eadfc8] bg-[#fbf6ea] p-4">
+-                      <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Laundry smart checkout amount</p>
+-                      <h5 className="mt-1 text-base font-black text-[#075c58]">
+-                        {isCustomCheckoutMode ? "Advanced custom deposit selected" : "Standard $59 intro minimum selected"}
+-                      </h5>
+-                      <p className="mt-1 text-sm font-semibold leading-6 text-slate-700">
+-                        {isCustomCheckoutMode
+-                          ? "Use this only when Leo/Gen intentionally approved a different Laundry Rescue deposit amount. The final balance is still handled after dry weigh-in."
+-                          : "This is the normal Laundry Rescue flow: collect the standard intro minimum now, then handle any final balance after dry weigh-in."}
+-                      </p>
+-                      <div className="mt-3 flex flex-wrap gap-2">
+-                        {isCustomCheckoutMode ? (
+-                          <button
+-                            type="button"
+-                            onClick={() => setCheckoutMode("standard")}
+-                            className="rounded-full border border-[#075c58] bg-white px-4 py-2 text-xs font-black text-[#075c58] transition hover:bg-[#f4ecdc]"
+-                          >
+-                            Use standard $59 intro minimum
+-                          </button>
+-                        ) : (
+-                          <button
+-                            type="button"
+-                            onClick={() => setCheckoutMode("custom")}
+-                            className="rounded-full border border-[#d8c18f] bg-white px-4 py-2 text-xs font-black text-slate-700 transition hover:border-[#075c58] hover:text-[#075c58]"
+-                          >
+-                            Advanced: use custom deposit amount
+-                          </button>
+-                        )}
+-                      </div>
+-                    </div>
+-                  )}
+-
+-                  {selectedIsCommercial && (
+-                    <input type="hidden" value={checkoutMode} readOnly aria-hidden="true" />
+-                  )}
+-
+-                  {isCustomCheckoutMode && (
+-                    <div className="mt-4 rounded-3xl border border-[#eadfc8] bg-[#fbf6ea] p-4">
+-                      <div>
+-                        <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">{selectedIsCommercial ? "Smart first-payment checkout" : selected.service === "laundry-rescue" ? "Advanced custom laundry deposit" : selectedRequiresReviewedCheckoutAmount ? "Reviewed smart checkout" : "Custom smart checkout"}</p>
+-                        <h5 className="mt-1 text-base font-black text-[#075c58]">{selectedIsCommercial ? "Amount the customer pays before scheduling" : selected.service === "laundry-rescue" ? "Custom deposit amount" : selectedRequiresReviewedCheckoutAmount ? "Reviewed/custom starting amount" : "Reviewed custom starting amount"}</h5>
+-                        <p className="mt-1 text-sm leading-6 text-slate-700">
+-                          {selectedIsCommercial
+-                            ? "Use this only when you want a simple checkout link instead of a formal invoice. It should match the approved first-payment amount."
+-                            : selected.service === "laundry-rescue"
+-                              ? "Advanced only: use this if you intentionally approved a Laundry Rescue deposit other than the standard $59 intro minimum. Final balance still happens after dry weigh-in."
+-                              : selectedRequiresReviewedCheckoutAmount
+-                                ? "This service depends on the property, condition, scope, photos, pets, and add-ons, so smart checkout uses a reviewed/custom amount instead of a standard package price."
+-                                : "Use this when the first smart checkout should not match the standard package price, such as a custom approved scope, special deposit, extra starting time, or service-area adjustment."}
+-                        </p>
+-                      </div>
+-                      <div className="mt-4 grid gap-3 md:grid-cols-[0.7fr_1.3fr]">
+-                        <label className="grid gap-2 text-sm font-bold text-slate-700">
+-                          {selectedIsCommercial ? "Amount to collect now" : selected.service === "laundry-rescue" ? "Custom deposit amount" : "Amount"}
+-                          <input
+-                            value={customInitialAmount}
+-                            onChange={(e) => setCustomInitialAmount(e.target.value)}
+-                            inputMode="decimal"
+-                            placeholder={selected.service === "laundry-rescue" ? "59" : "199"}
+-                            className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]"
+-                          />
+-                        </label>
+-                        <label className="grid gap-2 text-sm font-bold text-slate-700">
+-                          Checkout title
+-                          <input
+-                            value={customInitialTitle}
+-                            onChange={(e) => setCustomInitialTitle(e.target.value)}
+-                            placeholder={getServiceKey(selected) === "laundry-rescue" ? "Laundry Rescue custom deposit" : getServiceKey(selected) === "commercial-reset" ? "Commercial Reset approved quote" : getServiceKey(selected) === "move-out-cleaning" ? "Move-In / Move-Out Cleaning reviewed checkout" : getServiceKey(selected) === "specific-area-reset" ? "Specific Area(s) Reset reviewed checkout" : getServiceKey(selected) === "whole-home-reset" ? "Whole Home Cleaning reviewed checkout" : getServiceKey(selected) === "family-reset-3hr" ? "Parent Reset Plan checkout" : "Custom checkout"}
+-                            className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]"
+-                          />
+-                        </label>
+-                      </div>
+-                      <label className="mt-3 grid gap-2 text-sm font-bold text-slate-700">
+-                        Optional customer note
+-                        <textarea
+-                          value={customInitialNote}
+-                          onChange={(e) => setCustomInitialNote(e.target.value)}
+-                          rows={3}
+-                          placeholder={selectedIsCommercial ? "Example: Approved Commercial Reset first payment. Add-ons or scope changes are reviewed before any additional charge." : "Example: Custom approved starting amount for 3.5 hours after request review. Any additional approved time or mileage would be billed separately."}
+-                          className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
+-                        />
+-                      </label>
+-                    </div>
+-                  )}
+-
+-                  {selectedIsCommercial && isCustomCheckoutMode && (
+-                    <div className="mt-4 rounded-3xl border border-[#d8c18f] bg-[#fbf6ea] p-4">
+-                      <label className="flex gap-3 text-sm font-bold text-slate-700">
+-                        <input
+-                          type="checkbox"
+-                          checked={includeCommercialQuoteBreakdown}
+-                          onChange={(e) => setIncludeCommercialQuoteBreakdown(e.target.checked)}
+-                          disabled={!hasSavedCommercialQuoteBreakdown}
+-                          className="mt-1 h-4 w-4 rounded border-[#d8c18f] accent-[#075c58]"
+-                        />
+-                        <span>
+-                          <span className="block text-[#075c58]">Include saved commercial quote summary in the quick checkout email</span>
+-                          <span className="mt-1 block text-xs font-semibold leading-5 text-slate-600">
+-                            This only affects the smart checkout email. For a true itemized customer record, use the Stripe invoice option above instead.
+-                          </span>
+-                        </span>
+-                      </label>
+-                      {!hasSavedCommercialQuoteBreakdown && (
+-                        <p className="mt-3 rounded-2xl bg-amber-50 px-4 py-3 text-xs font-bold leading-5 text-amber-800">
+-                          No saved commercial quote summary is available yet. Save the Commercial Quote Builder draft first, then this checkbox will be available.
+-                        </p>
+-                      )}
+-                    </div>
+-                  )}
+-
+-                  {!selectedIsCommercial && (
+-                    <div className="mt-4 rounded-3xl border border-[#d8c18f] bg-[#fbf6ea] p-4">
+-                      <label className="flex gap-3 text-sm font-bold text-slate-700">
+-                        <input
+-                          type="checkbox"
+-                          checked={includeFamilyPaymentBreakdown}
+-                          onChange={(e) => setIncludeFamilyPaymentBreakdown(e.target.checked)}
+-                          disabled={!hasSavedFamilyPaymentBreakdown}
+-                          className="mt-1 h-4 w-4 rounded border-[#d8c18f] accent-[#075c58]"
+-                        />
+-                        <span>
+-                          <span className="block text-[#075c58]">Include saved customer payment summary in the quick checkout email</span>
+-                          <span className="mt-1 block text-xs font-semibold leading-5 text-slate-600">
+-                            Use this when you want the customer to see the package, custom amount, recurring plan, laundry note, discount, or credit details before paying by smart checkout.
+-                          </span>
+-                        </span>
+-                      </label>
+-                      {!hasSavedFamilyPaymentBreakdown && (
+-                        <p className="mt-3 rounded-2xl bg-amber-50 px-4 py-3 text-xs font-bold leading-5 text-amber-800">
+-                          No saved customer payment summary is available yet. Save the Draft Estimate Builder draft first, then this checkbox will be available.
+-                        </p>
+-                      )}
+-                    </div>
+-                  )}
+-
+-                  {selected.service === "laundry-rescue" && (
+-                    <div className="mt-4 rounded-3xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm leading-6 text-rose-900">
+-                      <p className="font-black text-rose-950">Laundry deposit checkout note</p>
+-                      <p className="mt-1 font-semibold">
+-                        This creates the non-refundable, taxable Laundry Rescue intro minimum checkout. The $59 minimum includes pickup, wash, dry, fold, return, and up to about 26.2 lbs. Stripe will ask the customer to choose auto-charge or invoice-before-delivery for any additional weight/add-ons.
+-                      </p>
+-                    </div>
+-                  )}
+-
+-                  {selected.service === "laundry-rescue" && (
+-                    <div className="mt-4 rounded-3xl border border-[#eadfc8] bg-white px-4 py-3 text-sm leading-6 text-slate-700">
+-                      <label className="flex items-start gap-3 font-bold text-slate-800">
+-                        <input
+-                          type="checkbox"
+-                          checked={laundryManualSalesTax}
+-                          onChange={(e) => setLaundryManualSalesTax(e.target.checked)}
+-                          className="mt-1 h-4 w-4 accent-[#075c58]"
+-                        />
+-                        <span>
+-                          Apply manual WA sales tax
+-                          <span className="mt-1 block text-xs font-semibold leading-5 text-slate-600">
+-                            Use this for Laundry Rescue checkout and final balance. Verify the local tax rate before sending.
+-                          </span>
+-                        </span>
+-                      </label>
+-                      {laundryManualSalesTax && (
+-                        <div className="mt-3 space-y-3">
+-                          <div className="grid gap-3 sm:grid-cols-2">
+-                            <label className="grid gap-2 text-sm font-bold text-slate-700">
+-                              Tax lookup ZIP
+-                              <input
+-                                value={laundryTaxLookupZip}
+-                                onChange={(e) => setLaundryTaxLookupZip(e.target.value.replace(/[^0-9-]/g, "").slice(0, 10))}
+-                                inputMode="numeric"
+-                                placeholder="From request"
+-                                className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]"
+-                              />
+-                              <span className="text-[11px] font-bold leading-4 text-slate-500">
+-                                Auto-filled from the request. Edit only if the service ZIP is wrong.
+-                              </span>
+-                            </label>
+-                            <label className="grid gap-2 text-sm font-bold text-slate-700">
+-                              Sales tax rate %
+-                              <input
+-                                value={laundryManualSalesTaxRate}
+-                                onChange={(e) => setLaundryManualSalesTaxRate(e.target.value)}
+-                                inputMode="decimal"
+-                                placeholder="Example: 10.3"
+-                                className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]"
+-                              />
+-                              <span className="text-[11px] font-bold leading-4 text-slate-500">
+-                                The lookup can fill this for you. Review before sending.
+-                              </span>
+-                            </label>
+-                          </div>
+-
+-                          <div className="rounded-2xl bg-[#fbf6ea] px-4 py-3 text-xs font-bold leading-5 text-slate-600">
+-                            <p>
+-                              Use “Lookup + fill rate” to pull the WA DOR rate from the request address/ZIP. If the lookup cannot match cleanly, use the DOR page or copy the address and enter the rate manually.
+-                            </p>
+-                            {laundryTaxLookupAddress && (
+-                              <p className="mt-2 text-slate-700">
+-                                Request address: <span className="font-black text-[#075c58]">{laundryTaxLookupAddress}</span>
+-                              </p>
+-                            )}
+-                            <div className="mt-3 grid gap-2 sm:grid-cols-3">
+-                              <button
+-                                type="button"
+-                                onClick={lookupLaundryTaxRateFromDor}
+-                                disabled={laundryTaxLookupBusy || !laundryTaxLookupZip}
+-                                className="inline-flex min-h-10 items-center justify-center rounded-2xl bg-[#075c58] px-4 py-2 text-xs font-black text-white shadow-sm transition hover:bg-[#064b48] disabled:cursor-not-allowed disabled:opacity-50"
+-                              >
+-                                {laundryTaxLookupBusy ? <><ActionSpinner /> Looking up...</> : "Lookup + fill rate"}
+-                              </button>
+-                              <button
+-                                type="button"
+-                                onClick={() => {
+-                                  if (laundryDorLookupUrl) window.open(laundryDorLookupUrl, "_blank", "noopener,noreferrer");
+-                                }}
+-                                disabled={!laundryDorLookupUrl}
+-                                className="inline-flex min-h-10 items-center justify-center rounded-2xl border border-[#d8c18f] bg-white px-4 py-2 text-xs font-black text-slate-700 shadow-sm transition hover:border-[#075c58] hover:text-[#075c58] disabled:cursor-not-allowed disabled:opacity-50"
+-                              >
+-                                Open DOR page
+-                              </button>
+-                              <button
+-                                type="button"
+-                                onClick={async () => {
+-                                  if (!laundryTaxLookupCopyText) return;
+-                                  await copyPlainTextToClipboard(laundryTaxLookupCopyText);
+-                                  setCheckoutMessage("WA DOR tax lookup address copied.");
+-                                }}
+-                                disabled={!laundryTaxLookupCopyText}
+-                                className="inline-flex min-h-10 items-center justify-center rounded-2xl border border-[#d8c18f] bg-white px-4 py-2 text-xs font-black text-slate-700 shadow-sm transition hover:border-[#075c58] hover:text-[#075c58] disabled:cursor-not-allowed disabled:opacity-50"
+-                              >
+-                                Copy address
+-                              </button>
+-                            </div>
+-                            <p className="mt-3">
+-                              Failsafe: if the $59 intro minimum is taxed now, the final invoice taxes only additional weight/add-ons. If the intro minimum was paid without tax, the final invoice can add a one-time catch-up for the missed $59 tax without charging the $59 again.
+-                            </p>
+-                          </div>
+-                        </div>
+-                      )}
+-                    </div>
+-                  )}
+-
+-                  <div className="mt-4 grid gap-3 md:grid-cols-2">
+-                    <button
+-                      type="button"
+-                      disabled={checkoutBusy}
+-                      onClick={() => createPaymentLink(true)}
+-                      className={getAdminActionClass("primary")}
+-                    >
+-                      {checkoutBusy
+-                        ? <><ActionSpinner /> Creating...</>
+-                        : selectedIsCommercial
+-                          ? "Create + email smart first-payment checkout link"
+-                          : selected.service === "laundry-rescue"
+-                            ? "Create + email smart intro minimum checkout link"
+-                            : "Create + email smart checkout link"}
+-                    </button>
+-                    <button
+-                      type="button"
+-                      disabled={checkoutBusy}
+-                      onClick={() => createPaymentLink(false)}
+-                      className={getAdminActionClass("secondary")}
+-                    >
+-                      {selectedIsCommercial
+-                        ? "Create smart first-payment checkout link only"
+-                        : selected.service === "laundry-rescue"
+-                          ? "Create smart intro minimum checkout link only"
+-                          : "Create smart checkout link only"}
+-                    </button>
+-                  </div>
+-                </div>
+-
+-                {selected.checkoutUrl && (
+-                  <div className="mt-4 rounded-2xl border border-[#eadfc8] bg-white p-4">
+-                    <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Current customer checkout link</p>
+-                    <p className="mt-1 text-xs font-bold leading-5 text-slate-600">Send the NestHelper customer checkout link when possible. It opens Stripe securely and can refresh the Stripe checkout session if it expires.</p>
+-                    <p className="mt-2 break-all text-sm text-[#075c58]">{selected.checkoutUrl}</p>
+-                    <div className="mt-3 flex flex-wrap gap-2">
+-                      <a href={selected.checkoutUrl} target="_blank" rel="noreferrer" className="rounded-full bg-[#075c58] px-4 py-2 text-xs font-black text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-[#064b48]">Open customer checkout link</a>
+-                      <button type="button" onClick={() => copyToClipboard(selected.checkoutUrl || "")} className="rounded-full border border-[#075c58] bg-white px-4 py-2 text-xs font-black text-[#075c58] transition hover:bg-[#f4ecdc]">Copy customer checkout link</button>
+-                    </div>
+-                    {selected.stripeCheckoutUrl && selected.stripeCheckoutUrl !== selected.checkoutUrl && (
+-                      <div className="mt-4 rounded-2xl bg-slate-50 px-4 py-3">
+-                        <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Backup raw Stripe URL</p>
+-                        <p className="mt-1 text-xs font-semibold leading-5 text-slate-600">Backup only. This raw Stripe session still expires; the customer checkout link above is the better link to send.</p>
+-                        <p className="mt-2 break-all text-xs text-slate-600">{selected.stripeCheckoutUrl}</p>
+-                        <div className="mt-3 flex flex-wrap gap-2">
+-                          <a href={selected.stripeCheckoutUrl} target="_blank" rel="noreferrer" className="rounded-full border border-[#075c58] bg-white px-4 py-2 text-xs font-black text-[#075c58] transition hover:bg-[#f4ecdc]">Open raw Stripe link</a>
+-                          <button type="button" onClick={() => copyToClipboard(selected.stripeCheckoutUrl || "")} className="rounded-full border border-[#d8c18f] bg-white px-4 py-2 text-xs font-black text-slate-700 transition hover:border-[#075c58] hover:text-[#075c58]">Copy raw Stripe link</button>
+-                        </div>
+-                      </div>
+-                    )}
+-                  </div>
+-                )}
+-
+-                {checkoutMessage && <p className="mt-3 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">{checkoutMessage}</p>}
+-                {checkoutError && <p className="mt-3 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{checkoutError}</p>}
+-              </AdminCollapsibleSection>
+-            )}
+-
+-            {showLaundryFinalBalance && (
+-              <AdminCollapsibleSection id="admin-section-laundry-final" eyebrow="Laundry final balance" title="Handle final laundry invoice or auto-charge" tone="white">
+-                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+-                  <div className="max-w-2xl">
+-                    <p className="text-xs font-black uppercase tracking-[0.2em] text-[#b98a2f]">
+-                      {laundryAutoChargeAuthorized ? "Laundry auto-charge final balance" : "Laundry final balance"}
+-                    </p>
+-                    <h4 className="mt-1 text-xl font-black text-[#075c58]">
+-                      {laundryAutoChargeAuthorized ? "Create invoice + auto-charge saved card" : "Send final invoice before delivery"}
+-                    </h4>
+-                    <p className="mt-2 text-sm leading-6 text-slate-700">
+-                      {laundryAutoChargeAuthorized
+-                        ? "The customer chose auto-charge during intro-minimum checkout. Enter the dry weight, additional lb rate, add-ons, and minimum already paid; NestHelper creates an itemized Stripe invoice for additional weight/add-ons and charges the saved payment method instead of showing a manual sender section."
+-                        : "The customer chose invoice-before-delivery, or no auto-charge authorization is saved. Enter the dry weight, additional lb rate, add-ons, and minimum already paid; NestHelper creates a Stripe invoice with line-item details for additional weight/add-ons only."}
+-                    </p>
+-                  </div>
+-                  <StatusBadge status={String(selected.laundryPaymentStatus || selected.paymentStatus || selected.status || "New")} />
+-                </div>
+-
+-                <div className="mt-4 grid gap-3 md:grid-cols-2">
+-                  <div className="rounded-2xl border border-[#eadfc8] bg-[#fbf6ea] p-4 text-sm leading-6 text-slate-700">
+-                    <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Customer final-payment choice</p>
+-                    <p className="mt-1 font-black text-[#075c58]">{selected.laundryFinalPaymentPreferenceLabel || "Not captured yet"}</p>
+-                    <p className="mt-1 text-xs font-semibold text-slate-600">
+-                      The intro minimum is non-refundable and taxable. The final invoice charges additional laundry/add-ons. If manual tax is on and the intro minimum was not taxed, it adds a one-time tax catch-up without charging the $59 again.
+-                    </p>
+-                  </div>
+-                  {laundryAutoChargeAuthorized ? (
+-                    <div className={`rounded-2xl border p-4 text-sm leading-6 ${laundryAutoChargeReady ? "border-emerald-100 bg-emerald-50 text-emerald-900" : "border-amber-200 bg-amber-50 text-amber-900"}`}>
+-                      <p className="text-xs font-black uppercase tracking-[0.16em]">Auto-charge status</p>
+-                      <p className="mt-1 font-black">{laundryAutoChargeReady ? "Saved Stripe payment method ready" : "Auto-charge was selected, but the saved card is missing"}</p>
+-                      <p className="mt-1 text-xs font-semibold">
+-                        {laundryAutoChargeReady
+-                          ? "The final action below will create the invoice and charge the saved card. Do not send a separate final invoice unless auto-charge fails."
+-                          : selected.laundryAutoChargeError || "Use a manual invoice or have the customer re-authorize the laundry deposit checkout before auto-charging."}
+-                      </p>
+-                    </div>
+-                  ) : (
+-                    <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900">
+-                      <p className="text-xs font-black uppercase tracking-[0.16em]">Hold until paid</p>
+-                      <p className="mt-1 font-black">Send the final invoice before delivery</p>
+-                      <p className="mt-1 text-xs font-semibold">Use the final invoice buttons below. Laundry should not be released until the invoice is fully paid.</p>
+-                    </div>
+-                  )}
+-                </div>
+-
+-                {laundryFinalAlreadyPaid && (
+-                  <p className="mt-4 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">
+-                    This request already shows the final laundry balance as paid. Do not create another final invoice or auto-charge unless you intentionally need a correction.
+-                  </p>
+-                )}
+-
+-                <div className="mt-4 grid gap-3 md:grid-cols-4">
+-                  <label className="grid gap-2 text-sm font-bold text-slate-700">
+-                    Dry weight lbs
+-                    <input
+-                      value={laundryDryWeightLbs}
+-                      onChange={(e) => setLaundryDryWeightLbs(e.target.value)}
+-                      inputMode="decimal"
+-                      placeholder="24"
+-                      className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]"
+-                    />
+-                  </label>
+-                  <label className="grid gap-2 text-sm font-bold text-slate-700">
+-                    Additional lb rate
+-                    <input
+-                      value={laundryRatePerLb}
+-                      onChange={(e) => setLaundryRatePerLb(e.target.value)}
+-                      inputMode="decimal"
+-                      className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]"
+-                    />
+-                  </label>
+-                  <label className="grid gap-2 text-sm font-bold text-slate-700">
+-                    Add-ons / bulky
+-                    <input
+-                      value={laundryAddOnsAmount}
+-                      onChange={(e) => setLaundryAddOnsAmount(e.target.value)}
+-                      inputMode="decimal"
+-                      placeholder="0"
+-                      className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]"
+-                    />
+-                  </label>
+-                  <label className="grid gap-2 text-sm font-bold text-slate-700">
+-                    Minimum already paid
+-                    <input
+-                      value={laundryDepositCredit}
+-                      onChange={(e) => setLaundryDepositCredit(e.target.value)}
+-                      inputMode="decimal"
+-                      className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]"
+-                    />
+-                  </label>
+-                </div>
+-
+-                <p className="mt-3 rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-xs font-bold leading-5 text-slate-600">
+-                  The $59 Laundry Rescue intro minimum already includes pickup, wash, dry, fold, return, and up to about 26.2 lbs. This final-balance tool charges only additional laundry above the included weight, plus approved add-ons or bulky items. If manual tax is on and the intro minimum was not taxed, it adds a one-time tax catch-up without charging the $59 again.
+-                </p>
+-
+-                <div className="mt-3 rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-xs font-bold leading-5 text-slate-600">
+-                  <p className="font-black uppercase tracking-[0.14em] text-[#b98a2f]">Laundry tax failsafe</p>
+-                  <p className="mt-1">
+-                    {laundryManualSalesTax && laundryTaxRateNumber > 0
+-                      ? laundryDepositTaxAlreadyCollected
+-                        ? `Intro minimum tax already appears collected (${formatMoney(laundryDepositTaxCollectedAmount)}). Final invoice will tax only additional weight/add-ons.`
+-                        : `Intro minimum tax does not appear collected. Final invoice will add about ${formatMoney(laundryDepositTaxCatchUpAmount)} tax catch-up for the $59 minimum, plus estimated tax on additional items.`
+-                      : "Manual sales tax is off or no rate is entered. No tax catch-up or final sales tax will be added."}
+-                  </p>
+-                </div>
+-
+-                <div className="mt-4 grid gap-3 rounded-2xl bg-[#fbf6ea] p-4 text-sm md:grid-cols-4">
+-                  <div>
+-                    <p className="font-black uppercase tracking-[0.14em] text-[#b98a2f]">Additional total before tax</p>
+-                    <p className="mt-1 text-xl font-black text-[#075c58]">{formatMoney(laundrySubtotal)}</p>
+-                  </div>
+-                  <div>
+-                    <p className="font-black uppercase tracking-[0.14em] text-[#b98a2f]">Included weight</p>
+-                    <p className="mt-1 text-xl font-black text-[#075c58]">{laundryIncludedWeightLbs.toFixed(1)} lb</p>
+-                  </div>
+-                  <div>
+-                    <p className="font-black uppercase tracking-[0.14em] text-[#b98a2f]">Final taxable balance</p>
+-                    <p className="mt-1 text-xl font-black text-[#075c58]">{formatMoney(laundryBalanceDue)}</p>
+-                  </div>
+-                  <div>
+-                    <p className="font-black uppercase tracking-[0.14em] text-[#b98a2f]">Estimated total w/ tax</p>
+-                    <p className="mt-1 text-xl font-black text-[#075c58]">{formatMoney(laundryEstimatedFinalTotalWithTax)}</p>
+-                  </div>
+-                </div>
+-
+-                <label className="mt-4 grid gap-2 text-sm font-bold text-slate-700">
+-                  Optional final balance note
+-                  <textarea
+-                    value={laundryFinalNote}
+-                    onChange={(e) => setLaundryFinalNote(e.target.value)}
+-                    placeholder="Example: 32 lbs dry weight, fragrance-free detergent, low heat dry. $59 minimum already includes up to about 26.2 lbs."
+-                    rows={3}
+-                    className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
+-                  />
+-                </label>
+-
+-                {laundryAutoChargeAuthorized ? (
+-                  <div className="mt-4">
+-                    <button
+-                      type="button"
+-                      disabled={laundryFinalBusy || laundryFinalAlreadyPaid || !laundryAutoChargeReady}
+-                      onClick={() => createLaundryFinalBalance(false)}
+-                      className={getAdminActionClass("primary")}
+-                    >
+-                      {laundryFinalBusy ? <><ActionSpinner /> Charging...</> : "Create invoice + auto-charge saved card"}
+-                    </button>
+-                    {!laundryAutoChargeReady && (
+-                      <p className="mt-2 text-xs font-bold text-amber-800">Auto-charge is not ready, so the charge button is disabled to avoid a failed or duplicate billing attempt.</p>
+-                    )}
+-                  </div>
+-                ) : (
+-                  <div className="mt-4 grid gap-3 md:grid-cols-2">
+-                    <button
+-                      type="button"
+-                      disabled={laundryFinalBusy || laundryFinalAlreadyPaid}
+-                      onClick={() => createLaundryFinalBalance(true)}
+-                      className={getAdminActionClass("primary")}
+-                    >
+-                      {laundryFinalBusy ? <><ActionSpinner /> Creating...</> : "Create + email final invoice"}
+-                    </button>
+-                    <button
+-                      type="button"
+-                      disabled={laundryFinalBusy || laundryFinalAlreadyPaid}
+-                      onClick={() => createLaundryFinalBalance(false)}
+-                      className={getAdminActionClass("secondary")}
+-                    >
+-                      Create final invoice only
+-                    </button>
+-                  </div>
+-                )}
+-
+-                {selected.laundryFinalCheckoutUrl && (
+-                  <div className="mt-4 rounded-2xl border border-[#eadfc8] bg-[#fbf6ea] p-4">
+-                    <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Current final balance invoice / receipt link</p>
+-                    <p className="mt-2 break-all text-sm text-[#075c58]">{selected.laundryFinalCheckoutUrl}</p>
+-                    <div className="mt-3 flex flex-wrap gap-2">
+-                      <a href={selected.laundryFinalCheckoutUrl} target="_blank" rel="noreferrer" className="rounded-full bg-[#075c58] px-4 py-2 text-xs font-black text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-[#064b48]">Open final invoice</a>
+-                      <button type="button" onClick={() => copyLaundryLink(selected.laundryFinalCheckoutUrl || "")} className="rounded-full border border-[#075c58] bg-white px-4 py-2 text-xs font-black text-[#075c58] transition hover:bg-[#f4ecdc]">Copy link</button>
+-                      {selected.laundryFinalInvoicePdf && (
+-                        <a href={selected.laundryFinalInvoicePdf} target="_blank" rel="noreferrer" className="rounded-full border border-[#075c58] bg-white px-4 py-2 text-xs font-black text-[#075c58] transition hover:bg-[#f4ecdc]">Open PDF</a>
+-                      )}
+-                    </div>
+-                  </div>
+-                )}
+-
+-                {laundryFinalMessage && <p className="mt-3 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">{laundryFinalMessage}</p>}
+-                {laundryFinalError && <p className="mt-3 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{laundryFinalError}</p>}
+-              </AdminCollapsibleSection>
+-            )}
+-
+-
+-            {showPaymentActions && (
+-              <AdminCollapsibleSection id="admin-section-additional-payment" eyebrow="Additional payment" title="Create add-on or balance payment" tone="gold">
+-                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+-                  <div className="max-w-2xl">
+-                    <p className="text-xs font-black uppercase tracking-[0.2em] text-[#b98a2f]">{selectedIsCommercial ? "Optional later/add-on payment" : "Additional payment"}</p>
+-                    <h4 className="mt-1 text-xl font-black text-[#075c58]">{selectedIsCommercial ? "Send only if the customer approves extra commercial scope" : "Send an extra Stripe link for approved add-ons"}</h4>
+-                    <p className="mt-2 text-sm leading-6 text-slate-700">
+-                      {selectedIsCommercial
+-                        ? "Use this after the first payment only for approved add-ons, floor/carpet work, linen/restock handling, recurring-plan changes, or added scope. Do not use it as an open-ended hourly charge."
+-                        : "Use this after the first payment if the job needs approved extra hours, extra miles, route changes, or another added balance. This creates a separate Stripe Checkout link tied to the same request."}
+-                    </p>
+-                  </div>
+-                  <StatusBadge status={String(selected.additionalPaymentStatus || "Optional")} />
+-                </div>
+-
+-                <div className="mt-4 grid gap-3 md:grid-cols-2">
+-                  <label className="grid gap-2 text-sm font-bold text-slate-700">
+-                    Additional amount
+-                    <input
+-                      value={additionalPaymentAmount}
+-                      onChange={(e) => setAdditionalPaymentAmount(e.target.value)}
+-                      inputMode="decimal"
+-                      placeholder="35"
+-                      className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]"
+-                    />
+-                  </label>
+-                  <label className="grid gap-2 text-sm font-bold text-slate-700">
+-                    Reason
+-                    <select
+-                      value={additionalPaymentReason}
+-                      onChange={(e) => setAdditionalPaymentReason(e.target.value)}
+-                      className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-bold text-[#075c58] outline-none focus:border-[#075c58]"
+-                    >
+-                      {isCommercialRequest(selected) ? (
+-                        <>
+-                          <option>Commercial approved add-on / additional scope</option>
+-                          <option>Specialty floor or carpet add-on</option>
+-                          <option>Short-term rental linen / restock add-on</option>
+-                          <option>Recurring plan adjustment</option>
+-                          <option>Other approved commercial balance</option>
+-                        </>
+-                      ) : (
+-                        <>
+-                          <option>Additional hours</option>
+-                          <option>Extra miles / route time</option>
+-                          <option>Additional approved task / add-on</option>
+-                          <option>Other approved balance</option>
+-                        </>
+-                      )}
+-                    </select>
+-                  </label>
+-                </div>
+-
+-                <label className="mt-4 grid gap-2 text-sm font-bold text-slate-700">
+-                  Optional customer note
+-                  <textarea
+-                    value={additionalPaymentNote}
+-                    onChange={(e) => setAdditionalPaymentNote(e.target.value)}
+-                    placeholder="Example: Additional 30 minutes approved by text for extra folding and toy reset. Original payment has already been credited."
+-                    rows={3}
+-                    className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
+-                  />
+-                </label>
+-
+-                <div className="mt-4 grid gap-3 md:grid-cols-2">
+-                  <button
+-                    type="button"
+-                    disabled={additionalPaymentBusy}
+-                    onClick={() => createAdditionalPayment(true)}
+-                    className={getAdminActionClass("primary")}
+-                  >
+-                    {additionalPaymentBusy ? <><ActionSpinner /> Creating...</> : "Create + email additional payment link"}
+-                  </button>
+-                  <button
+-                    type="button"
+-                    disabled={additionalPaymentBusy}
+-                    onClick={() => createAdditionalPayment(false)}
+-                    className={getAdminActionClass("secondary")}
+-                  >
+-                    Create additional link only
+-                  </button>
+-                </div>
+-
+-                {selected.additionalPaymentCheckoutUrl && (
+-                  <div className="mt-4 rounded-2xl border border-[#eadfc8] bg-white p-4">
+-                    <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Current additional payment link</p>
+-                    <p className="mt-2 break-all text-sm text-[#075c58]">{selected.additionalPaymentCheckoutUrl}</p>
+-                    <div className="mt-3 flex flex-wrap gap-2">
+-                      <a href={selected.additionalPaymentCheckoutUrl} target="_blank" rel="noreferrer" className="rounded-full bg-[#075c58] px-4 py-2 text-xs font-black text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-[#064b48]">Open additional checkout</a>
+-                      <button type="button" onClick={() => copyAdditionalPaymentLink(selected.additionalPaymentCheckoutUrl || "")} className="rounded-full border border-[#075c58] bg-white px-4 py-2 text-xs font-black text-[#075c58] transition hover:bg-[#f4ecdc]">Copy link</button>
+-                    </div>
+-                  </div>
+-                )}
+-
+-                {additionalPaymentMessage && <p className="mt-3 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">{additionalPaymentMessage}</p>}
+-                {additionalPaymentError && <p className="mt-3 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{additionalPaymentError}</p>}
+-              </AdminCollapsibleSection>
+-            )}
+-
+             <AdminCollapsibleSection id="admin-section-uploads" eyebrow="Photos, docs + full answers" title="Review uploads and advanced saved answers" tone="white">
+               <div className="grid gap-3 sm:grid-cols-2">
+                 <AdminPhotoUploads photos={getPhotoUploads(selected)} />
+

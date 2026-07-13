@@ -1273,6 +1273,7 @@ function AdminDetailWorkflowNav({
     if (item.service !== "laundry-rescue") navItems.push({ href: "#admin-section-recurring-service", label: "↻", title: "Follow-up" });
     if (showPaymentActions) navItems.push({ href: "#admin-section-payment", label: "3", title: item.service === "laundry-rescue" ? "Deposit" : "Payment" });
     if (showLaundryFinalBalance) navItems.push({ href: "#admin-section-laundry-final", label: "4", title: "Laundry final" });
+    if (showPaymentActions) navItems.push({ href: "#admin-section-additional-payment", label: "Add", title: "Add'l pay" });
     navItems.push({ href: "#admin-section-status", label: "✓", title: "Status" });
     if (showFamilyReferralPanel) navItems.push({ href: "#admin-section-referrals", label: "+", title: "Referrals" });
     if (showReviewRequestPanel) navItems.push({ href: "#admin-section-review-request", label: "★", title: "Review request" });
@@ -1284,11 +1285,11 @@ function AdminDetailWorkflowNav({
     <div className="mb-4 rounded-3xl border border-[#eadfc8] bg-white p-3 shadow-sm sm:p-4">
       <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-[11px] font-black uppercase tracking-[0.18em] text-[#b98a2f]">Shortcut map</p>
-          <h4 className="text-base font-black text-[#075c58] sm:text-lg">Jump to what you need</h4>
+          <p className="text-[11px] font-black uppercase tracking-[0.18em] text-[#b98a2f]">Shortcut map / table of contents</p>
+          <h4 className="text-base font-black text-[#075c58] sm:text-lg">Open the section you need</h4>
         </div>
         <p className="hidden text-xs font-semibold leading-5 text-slate-500 sm:block">
-          Navigation only. No actions run from these shortcuts.
+          Tap a shortcut to open that section and jump there. No actions run from this map.
         </p>
       </div>
       <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
@@ -5356,7 +5357,6 @@ export default function AdminTable({
               </details>
             </div>
 
-            <AdminDetailSnapshot collectionName={collectionName} item={selected} />
             <AdminDetailWorkflowNav
               collectionName={collectionName}
               item={selected}
@@ -5369,399 +5369,8 @@ export default function AdminTable({
               showReviewRequestPanel={Boolean(showReviewRequestPanel)}
             />
 
-            {collectionName === "serviceRequests" && (
-              <AdminCollapsibleSection id="admin-section-internal-notes" eyebrow="Internal notes" title="Private request tracking" tone="white">
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                  <div>
-                    <p className="text-xs font-black uppercase tracking-[0.18em] text-[#b98a2f]">Internal notes</p>
-                    <h4 className="mt-1 text-lg font-black text-[#075c58]">Private request tracking</h4>
-                    <p className="mt-1 text-xs font-semibold leading-5 text-slate-500">
-                      Admin-only notes. Customers do not see this section.
-                    </p>
-                  </div>
-                  {selected.service === "laundry-rescue" && (
-                    <div className={`rounded-2xl px-4 py-3 text-xs font-black ${laundryBagsStillOut > 0 ? "bg-amber-50 text-amber-800" : "bg-emerald-50 text-emerald-800"}`}>
-                      Bags still out: {laundryBagsStillOut}
-                    </div>
-                  )}
-                </div>
+            <AdminDetailSnapshot collectionName={collectionName} item={selected} />
 
-                {selected.service === "laundry-rescue" && (
-                  <div className="mt-4 grid gap-3 sm:grid-cols-3">
-                    <label className="grid gap-2 text-sm font-bold text-slate-700">
-                      Laundry bags used
-                      <input
-                        value={laundryBagsUsed}
-                        onChange={(e) => setLaundryBagsUsed(e.target.value.replace(/[^0-9]/g, "").slice(0, 3))}
-                        inputMode="numeric"
-                        placeholder="Example: 3"
-                        className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
-                      />
-                    </label>
-                    <label className="grid gap-2 text-sm font-bold text-slate-700">
-                      Bags returned
-                      <input
-                        value={laundryBagsReturned}
-                        onChange={(e) => setLaundryBagsReturned(e.target.value.replace(/[^0-9]/g, "").slice(0, 3))}
-                        inputMode="numeric"
-                        placeholder="Example: 1"
-                        className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
-                      />
-                    </label>
-                    <label className="grid gap-2 text-sm font-bold text-slate-700">
-                      Bag note
-                      <input
-                        value={laundryBagTrackingNotes}
-                        onChange={(e) => setLaundryBagTrackingNotes(e.target.value.slice(0, 240))}
-                        placeholder="Example: Need 2 bags back"
-                        className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
-                      />
-                    </label>
-                  </div>
-                )}
-
-                <label className="mt-4 grid gap-2 text-sm font-bold text-slate-700">
-                  Admin notes
-                  <textarea
-                    value={requestAdminNotes}
-                    onChange={(e) => setRequestAdminNotes(e.target.value)}
-                    rows={4}
-                    placeholder={selected.service === "laundry-rescue" ? "Example: Used 3 NestHelper bags. Customer returned 1. Need 2 bags back at delivery." : "Private notes about the request, quote, scheduling, customer preferences, access, or follow-up."}
-                    className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
-                  />
-                </label>
-
-                <div className="mt-4 flex flex-wrap items-center gap-3">
-                  <button type="button" disabled={requestNotesBusy} onClick={saveRequestInternalNotes} className={getAdminActionClass("primary")}>
-                    {requestNotesBusy ? <><ActionSpinner /> Saving...</> : "Save internal notes"}
-                  </button>
-                  <p className="text-xs font-semibold text-slate-500">This saves to the admin record only. It does not email the customer.</p>
-                </div>
-              </AdminCollapsibleSection>
-            )}
-
-            {collectionName === "serviceRequests" && selected.service === "laundry-rescue" && (
-              <AdminCollapsibleSection id="admin-section-repeat-laundry" eyebrow="Repeat laundry" title="Create the next Laundry Rescue pickup" tone="cream">
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                  <div>
-                    <p className="text-xs font-black uppercase tracking-[0.18em] text-[#b98a2f]">Repeat laundry</p>
-                    <h4 className="mt-1 text-lg font-black text-[#075c58]">Create a new request for the next pickup</h4>
-                    <p className="mt-1 text-xs font-semibold leading-5 text-slate-600">
-                      Loads the original laundry answers into editable fields, then creates a fresh Laundry Rescue request. The old request stays as-is.
-                    </p>
-                  </div>
-                  {selected.latestRepeatRequestId && (
-                    <div className="rounded-2xl bg-white px-4 py-3 text-xs font-bold text-slate-600">
-                      Last repeat: <span className="font-black text-[#075c58]">{String(selected.latestRepeatRequestId)}</span>
-                    </div>
-                  )}
-                </div>
-
-                <div className="mt-4 rounded-2xl border border-[#eadfc8] bg-white/80 p-3 sm:p-4">
-                  <p className="text-xs font-black uppercase tracking-[0.18em] text-[#b98a2f]">Repeat details</p>
-                  <p className="mt-1 text-xs font-semibold leading-5 text-slate-600">
-                    These fields should show the original answers when available, including raw submitted fields. Update anything that changed for this pickup before creating the new request.
-                  </p>
-
-                  <div className="mt-4 grid gap-3 md:grid-cols-2">
-                    <label className="grid gap-2 text-sm font-bold text-slate-700">
-                      Next pickup date
-                      <input
-                        type="date"
-                        value={repeatLaundryDate}
-                        onChange={(e) => setRepeatLaundryDate(e.target.value)}
-                        className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
-                      />
-                    </label>
-                    <label className="grid gap-2 text-sm font-bold text-slate-700">
-                      Pickup window
-                      <input
-                        value={repeatLaundryWindow}
-                        onChange={(e) => setRepeatLaundryWindow(e.target.value.slice(0, 120))}
-                        placeholder="Example: same as last week"
-                        className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
-                      />
-                    </label>
-                    <label className="grid gap-2 text-sm font-bold text-slate-700">
-                      Pickup spot
-                      <input
-                        value={repeatLaundryPickupSpot}
-                        onChange={(e) => setRepeatLaundryPickupSpot(e.target.value.slice(0, 160))}
-                        placeholder="Example: front door"
-                        className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
-                      />
-                    </label>
-                    <label className="grid gap-2 text-sm font-bold text-slate-700">
-                      Return spot
-                      <input
-                        value={repeatLaundryReturnSpot}
-                        onChange={(e) => setRepeatLaundryReturnSpot(e.target.value.slice(0, 160))}
-                        placeholder="Example: front door"
-                        className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
-                      />
-                    </label>
-                    <label className="grid gap-2 text-sm font-bold text-slate-700">
-                      Detergent preference
-                      <input
-                        value={repeatLaundryDetergent}
-                        onChange={(e) => setRepeatLaundryDetergent(e.target.value.slice(0, 160))}
-                        placeholder="Example: child-safe detergent"
-                        className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
-                      />
-                    </label>
-                    <label className="grid gap-2 text-sm font-bold text-slate-700">
-                      Laundry amount
-                      <input
-                        value={repeatLaundryAmount}
-                        onChange={(e) => setRepeatLaundryAmount(e.target.value.slice(0, 160))}
-                        placeholder="Example: 2 bags"
-                        className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
-                      />
-                    </label>
-                    <label className="grid gap-2 text-sm font-bold text-slate-700">
-                      Drying instructions
-                      <input
-                        value={repeatLaundryDryerPreference}
-                        onChange={(e) => setRepeatLaundryDryerPreference(e.target.value.slice(0, 200))}
-                        placeholder="Example: low heat / hang dry baby clothes"
-                        className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
-                      />
-                    </label>
-                    <label className="grid gap-2 text-sm font-bold text-slate-700">
-                      Folding instructions
-                      <input
-                        value={repeatLaundryFoldPreference}
-                        onChange={(e) => setRepeatLaundryFoldPreference(e.target.value.slice(0, 200))}
-                        placeholder="Example: fold everything"
-                        className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
-                      />
-                    </label>
-                  </div>
-
-                  <label className="mt-3 grid gap-2 text-sm font-bold text-slate-700">
-                    Special instructions for this pickup
-                    <textarea
-                      value={repeatLaundrySpecialInstructions}
-                      onChange={(e) => setRepeatLaundrySpecialInstructions(e.target.value.slice(0, 500))}
-                      rows={3}
-                      placeholder="Example: use child-safe detergent; keep baby clothes separate; no dryer sheets"
-                      className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
-                    />
-                  </label>
-
-                  <div className="mt-3 grid gap-3 md:grid-cols-2">
-                    <label className="grid gap-2 text-sm font-bold text-slate-700">
-                      Add-on / extra item note
-                      <input
-                        value={repeatLaundryAddOnNote}
-                        onChange={(e) => setRepeatLaundryAddOnNote(e.target.value.slice(0, 240))}
-                        placeholder="Optional: comforter, bulky item, extra bags"
-                        className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
-                      />
-                    </label>
-                    <label className="grid gap-2 text-sm font-bold text-slate-700">
-                      Internal repeat note
-                      <input
-                        value={repeatLaundryNote}
-                        onChange={(e) => setRepeatLaundryNote(e.target.value.slice(0, 240))}
-                        placeholder="Optional: customer confirmed by text"
-                        className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
-                      />
-                    </label>
-                  </div>
-                </div>
-
-                <div className="mt-4 flex flex-wrap items-center gap-3">
-                  <button type="button" disabled={repeatLaundryBusy} onClick={createRepeatLaundryRequest} className={getAdminActionClass("primary")}>
-                    {repeatLaundryBusy ? <><ActionSpinner /> Creating...</> : "Create repeat request"}
-                  </button>
-                  {repeatLaundryCreatedRequestId && (
-                    <button type="button" onClick={() => openCreatedServiceRequest(repeatLaundryCreatedRequestId, "repeat")} className={getAdminActionClass("secondary")}>
-                      Open new request
-                    </button>
-                  )}
-                  <p className="text-xs font-semibold text-slate-600">
-                    The new request starts unpaid with dry weight, bag tracking, payment links, and final invoice fields blank.
-                  </p>
-                </div>
-              </AdminCollapsibleSection>
-            )}
-            {collectionName === "serviceRequests" && selected.service !== "laundry-rescue" && (
-              <AdminCollapsibleSection id="admin-section-recurring-service" eyebrow="Follow-up / recurring" title="Create a new follow-up request" tone="cream">
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                  <div>
-                    <p className="text-xs font-black uppercase tracking-[0.18em] text-[#b98a2f]">Follow-up / recurring visit</p>
-                    <h4 className="mt-1 text-lg font-black text-[#075c58]">Create a new request for the next visit</h4>
-                    <p className="mt-1 text-xs font-semibold leading-5 text-slate-600">
-                      Loads the original service details into editable fields, then creates a fresh request. The old request stays unchanged and customers are not emailed automatically.
-                    </p>
-                  </div>
-                  {selected.latestFollowUpRequestId && (
-                    <div className="rounded-2xl bg-white px-4 py-3 text-xs font-bold text-slate-600">
-                      Last follow-up: <span className="font-black text-[#075c58]">{String(selected.latestFollowUpRequestId)}</span>
-                    </div>
-                  )}
-                </div>
-
-                <div className="mt-4 rounded-2xl border border-[#eadfc8] bg-white/80 p-3 sm:p-4">
-                  <p className="text-xs font-black uppercase tracking-[0.18em] text-[#b98a2f]">Next visit details</p>
-                  <p className="mt-1 text-xs font-semibold leading-5 text-slate-600">
-                    Use this for Whole Home Cleaning, Parent Reset, Specific Area Reset, Move-In/Move-Out, Move Prep, Errand Helper, or Commercial follow-up visits.
-                  </p>
-
-                  <div className="mt-4 grid gap-3 md:grid-cols-2">
-                    <label className="grid gap-2 text-sm font-bold text-slate-700">
-                      Next visit date
-                      <input
-                        type="date"
-                        value={followUpDate}
-                        onChange={(e) => setFollowUpDate(e.target.value)}
-                        className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
-                      />
-                    </label>
-                    <label className="grid gap-2 text-sm font-bold text-slate-700">
-                      Preferred window
-                      <input
-                        value={followUpWindow}
-                        onChange={(e) => setFollowUpWindow(e.target.value.slice(0, 140))}
-                        placeholder="Example: Tuesdays around 10 AM"
-                        className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
-                      />
-                    </label>
-                    <label className="grid gap-2 text-sm font-bold text-slate-700">
-                      Service / plan
-                      <input
-                        value={followUpServiceTitle}
-                        onChange={(e) => setFollowUpServiceTitle(e.target.value.slice(0, 180))}
-                        placeholder="Example: Whole Home Cleaning"
-                        className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
-                      />
-                    </label>
-                    <label className="grid gap-2 text-sm font-bold text-slate-700">
-                      Create as
-                      <select
-                        value={followUpCreateAs}
-                        onChange={(e) => setFollowUpCreateAs(e.target.value === "recurring" ? "recurring" : "one-time")}
-                        className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-bold text-[#075c58] outline-none focus:border-[#075c58]"
-                      >
-                        <option value="one-time">One-time follow-up</option>
-                        <option value="recurring">Recurring visit</option>
-                      </select>
-                      <span className="text-xs font-semibold leading-5 text-slate-500">Customer cadence can prefill below, but the new request only becomes recurring when you choose Recurring visit here.</span>
-                    </label>
-                    <label className="grid gap-2 text-sm font-bold text-slate-700">
-                      Planned cadence
-                      <select
-                        value={followUpCadence}
-                        onChange={(e) => setFollowUpCadence(e.target.value)}
-                        className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-bold text-[#075c58] outline-none focus:border-[#075c58]"
-                      >
-                        <option value="One-time follow-up">One-time follow-up</option>
-                        <option value="Weekly">Weekly</option>
-                        <option value="Biweekly">Biweekly</option>
-                        <option value="Monthly">Monthly</option>
-                        <option value="As needed">As needed</option>
-                      </select>
-                    </label>
-                    <label className="grid gap-2 text-sm font-bold text-slate-700">
-                      Agreed price
-                      <input
-                        value={followUpAgreedPrice}
-                        onChange={(e) => setFollowUpAgreedPrice(e.target.value.replace(/[^0-9.]/g, "").slice(0, 10))}
-                        inputMode="decimal"
-                        placeholder="Optional"
-                        className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
-                      />
-                    </label>
-                    <label className="grid gap-2 text-sm font-bold text-slate-700">
-                      Estimated helper hours
-                      <input
-                        value={followUpEstimatedHours}
-                        onChange={(e) => setFollowUpEstimatedHours(e.target.value.slice(0, 80))}
-                        placeholder="Example: 3 helper-hours"
-                        className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
-                      />
-                    </label>
-                  </div>
-
-                  <div className="mt-3 grid gap-3 md:grid-cols-2">
-                    <label className="grid gap-2 text-sm font-bold text-slate-700">
-                      Focus areas
-                      <textarea
-                        value={followUpFocusAreas}
-                        onChange={(e) => setFollowUpFocusAreas(e.target.value.slice(0, 500))}
-                        rows={3}
-                        placeholder="Example: kitchen, bathrooms, floors, baseboards"
-                        className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
-                      />
-                    </label>
-                    <label className="grid gap-2 text-sm font-bold text-slate-700">
-                      Rooms / scope included
-                      <textarea
-                        value={followUpIncludedRooms}
-                        onChange={(e) => setFollowUpIncludedRooms(e.target.value.slice(0, 500))}
-                        rows={3}
-                        placeholder="Example: 3 bed / 2 bath, kitchen, living room"
-                        className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
-                      />
-                    </label>
-                    <label className="grid gap-2 text-sm font-bold text-slate-700">
-                      Supplies preference
-                      <input
-                        value={followUpSuppliesPreference}
-                        onChange={(e) => setFollowUpSuppliesPreference(e.target.value.slice(0, 220))}
-                        placeholder="Example: NestHelper supplies / customer supplies"
-                        className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
-                      />
-                    </label>
-                    <label className="grid gap-2 text-sm font-bold text-slate-700">
-                      Pet notes
-                      <input
-                        value={followUpPetNotes}
-                        onChange={(e) => setFollowUpPetNotes(e.target.value.slice(0, 220))}
-                        placeholder="Example: dog in crate, pet hair focus"
-                        className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
-                      />
-                    </label>
-                  </div>
-
-                  <label className="mt-3 grid gap-2 text-sm font-bold text-slate-700">
-                    Special instructions for this visit
-                    <textarea
-                      value={followUpSpecialInstructions}
-                      onChange={(e) => setFollowUpSpecialInstructions(e.target.value.slice(0, 700))}
-                      rows={3}
-                      placeholder="Example: same as last time, but skip the office this week"
-                      className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
-                    />
-                  </label>
-
-                  <label className="mt-3 grid gap-2 text-sm font-bold text-slate-700">
-                    Internal note
-                    <input
-                      value={followUpInternalNote}
-                      onChange={(e) => setFollowUpInternalNote(e.target.value.slice(0, 300))}
-                      placeholder="Optional: customer confirmed recurring by text"
-                      className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
-                    />
-                  </label>
-                </div>
-
-                <div className="mt-4 flex flex-wrap items-center gap-3">
-                  <button type="button" disabled={followUpBusy} onClick={createFollowUpServiceRequest} className={getAdminActionClass("primary")}>
-                    {followUpBusy ? <><ActionSpinner /> Creating...</> : "Create follow-up request"}
-                  </button>
-                  {followUpCreatedRequestId && (
-                    <button type="button" onClick={() => openCreatedServiceRequest(followUpCreatedRequestId, "follow-up")} className={getAdminActionClass("secondary")}>
-                      Open new request
-                    </button>
-                  )}
-                  <p className="text-xs font-semibold text-slate-600">
-                    The new request starts unpaid with payment links, invoice links, and completion history blank. The Create as choice controls whether it is marked one-time or recurring.
-                  </p>
-                </div>
-              </AdminCollapsibleSection>
-            )}
             {showApplicationOnboardingPanel && <ApplicationQuickRead item={selected} documentCount={selectedApplicationDocuments.length} />}
 
             {showApplicationOnboardingPanel && (
@@ -5959,209 +5568,6 @@ export default function AdminTable({
 
                 {applicationOnboardingMessage && <p className="mt-3 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">{applicationOnboardingMessage}</p>}
                 {applicationOnboardingError && <p className="mt-3 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{applicationOnboardingError}</p>}
-              </AdminCollapsibleSection>
-            )}
-
-            {showCustomerStatusActions && (
-              <AdminCollapsibleSection id="admin-section-status" eyebrow="Status + customer update" title="Update status or notify customer" tone="white">
-                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                  <div className="max-w-2xl">
-                    <p className="text-xs font-black uppercase tracking-[0.2em] text-[#b98a2f]">Status + customer update</p>
-                    <h4 className="mt-1 text-xl font-black text-[#075c58]">Update the request and choose whether to notify the customer</h4>
-                    <p className="mt-2 text-sm leading-6 text-slate-700">
-                      Use <span className="font-black text-[#075c58]">Quote Sent</span> for quote emails. Use checkout/invoice statuses only after a real Stripe payment link or invoice is created.
-                    </p>
-                  </div>
-                  <StatusBadge status={statusValue} />
-                </div>
-
-                <div className="mt-4 grid gap-3 md:grid-cols-2">
-                  <label className="grid gap-2 text-sm font-bold text-slate-700">
-                    Customer-facing status
-                    <select
-                      value={statusValue}
-                      onChange={(e) => {
-                        const next = e.target.value;
-                        setStatusValue(next);
-                        setNotifyCustomer(shouldNotifyByDefault(next));
-                      }}
-                      className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-bold text-[#075c58] outline-none focus:border-[#075c58]"
-                    >
-                      {dropdownStatuses.map((status) => <option key={status}>{status}</option>)}
-                    </select>
-                  </label>
-
-                  <label className="flex items-center gap-3 rounded-2xl border border-[#eadfc8] bg-[#fbf6ea] px-4 py-3 text-sm font-bold text-slate-700">
-                    <input
-                      type="checkbox"
-                      checked={notifyCustomer}
-                      onChange={(e) => setNotifyCustomer(e.target.checked)}
-                      className="h-5 w-5 rounded border-[#075c58] accent-[#075c58]"
-                    />
-                    <span className="grid gap-1">
-                      <span>Send customer email notification</span>
-                      <span className="text-xs font-semibold text-slate-500">Shows Sent / Failed / Skipped after you save.</span>
-                    </span>
-                  </label>
-                </div>
-
-                <label className="mt-4 grid gap-2 text-sm font-bold text-slate-700">
-                  Optional customer note
-                  <textarea
-                    value={statusNote}
-                    onChange={(e) => setStatusNote(e.target.value)}
-                    placeholder={getStatusNotePlaceholder(statusValue)}
-                    rows={4}
-                    className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
-                  />
-                </label>
-
-                <StatusEmailDeliveryCard item={selected} />
-                <StatusEmailOutcomeCard outcome={statusEmailOutcome} />
-
-                <div className="mt-4 flex flex-wrap gap-3">
-                  <button
-                    type="button"
-                    disabled={statusBusy}
-                    onClick={submitStatusUpdate}
-                    className={getAdminActionClass("primary")}
-                  >
-                    {statusBusy ? <><ActionSpinner /> Updating...</> : notifyCustomer ? "Update status + notify customer" : "Update status only"}
-                  </button>
-                  {collectionName === "serviceRequests" && statusValue !== "Archived" && (
-                    <button
-                      type="button"
-                      disabled={statusBusy}
-                      onClick={archiveSelectedServiceRequest}
-                      className={getAdminActionClass("quiet")}
-                    >
-                      Archive / hide from active
-                    </button>
-                  )}
-                  {collectionName === "serviceRequests" && (
-                    <button
-                      type="button"
-                      disabled={statusBusy}
-                      onClick={deleteSelectedServiceRequest}
-                      className={getAdminActionClass("danger")}
-                      title="Permanently delete this request after a warning confirmation."
-                    >
-                      Delete request permanently
-                    </button>
-                  )}
-                  <p className="max-w-xl text-xs leading-5 text-slate-500">
-                    Quote emails can be sent here by choosing Quote Sent. Payment link, invoice, and payment received emails are handled separately by the payment/invoice buttons. Archive keeps the record but removes it from the active work queue. Delete is only for test, spam, duplicate, or accidental unpaid requests.
-                  </p>
-                </div>
-
-                {statusMessage && <p className="mt-3 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">{statusMessage}</p>}
-                {statusWarning && <p className="mt-3 rounded-2xl bg-amber-50 px-4 py-3 text-sm font-bold text-amber-800">{statusWarning}</p>}
-                {statusError && <p className="mt-3 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{statusError}</p>}
-              </AdminCollapsibleSection>
-            )}
-
-            {showFamilyReferralPanel && (
-              <AdminCollapsibleSection id="admin-section-referrals" eyebrow="Family referrals" title="Generate and track referral links" tone="gradient">
-                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                  <div className="max-w-3xl">
-                    <p className="text-xs font-black uppercase tracking-[0.2em] text-[#b98a2f]">Family referrals</p>
-                    <h4 className="mt-1 text-xl font-black text-[#075c58]">Generate and track one-time family referral links</h4>
-                    <p className="mt-2 text-sm leading-6 text-slate-700">
-                      Family referral links are only for completed eligible family-service customers. Each link is one-time use, and you can generate another one-time link for the same happy family when needed. Commercial Reset is intentionally excluded.
-                    </p>
-                  </div>
-                  <StatusBadge status={getReferralStatusText(selected)} />
-                </div>
-
-                <div className="mt-4 grid gap-3 md:grid-cols-2">
-                  <div className="rounded-2xl border border-[#eadfc8] bg-white p-4">
-                    <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Outgoing share link for this customer</p>
-                    <p className="mt-2 text-sm font-bold leading-6 text-slate-700">
-                      {selected.outgoingReferralCode
-                        ? `Latest one-time code: ${selected.outgoingReferralCode}`
-                        : selectedIsFamilyReferralEligible
-                          ? selectedCanGenerateReferral
-                            ? "Ready to generate after you choose this completed customer."
-                            : "Mark this eligible family request Completed before generating the customer’s referral link."
-                          : "This service is not eligible for a family referral share link."}
-                    </p>
-                    {selected.outgoingReferralLink && (
-                      <div className="mt-3 rounded-2xl bg-[#fbf6ea] p-3">
-                        <p className="break-all text-sm font-bold text-[#075c58]">{selected.outgoingReferralLink}</p>
-                        <p className="mt-2 text-xs font-semibold text-slate-600">Status: {selected.outgoingReferralStatus || "Active"}</p>
-                        {selected.outgoingReferralEmailError && <p className="mt-2 text-xs font-bold text-amber-800">Email note: {selected.outgoingReferralEmailError}</p>}
-                      </div>
-                    )}
-                    {selectedOutgoingReferralHistory.length > 0 && (
-                      <div className="mt-3 rounded-2xl border border-[#eadfc8] bg-white px-3 py-2 text-xs font-bold leading-5 text-slate-600">
-                        {selectedOutgoingReferralHistory.length} one-time referral link{selectedOutgoingReferralHistory.length === 1 ? "" : "s"} generated for this family. The latest link is shown above; each link can be used by one referred family only.
-                      </div>
-                    )}
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      <button
-                        type="button"
-                        disabled={referralBusy || (!selected.outgoingReferralLink && !selectedCanGenerateReferral)}
-                        onClick={() => createReferralLink(true)}
-                        className={getAdminActionClass("primary")}
-                      >
-                        {referralBusy ? <><ActionSpinner /> Working...</> : selected.outgoingReferralLink ? "Resend latest link email" : "Create + email referral link"}
-                      </button>
-                      {selected.outgoingReferralLink && selectedCanGenerateReferral && (
-                        <button
-                          type="button"
-                          disabled={referralBusy}
-                          onClick={() => createReferralLink(true, true)}
-                          className={getAdminActionClass("secondary")}
-                          title="Creates a brand-new one-time link for this same family to share with another family."
-                        >
-                          Create + email another one-time link
-                        </button>
-                      )}
-                      {selected.outgoingReferralLink && (
-                        <button type="button" onClick={() => copyReferralLink(selected.outgoingReferralLink || "")} className={getAdminActionClass("secondary")}>Copy latest link</button>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="rounded-2xl border border-[#eadfc8] bg-white p-4">
-                    <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Incoming referred-family tracking</p>
-                    {selected.incomingReferralCode ? (
-                      <div className="mt-2 text-sm font-bold leading-6 text-slate-700">
-                        <p>Incoming code: <span className="text-[#075c58]">{selected.incomingReferralCode}</span></p>
-                        <p>Status: <span className="text-[#075c58]">{selected.incomingReferralStatus || "Pending referred family completion"}</span></p>
-                        {selected.incomingReferralReferrerName && <p>Referring family: {selected.incomingReferralReferrerName}</p>}
-                        {selected.incomingReferralRewardCode && <p>Reward code: {selected.incomingReferralRewardCode}</p>}
-                        {selected.incomingReferralRewardEmailError && <p className="mt-2 text-amber-800">Reward email note: {selected.incomingReferralRewardEmailError}</p>}
-                      </div>
-                    ) : (
-                      <p className="mt-2 text-sm font-bold leading-6 text-slate-700">This request was not submitted through a family referral link.</p>
-                    )}
-                    <p className="mt-3 rounded-2xl bg-[#fbf6ea] px-4 py-3 text-xs font-bold leading-5 text-slate-600">
-                      When a referred eligible family reset is marked Completed, NestHelper automatically emails the original referring family about their reward/credit and updates both records.
-                    </p>
-                  </div>
-                </div>
-
-                {selectedAvailableCustomerCreditTotal > 0 && (
-                  <div className="mt-3 rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-bold leading-6 text-emerald-900">
-                    Available saved credit for this customer email: {formatMoney(selectedAvailableCustomerCreditTotal)}. Open the Draft Estimate Builder to apply it before sending checkout or invoice.
-                  </div>
-                )}
-
-                {referralMessage && <p className="mt-3 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">{referralMessage}</p>}
-                {referralError && <p className="mt-3 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{referralError}</p>}
-              </AdminCollapsibleSection>
-            )}
-
-            {showReviewRequestPanel && (
-              <AdminCollapsibleSection id="admin-section-review-request" eyebrow="Review request" title="Ask for a customer review" tone="white">
-                <ReviewRequestPanel
-                  selected={selected}
-                  onRecordUpdate={(updates) => {
-                    setSelected((prev) => (prev ? { ...prev, ...updates } : prev));
-                    setItems((prev) => prev.map((item) => item.id === selected.id ? { ...item, ...updates } : item));
-                  }}
-                />
               </AdminCollapsibleSection>
             )}
 
@@ -6434,6 +5840,401 @@ export default function AdminTable({
                     setAdditionalPaymentNote(note);
                   }}
                 />
+              </AdminCollapsibleSection>
+            )}
+
+            {collectionName === "serviceRequests" && (
+              <AdminCollapsibleSection id="admin-section-internal-notes" eyebrow="Internal notes" title="Private request tracking" tone="white">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <p className="text-xs font-black uppercase tracking-[0.18em] text-[#b98a2f]">Internal notes</p>
+                    <h4 className="mt-1 text-lg font-black text-[#075c58]">Private request tracking</h4>
+                    <p className="mt-1 text-xs font-semibold leading-5 text-slate-500">
+                      Admin-only notes. Customers do not see this section.
+                    </p>
+                  </div>
+                  {selected.service === "laundry-rescue" && (
+                    <div className={`rounded-2xl px-4 py-3 text-xs font-black ${laundryBagsStillOut > 0 ? "bg-amber-50 text-amber-800" : "bg-emerald-50 text-emerald-800"}`}>
+                      Bags still out: {laundryBagsStillOut}
+                    </div>
+                  )}
+                </div>
+
+                {selected.service === "laundry-rescue" && (
+                  <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                    <label className="grid gap-2 text-sm font-bold text-slate-700">
+                      Laundry bags used
+                      <input
+                        value={laundryBagsUsed}
+                        onChange={(e) => setLaundryBagsUsed(e.target.value.replace(/[^0-9]/g, "").slice(0, 3))}
+                        inputMode="numeric"
+                        placeholder="Example: 3"
+                        className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
+                      />
+                    </label>
+                    <label className="grid gap-2 text-sm font-bold text-slate-700">
+                      Bags returned
+                      <input
+                        value={laundryBagsReturned}
+                        onChange={(e) => setLaundryBagsReturned(e.target.value.replace(/[^0-9]/g, "").slice(0, 3))}
+                        inputMode="numeric"
+                        placeholder="Example: 1"
+                        className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
+                      />
+                    </label>
+                    <label className="grid gap-2 text-sm font-bold text-slate-700">
+                      Bag note
+                      <input
+                        value={laundryBagTrackingNotes}
+                        onChange={(e) => setLaundryBagTrackingNotes(e.target.value.slice(0, 240))}
+                        placeholder="Example: Need 2 bags back"
+                        className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
+                      />
+                    </label>
+                  </div>
+                )}
+
+                <label className="mt-4 grid gap-2 text-sm font-bold text-slate-700">
+                  Admin notes
+                  <textarea
+                    value={requestAdminNotes}
+                    onChange={(e) => setRequestAdminNotes(e.target.value)}
+                    rows={4}
+                    placeholder={selected.service === "laundry-rescue" ? "Example: Used 3 NestHelper bags. Customer returned 1. Need 2 bags back at delivery." : "Private notes about the request, quote, scheduling, customer preferences, access, or follow-up."}
+                    className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
+                  />
+                </label>
+
+                <div className="mt-4 flex flex-wrap items-center gap-3">
+                  <button type="button" disabled={requestNotesBusy} onClick={saveRequestInternalNotes} className={getAdminActionClass("primary")}>
+                    {requestNotesBusy ? <><ActionSpinner /> Saving...</> : "Save internal notes"}
+                  </button>
+                  <p className="text-xs font-semibold text-slate-500">This saves to the admin record only. It does not email the customer.</p>
+                </div>
+              </AdminCollapsibleSection>
+            )}
+
+            {collectionName === "serviceRequests" && selected.service === "laundry-rescue" && (
+              <AdminCollapsibleSection id="admin-section-repeat-laundry" eyebrow="Repeat laundry" title="Create the next Laundry Rescue pickup" tone="cream">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <p className="text-xs font-black uppercase tracking-[0.18em] text-[#b98a2f]">Repeat laundry</p>
+                    <h4 className="mt-1 text-lg font-black text-[#075c58]">Create a new request for the next pickup</h4>
+                    <p className="mt-1 text-xs font-semibold leading-5 text-slate-600">
+                      Loads the original laundry answers into editable fields, then creates a fresh Laundry Rescue request. The old request stays as-is.
+                    </p>
+                  </div>
+                  {selected.latestRepeatRequestId && (
+                    <div className="rounded-2xl bg-white px-4 py-3 text-xs font-bold text-slate-600">
+                      Last repeat: <span className="font-black text-[#075c58]">{String(selected.latestRepeatRequestId)}</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="mt-4 rounded-2xl border border-[#eadfc8] bg-white/80 p-3 sm:p-4">
+                  <p className="text-xs font-black uppercase tracking-[0.18em] text-[#b98a2f]">Repeat details</p>
+                  <p className="mt-1 text-xs font-semibold leading-5 text-slate-600">
+                    These fields should show the original answers when available, including raw submitted fields. Update anything that changed for this pickup before creating the new request.
+                  </p>
+
+                  <div className="mt-4 grid gap-3 md:grid-cols-2">
+                    <label className="grid gap-2 text-sm font-bold text-slate-700">
+                      Next pickup date
+                      <input
+                        type="date"
+                        value={repeatLaundryDate}
+                        onChange={(e) => setRepeatLaundryDate(e.target.value)}
+                        className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
+                      />
+                    </label>
+                    <label className="grid gap-2 text-sm font-bold text-slate-700">
+                      Pickup window
+                      <input
+                        value={repeatLaundryWindow}
+                        onChange={(e) => setRepeatLaundryWindow(e.target.value.slice(0, 120))}
+                        placeholder="Example: same as last week"
+                        className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
+                      />
+                    </label>
+                    <label className="grid gap-2 text-sm font-bold text-slate-700">
+                      Pickup spot
+                      <input
+                        value={repeatLaundryPickupSpot}
+                        onChange={(e) => setRepeatLaundryPickupSpot(e.target.value.slice(0, 160))}
+                        placeholder="Example: front door"
+                        className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
+                      />
+                    </label>
+                    <label className="grid gap-2 text-sm font-bold text-slate-700">
+                      Return spot
+                      <input
+                        value={repeatLaundryReturnSpot}
+                        onChange={(e) => setRepeatLaundryReturnSpot(e.target.value.slice(0, 160))}
+                        placeholder="Example: front door"
+                        className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
+                      />
+                    </label>
+                    <label className="grid gap-2 text-sm font-bold text-slate-700">
+                      Detergent preference
+                      <input
+                        value={repeatLaundryDetergent}
+                        onChange={(e) => setRepeatLaundryDetergent(e.target.value.slice(0, 160))}
+                        placeholder="Example: child-safe detergent"
+                        className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
+                      />
+                    </label>
+                    <label className="grid gap-2 text-sm font-bold text-slate-700">
+                      Laundry amount
+                      <input
+                        value={repeatLaundryAmount}
+                        onChange={(e) => setRepeatLaundryAmount(e.target.value.slice(0, 160))}
+                        placeholder="Example: 2 bags"
+                        className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
+                      />
+                    </label>
+                    <label className="grid gap-2 text-sm font-bold text-slate-700">
+                      Drying instructions
+                      <input
+                        value={repeatLaundryDryerPreference}
+                        onChange={(e) => setRepeatLaundryDryerPreference(e.target.value.slice(0, 200))}
+                        placeholder="Example: low heat / hang dry baby clothes"
+                        className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
+                      />
+                    </label>
+                    <label className="grid gap-2 text-sm font-bold text-slate-700">
+                      Folding instructions
+                      <input
+                        value={repeatLaundryFoldPreference}
+                        onChange={(e) => setRepeatLaundryFoldPreference(e.target.value.slice(0, 200))}
+                        placeholder="Example: fold everything"
+                        className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
+                      />
+                    </label>
+                  </div>
+
+                  <label className="mt-3 grid gap-2 text-sm font-bold text-slate-700">
+                    Special instructions for this pickup
+                    <textarea
+                      value={repeatLaundrySpecialInstructions}
+                      onChange={(e) => setRepeatLaundrySpecialInstructions(e.target.value.slice(0, 500))}
+                      rows={3}
+                      placeholder="Example: use child-safe detergent; keep baby clothes separate; no dryer sheets"
+                      className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
+                    />
+                  </label>
+
+                  <div className="mt-3 grid gap-3 md:grid-cols-2">
+                    <label className="grid gap-2 text-sm font-bold text-slate-700">
+                      Add-on / extra item note
+                      <input
+                        value={repeatLaundryAddOnNote}
+                        onChange={(e) => setRepeatLaundryAddOnNote(e.target.value.slice(0, 240))}
+                        placeholder="Optional: comforter, bulky item, extra bags"
+                        className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
+                      />
+                    </label>
+                    <label className="grid gap-2 text-sm font-bold text-slate-700">
+                      Internal repeat note
+                      <input
+                        value={repeatLaundryNote}
+                        onChange={(e) => setRepeatLaundryNote(e.target.value.slice(0, 240))}
+                        placeholder="Optional: customer confirmed by text"
+                        className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
+                      />
+                    </label>
+                  </div>
+                </div>
+
+                <div className="mt-4 flex flex-wrap items-center gap-3">
+                  <button type="button" disabled={repeatLaundryBusy} onClick={createRepeatLaundryRequest} className={getAdminActionClass("primary")}>
+                    {repeatLaundryBusy ? <><ActionSpinner /> Creating...</> : "Create repeat request"}
+                  </button>
+                  {repeatLaundryCreatedRequestId && (
+                    <button type="button" onClick={() => openCreatedServiceRequest(repeatLaundryCreatedRequestId, "repeat")} className={getAdminActionClass("secondary")}>
+                      Open new request
+                    </button>
+                  )}
+                  <p className="text-xs font-semibold text-slate-600">
+                    The new request starts unpaid with dry weight, bag tracking, payment links, and final invoice fields blank.
+                  </p>
+                </div>
+              </AdminCollapsibleSection>
+            )}
+
+            {collectionName === "serviceRequests" && selected.service !== "laundry-rescue" && (
+              <AdminCollapsibleSection id="admin-section-recurring-service" eyebrow="Follow-up / recurring" title="Create a new follow-up request" tone="cream">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <p className="text-xs font-black uppercase tracking-[0.18em] text-[#b98a2f]">Follow-up / recurring visit</p>
+                    <h4 className="mt-1 text-lg font-black text-[#075c58]">Create a new request for the next visit</h4>
+                    <p className="mt-1 text-xs font-semibold leading-5 text-slate-600">
+                      Loads the original service details into editable fields, then creates a fresh request. The old request stays unchanged and customers are not emailed automatically.
+                    </p>
+                  </div>
+                  {selected.latestFollowUpRequestId && (
+                    <div className="rounded-2xl bg-white px-4 py-3 text-xs font-bold text-slate-600">
+                      Last follow-up: <span className="font-black text-[#075c58]">{String(selected.latestFollowUpRequestId)}</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="mt-4 rounded-2xl border border-[#eadfc8] bg-white/80 p-3 sm:p-4">
+                  <p className="text-xs font-black uppercase tracking-[0.18em] text-[#b98a2f]">Next visit details</p>
+                  <p className="mt-1 text-xs font-semibold leading-5 text-slate-600">
+                    Use this for Whole Home Cleaning, Parent Reset, Specific Area Reset, Move-In/Move-Out, Move Prep, Errand Helper, or Commercial follow-up visits.
+                  </p>
+
+                  <div className="mt-4 grid gap-3 md:grid-cols-2">
+                    <label className="grid gap-2 text-sm font-bold text-slate-700">
+                      Next visit date
+                      <input
+                        type="date"
+                        value={followUpDate}
+                        onChange={(e) => setFollowUpDate(e.target.value)}
+                        className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
+                      />
+                    </label>
+                    <label className="grid gap-2 text-sm font-bold text-slate-700">
+                      Preferred window
+                      <input
+                        value={followUpWindow}
+                        onChange={(e) => setFollowUpWindow(e.target.value.slice(0, 140))}
+                        placeholder="Example: Tuesdays around 10 AM"
+                        className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
+                      />
+                    </label>
+                    <label className="grid gap-2 text-sm font-bold text-slate-700">
+                      Service / plan
+                      <input
+                        value={followUpServiceTitle}
+                        onChange={(e) => setFollowUpServiceTitle(e.target.value.slice(0, 180))}
+                        placeholder="Example: Whole Home Cleaning"
+                        className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
+                      />
+                    </label>
+                    <label className="grid gap-2 text-sm font-bold text-slate-700">
+                      Create as
+                      <select
+                        value={followUpCreateAs}
+                        onChange={(e) => setFollowUpCreateAs(e.target.value === "recurring" ? "recurring" : "one-time")}
+                        className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-bold text-[#075c58] outline-none focus:border-[#075c58]"
+                      >
+                        <option value="one-time">One-time follow-up</option>
+                        <option value="recurring">Recurring visit</option>
+                      </select>
+                      <span className="text-xs font-semibold leading-5 text-slate-500">Customer cadence can prefill below, but the new request only becomes recurring when you choose Recurring visit here.</span>
+                    </label>
+                    <label className="grid gap-2 text-sm font-bold text-slate-700">
+                      Planned cadence
+                      <select
+                        value={followUpCadence}
+                        onChange={(e) => setFollowUpCadence(e.target.value)}
+                        className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-bold text-[#075c58] outline-none focus:border-[#075c58]"
+                      >
+                        <option value="One-time follow-up">One-time follow-up</option>
+                        <option value="Weekly">Weekly</option>
+                        <option value="Biweekly">Biweekly</option>
+                        <option value="Monthly">Monthly</option>
+                        <option value="As needed">As needed</option>
+                      </select>
+                    </label>
+                    <label className="grid gap-2 text-sm font-bold text-slate-700">
+                      Agreed price
+                      <input
+                        value={followUpAgreedPrice}
+                        onChange={(e) => setFollowUpAgreedPrice(e.target.value.replace(/[^0-9.]/g, "").slice(0, 10))}
+                        inputMode="decimal"
+                        placeholder="Optional"
+                        className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
+                      />
+                    </label>
+                    <label className="grid gap-2 text-sm font-bold text-slate-700">
+                      Estimated helper hours
+                      <input
+                        value={followUpEstimatedHours}
+                        onChange={(e) => setFollowUpEstimatedHours(e.target.value.slice(0, 80))}
+                        placeholder="Example: 3 helper-hours"
+                        className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
+                      />
+                    </label>
+                  </div>
+
+                  <div className="mt-3 grid gap-3 md:grid-cols-2">
+                    <label className="grid gap-2 text-sm font-bold text-slate-700">
+                      Focus areas
+                      <textarea
+                        value={followUpFocusAreas}
+                        onChange={(e) => setFollowUpFocusAreas(e.target.value.slice(0, 500))}
+                        rows={3}
+                        placeholder="Example: kitchen, bathrooms, floors, baseboards"
+                        className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
+                      />
+                    </label>
+                    <label className="grid gap-2 text-sm font-bold text-slate-700">
+                      Rooms / scope included
+                      <textarea
+                        value={followUpIncludedRooms}
+                        onChange={(e) => setFollowUpIncludedRooms(e.target.value.slice(0, 500))}
+                        rows={3}
+                        placeholder="Example: 3 bed / 2 bath, kitchen, living room"
+                        className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
+                      />
+                    </label>
+                    <label className="grid gap-2 text-sm font-bold text-slate-700">
+                      Supplies preference
+                      <input
+                        value={followUpSuppliesPreference}
+                        onChange={(e) => setFollowUpSuppliesPreference(e.target.value.slice(0, 220))}
+                        placeholder="Example: NestHelper supplies / customer supplies"
+                        className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
+                      />
+                    </label>
+                    <label className="grid gap-2 text-sm font-bold text-slate-700">
+                      Pet notes
+                      <input
+                        value={followUpPetNotes}
+                        onChange={(e) => setFollowUpPetNotes(e.target.value.slice(0, 220))}
+                        placeholder="Example: dog in crate, pet hair focus"
+                        className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
+                      />
+                    </label>
+                  </div>
+
+                  <label className="mt-3 grid gap-2 text-sm font-bold text-slate-700">
+                    Special instructions for this visit
+                    <textarea
+                      value={followUpSpecialInstructions}
+                      onChange={(e) => setFollowUpSpecialInstructions(e.target.value.slice(0, 700))}
+                      rows={3}
+                      placeholder="Example: same as last time, but skip the office this week"
+                      className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
+                    />
+                  </label>
+
+                  <label className="mt-3 grid gap-2 text-sm font-bold text-slate-700">
+                    Internal note
+                    <input
+                      value={followUpInternalNote}
+                      onChange={(e) => setFollowUpInternalNote(e.target.value.slice(0, 300))}
+                      placeholder="Optional: customer confirmed recurring by text"
+                      className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
+                    />
+                  </label>
+                </div>
+
+                <div className="mt-4 flex flex-wrap items-center gap-3">
+                  <button type="button" disabled={followUpBusy} onClick={createFollowUpServiceRequest} className={getAdminActionClass("primary")}>
+                    {followUpBusy ? <><ActionSpinner /> Creating...</> : "Create follow-up request"}
+                  </button>
+                  {followUpCreatedRequestId && (
+                    <button type="button" onClick={() => openCreatedServiceRequest(followUpCreatedRequestId, "follow-up")} className={getAdminActionClass("secondary")}>
+                      Open new request
+                    </button>
+                  )}
+                  <p className="text-xs font-semibold text-slate-600">
+                    The new request starts unpaid with payment links, invoice links, and completion history blank. The Create as choice controls whether it is marked one-time or recurring.
+                  </p>
+                </div>
               </AdminCollapsibleSection>
             )}
 
@@ -7065,7 +6866,6 @@ export default function AdminTable({
               </AdminCollapsibleSection>
             )}
 
-
             {showPaymentActions && (
               <AdminCollapsibleSection id="admin-section-additional-payment" eyebrow="Additional payment" title="Create add-on or balance payment" tone="gold">
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
@@ -7162,6 +6962,209 @@ export default function AdminTable({
 
                 {additionalPaymentMessage && <p className="mt-3 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">{additionalPaymentMessage}</p>}
                 {additionalPaymentError && <p className="mt-3 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{additionalPaymentError}</p>}
+              </AdminCollapsibleSection>
+            )}
+
+            {showCustomerStatusActions && (
+              <AdminCollapsibleSection id="admin-section-status" eyebrow="Status + customer update" title="Update status or notify customer" tone="white">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="max-w-2xl">
+                    <p className="text-xs font-black uppercase tracking-[0.2em] text-[#b98a2f]">Status + customer update</p>
+                    <h4 className="mt-1 text-xl font-black text-[#075c58]">Update the request and choose whether to notify the customer</h4>
+                    <p className="mt-2 text-sm leading-6 text-slate-700">
+                      Use <span className="font-black text-[#075c58]">Quote Sent</span> for quote emails. Use checkout/invoice statuses only after a real Stripe payment link or invoice is created.
+                    </p>
+                  </div>
+                  <StatusBadge status={statusValue} />
+                </div>
+
+                <div className="mt-4 grid gap-3 md:grid-cols-2">
+                  <label className="grid gap-2 text-sm font-bold text-slate-700">
+                    Customer-facing status
+                    <select
+                      value={statusValue}
+                      onChange={(e) => {
+                        const next = e.target.value;
+                        setStatusValue(next);
+                        setNotifyCustomer(shouldNotifyByDefault(next));
+                      }}
+                      className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-bold text-[#075c58] outline-none focus:border-[#075c58]"
+                    >
+                      {dropdownStatuses.map((status) => <option key={status}>{status}</option>)}
+                    </select>
+                  </label>
+
+                  <label className="flex items-center gap-3 rounded-2xl border border-[#eadfc8] bg-[#fbf6ea] px-4 py-3 text-sm font-bold text-slate-700">
+                    <input
+                      type="checkbox"
+                      checked={notifyCustomer}
+                      onChange={(e) => setNotifyCustomer(e.target.checked)}
+                      className="h-5 w-5 rounded border-[#075c58] accent-[#075c58]"
+                    />
+                    <span className="grid gap-1">
+                      <span>Send customer email notification</span>
+                      <span className="text-xs font-semibold text-slate-500">Shows Sent / Failed / Skipped after you save.</span>
+                    </span>
+                  </label>
+                </div>
+
+                <label className="mt-4 grid gap-2 text-sm font-bold text-slate-700">
+                  Optional customer note
+                  <textarea
+                    value={statusNote}
+                    onChange={(e) => setStatusNote(e.target.value)}
+                    placeholder={getStatusNotePlaceholder(statusValue)}
+                    rows={4}
+                    className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
+                  />
+                </label>
+
+                <StatusEmailDeliveryCard item={selected} />
+                <StatusEmailOutcomeCard outcome={statusEmailOutcome} />
+
+                <div className="mt-4 flex flex-wrap gap-3">
+                  <button
+                    type="button"
+                    disabled={statusBusy}
+                    onClick={submitStatusUpdate}
+                    className={getAdminActionClass("primary")}
+                  >
+                    {statusBusy ? <><ActionSpinner /> Updating...</> : notifyCustomer ? "Update status + notify customer" : "Update status only"}
+                  </button>
+                  {collectionName === "serviceRequests" && statusValue !== "Archived" && (
+                    <button
+                      type="button"
+                      disabled={statusBusy}
+                      onClick={archiveSelectedServiceRequest}
+                      className={getAdminActionClass("quiet")}
+                    >
+                      Archive / hide from active
+                    </button>
+                  )}
+                  {collectionName === "serviceRequests" && (
+                    <button
+                      type="button"
+                      disabled={statusBusy}
+                      onClick={deleteSelectedServiceRequest}
+                      className={getAdminActionClass("danger")}
+                      title="Permanently delete this request after a warning confirmation."
+                    >
+                      Delete request permanently
+                    </button>
+                  )}
+                  <p className="max-w-xl text-xs leading-5 text-slate-500">
+                    Quote emails can be sent here by choosing Quote Sent. Payment link, invoice, and payment received emails are handled separately by the payment/invoice buttons. Archive keeps the record but removes it from the active work queue. Delete is only for test, spam, duplicate, or accidental unpaid requests.
+                  </p>
+                </div>
+
+                {statusMessage && <p className="mt-3 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">{statusMessage}</p>}
+                {statusWarning && <p className="mt-3 rounded-2xl bg-amber-50 px-4 py-3 text-sm font-bold text-amber-800">{statusWarning}</p>}
+                {statusError && <p className="mt-3 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{statusError}</p>}
+              </AdminCollapsibleSection>
+            )}
+
+            {showFamilyReferralPanel && (
+              <AdminCollapsibleSection id="admin-section-referrals" eyebrow="Family referrals" title="Generate and track referral links" tone="gradient">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="max-w-3xl">
+                    <p className="text-xs font-black uppercase tracking-[0.2em] text-[#b98a2f]">Family referrals</p>
+                    <h4 className="mt-1 text-xl font-black text-[#075c58]">Generate and track one-time family referral links</h4>
+                    <p className="mt-2 text-sm leading-6 text-slate-700">
+                      Family referral links are only for completed eligible family-service customers. Each link is one-time use, and you can generate another one-time link for the same happy family when needed. Commercial Reset is intentionally excluded.
+                    </p>
+                  </div>
+                  <StatusBadge status={getReferralStatusText(selected)} />
+                </div>
+
+                <div className="mt-4 grid gap-3 md:grid-cols-2">
+                  <div className="rounded-2xl border border-[#eadfc8] bg-white p-4">
+                    <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Outgoing share link for this customer</p>
+                    <p className="mt-2 text-sm font-bold leading-6 text-slate-700">
+                      {selected.outgoingReferralCode
+                        ? `Latest one-time code: ${selected.outgoingReferralCode}`
+                        : selectedIsFamilyReferralEligible
+                          ? selectedCanGenerateReferral
+                            ? "Ready to generate after you choose this completed customer."
+                            : "Mark this eligible family request Completed before generating the customer’s referral link."
+                          : "This service is not eligible for a family referral share link."}
+                    </p>
+                    {selected.outgoingReferralLink && (
+                      <div className="mt-3 rounded-2xl bg-[#fbf6ea] p-3">
+                        <p className="break-all text-sm font-bold text-[#075c58]">{selected.outgoingReferralLink}</p>
+                        <p className="mt-2 text-xs font-semibold text-slate-600">Status: {selected.outgoingReferralStatus || "Active"}</p>
+                        {selected.outgoingReferralEmailError && <p className="mt-2 text-xs font-bold text-amber-800">Email note: {selected.outgoingReferralEmailError}</p>}
+                      </div>
+                    )}
+                    {selectedOutgoingReferralHistory.length > 0 && (
+                      <div className="mt-3 rounded-2xl border border-[#eadfc8] bg-white px-3 py-2 text-xs font-bold leading-5 text-slate-600">
+                        {selectedOutgoingReferralHistory.length} one-time referral link{selectedOutgoingReferralHistory.length === 1 ? "" : "s"} generated for this family. The latest link is shown above; each link can be used by one referred family only.
+                      </div>
+                    )}
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        disabled={referralBusy || (!selected.outgoingReferralLink && !selectedCanGenerateReferral)}
+                        onClick={() => createReferralLink(true)}
+                        className={getAdminActionClass("primary")}
+                      >
+                        {referralBusy ? <><ActionSpinner /> Working...</> : selected.outgoingReferralLink ? "Resend latest link email" : "Create + email referral link"}
+                      </button>
+                      {selected.outgoingReferralLink && selectedCanGenerateReferral && (
+                        <button
+                          type="button"
+                          disabled={referralBusy}
+                          onClick={() => createReferralLink(true, true)}
+                          className={getAdminActionClass("secondary")}
+                          title="Creates a brand-new one-time link for this same family to share with another family."
+                        >
+                          Create + email another one-time link
+                        </button>
+                      )}
+                      {selected.outgoingReferralLink && (
+                        <button type="button" onClick={() => copyReferralLink(selected.outgoingReferralLink || "")} className={getAdminActionClass("secondary")}>Copy latest link</button>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl border border-[#eadfc8] bg-white p-4">
+                    <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Incoming referred-family tracking</p>
+                    {selected.incomingReferralCode ? (
+                      <div className="mt-2 text-sm font-bold leading-6 text-slate-700">
+                        <p>Incoming code: <span className="text-[#075c58]">{selected.incomingReferralCode}</span></p>
+                        <p>Status: <span className="text-[#075c58]">{selected.incomingReferralStatus || "Pending referred family completion"}</span></p>
+                        {selected.incomingReferralReferrerName && <p>Referring family: {selected.incomingReferralReferrerName}</p>}
+                        {selected.incomingReferralRewardCode && <p>Reward code: {selected.incomingReferralRewardCode}</p>}
+                        {selected.incomingReferralRewardEmailError && <p className="mt-2 text-amber-800">Reward email note: {selected.incomingReferralRewardEmailError}</p>}
+                      </div>
+                    ) : (
+                      <p className="mt-2 text-sm font-bold leading-6 text-slate-700">This request was not submitted through a family referral link.</p>
+                    )}
+                    <p className="mt-3 rounded-2xl bg-[#fbf6ea] px-4 py-3 text-xs font-bold leading-5 text-slate-600">
+                      When a referred eligible family reset is marked Completed, NestHelper automatically emails the original referring family about their reward/credit and updates both records.
+                    </p>
+                  </div>
+                </div>
+
+                {selectedAvailableCustomerCreditTotal > 0 && (
+                  <div className="mt-3 rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-bold leading-6 text-emerald-900">
+                    Available saved credit for this customer email: {formatMoney(selectedAvailableCustomerCreditTotal)}. Open the Draft Estimate Builder to apply it before sending checkout or invoice.
+                  </div>
+                )}
+
+                {referralMessage && <p className="mt-3 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">{referralMessage}</p>}
+                {referralError && <p className="mt-3 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{referralError}</p>}
+              </AdminCollapsibleSection>
+            )}
+
+            {showReviewRequestPanel && (
+              <AdminCollapsibleSection id="admin-section-review-request" eyebrow="Review request" title="Ask for a customer review" tone="white">
+                <ReviewRequestPanel
+                  selected={selected}
+                  onRecordUpdate={(updates) => {
+                    setSelected((prev) => (prev ? { ...prev, ...updates } : prev));
+                    setItems((prev) => prev.map((item) => item.id === selected.id ? { ...item, ...updates } : item));
+                  }}
+                />
               </AdminCollapsibleSection>
             )}
 
