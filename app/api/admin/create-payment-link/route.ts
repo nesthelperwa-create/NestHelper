@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
+import { randomBytes } from "crypto";
 import { getAuth } from "firebase-admin/auth";
 import { getApps } from "firebase-admin/app";
 import Stripe from "stripe";
@@ -49,6 +50,10 @@ function moneyToCents(value: number) {
 
 function formatMoney(value: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(Number.isFinite(value) ? value : 0);
+}
+
+function createCheckoutAccessToken() {
+  return randomBytes(24).toString("hex");
 }
 
 
@@ -310,6 +315,9 @@ export async function POST(request: Request) {
     const fullName = getString(data.fullName);
     const phone = getString(data.phone);
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+    const existingCheckoutAccessToken = getString(data.checkoutAccessToken);
+    const checkoutAccessToken = existingCheckoutAccessToken || createCheckoutAccessToken();
+    const smartCheckoutUrl = `${siteUrl}/pay/${checkoutAccessToken}`;
     const laundryDepositAmount = getLaundryDepositAmount(customAmount, useCustomInitial);
     const laundryDepositAmountCents = moneyToCents(laundryDepositAmount);
     const manualSalesTaxRateId = await getOrCreateManualSalesTaxRate(stripe, manualSalesTax, { requestId, serviceId, paymentType: isLaundryRescue ? "laundry_deposit" : "quick_checkout" });
@@ -388,6 +396,7 @@ export async function POST(request: Request) {
         servicePeriodLabel,
         servicePeriodStart: isCommercialReset ? getString(savedCommercialBreakdown.servicePeriodStart) : getString(savedFamilyBreakdown.servicePeriodStart),
         servicePeriodEnd: isCommercialReset ? getString(savedCommercialBreakdown.servicePeriodEnd) : getString(savedFamilyBreakdown.servicePeriodEnd),
+        checkoutAccessToken,
         customerName: fullName,
         customerEmail: email,
         customerPhone: phone,
@@ -438,7 +447,7 @@ export async function POST(request: Request) {
           requestId,
           serviceTitle: useCustomInitial ? customTitle : serviceTitle,
           servicePrice,
-          paymentUrl: checkoutUrl,
+          paymentUrl: smartCheckoutUrl,
           preferredDate: getString(data.preferredDate),
           preferredWindow: getString(data.preferredWindow),
           city: getString(data.city),
@@ -456,7 +465,7 @@ export async function POST(request: Request) {
           quoteBreakdownTitle: isLaundryRescue
             ? "Laundry Rescue deposit and final-balance choice"
             : isCommercialReset
-              ? "Commercial Reset quote breakdown"
+              ? "Commercial Reset quote summary"
               : customerSafeFamilyBreakdownText
                 ? "NestHelper payment summary"
                 : undefined,
@@ -473,8 +482,13 @@ export async function POST(request: Request) {
       paymentStatus: isLaundryRescue ? "Deposit Checkout Sent" : "Checkout Sent",
       laundryPaymentStatus: isLaundryRescue ? "Deposit Checkout Sent" : data.laundryPaymentStatus || null,
       paymentMode: useCustomInitial ? "custom" : mode,
-      checkoutUrl,
+      checkoutUrl: smartCheckoutUrl,
+      smartCheckoutUrl,
+      stripeCheckoutUrl: checkoutUrl,
       checkoutSessionId: session.id,
+      checkoutAccessToken,
+      checkoutAccessTokenCreatedAt: existingCheckoutAccessToken ? data.checkoutAccessTokenCreatedAt || null : FieldValue.serverTimestamp(),
+      checkoutLinkType: "smart_checkout",
       stripePriceId: priceId || null,
       checkoutCreatedAt: FieldValue.serverTimestamp(),
       checkoutSentAt: emailSent ? FieldValue.serverTimestamp() : null,
@@ -502,7 +516,8 @@ export async function POST(request: Request) {
       updatePayload.customInitialAmountCents = customAmountCents;
       updatePayload.customInitialTitle = customTitle;
       updatePayload.customInitialNote = customNote;
-      updatePayload.customInitialCheckoutUrl = checkoutUrl;
+      updatePayload.customInitialCheckoutUrl = smartCheckoutUrl;
+      updatePayload.customInitialStripeCheckoutUrl = checkoutUrl;
       updatePayload.customInitialCheckoutSessionId = session.id;
     }
 
@@ -522,7 +537,9 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       ok: true,
-      url: checkoutUrl,
+      url: smartCheckoutUrl,
+      smartCheckoutUrl,
+      stripeCheckoutUrl: checkoutUrl,
       sessionId: session.id,
       emailSent,
       emailError,

@@ -4467,7 +4467,7 @@ export default function AdminTable({
     if (!selected) return;
     const useCustomInitial = checkoutMode === "custom";
     setCheckoutBusy(true);
-    setActiveAction(sendEmail ? "Creating and emailing quick checkout link..." : "Creating quick checkout link only...");
+    setActiveAction(sendEmail ? "Creating and emailing smart checkout link..." : "Creating smart checkout link only...");
     setCheckoutMessage("");
     setCheckoutError("");
     setCommercialInvoiceMessage("");
@@ -4500,12 +4500,14 @@ export default function AdminTable({
       const data = await res.json().catch(() => ({}));
 
       if (!res.ok || !data.ok) {
-        throw new Error(data.error || "Unable to create quick checkout link.");
+        throw new Error(data.error || "Unable to create smart checkout link.");
       }
 
       setSelected((prev) => prev ? {
         ...prev,
         checkoutUrl: data.url,
+        smartCheckoutUrl: data.smartCheckoutUrl || data.url,
+        stripeCheckoutUrl: data.stripeCheckoutUrl || prev.stripeCheckoutUrl,
         checkoutSessionId: data.sessionId,
         status: selected.service === "laundry-rescue" ? "Deposit Checkout Sent" : "Checkout Sent",
         paymentStatus: selected.service === "laundry-rescue" ? "Deposit Checkout Sent" : "Checkout Sent",
@@ -4530,9 +4532,9 @@ export default function AdminTable({
       const laundryDepositNotice = selected.service === "laundry-rescue"
         ? laundryManualSalesTax && laundryTaxRateNumber > 0 ? ` Stripe checkout will add manual WA sales tax at ${laundryManualSalesTaxRate}% to the non-refundable intro minimum and ask the customer to choose auto-charge or invoice-before-delivery for the final laundry balance.` : " Stripe checkout will collect the non-refundable intro minimum without sales tax. If sales tax is missed here, the final-balance tool can add a one-time tax catch-up when manual tax is turned on."
         : "";
-      setCheckoutMessage(data.emailError || (data.emailSent ? `Quick checkout link created and emailed to the customer.${commercialBreakdownNotice}${familyBreakdownNotice}${laundryDepositNotice}` : `Quick checkout link created. Copy it and send it manually.${commercialBreakdownNotice}${familyBreakdownNotice}${laundryDepositNotice}`));
+      setCheckoutMessage(data.emailError || (data.emailSent ? `Smart checkout link created and emailed to the customer.${commercialBreakdownNotice}${familyBreakdownNotice}${laundryDepositNotice}` : `Smart checkout link created. Copy it and send it manually.${commercialBreakdownNotice}${familyBreakdownNotice}${laundryDepositNotice}`));
     } catch (error) {
-      setCheckoutError(error instanceof Error ? error.message : "Unable to create quick checkout link.");
+      setCheckoutError(error instanceof Error ? error.message : "Unable to create smart checkout link.");
     } finally {
       setCheckoutBusy(false);
       setActiveAction("");
@@ -6486,21 +6488,21 @@ export default function AdminTable({
                   <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                     <div className="max-w-2xl">
                       <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Quick checkout</p>
-                      <h5 className="mt-1 text-base font-black text-[#075c58]">Create a non-invoice Stripe checkout link</h5>
+                      <h5 className="mt-1 text-base font-black text-[#075c58]">Create a smart non-invoice checkout link</h5>
                       <p className="mt-1 text-sm leading-6 text-slate-700">
-                        Quick checkout is best for simple package payments, deposits, or small custom payments. It does not create the same itemized Stripe invoice/PDF as the invoice builder.
+                        Smart checkout is best for simple package payments, deposits, or small custom payments. The customer receives a NestHelper link that opens Stripe securely and can refresh the Stripe checkout if it expires.
                       </p>
                     </div>
                     <div className="rounded-2xl bg-[#fbf6ea] px-4 py-3 text-xs font-bold leading-5 text-slate-700 lg:max-w-sm">
                       {selectedIsCommercial
-                        ? "Commercial quick checkout uses the custom first-payment amount below. Use the invoice option for formal itemized records."
-                        : "Quick checkout uses the standard package price unless you choose a custom reviewed amount. Invoices use the saved customer payment summary instead."}
+                        ? "Commercial smart checkout uses the custom first-payment amount below. Use the invoice option for formal itemized records."
+                        : "Smart checkout uses the standard package price unless you choose a custom reviewed amount. Invoices use the saved customer payment summary instead."}
                     </div>
                   </div>
 
                   {!selectedIsCommercial && (
                     <div className="mt-4 grid gap-2 sm:max-w-sm">
-                      <label className="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Quick checkout amount</label>
+                      <label className="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Smart checkout amount</label>
                       <select
                         value={checkoutMode}
                         onChange={(e) => setCheckoutMode(e.target.value as CheckoutMode)}
@@ -6519,7 +6521,7 @@ export default function AdminTable({
                   {isCustomCheckoutMode && (
                     <div className="mt-4 rounded-3xl border border-[#eadfc8] bg-[#fbf6ea] p-4">
                       <div>
-                        <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">{selectedIsCommercial ? "Quick first-payment checkout" : selectedRequiresReviewedCheckoutAmount ? "Reviewed quick checkout" : "Custom quick checkout"}</p>
+                        <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">{selectedIsCommercial ? "Smart first-payment checkout" : selectedRequiresReviewedCheckoutAmount ? "Reviewed smart checkout" : "Custom smart checkout"}</p>
                         <h5 className="mt-1 text-base font-black text-[#075c58]">{selectedIsCommercial ? "Amount the customer pays before scheduling" : selectedRequiresReviewedCheckoutAmount ? "Reviewed/custom starting amount" : "Reviewed custom starting amount"}</h5>
                         <p className="mt-1 text-sm leading-6 text-slate-700">
                           {selectedIsCommercial
@@ -6576,7 +6578,7 @@ export default function AdminTable({
                         <span>
                           <span className="block text-[#075c58]">Include saved commercial quote summary in the quick checkout email</span>
                           <span className="mt-1 block text-xs font-semibold leading-5 text-slate-600">
-                            This only affects the quick checkout email. For a true itemized customer record, use the Stripe invoice option above instead.
+                            This only affects the smart checkout email. For a true itemized customer record, use the Stripe invoice option above instead.
                           </span>
                         </span>
                       </label>
@@ -6601,7 +6603,7 @@ export default function AdminTable({
                         <span>
                           <span className="block text-[#075c58]">Include saved customer payment summary in the quick checkout email</span>
                           <span className="mt-1 block text-xs font-semibold leading-5 text-slate-600">
-                            Use this when you want the customer to see the package, custom amount, recurring plan, laundry note, discount, or credit details before paying by quick checkout.
+                            Use this when you want the customer to see the package, custom amount, recurring plan, laundry note, discount, or credit details before paying by smart checkout.
                           </span>
                         </span>
                       </label>
@@ -6729,10 +6731,10 @@ export default function AdminTable({
                       {checkoutBusy
                         ? <><ActionSpinner /> Creating...</>
                         : selectedIsCommercial
-                          ? "Create + email quick first-payment checkout link"
+                          ? "Create + email smart first-payment checkout link"
                           : selected.service === "laundry-rescue"
-                            ? "Create + email intro minimum checkout link"
-                            : "Create + email quick checkout link"}
+                            ? "Create + email smart intro minimum checkout link"
+                            : "Create + email smart checkout link"}
                     </button>
                     <button
                       type="button"
@@ -6741,22 +6743,34 @@ export default function AdminTable({
                       className={getAdminActionClass("secondary")}
                     >
                       {selectedIsCommercial
-                        ? "Create quick first-payment checkout link only"
+                        ? "Create smart first-payment checkout link only"
                         : selected.service === "laundry-rescue"
-                          ? "Create intro minimum checkout link only"
-                          : "Create quick checkout link only"}
+                          ? "Create smart intro minimum checkout link only"
+                          : "Create smart checkout link only"}
                     </button>
                   </div>
                 </div>
 
                 {selected.checkoutUrl && (
                   <div className="mt-4 rounded-2xl border border-[#eadfc8] bg-white p-4">
-                    <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Current quick checkout link</p>
+                    <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Current customer checkout link</p>
+                    <p className="mt-1 text-xs font-bold leading-5 text-slate-600">Send the NestHelper customer checkout link when possible. It opens Stripe securely and can refresh the Stripe checkout session if it expires.</p>
                     <p className="mt-2 break-all text-sm text-[#075c58]">{selected.checkoutUrl}</p>
                     <div className="mt-3 flex flex-wrap gap-2">
-                      <a href={selected.checkoutUrl} target="_blank" rel="noreferrer" className="rounded-full bg-[#075c58] px-4 py-2 text-xs font-black text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-[#064b48]">Open Stripe quick checkout</a>
-                      <button type="button" onClick={() => copyToClipboard(selected.checkoutUrl || "")} className="rounded-full border border-[#075c58] bg-white px-4 py-2 text-xs font-black text-[#075c58] transition hover:bg-[#f4ecdc]">Copy quick checkout link</button>
+                      <a href={selected.checkoutUrl} target="_blank" rel="noreferrer" className="rounded-full bg-[#075c58] px-4 py-2 text-xs font-black text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-[#064b48]">Open customer checkout link</a>
+                      <button type="button" onClick={() => copyToClipboard(selected.checkoutUrl || "")} className="rounded-full border border-[#075c58] bg-white px-4 py-2 text-xs font-black text-[#075c58] transition hover:bg-[#f4ecdc]">Copy customer checkout link</button>
                     </div>
+                    {selected.stripeCheckoutUrl && selected.stripeCheckoutUrl !== selected.checkoutUrl && (
+                      <div className="mt-4 rounded-2xl bg-slate-50 px-4 py-3">
+                        <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Backup raw Stripe URL</p>
+                        <p className="mt-1 text-xs font-semibold leading-5 text-slate-600">Backup only. This raw Stripe session still expires; the customer checkout link above is the better link to send.</p>
+                        <p className="mt-2 break-all text-xs text-slate-600">{selected.stripeCheckoutUrl}</p>
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          <a href={selected.stripeCheckoutUrl} target="_blank" rel="noreferrer" className="rounded-full border border-[#075c58] bg-white px-4 py-2 text-xs font-black text-[#075c58] transition hover:bg-[#f4ecdc]">Open raw Stripe link</a>
+                          <button type="button" onClick={() => copyToClipboard(selected.stripeCheckoutUrl || "")} className="rounded-full border border-[#d8c18f] bg-white px-4 py-2 text-xs font-black text-slate-700 transition hover:border-[#075c58] hover:text-[#075c58]">Copy raw Stripe link</button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 

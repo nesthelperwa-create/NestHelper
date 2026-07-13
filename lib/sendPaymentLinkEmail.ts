@@ -171,10 +171,11 @@ export async function sendPaymentLinkEmail({
         <div style="padding:22px 18px;color:#233;line-height:1.6;box-sizing:border-box;overflow-wrap:anywhere;word-break:break-word;">
           <p style="margin:0 0 16px 0;">${escapeHtml(greeting)}</p>
           <p style="margin:0 0 18px 0;">We reviewed your request and the next step is secure checkout. If a payment summary is included below, please review it before paying. Your visit is not confirmed until payment is completed and NestHelper follows up with scheduling details.</p>
+          <p style="margin:0 0 18px 0;border-left:4px solid #f1c96b;background:#fbf6ea;padding:12px 14px;border-radius:12px;color:#233;font-size:14px;line-height:1.55;"><strong>Good to know:</strong> this NestHelper checkout link opens Stripe securely. If the Stripe checkout session expires, the NestHelper link can refresh it automatically.</p>
           ${summaryRows ? `<div style="width:100%;box-sizing:border-box;border:1px solid #eee;border-radius:14px;overflow:hidden;margin:0 0 22px 0;">${summaryRows}</div>` : ""}
           ${quoteBreakdownHtml}
-          <p style="margin:22px 0;"><a href="${escapeHtml(paymentUrl)}" style="display:inline-block;background:#075c58;color:#fff;text-decoration:none;padding:13px 20px;border-radius:999px;font-weight:800;max-width:100%;box-sizing:border-box;white-space:normal;text-align:center;">Pay securely with Stripe</a></p>
-          <p style="margin:0 0 14px 0;font-size:14px;color:#556;">If the button does not work, copy and paste this secure checkout link into your browser:</p>
+          <p style="margin:22px 0;"><a href="${escapeHtml(paymentUrl)}" style="display:inline-block;background:#075c58;color:#fff;text-decoration:none;padding:13px 20px;border-radius:999px;font-weight:800;max-width:100%;box-sizing:border-box;white-space:normal;text-align:center;">Open secure checkout</a></p>
+          <p style="margin:0 0 14px 0;font-size:14px;color:#556;">If the button does not work, copy and paste this secure NestHelper checkout link into your browser:</p>
           <p style="word-break:break-all;font-size:13px;color:#075c58;margin:0 0 18px 0;">${escapeHtml(paymentUrl)}</p>
           <h2 style="font-size:18px;margin:0 0 10px 0;color:#0f4f4a;">What happens after payment</h2>
           <ol style="margin:0 0 18px 20px;padding:0;">
@@ -197,12 +198,14 @@ ${cleanQuoteBreakdown}` : "";
 
 We reviewed your NestHelper request and it is ready for secure checkout. If a payment summary is included, please review it before paying. Your visit is not confirmed until payment is completed and NestHelper follows up with scheduling details.
 
+This NestHelper checkout link opens Stripe securely. If the Stripe checkout session expires, the NestHelper link can refresh it automatically.
+
 Service: ${serviceTitle}
 Request ID: ${requestId}
 ${servicePrice ? `Price / deposit: ${servicePrice}
 ` : ""}${quoteBreakdownTextBlock}
 
-Pay securely with Stripe: ${paymentUrl}
+Open secure checkout: ${paymentUrl}
 
 After payment, NestHelper will confirm timing and prep notes. For Laundry Rescue, dry weight and add-ons are confirmed before any final balance.
 
