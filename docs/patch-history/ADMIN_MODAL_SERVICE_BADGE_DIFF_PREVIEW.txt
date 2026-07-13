@@ -1,0 +1,54 @@
+--- before/components/admin/AdminTable.tsx
++++ after/components/admin/AdminTable.tsx
+@@ -690,6 +690,21 @@
+     >
+       <span className={`h-2 w-2 shrink-0 rounded-full ${look.dot}`} />
+       <span className="min-w-0 truncate">{label}</span>
++    </span>
++  );
++}
++
++function ModalServiceBadge({ item }: { item: AdminDoc }) {
++  const look = getServiceLook(item);
++  const compactLabel = getCompactServicePillLabel(item);
++  const fullLabel = look.label;
++  return (
++    <span
++      className={`inline-flex max-w-full items-center gap-2 rounded-full border px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.08em] sm:text-[11px] ${look.badge}`}
++      title={fullLabel}
++    >
++      <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${look.dot}`} />
++      <span className="min-w-0 truncate">{compactLabel}</span>
+     </span>
+   );
+ }
+@@ -1328,7 +1343,10 @@
+     <AdminCollapsibleSection id="admin-section-snapshot" eyebrow="Snapshot" title="Review the customer/request basics">
+       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+         <div className="min-w-0">
+-          <p className="text-xs font-black uppercase tracking-[0.18em] text-[#b98a2f]">Snapshot</p>
++          <div className="flex min-w-0 flex-wrap items-center gap-2">
++            <p className="text-xs font-black uppercase tracking-[0.18em] text-[#b98a2f]">Snapshot</p>
++            {collectionName === "serviceRequests" && <ModalServiceBadge item={item} />}
++          </div>
+           <h4 className="mt-1 min-w-0 break-words text-xl font-black text-[#075c58] sm:truncate">{getRecordDisplayName(item)}</h4>
+           <p className="mt-1 min-w-0 break-words text-sm font-semibold text-slate-600">{getRecordContactLine(item)}</p>
+         </div>
+@@ -5319,10 +5337,13 @@
+       {selected && (
+         <div className="fixed inset-0 z-[300] overflow-y-auto overflow-x-hidden bg-black/50 px-2 pb-4 pt-2 sm:px-4 sm:py-4">
+           <div className="mx-auto min-h-[calc(100dvh-1rem)] w-full max-w-6xl overflow-hidden rounded-3xl bg-white p-3 shadow-2xl sm:min-h-0 sm:max-h-[92dvh] sm:overflow-auto sm:p-6">
+-            <div className="sticky top-0 z-30 -mx-4 -mt-4 mb-3 flex items-center justify-between gap-3 rounded-t-3xl border-b border-[#eadfc8] bg-white/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:-mt-6 sm:mb-4 sm:px-6 sm:py-4">
+-              <div className="min-w-0">
+-                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#b98a2f]">Admin details</p>
+-                <h3 className="truncate text-xl font-bold text-[#075c58] sm:text-2xl">{getRecordDisplayName(selected)}</h3>
++            <div className="sticky top-0 z-30 -mx-3 -mt-3 mb-3 flex items-center justify-between gap-3 rounded-t-3xl border-b border-[#eadfc8] bg-white/95 px-3 py-3 backdrop-blur sm:-mx-6 sm:-mt-6 sm:mb-4 sm:px-6 sm:py-4">
++              <div className="min-w-0 flex-1">
++                <div className="flex min-w-0 flex-wrap items-center gap-2">
++                  <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#b98a2f]">Admin details</p>
++                  {collectionName === "serviceRequests" && <ModalServiceBadge item={selected} />}
++                </div>
++                <h3 className="mt-1 truncate text-xl font-bold text-[#075c58] sm:text-2xl">{getRecordDisplayName(selected)}</h3>
+                 <p className="mt-1 truncate text-xs font-semibold leading-5 text-slate-500">
+                   {collectionName === "serviceRequests" ? getCleanServiceLabel(selected) : title} · {getRecordContactLine(selected)}
+                 </p>
