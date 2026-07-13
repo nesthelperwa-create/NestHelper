@@ -6496,11 +6496,13 @@ export default function AdminTable({
                     <div className="rounded-2xl bg-[#fbf6ea] px-4 py-3 text-xs font-bold leading-5 text-slate-700 lg:max-w-sm">
                       {selectedIsCommercial
                         ? "Commercial smart checkout uses the custom first-payment amount below. Use the invoice option for formal itemized records."
-                        : "Smart checkout uses the standard package price unless you choose a custom reviewed amount. Invoices use the saved customer payment summary instead."}
+                        : selected.service === "laundry-rescue"
+                          ? "Laundry Rescue smart checkout uses the standard $59 intro minimum by default. Use Advanced only if you intentionally approved a different deposit amount."
+                          : "Smart checkout uses the standard package price unless you choose a custom reviewed amount. Invoices use the saved customer payment summary instead."}
                     </div>
                   </div>
 
-                  {!selectedIsCommercial && (
+                  {!selectedIsCommercial && selected.service !== "laundry-rescue" && (
                     <div className="mt-4 grid gap-2 sm:max-w-sm">
                       <label className="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Smart checkout amount</label>
                       <select
@@ -6514,6 +6516,39 @@ export default function AdminTable({
                     </div>
                   )}
 
+                  {!selectedIsCommercial && selected.service === "laundry-rescue" && (
+                    <div className="mt-4 rounded-3xl border border-[#eadfc8] bg-[#fbf6ea] p-4">
+                      <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Laundry smart checkout amount</p>
+                      <h5 className="mt-1 text-base font-black text-[#075c58]">
+                        {isCustomCheckoutMode ? "Advanced custom deposit selected" : "Standard $59 intro minimum selected"}
+                      </h5>
+                      <p className="mt-1 text-sm font-semibold leading-6 text-slate-700">
+                        {isCustomCheckoutMode
+                          ? "Use this only when Leo/Gen intentionally approved a different Laundry Rescue deposit amount. The final balance is still handled after dry weigh-in."
+                          : "This is the normal Laundry Rescue flow: collect the standard intro minimum now, then handle any final balance after dry weigh-in."}
+                      </p>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {isCustomCheckoutMode ? (
+                          <button
+                            type="button"
+                            onClick={() => setCheckoutMode("standard")}
+                            className="rounded-full border border-[#075c58] bg-white px-4 py-2 text-xs font-black text-[#075c58] transition hover:bg-[#f4ecdc]"
+                          >
+                            Use standard $59 intro minimum
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => setCheckoutMode("custom")}
+                            className="rounded-full border border-[#d8c18f] bg-white px-4 py-2 text-xs font-black text-slate-700 transition hover:border-[#075c58] hover:text-[#075c58]"
+                          >
+                            Advanced: use custom deposit amount
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
                   {selectedIsCommercial && (
                     <input type="hidden" value={checkoutMode} readOnly aria-hidden="true" />
                   )}
@@ -6521,24 +6556,26 @@ export default function AdminTable({
                   {isCustomCheckoutMode && (
                     <div className="mt-4 rounded-3xl border border-[#eadfc8] bg-[#fbf6ea] p-4">
                       <div>
-                        <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">{selectedIsCommercial ? "Smart first-payment checkout" : selectedRequiresReviewedCheckoutAmount ? "Reviewed smart checkout" : "Custom smart checkout"}</p>
-                        <h5 className="mt-1 text-base font-black text-[#075c58]">{selectedIsCommercial ? "Amount the customer pays before scheduling" : selectedRequiresReviewedCheckoutAmount ? "Reviewed/custom starting amount" : "Reviewed custom starting amount"}</h5>
+                        <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">{selectedIsCommercial ? "Smart first-payment checkout" : selected.service === "laundry-rescue" ? "Advanced custom laundry deposit" : selectedRequiresReviewedCheckoutAmount ? "Reviewed smart checkout" : "Custom smart checkout"}</p>
+                        <h5 className="mt-1 text-base font-black text-[#075c58]">{selectedIsCommercial ? "Amount the customer pays before scheduling" : selected.service === "laundry-rescue" ? "Custom deposit amount" : selectedRequiresReviewedCheckoutAmount ? "Reviewed/custom starting amount" : "Reviewed custom starting amount"}</h5>
                         <p className="mt-1 text-sm leading-6 text-slate-700">
                           {selectedIsCommercial
                             ? "Use this only when you want a simple checkout link instead of a formal invoice. It should match the approved first-payment amount."
-                            : selectedRequiresReviewedCheckoutAmount
-                              ? "This service depends on the property, condition, scope, photos, pets, and add-ons, so quick checkout uses a reviewed/custom amount instead of a standard package price."
-                              : "Use this when the first quick checkout should not match the standard package price, such as a custom approved scope, special deposit, extra starting time, or service-area adjustment."}
+                            : selected.service === "laundry-rescue"
+                              ? "Advanced only: use this if you intentionally approved a Laundry Rescue deposit other than the standard $59 intro minimum. Final balance still happens after dry weigh-in."
+                              : selectedRequiresReviewedCheckoutAmount
+                                ? "This service depends on the property, condition, scope, photos, pets, and add-ons, so smart checkout uses a reviewed/custom amount instead of a standard package price."
+                                : "Use this when the first smart checkout should not match the standard package price, such as a custom approved scope, special deposit, extra starting time, or service-area adjustment."}
                         </p>
                       </div>
                       <div className="mt-4 grid gap-3 md:grid-cols-[0.7fr_1.3fr]">
                         <label className="grid gap-2 text-sm font-bold text-slate-700">
-                          {selectedIsCommercial ? "Amount to collect now" : "Amount"}
+                          {selectedIsCommercial ? "Amount to collect now" : selected.service === "laundry-rescue" ? "Custom deposit amount" : "Amount"}
                           <input
                             value={customInitialAmount}
                             onChange={(e) => setCustomInitialAmount(e.target.value)}
                             inputMode="decimal"
-                            placeholder="199"
+                            placeholder={selected.service === "laundry-rescue" ? "59" : "199"}
                             className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]"
                           />
                         </label>
