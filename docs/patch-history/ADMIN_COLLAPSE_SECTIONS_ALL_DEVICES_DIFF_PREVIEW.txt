@@ -1,0 +1,36 @@
+--- before/components/admin/AdminTable.tsx
++++ after/components/admin/AdminTable.tsx
+@@ -1,7 +1,7 @@
+ "use client";
+ 
+ import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
+-import { useEffect, useMemo, useRef, useState } from "react";
++import { useEffect, useMemo, useState } from "react";
+ import { firebaseAuth, firestoreDb } from "@/lib/firebaseClient";
+ import StatusBadge from "./StatusBadge";
+ import CommercialQuoteBreakdownBuilder from "./CommercialQuoteBreakdownBuilder";
+@@ -857,15 +857,6 @@
+   children: React.ReactNode;
+   tone?: "white" | "cream" | "gold" | "blue" | "gradient";
+ }) {
+-  const detailsRef = useRef<HTMLDetailsElement | null>(null);
+-
+-  useEffect(() => {
+-    const details = detailsRef.current;
+-    if (!details || typeof window === "undefined") return;
+-
+-    details.open = window.matchMedia("(min-width: 768px)").matches;
+-  }, []);
+-
+   const toneClass =
+     tone === "gold"
+       ? "border-[#d8c18f] bg-[#fbf6ea]"
+@@ -878,7 +869,7 @@
+             : "border-[#eadfc8] bg-white";
+ 
+   return (
+-    <details ref={detailsRef} id={id} className={`group scroll-mt-28 mb-5 w-full max-w-full overflow-hidden rounded-3xl border shadow-sm ${toneClass}`}>
++    <details id={id} className={`group scroll-mt-28 mb-5 w-full max-w-full overflow-hidden rounded-3xl border shadow-sm ${toneClass}`}>
+       <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 outline-none transition hover:bg-white/60 focus-visible:ring-4 focus-visible:ring-[#075c58]/15 sm:px-5 sm:py-4 [&::-webkit-details-marker]:hidden">
+         <span className="min-w-0">
+           <span className="block text-[11px] font-black uppercase tracking-[0.18em] text-[#b98a2f]">{eyebrow}</span>
