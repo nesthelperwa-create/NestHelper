@@ -24,14 +24,14 @@ import { siteConfig } from "@/lib/siteConfig";
 export const metadata: Metadata = {
   title: { absolute: "NestHelper | Bothell Home Cleaning & Parent Reset" },
   description:
-    "NestHelper helps Bothell and Eastside families with whole-home cleaning, parent resets, simple in-home meal prep support, area resets, Move Prep & Home Reset, move-in/move-out cleaning, laundry, and errands.",
+    "NestHelper helps busy Bothell and Eastside families with home resets, laundry help, move-out cleaning, errands, and simple household support.",
   alternates: {
     canonical: siteConfig.url,
   },
   openGraph: {
     title: "NestHelper | Bothell Home Cleaning & Parent Reset",
     description:
-      "Whole-home cleaning, parent resets, simple in-home meal prep support, area resets, Move Prep & Home Reset, move-in/move-out cleaning, laundry help, and errands for busy Bothell and Eastside families.",
+      "NestHelper helps busy Bothell and Eastside families with home resets, laundry help, move-out cleaning, errands, and simple household support.",
     url: siteConfig.url,
     images: [siteConfig.assets.og],
   },
