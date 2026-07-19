@@ -1,7 +1,7 @@
 {
-  "name": "NestHelper",
+  "name": "NestHelper | Bothell, Eastside & Snohomish County Help",
   "short_name": "NestHelper",
-  "description": "NestHelper helps busy Bothell and Eastside families with home resets, laundry help, move-out cleaning, errands, and simple household support.",
+  "description": "NestHelper helps busy Bothell, Eastside, and select Snohomish County families with home resets, laundry help, errands, and household support.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

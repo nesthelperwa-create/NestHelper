@@ -6,14 +6,14 @@ import { RequestForm } from "@/components/forms/RequestForm";
 import { siteConfig } from "@/lib/siteConfig";
 
 export const metadata: Metadata = {
-  title: "Request NestHelper Service | Bothell, WA",
+  title: "Request NestHelper Service | Bothell, Eastside & Snohomish County",
   description:
     "Request NestHelper help for whole-home cleaning, parent resets, simple in-home meal prep support, area resets, Move Prep & Home Reset, move-in/move-out cleaning, laundry rescue, and local errands.",
   alternates: {
     canonical: `${siteConfig.url}/request`,
   },
   openGraph: {
-    title: "Request NestHelper Service | Bothell, WA",
+    title: "Request NestHelper Service | Bothell, Eastside & Snohomish County",
     description:
       "Send a NestHelper request for home cleaning, parent reset help, simple in-home meal prep support, area resets, Move Prep & Home Reset, move-in/move-out cleaning, laundry rescue, or local errands.",
     url: `${siteConfig.url}/request`,
@@ -33,7 +33,7 @@ export default function RequestPage() {
             Request household help.
           </h1>
           <p className="mx-auto mt-4 max-w-2xl text-sm font-semibold leading-6 text-nest-ink/72 sm:text-base sm:leading-7">
-            Tell us what kind of help you need. NestHelper reviews the scope, timing, service area, and pricing before sending any secure payment link.
+            Tell us what kind of help you need. NestHelper reviews the scope, timing, service area, helper coverage, and pricing before sending any secure payment link. Select Snohomish County requests are confirmed before payment.
           </p>
           <p className="mx-auto mt-3 max-w-2xl text-xs font-bold leading-5 text-nest-ink/58 sm:text-sm">
             Home cleaning, parent resets, laundry rescue, errands, move prep, and simple in-home meal prep support.

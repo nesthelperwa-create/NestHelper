@@ -192,6 +192,9 @@ const partnerAreaOptions = [
   "Woodinville",
   "Kirkland / Redmond",
   "Bellevue / Eastside",
+  "Mill Creek / Lynnwood",
+  "Edmonds / Mountlake Terrace",
+  "Snohomish / Mukilteo",
   "Seattle / nearby",
   "Other nearby area",
 ];

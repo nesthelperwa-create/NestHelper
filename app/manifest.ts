@@ -2,9 +2,9 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "NestHelper | Household Help in Bothell, Woodinville & Eastside WA",
+    name: "NestHelper | Bothell, Eastside & Snohomish County Help",
     short_name: "NestHelper",
-    description: "Household help, home resets, laundry catch-up, errands, and organizing for busy Eastside/Northshore families.",
+    description: "NestHelper helps busy Bothell, Eastside, and select Snohomish County families with home resets, laundry help, errands, and household support.",
     start_url: "/",
     scope: "/",
     display: "standalone",

@@ -21,13 +21,13 @@ import { siteConfig } from "@/lib/siteConfig";
 
 export const metadata: Metadata = {
   title: "Commercial Reset | NestHelper",
-  description: "Quote-first Commercial Reset cleaning for small offices, churches, salons, and local businesses in Eastside, Northshore, and Pierce County.",
+  description: "Quote-first Commercial Reset cleaning for small offices, churches, salons, and local businesses in Eastside, Northshore, select Snohomish County, and Pierce County.",
   alternates: {
     canonical: `${siteConfig.url}/commercial-reset`,
   },
   openGraph: {
     title: "Commercial Reset | NestHelper",
-    description: "Quote-first Commercial Reset cleaning for small offices, churches, salons, and local businesses in Eastside, Northshore, and Pierce County.",
+    description: "Quote-first Commercial Reset cleaning for small offices, churches, salons, and local businesses in Eastside, Northshore, select Snohomish County, and Pierce County.",
     url: `${siteConfig.url}/commercial-reset`,
     images: [siteConfig.assets.og],
   },
@@ -129,7 +129,7 @@ export default function CommercialResetPage() {
             <div className="text-center lg:text-left">
               <p className="pill-label mx-auto w-fit lg:mx-0"><MapPin size={15} /> Service area check</p>
               <h2 className="mt-4 text-2xl font-black leading-tight text-nest-teal sm:text-3xl">
-                Now quoting select Eastside and Northshore areas.
+                Now quoting select Eastside, Northshore, and Snohomish County areas.
               </h2>
               <p className="mt-3 font-medium leading-7 text-nest-ink/70">
                 This service is not available everywhere yet. If your business is near these areas, submit a quote request and NestHelper will review the address, schedule, scope, and any local endorsement requirements before confirming service.
@@ -140,7 +140,7 @@ export default function CommercialResetPage() {
               <div className="rounded-[1.5rem] border border-nest-gold/14 bg-white/88 p-4 shadow-sm">
                 <h3 className="text-lg font-black text-nest-teal">Eastside focus</h3>
                 <p className="mt-2 text-sm font-bold leading-6 text-nest-ink/68">
-                  Bothell, Woodinville, Kenmore, Kirkland, Redmond, Bellevue, Duvall, Mill Creek, and nearby communities.
+                  Bothell, Woodinville, Kenmore, Kirkland, Redmond, Bellevue, Duvall, Mill Creek, Lynnwood, Edmonds, Mountlake Terrace, Snohomish, Mukilteo, and nearby communities.
                 </p>
               </div>
               <div className="rounded-[1.5rem] border border-nest-gold/14 bg-white/88 p-4 shadow-sm">
@@ -296,7 +296,7 @@ export default function CommercialResetPage() {
         <div className="mx-auto max-w-4xl text-center">
           <p className="pill-label mx-auto w-fit"><MapPin size={15} /> Detailed Service Areas</p>
           <h2 className="text-balance mt-4 text-3xl font-black leading-tight text-nest-teal sm:text-5xl">
-            Now quoting select Eastside and Northshore areas.
+            Now quoting select Eastside, Northshore, and Snohomish County areas.
           </h2>
           <p className="mx-auto mt-5 max-w-3xl font-medium leading-7 text-nest-ink/70">
             Service availability depends on schedule, scope, address, and local licensing/endorsement requirements. Some city-limit jobs may require a city endorsement before service begins.
@@ -310,12 +310,12 @@ export default function CommercialResetPage() {
           />
           <AreaCard
             title="Northshore focus"
-            text="Bothell, Woodinville, Kenmore, Mill Creek, and nearby Northshore communities."
+            text="Bothell, Woodinville, Kenmore, Mill Creek, Lynnwood, Mountlake Terrace, Snohomish, Mukilteo, and nearby Northshore/Snohomish County communities."
           />
           <div className="rounded-[2rem] border border-nest-gold/16 bg-nest-mint/20 p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-soft">
             <h3 className="text-2xl font-black text-nest-teal">Nearby communities welcome</h3>
             <p className="mt-3 font-medium leading-7 text-nest-ink/70">
-              Nearby Eastside and Northshore communities are welcome to request a quote, but availability still depends on the address, schedule, scope, helper/partner fit, and any required local endorsements.
+              Nearby Eastside, Northshore, and select Snohomish County communities are welcome to request a quote, but availability still depends on the address, schedule, scope, helper/partner fit, and any required local endorsements.
             </p>
           </div>
         </div>

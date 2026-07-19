@@ -1,0 +1,629 @@
+--- before/app/page.tsx
++++ after/app/page.tsx
+@@ -22,16 +22,16 @@
+ import { siteConfig } from "@/lib/siteConfig";
+ 
+ export const metadata: Metadata = {
+-  title: { absolute: "NestHelper | Bothell Home Cleaning & Parent Reset" },
++  title: { absolute: "NestHelper | Bothell, Eastside & Snohomish County Help" },
+   description:
+-    "NestHelper helps busy Bothell and Eastside families with home resets, laundry help, move-out cleaning, errands, and simple household support.",
++    "NestHelper helps Bothell, Eastside, and select Snohomish County families with home resets, laundry help, move-out cleaning, errands, and support.",
+   alternates: {
+     canonical: siteConfig.url,
+   },
+   openGraph: {
+-    title: "NestHelper | Bothell Home Cleaning & Parent Reset",
++    title: "NestHelper | Bothell, Eastside & Snohomish County Help",
+     description:
+-      "NestHelper helps busy Bothell and Eastside families with home resets, laundry help, move-out cleaning, errands, and simple household support.",
++      "NestHelper helps Bothell, Eastside, and select Snohomish County families with home resets, laundry help, move-out cleaning, errands, and support.",
+     url: siteConfig.url,
+     images: [siteConfig.assets.og],
+   },
+@@ -73,13 +73,13 @@
+               <div id="service-area" className="mt-4 scroll-mt-24 border-t border-nest-gold/14 pt-3 text-left">
+                 <div className="flex items-start gap-2 text-sm font-black leading-5 text-nest-teal sm:items-center">
+                   <MapPin size={16} className="mt-0.5 shrink-0 text-nest-gold sm:mt-0" />
+-                  <span>Serving Bothell, Woodinville & nearby communities</span>
++                  <span>Serving Bothell, Eastside & select Snohomish County areas</span>
+                 </div>
+                 <p className="mt-2 text-xs font-semibold leading-5 text-nest-ink/64">
+-                  Bothell, Woodinville, Kenmore, Kirkland, Redmond, Mill Creek, and nearby Eastside/Northshore areas. Send your address and we will confirm availability before payment.
++                  Bothell, Woodinville, Kenmore, Kirkland, Redmond, Mill Creek, Lynnwood, Edmonds, Mountlake Terrace, Snohomish, Mukilteo, and nearby Eastside/Northshore/South Snohomish County areas by request. Send your address and we will confirm availability before payment.
+                 </p>
+                 <div className="mt-3 flex flex-wrap gap-2">
+-                  {["Bothell", "Woodinville", "Kenmore", "Kirkland", "Redmond", "Mill Creek", "Nearby Eastside/Northshore"].map((area) => (
++                  {["Bothell", "Woodinville", "Kenmore", "Kirkland", "Redmond", "Mill Creek", "Lynnwood", "Edmonds", "Mountlake Terrace", "Snohomish", "Mukilteo", "By request"].map((area) => (
+                     <span key={area} className="rounded-full border border-nest-gold/16 bg-nest-cream px-3 py-1 text-[0.72rem] font-black text-nest-teal">
+                       {area}
+                     </span>
+
+--- before/app/layout.tsx
++++ after/app/layout.tsx
+@@ -21,10 +21,10 @@
+   metadataBase: new URL(siteUrl),
+   applicationName: siteConfig.name,
+   title: {
+-    default: "NestHelper | Household Help in Bothell, Woodinville & Eastside WA",
++    default: "NestHelper | Household Help in Bothell, Eastside & Snohomish County WA",
+     template: "%s | NestHelper",
+   },
+-  description: "NestHelper helps busy Bothell and Eastside families with home resets, laundry help, move-out cleaning, errands, and simple household support.",
++  description: "NestHelper helps busy Bothell, Eastside, and select Snohomish County families with home resets, laundry help, errands, and household support.",
+   keywords: [
+     "household help Bothell",
+     "household help Woodinville",
+@@ -41,10 +41,13 @@
+     "Bothell household help",
+     "Kirkland household help",
+     "Redmond household help",
++    "Lynnwood laundry help",
++    "Mill Creek home cleaning",
++    "Snohomish County home help",
+   ],
+   openGraph: {
+-    title: "NestHelper | Household Help in Bothell, Woodinville & Eastside WA",
+-    description: "NestHelper helps busy Bothell and Eastside families with home resets, laundry help, move-out cleaning, errands, and simple household support.",
++    title: "NestHelper | Household Help in Bothell, Eastside & Snohomish County WA",
++    description: "NestHelper helps busy Bothell, Eastside, and select Snohomish County families with home resets, laundry help, errands, and household support.",
+     url: siteUrl,
+     siteName: siteConfig.name,
+     images: [
+@@ -60,8 +63,8 @@
+   },
+   twitter: {
+     card: "summary_large_image",
+-    title: "NestHelper | Household Help in Bothell, Woodinville & Eastside WA",
+-    description: "NestHelper helps busy Bothell and Eastside families with home resets, laundry help, move-out cleaning, errands, and simple household support.",
++    title: "NestHelper | Household Help in Bothell, Eastside & Snohomish County WA",
++    description: "NestHelper helps busy Bothell, Eastside, and select Snohomish County families with home resets, laundry help, errands, and household support.",
+     images: [siteConfig.assets.og],
+   },
+   icons: {
+@@ -104,7 +107,7 @@
+   telephone: siteConfig.phone,
+   email: siteConfig.emails.support,
+   description:
+-    "NestHelper provides managed household support, home reset help, simple in-home meal prep support, Move Prep & Home Reset, laundry catch-up, errands, organizing, and extra hands around the house for busy families in Bothell, Woodinville, and nearby Eastside/Northshore communities. NestHelper does not provide childcare.",
++    "NestHelper provides managed household support, home reset help, laundry catch-up, errands, organizing, simple in-home meal prep support, and move-related reset help for busy families in Bothell, Eastside, Northshore, and select Snohomish County communities. NestHelper does not provide childcare.",
+   areaServed: [
+     "Bothell, WA",
+     "Woodinville, WA",
+@@ -112,8 +115,14 @@
+     "Redmond, WA",
+     "Kenmore, WA",
+     "Mill Creek, WA",
++    "Lynnwood, WA",
++    "Edmonds, WA",
++    "Mountlake Terrace, WA",
++    "Snohomish, WA",
++    "Mukilteo, WA",
+     "Nearby Eastside communities",
+     "Nearby Northshore communities",
++    "Select Snohomish County communities",
+   ],
+   knowsAbout: [
+     "household help for busy parents",
+
+--- before/lib/siteConfig.ts
++++ after/lib/siteConfig.ts
+@@ -24,7 +24,7 @@
+   },
+   phone: "(425) 790-1330",
+   phoneHref: "tel:+14257901330",
+-  serviceArea: "Bothell, Woodinville, Kenmore, Kirkland, Redmond, Mill Creek & nearby Eastside/Northshore communities",
++  serviceArea: "Bothell, Woodinville, Kenmore, Kirkland, Redmond, Mill Creek, Lynnwood, Edmonds, Mountlake Terrace, Snohomish, Mukilteo & nearby Eastside, Northshore, and South Snohomish County communities",
+   foundingCode: "FOUNDINGFAMILY",
+   social: {
+     facebook: "https://www.facebook.com/NestHelperLLC",
+
+--- before/app/manifest.ts
++++ after/app/manifest.ts
+@@ -2,9 +2,9 @@
+ 
+ export default function manifest(): MetadataRoute.Manifest {
+   return {
+-    name: "NestHelper | Household Help in Bothell, Woodinville & Eastside WA",
++    name: "NestHelper | Bothell, Eastside & Snohomish County Help",
+     short_name: "NestHelper",
+-    description: "Household help, home resets, laundry catch-up, errands, and organizing for busy Eastside/Northshore families.",
++    description: "NestHelper helps busy Bothell, Eastside, and select Snohomish County families with home resets, laundry help, errands, and household support.",
+     start_url: "/",
+     scope: "/",
+     display: "standalone",
+
+--- before/app/sitemap.ts
++++ after/app/sitemap.ts
+@@ -16,11 +16,12 @@
+   "/referrals",
+   "/commercial-reset",
+   "/commercial-reset/request",
++  "/service-area/snohomish-county",
+   "/policies",
+ ];
+ 
+ export default function sitemap(): MetadataRoute.Sitemap {
+-  const lastModified = new Date("2026-06-25T00:00:00.000Z");
++  const lastModified = new Date("2026-07-18T00:00:00.000Z");
+ 
+   return [
+     ...staticRoutes.map((route) => ({
+
+--- before/app/services/page.tsx
++++ after/app/services/page.tsx
+@@ -10,7 +10,7 @@
+ export const metadata: Metadata = {
+   title: "Home Cleaning & Parent Reset Services | NestHelper",
+   description:
+-    "NestHelper offers whole-home cleaning, parent reset help, simple in-home meal prep support, area resets, Move Prep & Home Reset, move-in/move-out cleaning, laundry rescue, and errands for Bothell and Eastside families.",
++    "NestHelper offers whole-home cleaning, parent reset help, simple in-home meal prep support, area resets, Move Prep & Home Reset, move-in/move-out cleaning, laundry rescue, and errands for Bothell, Eastside, and select Snohomish County families.",
+   alternates: {
+     canonical: `${siteConfig.url}/services`,
+   },
+@@ -35,6 +35,10 @@
+         title="Clear packages. Real accountability."
+         text="Choose a household-help package, submit the details, and NestHelper reviews scope, timing, service area, safety notes, and pricing before sending a secure payment link."
+       />
++
++      <div className="mx-auto mt-6 max-w-4xl rounded-[1.75rem] border border-nest-gold/18 bg-nest-cream/70 p-4 text-center text-sm font-semibold leading-6 text-nest-ink/72 shadow-sm">
++        Serving Bothell, the Eastside, Northshore, and select Snohomish County communities including Mill Creek, Lynnwood, Edmonds, Mountlake Terrace, Snohomish, and Mukilteo by request. Availability is confirmed before payment.
++      </div>
+ 
+       <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
+         <div className="mb-10 rounded-[2rem] border border-nest-gold/16 bg-white/86 p-5 text-center shadow-sm sm:p-6">
+
+--- before/app/faq/page.tsx
++++ after/app/faq/page.tsx
+@@ -20,7 +20,7 @@
+ 
+ const faqs = [
+   ["What does NestHelper help with?", "NestHelper gives busy families extra hands around the home with Parent Reset Plan visits, optional simple in-home meal prep support, whole-home cleaning, kitchen and bath resets, garage and area resets, Move Prep & Home Reset, move-in / move-out cleaning, laundry rescue, errands, organizing, and practical family support. We do not provide childcare, unsupervised babysitting, medical care, elder care, or emergency services."],
+-  ["Do you serve outside Bothell?", `Yes. NestHelper serves ${siteConfig.serviceArea}. If you are close by but unsure, submit a request and we will confirm availability before sending any payment link.`],
++  ["Do you serve outside Bothell or in Snohomish County?", `Yes. NestHelper serves ${siteConfig.serviceArea}. Snohomish County requests are handled as select nearby areas by request, and availability depends on service type, travel time, helper coverage, schedule, and any required local endorsement. Submit a request and we will confirm before sending any payment link.`],
+   ["Which service should I choose for whole-home cleaning, selected rooms, or moving?", "Choose Parent Reset Plan for a 3-hour busy-parent reset in selected family spaces with organizing, light cleaning, and child-safe disinfecting. Choose Whole Home Cleaning for the entire home, first-time deep cleans, first-time deep clean plus recurring maintenance, or weekly, bi-weekly, and monthly full-home support. Choose Specific Area(s) Reset when you only need selected rooms or focused areas such as kitchen, bathroom(s), pantry, fridge, oven, laundry area, garage, or a few rooms. Choose Move Prep & Home Reset for in-home sorting, open-first essentials boxes, QR Smart Labels, packing supply kits, donation sorting, light unpacking, after-move kitchen setup, and getting settled. Choose Move-In / Move-Out Cleaning for empty or mostly empty homes before moving in, after moving out, or before listing/renting. Choose Laundry Rescue separately for pickup, wash, dry, fold, and return laundry help."],
+   ["Is NestHelper a moving company?", "No. Movers handle transportation and heavy lifting. NestHelper helps with in-home sorting, organizing, labeling, open-first boxes, light unpacking, cleaning, and after-move reset support. Move-out cleaning can be requested but is quoted separately."],
+   ["What are NestHelper Smart Labels?", "Smart Labels are customer-owned QR stickers that may be included with qualifying resets. Families can use them for bins, closets, shelves, moving boxes, seasonal items, garages, storage areas, pantries, and playrooms. A family can scan a label to update the name, location, items inside, notes, and small photos. Labels start with no PIN by default, and the family can add an optional 4-digit PIN later for privacy."],
+
+--- before/app/request/page.tsx
++++ after/app/request/page.tsx
+@@ -6,14 +6,14 @@
+ import { siteConfig } from "@/lib/siteConfig";
+ 
+ export const metadata: Metadata = {
+-  title: "Request NestHelper Service | Bothell, WA",
++  title: "Request NestHelper Service | Bothell, Eastside & Snohomish County",
+   description:
+     "Request NestHelper help for whole-home cleaning, parent resets, simple in-home meal prep support, area resets, Move Prep & Home Reset, move-in/move-out cleaning, laundry rescue, and local errands.",
+   alternates: {
+     canonical: `${siteConfig.url}/request`,
+   },
+   openGraph: {
+-    title: "Request NestHelper Service | Bothell, WA",
++    title: "Request NestHelper Service | Bothell, Eastside & Snohomish County",
+     description:
+       "Send a NestHelper request for home cleaning, parent reset help, simple in-home meal prep support, area resets, Move Prep & Home Reset, move-in/move-out cleaning, laundry rescue, or local errands.",
+     url: `${siteConfig.url}/request`,
+@@ -33,7 +33,7 @@
+             Request household help.
+           </h1>
+           <p className="mx-auto mt-4 max-w-2xl text-sm font-semibold leading-6 text-nest-ink/72 sm:text-base sm:leading-7">
+-            Tell us what kind of help you need. NestHelper reviews the scope, timing, service area, and pricing before sending any secure payment link.
++            Tell us what kind of help you need. NestHelper reviews the scope, timing, service area, helper coverage, and pricing before sending any secure payment link. Select Snohomish County requests are confirmed before payment.
+           </p>
+           <p className="mx-auto mt-3 max-w-2xl text-xs font-bold leading-5 text-nest-ink/58 sm:text-sm">
+             Home cleaning, parent resets, laundry rescue, errands, move prep, and simple in-home meal prep support.
+
+--- before/app/commercial-reset/page.tsx
++++ after/app/commercial-reset/page.tsx
+@@ -21,13 +21,13 @@
+ 
+ export const metadata: Metadata = {
+   title: "Commercial Reset | NestHelper",
+-  description: "Quote-first Commercial Reset cleaning for small offices, churches, salons, and local businesses in Eastside, Northshore, and Pierce County.",
++  description: "Quote-first Commercial Reset cleaning for small offices, churches, salons, and local businesses in Eastside, Northshore, select Snohomish County, and Pierce County.",
+   alternates: {
+     canonical: `${siteConfig.url}/commercial-reset`,
+   },
+   openGraph: {
+     title: "Commercial Reset | NestHelper",
+-    description: "Quote-first Commercial Reset cleaning for small offices, churches, salons, and local businesses in Eastside, Northshore, and Pierce County.",
++    description: "Quote-first Commercial Reset cleaning for small offices, churches, salons, and local businesses in Eastside, Northshore, select Snohomish County, and Pierce County.",
+     url: `${siteConfig.url}/commercial-reset`,
+     images: [siteConfig.assets.og],
+   },
+@@ -129,7 +129,7 @@
+             <div className="text-center lg:text-left">
+               <p className="pill-label mx-auto w-fit lg:mx-0"><MapPin size={15} /> Service area check</p>
+               <h2 className="mt-4 text-2xl font-black leading-tight text-nest-teal sm:text-3xl">
+-                Now quoting select Eastside and Northshore areas.
++                Now quoting select Eastside, Northshore, and Snohomish County areas.
+               </h2>
+               <p className="mt-3 font-medium leading-7 text-nest-ink/70">
+                 This service is not available everywhere yet. If your business is near these areas, submit a quote request and NestHelper will review the address, schedule, scope, and any local endorsement requirements before confirming service.
+@@ -140,7 +140,7 @@
+               <div className="rounded-[1.5rem] border border-nest-gold/14 bg-white/88 p-4 shadow-sm">
+                 <h3 className="text-lg font-black text-nest-teal">Eastside focus</h3>
+                 <p className="mt-2 text-sm font-bold leading-6 text-nest-ink/68">
+-                  Bothell, Woodinville, Kenmore, Kirkland, Redmond, Bellevue, Duvall, Mill Creek, and nearby communities.
++                  Bothell, Woodinville, Kenmore, Kirkland, Redmond, Bellevue, Duvall, Mill Creek, Lynnwood, Edmonds, Mountlake Terrace, Snohomish, Mukilteo, and nearby communities.
+                 </p>
+               </div>
+               <div className="rounded-[1.5rem] border border-nest-gold/14 bg-white/88 p-4 shadow-sm">
+@@ -296,7 +296,7 @@
+         <div className="mx-auto max-w-4xl text-center">
+           <p className="pill-label mx-auto w-fit"><MapPin size={15} /> Detailed Service Areas</p>
+           <h2 className="text-balance mt-4 text-3xl font-black leading-tight text-nest-teal sm:text-5xl">
+-            Now quoting select Eastside and Northshore areas.
++            Now quoting select Eastside, Northshore, and Snohomish County areas.
+           </h2>
+           <p className="mx-auto mt-5 max-w-3xl font-medium leading-7 text-nest-ink/70">
+             Service availability depends on schedule, scope, address, and local licensing/endorsement requirements. Some city-limit jobs may require a city endorsement before service begins.
+@@ -310,12 +310,12 @@
+           />
+           <AreaCard
+             title="Northshore focus"
+-            text="Bothell, Woodinville, Kenmore, Mill Creek, and nearby Northshore communities."
++            text="Bothell, Woodinville, Kenmore, Mill Creek, Lynnwood, Mountlake Terrace, Snohomish, Mukilteo, and nearby Northshore/Snohomish County communities."
+           />
+           <div className="rounded-[2rem] border border-nest-gold/16 bg-nest-mint/20 p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-soft">
+             <h3 className="text-2xl font-black text-nest-teal">Nearby communities welcome</h3>
+             <p className="mt-3 font-medium leading-7 text-nest-ink/70">
+-              Nearby Eastside and Northshore communities are welcome to request a quote, but availability still depends on the address, schedule, scope, helper/partner fit, and any required local endorsements.
++              Nearby Eastside, Northshore, and select Snohomish County communities are welcome to request a quote, but availability still depends on the address, schedule, scope, helper/partner fit, and any required local endorsements.
+             </p>
+           </div>
+         </div>
+
+--- before/components/forms/CommercialResetForm.tsx
++++ after/components/forms/CommercialResetForm.tsx
+@@ -937,12 +937,12 @@
+         </div>
+       </Section>
+ 
+-      <Section title="2. Cleaning address" description="Commercial Reset is quoted in select Eastside and Northshore areas. Parent Reset home services remain focused on the Eastside/Northshore side.">
++      <Section title="2. Cleaning address" description="Commercial Reset is quoted in select Eastside, Northshore, and Snohomish County areas. Parent Reset home services remain reviewed by address before payment.">
+         <div className="grid gap-4 sm:grid-cols-2">
+           <Field label="Service area">
+             <select className="input" value={form.serviceRegion} onChange={(e) => update("serviceRegion", e.target.value)}>
+               <option>Not sure yet</option>
+-              <option>Eastside / Northshore commercial area</option>
++              <option>Eastside / Northshore / select Snohomish County commercial area</option>
+               <option>Nearby area — please review</option>
+             </select>
+           </Field>
+
+--- before/components/forms/ApplicationForms.tsx
++++ after/components/forms/ApplicationForms.tsx
+@@ -192,6 +192,9 @@
+   "Woodinville",
+   "Kirkland / Redmond",
+   "Bellevue / Eastside",
++  "Mill Creek / Lynnwood",
++  "Edmonds / Mountlake Terrace",
++  "Snohomish / Mukilteo",
+   "Seattle / nearby",
+   "Other nearby area",
+ ];
+
+--- before/components/Footer.tsx
++++ after/components/Footer.tsx
+@@ -68,7 +68,7 @@
+             { href: "/#how-it-works", label: "How It Works" },
+             { href: "/giving-back", label: "Giving Back" },
+             { href: "/referrals", label: "Family Referrals" },
+-            { href: "/#service-area", label: "Service Area" },
++            { href: "/service-area/snohomish-county", label: "Service Area" },
+           ]}
+         />
+ 
+
+--- before/lib/services.ts
++++ after/lib/services.ts
+@@ -30,7 +30,7 @@
+     standardPrice: "$129",
+     priceNote: "Flat 2-hour visit",
+     serviceTime: "2 hours of in-home help",
+-    travelInfo: "Core Eastside service area",
++    travelInfo: "Core Eastside/Northshore + select Snohomish County area",
+     image: "/assets/services/service-parent-reset.svg",
+     stripeStandardEnv: "STRIPE_PRICE_PARENT_RESET_STANDARD",
+     recurringRates: [
+@@ -54,7 +54,7 @@
+     standardPrice: "$199",
+     priceNote: "Flat 3-hour parent reset",
+     serviceTime: "3 hours of reset help",
+-    travelInfo: "Core Eastside service area",
++    travelInfo: "Core Eastside/Northshore + select Snohomish County area",
+     image: "/assets/services/service-family-reset-refresh.png",
+     stripeStandardEnv: "STRIPE_PRICE_FAMILY_RESET_STANDARD",
+     recurringRates: [
+@@ -78,7 +78,7 @@
+     standardPrice: "$279",
+     priceNote: "Flat 4-hour visit",
+     serviceTime: "4 hours of helper time",
+-    travelInfo: "Core Eastside service area",
++    travelInfo: "Core Eastside/Northshore + select Snohomish County area",
+     image: "/assets/services/service-helper-block.svg",
+     stripeStandardEnv: "STRIPE_PRICE_HELPER_BLOCK_STANDARD",
+     recurringRates: [
+@@ -101,7 +101,7 @@
+     standardPrice: "Quoted after review",
+     priceNote: "Size + condition reviewed",
+     serviceTime: "Scope-based visit, usually 3–6+ hours",
+-    travelInfo: "Core Eastside/Northshore service area",
++    travelInfo: "Core Eastside/Northshore + select Snohomish County area",
+     image: "/assets/services/service-whole-home-reset.svg",
+     note: "Whole Home Cleaning requests are reviewed before checkout. Square footage, bedroom/bathroom count, visit type, condition, pets, access, optional detail add-ons, photos, and scheduling all affect the quote. Use this for the entire home; use Specific Area(s) Reset for selected rooms or focused areas only."
+   },
+@@ -120,7 +120,7 @@
+     standardPrice: "Quoted after review",
+     priceNote: "Rooms + add-ons reviewed",
+     serviceTime: "Scope-based visit, usually 2–4+ hours",
+-    travelInfo: "Core Eastside/Northshore service area",
++    travelInfo: "Core Eastside/Northshore + select Snohomish County area",
+     image: "/assets/services/service-specific-area-reset.svg",
+     note: "Specific Area(s) Resets are reviewed before checkout. The selected rooms, repeat area support preference, cleaning type, detailed add-ons, size/count, photos, buildup or clutter level, access, product preferences, customer-arranged trash/donation prep, and safety notes all affect the quote. Kitchen + Bath Reset requests fit here. NestHelper does not provide dump runs, junk hauling, hazardous material disposal, pest/biohazard cleanup, mold remediation, or unsafe heavy lifting."
+   },
+@@ -139,7 +139,7 @@
+     standardPrice: "Quoted after review",
+     priceNote: "Square footage + condition reviewed",
+     serviceTime: "Scope-based visit, usually 2–6+ hours",
+-    travelInfo: "Core Eastside/Northshore service area",
++    travelInfo: "Core Eastside/Northshore + select Snohomish County area",
+     image: "/assets/services/service-move-out-cleaning-refresh.png",
+     note: "Move-in / move-out cleaning is reviewed before checkout. Square footage, empty-home status, photos, kitchen/bathroom condition, appliance requests, access notes, and timing all affect the quote."
+   },
+@@ -159,7 +159,7 @@
+     standardPrice: "From $199",
+     priceNote: "Up to 2 helper-hours",
+     serviceTime: "Move prep packages from 2–3.5 helper-hours",
+-    travelInfo: "Core Eastside/Northshore service area",
++    travelInfo: "Core Eastside/Northshore + select Snohomish County area",
+     image: "/assets/services/service-move-prep-home-reset.svg",
+     note: "Move Prep & Home Reset is for in-home sorting, organizing, labeling, open-first boxes, packing supply kits, light unpacking, and after-move setup support. Movers handle transportation and heavy lifting. Move Prep Add-On starts at $199 for up to 2 helper-hours; Focused Room Prep is $249 up to 2.5 helper-hours; After-move kitchen setup / kitchen reset is from $349; Move-In Essentials Reset is $299 up to 3 helper-hours; Smart Label Setup is $99 up to 20 QR labels; supply kits are charged separately and confirmed before checkout; garage, storage areas, sheds, and heavy clutter are custom quote after review. Additional approved time is $65 per helper-hour with a 1-hour minimum. Move-out cleaning is quoted separately."
+   },
+@@ -181,7 +181,7 @@
+     travelInfo: "Up to 15 driving miles included",
+     image: "/assets/services/service-errand-helper.svg",
+     stripeStandardEnv: "STRIPE_PRICE_ERRAND_STANDARD",
+-    note: "Best for nearby errands in and around Bothell, Woodinville, Kirkland, Redmond, and nearby Eastside/Northshore communities. Longer routes can be reviewed before checkout."
++    note: "Best for nearby errands in and around Bothell, Woodinville, Kirkland, Redmond, Mill Creek, Lynnwood, Edmonds, and nearby Eastside/Northshore/Snohomish County communities. Longer routes can be reviewed before checkout."
+   },
+   {
+     id: "laundry-rescue",
+
+--- before/app/service-area/snohomish-county/page.tsx
++++ after/app/service-area/snohomish-county/page.tsx
+@@ -0,0 +1,178 @@
++import type { Metadata } from "next";
++import { CheckCircle2, Clock3, Home, MapPin, ShieldCheck, Sparkles } from "lucide-react";
++import { ButtonLink } from "@/components/ui/ButtonLink";
++import { PageHero } from "@/components/PageHero";
++import { siteConfig } from "@/lib/siteConfig";
++
++export const metadata: Metadata = {
++  title: "Snohomish County Home Help",
++  description:
++    "NestHelper serves Bothell, the Eastside, and select Snohomish County communities with home resets, cleaning, laundry help, errands, and move-related support.",
++  alternates: {
++    canonical: `${siteConfig.url}/service-area/snohomish-county`,
++  },
++  openGraph: {
++    title: "Snohomish County Home Help | NestHelper",
++    description:
++      "Home resets, cleaning, laundry help, errands, and move-related support for select Snohomish County communities by request.",
++    url: `${siteConfig.url}/service-area/snohomish-county`,
++    images: [siteConfig.assets.og],
++  },
++};
++
++const coreAreas = [
++  "Bothell",
++  "Woodinville",
++  "Kenmore",
++  "Kirkland",
++  "Redmond",
++  "Mill Creek",
++  "Lynnwood",
++  "Edmonds",
++  "Mountlake Terrace",
++  "Snohomish",
++  "Mukilteo",
++];
++
++const byRequestAreas = [
++  "Everett",
++  "Brier",
++  "Maltby",
++  "Clearview",
++  "Lake Stevens",
++  "Monroe",
++  "Marysville",
++];
++
++const serviceNotes = [
++  {
++    title: "Reviewed before payment",
++    text: "Snohomish County requests are reviewed by address, service type, schedule, and helper coverage before we send a checkout link.",
++    icon: <ShieldCheck size={20} />,
++  },
++  {
++    title: "Best nearby fit first",
++    text: "We are starting with nearby South Snohomish County communities so travel time and service quality stay manageable.",
++    icon: <MapPin size={20} />,
++  },
++  {
++    title: "Service type matters",
++    text: "Home resets, move-out cleaning, and cleaning support are easier to expand. Laundry and errands may depend more on route timing.",
++    icon: <Clock3 size={20} />,
++  },
++];
++
++export default function SnohomishCountyServiceAreaPage() {
++  return (
++    <>
++      <PageHero
++        eyebrow="Service area"
++        title="Now reviewing select Snohomish County requests."
++        text="NestHelper is expanding beyond Bothell, Woodinville, and nearby Eastside/Northshore communities into select Snohomish County areas. Availability is confirmed by address before payment."
++        ctaLabel="Request Help"
++      />
++
++      <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
++        <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr] lg:items-start">
++          <div className="rounded-[2rem] border border-nest-gold/18 bg-white p-6 shadow-soft sm:p-8">
++            <div className="pill-label mb-4 w-fit">
++              <MapPin size={15} /> Areas we are reviewing
++            </div>
++            <h2 className="text-3xl font-black tracking-tight text-nest-teal sm:text-4xl">
++              Nearby communities make the most sense first.
++            </h2>
++            <p className="mt-4 text-base font-medium leading-7 text-nest-ink/72">
++              We are not promising every Snohomish County address yet. The goal is to serve nearby families well while keeping travel, helper coverage, laundry routes, and scheduling realistic.
++            </p>
++
++            <div className="mt-6 rounded-[1.5rem] border border-nest-teal/10 bg-nest-cream p-4">
++              <p className="text-xs font-black uppercase tracking-[0.18em] text-nest-gold">Primary nearby areas</p>
++              <div className="mt-3 flex flex-wrap gap-2">
++                {coreAreas.map((area) => (
++                  <span key={area} className="rounded-full border border-nest-gold/16 bg-white px-3 py-1.5 text-sm font-black text-nest-teal">
++                    {area}
++                  </span>
++                ))}
++              </div>
++            </div>
++
++            <div className="mt-4 rounded-[1.5rem] border border-nest-teal/10 bg-white p-4">
++              <p className="text-xs font-black uppercase tracking-[0.18em] text-nest-gold">Farther areas by request</p>
++              <div className="mt-3 flex flex-wrap gap-2">
++                {byRequestAreas.map((area) => (
++                  <span key={area} className="rounded-full border border-nest-teal/10 bg-nest-mint/35 px-3 py-1.5 text-sm font-bold text-nest-teal">
++                    {area}
++                  </span>
++                ))}
++              </div>
++              <p className="mt-3 text-sm font-semibold leading-6 text-nest-ink/65">
++                These may require schedule review, helper availability, route planning, or a custom quote.
++              </p>
++            </div>
++          </div>
++
++          <div className="grid gap-4">
++            {serviceNotes.map((note) => (
++              <div key={note.title} className="rounded-[1.75rem] border border-nest-gold/18 bg-white/82 p-5 shadow-sm">
++                <div className="flex gap-4">
++                  <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-nest-mint text-nest-teal">
++                    {note.icon}
++                  </span>
++                  <div>
++                    <h3 className="text-lg font-black text-nest-teal">{note.title}</h3>
++                    <p className="mt-2 text-sm font-semibold leading-6 text-nest-ink/68">{note.text}</p>
++                  </div>
++                </div>
++              </div>
++            ))}
++
++            <div className="rounded-[2rem] border border-nest-gold/18 bg-nest-cream p-6 shadow-sm">
++              <div className="flex items-center gap-3">
++                <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-nest-teal shadow-sm">
++                  <Home size={20} />
++                </span>
++                <div>
++                  <p className="text-xs font-black uppercase tracking-[0.18em] text-nest-gold">Services</p>
++                  <h3 className="text-xl font-black text-nest-teal">What can be requested</h3>
++                </div>
++              </div>
++              <ul className="mt-5 grid gap-3 text-sm font-semibold leading-6 text-nest-ink/72">
++                {[
++                  "Parent Reset Plan and focused home resets",
++                  "Whole Home Cleaning and Specific Area(s) Reset",
++                  "Move-In / Move-Out Cleaning",
++                  "Move Prep & Home Reset support",
++                  "Laundry Rescue when route timing works",
++                  "Errand Helper by route and distance review",
++                ].map((item) => (
++                  <li key={item} className="flex gap-2">
++                    <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-nest-teal" />
++                    <span>{item}</span>
++                  </li>
++                ))}
++              </ul>
++            </div>
++          </div>
++        </div>
++
++        <div className="mt-8 overflow-hidden rounded-[2.25rem] border border-nest-teal/10 bg-nest-teal p-6 text-white shadow-soft sm:p-8">
++          <div className="grid gap-5 lg:grid-cols-[1fr_auto] lg:items-center">
++            <div>
++              <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-black uppercase tracking-[0.16em] text-nest-gold2">
++                <Sparkles size={14} /> Best next step
++              </div>
++              <h2 className="text-2xl font-black tracking-tight sm:text-3xl">Send the address and request details first.</h2>
++              <p className="mt-3 max-w-3xl text-sm font-semibold leading-7 text-white/78">
++                We will confirm whether the address is within a practical service route, whether the requested service is a good fit, and whether any local endorsement or helper coverage item needs review before checkout.
++              </p>
++            </div>
++            <div className="flex flex-col gap-3 sm:flex-row lg:flex-col">
++              <ButtonLink href="/request">Request Help</ButtonLink>
++              <ButtonLink href="/contact" variant="secondary">Ask Before Booking</ButtonLink>
++            </div>
++          </div>
++        </div>
++      </section>
++    </>
++  );
++}
+
+--- before/public/site.webmanifest
++++ after/public/site.webmanifest
+@@ -0,0 +1,33 @@
++{
++  "name": "NestHelper | Bothell, Eastside & Snohomish County Help",
++  "short_name": "NestHelper",
++  "description": "NestHelper helps busy Bothell, Eastside, and select Snohomish County families with home resets, laundry help, errands, and household support.",
++  "start_url": "/",
++  "scope": "/",
++  "display": "standalone",
++  "background_color": "#fbf6ea",
++  "theme_color": "#075c58",
++  "icons": [
++    {
++      "src": "/favicon-48x48.png",
++      "sizes": "48x48",
++      "type": "image/png"
++    },
++    {
++      "src": "/favicon-96x96.png",
++      "sizes": "96x96",
++      "type": "image/png"
++    },
++    {
++      "src": "/icon.png",
++      "sizes": "512x512",
++      "type": "image/png",
++      "purpose": "any maskable"
++    },
++    {
++      "src": "/apple-touch-icon.png",
++      "sizes": "180x180",
++      "type": "image/png"
++    }
++  ]
++}
+
+--- before/public/browserconfig.xml
++++ after/public/browserconfig.xml
+@@ -0,0 +1,12 @@
++<?xml version="1.0" encoding="utf-8"?>
++<browserconfig>
++  <msapplication>
++    <tile>
++      <square70x70logo src="/favicon-96x96.png"/>
++      <square150x150logo src="/apple-touch-icon.png"/>
++      <wide310x150logo src="/icon.png"/>
++      <square310x310logo src="/icon.png"/>
++      <TileColor>#075c58</TileColor>
++    </tile>
++  </msapplication>
++</browserconfig>

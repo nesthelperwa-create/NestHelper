@@ -68,7 +68,7 @@ export function Footer() {
             { href: "/#how-it-works", label: "How It Works" },
             { href: "/giving-back", label: "Giving Back" },
             { href: "/referrals", label: "Family Referrals" },
-            { href: "/#service-area", label: "Service Area" },
+            { href: "/service-area/snohomish-county", label: "Service Area" },
           ]}
         />
 

@@ -21,10 +21,10 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   applicationName: siteConfig.name,
   title: {
-    default: "NestHelper | Household Help in Bothell, Woodinville & Eastside WA",
+    default: "NestHelper | Household Help in Bothell, Eastside & Snohomish County WA",
     template: "%s | NestHelper",
   },
-  description: "NestHelper helps busy Bothell and Eastside families with home resets, laundry help, move-out cleaning, errands, and simple household support.",
+  description: "NestHelper helps busy Bothell, Eastside, and select Snohomish County families with home resets, laundry help, errands, and household support.",
   keywords: [
     "household help Bothell",
     "household help Woodinville",
@@ -41,10 +41,13 @@ export const metadata: Metadata = {
     "Bothell household help",
     "Kirkland household help",
     "Redmond household help",
+    "Lynnwood laundry help",
+    "Mill Creek home cleaning",
+    "Snohomish County home help",
   ],
   openGraph: {
-    title: "NestHelper | Household Help in Bothell, Woodinville & Eastside WA",
-    description: "NestHelper helps busy Bothell and Eastside families with home resets, laundry help, move-out cleaning, errands, and simple household support.",
+    title: "NestHelper | Household Help in Bothell, Eastside & Snohomish County WA",
+    description: "NestHelper helps busy Bothell, Eastside, and select Snohomish County families with home resets, laundry help, errands, and household support.",
     url: siteUrl,
     siteName: siteConfig.name,
     images: [
@@ -60,8 +63,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "NestHelper | Household Help in Bothell, Woodinville & Eastside WA",
-    description: "NestHelper helps busy Bothell and Eastside families with home resets, laundry help, move-out cleaning, errands, and simple household support.",
+    title: "NestHelper | Household Help in Bothell, Eastside & Snohomish County WA",
+    description: "NestHelper helps busy Bothell, Eastside, and select Snohomish County families with home resets, laundry help, errands, and household support.",
     images: [siteConfig.assets.og],
   },
   icons: {
@@ -104,7 +107,7 @@ const organizationJsonLd = {
   telephone: siteConfig.phone,
   email: siteConfig.emails.support,
   description:
-    "NestHelper provides managed household support, home reset help, simple in-home meal prep support, Move Prep & Home Reset, laundry catch-up, errands, organizing, and extra hands around the house for busy families in Bothell, Woodinville, and nearby Eastside/Northshore communities. NestHelper does not provide childcare.",
+    "NestHelper provides managed household support, home reset help, laundry catch-up, errands, organizing, simple in-home meal prep support, and move-related reset help for busy families in Bothell, Eastside, Northshore, and select Snohomish County communities. NestHelper does not provide childcare.",
   areaServed: [
     "Bothell, WA",
     "Woodinville, WA",
@@ -112,8 +115,14 @@ const organizationJsonLd = {
     "Redmond, WA",
     "Kenmore, WA",
     "Mill Creek, WA",
+    "Lynnwood, WA",
+    "Edmonds, WA",
+    "Mountlake Terrace, WA",
+    "Snohomish, WA",
+    "Mukilteo, WA",
     "Nearby Eastside communities",
     "Nearby Northshore communities",
+    "Select Snohomish County communities",
   ],
   knowsAbout: [
     "household help for busy parents",

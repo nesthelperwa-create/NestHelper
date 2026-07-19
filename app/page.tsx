@@ -22,16 +22,16 @@ import { services } from "@/lib/services";
 import { siteConfig } from "@/lib/siteConfig";
 
 export const metadata: Metadata = {
-  title: { absolute: "NestHelper | Bothell Home Cleaning & Parent Reset" },
+  title: { absolute: "NestHelper | Bothell, Eastside & Snohomish County Help" },
   description:
-    "NestHelper helps busy Bothell and Eastside families with home resets, laundry help, move-out cleaning, errands, and simple household support.",
+    "NestHelper helps Bothell, Eastside, and select Snohomish County families with home resets, laundry help, move-out cleaning, errands, and support.",
   alternates: {
     canonical: siteConfig.url,
   },
   openGraph: {
-    title: "NestHelper | Bothell Home Cleaning & Parent Reset",
+    title: "NestHelper | Bothell, Eastside & Snohomish County Help",
     description:
-      "NestHelper helps busy Bothell and Eastside families with home resets, laundry help, move-out cleaning, errands, and simple household support.",
+      "NestHelper helps Bothell, Eastside, and select Snohomish County families with home resets, laundry help, move-out cleaning, errands, and support.",
     url: siteConfig.url,
     images: [siteConfig.assets.og],
   },
@@ -73,13 +73,13 @@ export default function HomePage() {
               <div id="service-area" className="mt-4 scroll-mt-24 border-t border-nest-gold/14 pt-3 text-left">
                 <div className="flex items-start gap-2 text-sm font-black leading-5 text-nest-teal sm:items-center">
                   <MapPin size={16} className="mt-0.5 shrink-0 text-nest-gold sm:mt-0" />
-                  <span>Serving Bothell, Woodinville & nearby communities</span>
+                  <span>Serving Bothell, Eastside & select Snohomish County areas</span>
                 </div>
                 <p className="mt-2 text-xs font-semibold leading-5 text-nest-ink/64">
-                  Bothell, Woodinville, Kenmore, Kirkland, Redmond, Mill Creek, and nearby Eastside/Northshore areas. Send your address and we will confirm availability before payment.
+                  Bothell, Woodinville, Kenmore, Kirkland, Redmond, Mill Creek, Lynnwood, Edmonds, Mountlake Terrace, Snohomish, Mukilteo, and nearby Eastside/Northshore/South Snohomish County areas by request. Send your address and we will confirm availability before payment.
                 </p>
                 <div className="mt-3 flex flex-wrap gap-2">
-                  {["Bothell", "Woodinville", "Kenmore", "Kirkland", "Redmond", "Mill Creek", "Nearby Eastside/Northshore"].map((area) => (
+                  {["Bothell", "Woodinville", "Kenmore", "Kirkland", "Redmond", "Mill Creek", "Lynnwood", "Edmonds", "Mountlake Terrace", "Snohomish", "Mukilteo", "By request"].map((area) => (
                     <span key={area} className="rounded-full border border-nest-gold/16 bg-nest-cream px-3 py-1 text-[0.72rem] font-black text-nest-teal">
                       {area}
                     </span>

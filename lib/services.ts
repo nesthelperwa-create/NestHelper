@@ -30,7 +30,7 @@ export const services: Service[] = [
     standardPrice: "$129",
     priceNote: "Flat 2-hour visit",
     serviceTime: "2 hours of in-home help",
-    travelInfo: "Core Eastside service area",
+    travelInfo: "Core Eastside/Northshore + select Snohomish County area",
     image: "/assets/services/service-parent-reset.svg",
     stripeStandardEnv: "STRIPE_PRICE_PARENT_RESET_STANDARD",
     recurringRates: [
@@ -54,7 +54,7 @@ export const services: Service[] = [
     standardPrice: "$199",
     priceNote: "Flat 3-hour parent reset",
     serviceTime: "3 hours of reset help",
-    travelInfo: "Core Eastside service area",
+    travelInfo: "Core Eastside/Northshore + select Snohomish County area",
     image: "/assets/services/service-family-reset-refresh.png",
     stripeStandardEnv: "STRIPE_PRICE_FAMILY_RESET_STANDARD",
     recurringRates: [
@@ -78,7 +78,7 @@ export const services: Service[] = [
     standardPrice: "$279",
     priceNote: "Flat 4-hour visit",
     serviceTime: "4 hours of helper time",
-    travelInfo: "Core Eastside service area",
+    travelInfo: "Core Eastside/Northshore + select Snohomish County area",
     image: "/assets/services/service-helper-block.svg",
     stripeStandardEnv: "STRIPE_PRICE_HELPER_BLOCK_STANDARD",
     recurringRates: [
@@ -101,7 +101,7 @@ export const services: Service[] = [
     standardPrice: "Quoted after review",
     priceNote: "Size + condition reviewed",
     serviceTime: "Scope-based visit, usually 3–6+ hours",
-    travelInfo: "Core Eastside/Northshore service area",
+    travelInfo: "Core Eastside/Northshore + select Snohomish County area",
     image: "/assets/services/service-whole-home-reset.svg",
     note: "Whole Home Cleaning requests are reviewed before checkout. Square footage, bedroom/bathroom count, visit type, condition, pets, access, optional detail add-ons, photos, and scheduling all affect the quote. Use this for the entire home; use Specific Area(s) Reset for selected rooms or focused areas only."
   },
@@ -120,7 +120,7 @@ export const services: Service[] = [
     standardPrice: "Quoted after review",
     priceNote: "Rooms + add-ons reviewed",
     serviceTime: "Scope-based visit, usually 2–4+ hours",
-    travelInfo: "Core Eastside/Northshore service area",
+    travelInfo: "Core Eastside/Northshore + select Snohomish County area",
     image: "/assets/services/service-specific-area-reset.svg",
     note: "Specific Area(s) Resets are reviewed before checkout. The selected rooms, repeat area support preference, cleaning type, detailed add-ons, size/count, photos, buildup or clutter level, access, product preferences, customer-arranged trash/donation prep, and safety notes all affect the quote. Kitchen + Bath Reset requests fit here. NestHelper does not provide dump runs, junk hauling, hazardous material disposal, pest/biohazard cleanup, mold remediation, or unsafe heavy lifting."
   },
@@ -139,7 +139,7 @@ export const services: Service[] = [
     standardPrice: "Quoted after review",
     priceNote: "Square footage + condition reviewed",
     serviceTime: "Scope-based visit, usually 2–6+ hours",
-    travelInfo: "Core Eastside/Northshore service area",
+    travelInfo: "Core Eastside/Northshore + select Snohomish County area",
     image: "/assets/services/service-move-out-cleaning-refresh.png",
     note: "Move-in / move-out cleaning is reviewed before checkout. Square footage, empty-home status, photos, kitchen/bathroom condition, appliance requests, access notes, and timing all affect the quote."
   },
@@ -159,7 +159,7 @@ export const services: Service[] = [
     standardPrice: "From $199",
     priceNote: "Up to 2 helper-hours",
     serviceTime: "Move prep packages from 2–3.5 helper-hours",
-    travelInfo: "Core Eastside/Northshore service area",
+    travelInfo: "Core Eastside/Northshore + select Snohomish County area",
     image: "/assets/services/service-move-prep-home-reset.svg",
     note: "Move Prep & Home Reset is for in-home sorting, organizing, labeling, open-first boxes, packing supply kits, light unpacking, and after-move setup support. Movers handle transportation and heavy lifting. Move Prep Add-On starts at $199 for up to 2 helper-hours; Focused Room Prep is $249 up to 2.5 helper-hours; After-move kitchen setup / kitchen reset is from $349; Move-In Essentials Reset is $299 up to 3 helper-hours; Smart Label Setup is $99 up to 20 QR labels; supply kits are charged separately and confirmed before checkout; garage, storage areas, sheds, and heavy clutter are custom quote after review. Additional approved time is $65 per helper-hour with a 1-hour minimum. Move-out cleaning is quoted separately."
   },
@@ -181,7 +181,7 @@ export const services: Service[] = [
     travelInfo: "Up to 15 driving miles included",
     image: "/assets/services/service-errand-helper.svg",
     stripeStandardEnv: "STRIPE_PRICE_ERRAND_STANDARD",
-    note: "Best for nearby errands in and around Bothell, Woodinville, Kirkland, Redmond, and nearby Eastside/Northshore communities. Longer routes can be reviewed before checkout."
+    note: "Best for nearby errands in and around Bothell, Woodinville, Kirkland, Redmond, Mill Creek, Lynnwood, Edmonds, and nearby Eastside/Northshore/Snohomish County communities. Longer routes can be reviewed before checkout."
   },
   {
     id: "laundry-rescue",
