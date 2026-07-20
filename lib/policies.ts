@@ -151,7 +151,7 @@ export const policies: Policy[] = [
     sections: [
       {
         heading: "Dry weight billing",
-        body: "Laundry is weighed dry at pickup or through a partner provider. The minimum deposit applies to the final total. Any remaining balance is sent through Stripe after weigh-in."
+        body: "Laundry is priced by final dry weight after washing, drying, and folding, whether handled by NestHelper or a partner provider. The minimum deposit applies to the final total. Any remaining balance is sent through Stripe after the final dry weight is confirmed."
       },
       {
         heading: "Add-ons",

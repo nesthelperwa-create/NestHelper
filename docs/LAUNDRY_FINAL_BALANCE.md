@@ -19,17 +19,17 @@ The deposit checkout keeps Stripe automatic tax disabled. If sales tax should be
 During Stripe checkout, the customer must choose one final-balance option:
 
 ```text
-Auto-charge my saved card after dry weight is confirmed
+Auto-charge my saved card after final dry weight is confirmed
 Send me the final invoice link before delivery
 ```
 
-## Step 2: Dry weigh-in and final balance
+## Step 2: Final dry weight and final balance
 
-After pickup, dry-weigh the laundry and open the request in `/admin/requests`.
+After washing, drying, and folding, confirm the final dry weight and open the request in `/admin/requests`.
 
 Use the **Laundry final balance** section to enter:
 
-- Dry weight lbs
+- Final dry weight lbs
 - Additional lb rate
 - Add-ons / bulky items
 - Minimum already paid / included weight

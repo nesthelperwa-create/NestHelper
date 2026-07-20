@@ -10,7 +10,7 @@ import { siteConfig } from "@/lib/siteConfig";
 export const metadata: Metadata = {
   title: "Home Cleaning & Parent Reset Services | NestHelper",
   description:
-    "NestHelper offers whole-home cleaning, parent reset help, simple in-home meal prep support, area resets, Move Prep & Home Reset, move-in/move-out cleaning, laundry rescue, and errands for Bothell, Eastside, and select Snohomish County families.",
+    "NestHelper offers whole-home cleaning, parent reset help, simple in-home meal prep support, area resets, Move Prep & Home Reset, move-in/move-out cleaning, laundry rescue, and errands for Bothell and Eastside families.",
   alternates: {
     canonical: `${siteConfig.url}/services`,
   },
@@ -35,10 +35,6 @@ export default function ServicesPage() {
         title="Clear packages. Real accountability."
         text="Choose a household-help package, submit the details, and NestHelper reviews scope, timing, service area, safety notes, and pricing before sending a secure payment link."
       />
-
-      <div className="mx-auto mt-6 max-w-4xl rounded-[1.75rem] border border-nest-gold/18 bg-nest-cream/70 p-4 text-center text-sm font-semibold leading-6 text-nest-ink/72 shadow-sm">
-        Serving Bothell, the Eastside, Northshore, and select Snohomish County communities including Mill Creek, Lynnwood, Edmonds, Mountlake Terrace, Snohomish, and Mukilteo by request. Availability is confirmed before payment.
-      </div>
 
       <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
         <div className="mb-10 rounded-[2rem] border border-nest-gold/16 bg-white/86 p-5 text-center shadow-sm sm:p-6">
@@ -210,13 +206,13 @@ export default function ServicesPage() {
             <p className="pill-label mx-auto w-fit"><Scale size={15} /> Laundry Rescue</p>
             <h2 className="text-balance mx-auto mt-4 max-w-4xl text-3xl font-black leading-tight text-nest-teal sm:text-4xl">$59 minimum includes pickup, wash, dry, fold, return, and up to about 26.2 lbs.</h2>
             <p className="mx-auto mt-4 max-w-4xl text-lg font-medium leading-8 text-nest-ink/72">
-              Laundry Rescue intro launch pricing keeps the first step simple. Additional laundry above the included weight is $2.25/lb. At pickup, laundry is weighed dry using a portable scale, add-ons or bulky items are reviewed, and any final balance is handled by the option selected during checkout: auto-charge after review or invoice-before-delivery.
+              Laundry Rescue intro launch pricing keeps the first step simple. After washing, drying, and folding, the final dry weight is used for pricing. Additional laundry above the included weight is $2.25/lb, and any final balance is handled by the option selected during checkout: auto-charge after review or invoice-before-delivery.
             </p>
           </div>
 
           <div className="grid gap-5 p-7 sm:p-8 lg:grid-cols-3">
             <LaundryStep icon={<CreditCard />} title="1. Intro minimum" text="$59 non-refundable minimum includes pickup, wash, dry, fold, return, and up to about 26.2 lbs of laundry." />
-            <LaundryStep icon={<Scale />} title="2. Dry weigh-in" text="Laundry is weighed dry at pickup. Additional laundry above the included weight is $2.25/lb." />
+            <LaundryStep icon={<Scale />} title="2. Final dry weight" text="Laundry is washed, dried, and folded first. Final pricing is based on the final dry weight, and any laundry above the included amount is $2.25/lb." />
             <LaundryStep icon={<ClipboardCheck />} title="3. Extras if needed" text="Approved add-ons, bulky items, or additional weight are handled by the checkout option selected: auto-charge after review or invoice before delivery." />
           </div>
 
