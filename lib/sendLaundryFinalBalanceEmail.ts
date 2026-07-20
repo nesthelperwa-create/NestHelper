@@ -84,7 +84,7 @@ export async function sendLaundryFinalBalanceEmail({
     "Request ID": requestId,
     "Invoice number": invoiceNumber,
     Service: "Laundry Rescue final balance",
-    "Dry weight": `${formatNumber(dryWeightLbs)} lb`,
+    "Final dry weight": `${formatNumber(dryWeightLbs)} lb`,
     "Included in $59 minimum": `Up to about ${formatNumber(displayIncludedWeightLbs)} lb`,
     "Additional laundry": `${formatNumber(displayAdditionalWeightLbs)} lb at ${formatMoney(ratePerLb)}/lb`,
     "Add-ons / bulky items": addOnsAmount > 0 ? formatMoney(addOnsAmount) : "None",
@@ -108,7 +108,7 @@ export async function sendLaundryFinalBalanceEmail({
         </div>
         <div style="padding:22px 18px;color:#233;line-height:1.6;box-sizing:border-box;overflow-wrap:anywhere;word-break:break-word;">
           <p style="margin:0 0 16px 0;">${escapeHtml(greeting)}</p>
-          <p style="margin:0 0 18px 0;">Your laundry was dry-weighed. Your $59 intro minimum already includes pickup, wash, dry, fold, return, and up to about 26.2 lbs. The remaining balance covers any additional laundry above the included weight plus approved add-ons or bulky items.</p>
+          <p style="margin:0 0 18px 0;">Your laundry has been washed, dried, folded, and calculated by final dry weight. Your $59 intro minimum already includes pickup, wash, dry, fold, return, and up to about 26.2 lbs. The remaining balance covers any additional laundry above the included final dry weight plus approved add-ons or bulky items.</p>
           ${noteHtml}
           ${summaryRows ? `<div style="width:100%;box-sizing:border-box;border:1px solid #eee;border-radius:14px;overflow:hidden;margin:0 0 22px 0;">${summaryRows}</div>` : ""}
           <p style="margin:22px 0;"><a href="${escapeHtml(invoiceUrl)}" style="display:inline-block;background:#075c58;color:#fff;text-decoration:none;padding:13px 20px;border-radius:999px;font-weight:800;max-width:100%;box-sizing:border-box;white-space:normal;text-align:center;">View and pay final invoice</a></p>
@@ -127,7 +127,7 @@ export async function sendLaundryFinalBalanceEmail({
       </div>
     </div>`;
 
-  const text = `${greeting}\n\nYour laundry was dry-weighed. Your $59 intro minimum already includes pickup, wash, dry, fold, return, and up to about 26.2 lbs. The remaining balance covers any additional laundry above the included weight plus approved add-ons or bulky items.\n\nRequest ID: ${requestId}\nDry weight: ${formatNumber(dryWeightLbs)} lb\nIncluded in $59 minimum: up to about ${formatNumber(displayIncludedWeightLbs)} lb\nAdditional laundry: ${formatNumber(displayAdditionalWeightLbs)} lb at ${formatMoney(ratePerLb)}/lb\nAdd-ons / bulky items: ${addOnsAmount > 0 ? formatMoney(addOnsAmount) : "None"}\nMinimum already paid: ${formatMoney(depositCredit)}\nFinal balance due: ${formatMoney(balanceDue)}${note?.trim() ? `\n\nNote from NestHelper:\n${note.trim()}` : ""}\n\nPay securely: ${invoiceUrl}\n\nQuestions or changes? Reply to this email or contact us at ${customerSupportEmail}.\n\nNestHelper: ${siteUrl}`;
+  const text = `${greeting}\n\nYour laundry has been washed, dried, folded, and calculated by final dry weight. Your $59 intro minimum already includes pickup, wash, dry, fold, return, and up to about 26.2 lbs. The remaining balance covers any additional laundry above the included final dry weight plus approved add-ons or bulky items.\n\nRequest ID: ${requestId}\nDry weight: ${formatNumber(dryWeightLbs)} lb\nIncluded in $59 minimum: up to about ${formatNumber(displayIncludedWeightLbs)} lb\nAdditional laundry: ${formatNumber(displayAdditionalWeightLbs)} lb at ${formatMoney(ratePerLb)}/lb\nAdd-ons / bulky items: ${addOnsAmount > 0 ? formatMoney(addOnsAmount) : "None"}\nMinimum already paid: ${formatMoney(depositCredit)}\nFinal balance due: ${formatMoney(balanceDue)}${note?.trim() ? `\n\nNote from NestHelper:\n${note.trim()}` : ""}\n\nPay securely: ${invoiceUrl}\n\nQuestions or changes? Reply to this email or contact us at ${customerSupportEmail}.\n\nNestHelper: ${siteUrl}`;
 
   const resend = new Resend(apiKey);
   return resend.emails.send({ from, to, subject: "Laundry Rescue final invoice is ready", html, text, replyTo: customerSupportEmail });

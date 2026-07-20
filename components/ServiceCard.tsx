@@ -158,7 +158,7 @@ const serviceExtras: Record<string, ServiceExtra> = {
   "laundry-rescue": {
     bestFor: "Laundry catch-up when the baskets are taking over and you want pickup, wash/fold coordination, and clean return delivery handled for you.",
     extraDetails: [
-      "Laundry is dry-weighed at pickup so pricing is clear before final balance",
+      "Laundry is weighed after washing, drying, and folding so final dry-weight pricing is clear before any balance",
       "Clean clothes may be returned in reusable NestHelper bags or totes",
       "Add-ons can cover fragrance-free detergent, sensitive skin detergent, low heat, hang dry, or rush return when available",
     ],

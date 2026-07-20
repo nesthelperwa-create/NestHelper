@@ -112,7 +112,7 @@ function buildLaundryFinalPaymentCustomFields(): LaundryFinalPaymentCustomField[
       optional: false,
       dropdown: {
         options: [
-          { label: "Auto-charge saved card after weigh-in", value: "autocharge" },
+          { label: "Auto-charge saved card after final dry weight is confirmed", value: "autocharge" },
           { label: "Email final invoice before delivery", value: "invoicebeforedelivery" },
         ],
       },
@@ -406,7 +406,7 @@ async function createFreshCheckoutSession({
               name: customTitle || "Laundry Rescue non-refundable intro minimum",
               description: [
                 customNote || "Non-refundable Laundry Rescue intro minimum. The $59 minimum includes pickup, wash, dry, fold, return, and up to about 26.2 lbs. Additional laundry, add-ons, bulky items, or approved changes are reviewed separately.",
-                "Final balance is handled after dry weigh-in. The customer chooses auto-charge or invoice-before-delivery during checkout.",
+                "Final balance is handled after final dry weight is confirmed. The customer chooses auto-charge or invoice-before-delivery during checkout.",
               ].filter(Boolean).join("\n").slice(0, 1000),
             },
           },
@@ -488,7 +488,7 @@ async function createFreshCheckoutSession({
     checkoutParams.custom_text = {
       submit: {
         message:
-          "Laundry Rescue intro minimum is non-refundable and includes pickup, wash, dry, fold, return, and up to about 26.2 lbs. If you choose auto-charge, NestHelper may charge your saved payment method for any additional laundry, approved add-ons, or bulky items after dry weight is confirmed. If you choose invoice-before-delivery, laundry is held until any final invoice is fully paid.",
+          "Laundry Rescue intro minimum is non-refundable and includes pickup, wash, dry, fold, return, and up to about 26.2 lbs of final dry-weight laundry. If you choose auto-charge, NestHelper may charge your saved payment method for any additional laundry, approved add-ons, or bulky items after dry weight is confirmed. If you choose invoice-before-delivery, laundry is held until any final invoice is fully paid.",
       },
     };
   }

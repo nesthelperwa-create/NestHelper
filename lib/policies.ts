@@ -147,7 +147,7 @@ export const policies: Policy[] = [
   {
     slug: "laundry-policy",
     title: "Laundry Policy",
-    intro: "Laundry Rescue is priced by dry weight and handled with clear preferences and documentation.",
+    intro: "Laundry Rescue is priced by final dry weight and handled with clear preferences and documentation.",
     sections: [
       {
         heading: "Dry weight billing",

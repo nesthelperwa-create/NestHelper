@@ -79,12 +79,12 @@ Laundry Rescue is treated differently from flat-price services.
 1. Admin reviews the Laundry Rescue request.
 2. Admin sends the normal quick checkout link. For Laundry Rescue, this is the non-refundable intro minimum only; manual sales tax is added only if checked.
 3. During deposit checkout, Stripe asks the customer to choose one final-balance option:
-   - Auto-charge my saved card after dry weight is confirmed
+   - Auto-charge my saved card after final dry weight is confirmed
    - Send me the final invoice link before delivery
 4. When the deposit checkout succeeds, the webhook marks the request as `Deposit Paid - Final Pending` instead of fully `Paid`.
-5. After pickup, admin dry-weighs the laundry.
+5. After washing, drying, and folding, admin confirms the final dry weight.
 6. In the admin request detail view, use the **Laundry final balance** section:
-   - Dry weight lbs
+   - Final dry weight lbs
    - Additional lb rate
    - Add-ons / bulky items
    - Minimum already paid / included weight
@@ -111,6 +111,6 @@ Internal discount mode now uses the same Laundry Rescue minimum/intro launch rat
 
 ## Laundry Rescue tax and final-balance choice note
 
-Laundry Rescue deposits created from either Quick Checkout or the saved Family Payment Breakdown are Checkout Sessions, not normal Stripe invoices, so Stripe can collect the customer’s required final-balance choice: auto-charge saved card after weigh-in, or email final invoice before delivery. The final balance after dry weight remains a Stripe invoice with line-item details.
+Laundry Rescue deposits created from either Quick Checkout or the saved Family Payment Breakdown are Checkout Sessions, not normal Stripe invoices, so Stripe can collect the customer’s required final-balance choice: auto-charge saved card after final dry weight is confirmed, or email final invoice before delivery. The final balance after dry weight remains a Stripe invoice with line-item details.
 
 Laundry Rescue tax is not forced through Stripe automatic tax. Admin can add manual Washington sales tax to deposit checkout and final balance invoices only when needed and after verifying the rate.

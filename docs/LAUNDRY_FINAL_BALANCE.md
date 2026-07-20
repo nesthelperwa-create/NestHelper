@@ -91,6 +91,6 @@ Tax only shows when the admin intentionally checks the manual sales-tax box and 
 
 ## Laundry Rescue tax and final-balance choice note
 
-Laundry Rescue deposits created from either Quick Checkout or the saved Family Payment Breakdown are Checkout Sessions, not normal Stripe invoices, so Stripe can collect the customer’s required final-balance choice: auto-charge saved card after weigh-in, or email final invoice before delivery. The final balance after dry weight remains a Stripe invoice with line-item details.
+Laundry Rescue deposits created from either Quick Checkout or the saved Family Payment Breakdown are Checkout Sessions, not normal Stripe invoices, so Stripe can collect the customer’s required final-balance choice: auto-charge saved card after final dry weight is confirmed, or email final invoice before delivery. The final balance after dry weight remains a Stripe invoice with line-item details.
 
 Laundry Rescue tax is no longer forced on through Stripe automatic tax. Admin can add manual Washington sales tax to the deposit checkout or final balance invoice only when needed and after verifying the correct rate.

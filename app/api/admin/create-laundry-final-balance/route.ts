@@ -196,7 +196,7 @@ export async function POST(request: Request) {
     const manualSalesTax = resolveManualSalesTaxConfig({ enabled: body?.manualSalesTax, rate: body?.manualSalesTaxRate });
 
     if (!requestId) return NextResponse.json({ ok: false, error: "Missing request ID." }, { status: 400 });
-    if (dryWeightLbs <= 0) return NextResponse.json({ ok: false, error: "Enter the dry weight before creating a final balance invoice." }, { status: 400 });
+    if (dryWeightLbs <= 0) return NextResponse.json({ ok: false, error: "Enter the final dry weight before creating a final balance invoice." }, { status: 400 });
     if (ratePerLb <= 0) return NextResponse.json({ ok: false, error: "Enter a valid per-pound rate." }, { status: 400 });
 
     const db = getFirebaseAdminDb();
@@ -320,7 +320,7 @@ export async function POST(request: Request) {
       // Keep the customer-facing invoice fields under the limit and store the
       // rest in metadata below so the dashboard/audit details are preserved.
       custom_fields: [
-        { name: "Dry weight", value: `${formatNumber(dryWeightLbs)} lb` },
+        { name: "Final dry weight", value: `${formatNumber(dryWeightLbs)} lb` },
         { name: "Included weight", value: `About ${formatNumber(laundryDisplayIncludedLbs)} lb` },
         { name: "Additional weight", value: `${formatNumber(additionalWeightLbs)} lb` },
         { name: "Final collection", value: autoCharge ? "Auto-charge" : "Invoice before delivery" },
@@ -436,7 +436,7 @@ export async function POST(request: Request) {
         {
           ok: false,
           error:
-            "Stripe finalized the laundry final balance invoice at $0.00. The invoice was not emailed or auto-charged. Review the dry weight, included weight, add-ons, and final-balance calculation and try again.",
+            "Stripe finalized the laundry final balance invoice at $0.00. The invoice was not emailed or auto-charged. Review the final dry weight, included weight, add-ons, and final-balance calculation and try again.",
         },
         { status: 500 }
       );

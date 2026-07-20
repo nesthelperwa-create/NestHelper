@@ -20,12 +20,12 @@ Hi {{FirstName}}, your Laundry Rescue pickup is approved.
 Please pay the {{DepositAmount}} deposit here:
 {{StripeDepositLink}}
 
-This deposit applies toward your final total. Final price is based on dry weight at pickup, selected add-ons, and applicable WA sales tax.
+This deposit applies toward your final total. Final price is based on final dry weight after washing, drying, and folding, selected add-ons, and applicable WA sales tax.
 – NestHelper
 
 ## Laundry final balance
 
-Hi {{FirstName}}, your laundry dry weight is {{Weight}} lbs.
+Hi {{FirstName}}, your laundry final dry weight is {{Weight}} lbs.
 
 Laundry Rescue: {{Weight}} × {{Rate}} = {{LaundrySubtotal}}
 Add-ons: {{AddOns}}

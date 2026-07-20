@@ -193,7 +193,7 @@ export const services: Service[] = [
       "$59 minimum includes pickup, wash, dry, fold, return, and up to about 26.2 lbs",
       "Additional laundry is $2.25/lb",
       "Eco-friendly detergent available",
-      "Auto-charge or invoice after weigh-in"
+      "Auto-charge or invoice after final dry weight"
     ],
     standardPrice: "$59 minimum",
     priceNote: "Includes up to 26.2 lbs",

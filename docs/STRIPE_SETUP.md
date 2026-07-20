@@ -15,7 +15,7 @@ Laundry:
 1. Customer submits Laundry Rescue request.
 2. NestHelper approves pickup and sends a non-refundable deposit link. Manual sales tax is added only when intentionally checked by admin.
 3. Stripe checkout asks the customer to choose auto-charge for the final balance or invoice-before-delivery.
-4. Laundry is dry-weighed at pickup.
+4. Laundry is weighed after washing, drying, and folding as final dry weight.
 5. Add-ons are confirmed.
 6. Final balance is created as a Stripe Invoice with line-item breakdown.
 7. If auto-charge was authorized and a saved payment method is available, the invoice is charged automatically. Otherwise, the final invoice is emailed before delivery and laundry is held until paid.
@@ -132,7 +132,7 @@ For testing and live use, keep `ENABLE_STRIPE_AUTOMATIC_TAX=false`. Add sales ta
 
 ## Laundry Rescue tax and final-balance choice note
 
-Laundry Rescue deposits created from either Quick Checkout or the saved Family Payment Breakdown are Checkout Sessions, not normal Stripe invoices, so Stripe can collect the customer’s required final-balance choice: auto-charge saved card after weigh-in, or email final invoice before delivery. The final balance after dry weight remains a Stripe invoice with line-item details.
+Laundry Rescue deposits created from either Quick Checkout or the saved Family Payment Breakdown are Checkout Sessions, not normal Stripe invoices, so Stripe can collect the customer’s required final-balance choice: auto-charge saved card after final dry weight is confirmed, or email final invoice before delivery. The final balance after dry weight remains a Stripe invoice with line-item details.
 
 Laundry Rescue tax is no longer forced on through Stripe automatic tax. Admin can add manual Washington sales tax to deposit Checkout and final balance invoices only when needed and after verifying the correct rate.
 

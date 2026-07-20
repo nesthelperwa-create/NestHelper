@@ -43,7 +43,7 @@ function getPaymentCopy(paymentStatus: string) {
       intro: "Thank you — we received your non-refundable Laundry Rescue intro minimum. This $59 minimum includes pickup, wash, dry, fold, return, and up to about 26.2 lbs of laundry.",
       nextSteps: [
         "NestHelper will confirm pickup/return details and any prep notes.",
-        "Your laundry will be dry-weighed at pickup.",
+        "Your laundry will be washed, dried, folded, and calculated by final dry weight.",
         "Any additional laundry above the included weight, approved add-ons, bulky items, or approved changes are handled based on the option selected during checkout: auto-charge the saved card or send an invoice link before delivery.",
       ],
     };

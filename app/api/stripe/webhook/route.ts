@@ -90,7 +90,7 @@ function normalizeLaundryFinalPreference(value: string) {
 }
 
 function getLaundryFinalPreferenceLabel(preference: string) {
-  if (preference === "auto_charge") return "Auto-charge saved card after dry weigh-in";
+  if (preference === "auto_charge") return "Auto-charge saved card after final dry weight is confirmed";
   if (preference === "invoice_before_delivery") return "Send final invoice link before delivery";
   return "Send final invoice link before delivery";
 }
@@ -249,7 +249,7 @@ export async function POST(request: Request) {
                   Customer: customerName,
                   Email: email,
                   "Amount paid": formatMoney(invoice.amount_paid, invoice.currency),
-                  "Dry weight": getString(existingData.laundryDryWeightLbs) ? `${getString(existingData.laundryDryWeightLbs)} lb` : "",
+                  "Final dry weight": getString(existingData.laundryDryWeightLbs) ? `${getString(existingData.laundryDryWeightLbs)} lb` : "",
                   "Minimum already paid": existingData.laundryDepositCredit ? `$${existingData.laundryDepositCredit}` : "",
                   Address: buildAddress(existingData),
                   "Stripe invoice": invoice.id,

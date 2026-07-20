@@ -40,7 +40,7 @@ function buildLaundryFinalPaymentCustomFields(): LaundryFinalPaymentCustomField[
       optional: false,
       dropdown: {
         options: [
-          { label: "Auto-charge saved card after weigh-in", value: "autocharge" },
+          { label: "Auto-charge saved card after final dry weight is confirmed", value: "autocharge" },
           { label: "Email final invoice before delivery", value: "invoicebeforedelivery" },
         ],
       },
@@ -202,7 +202,7 @@ async function createLaundryDepositCheckoutFromBreakdown(params: {
             tax_code: laundryProductTaxCode,
             name: "Laundry Rescue non-refundable intro minimum",
             description: [
-              customerBreakdownText || getString(breakdown.customerNote) || "Non-refundable Laundry Rescue intro minimum includes pickup, wash, dry, fold, return, and up to about 26.2 lbs. Additional weight/add-ons are reviewed after dry weigh-in.",
+              customerBreakdownText || getString(breakdown.customerNote) || "Non-refundable Laundry Rescue intro minimum includes pickup, wash, dry, fold, return, and up to about 26.2 lbs. Additional weight/add-ons are reviewed after final dry weight is confirmed.",
               referralCreditAlreadyDeductedNote,
               servicePeriodLabel ? `Service period: ${servicePeriodLabel}` : "",
             ].filter(Boolean).join("\n").slice(0, 1000),
@@ -221,7 +221,7 @@ async function createLaundryDepositCheckoutFromBreakdown(params: {
     custom_text: {
       submit: {
         message:
-          "Laundry Rescue intro minimum is non-refundable and includes pickup, wash, dry, fold, return, and up to about 26.2 lbs. If you choose auto-charge, NestHelper may charge your saved payment method for any additional laundry, approved add-ons, or bulky items after dry weight is confirmed. If you choose invoice-before-delivery, laundry is held until any final invoice is fully paid.",
+          "Laundry Rescue intro minimum is non-refundable and includes pickup, wash, dry, fold, return, and up to about 26.2 lbs of final dry-weight laundry. If you choose auto-charge, NestHelper may charge your saved payment method for any additional laundry, approved add-ons, or bulky items after dry weight is confirmed. If you choose invoice-before-delivery, laundry is held until any final invoice is fully paid.",
       },
     },
     success_url: `${siteUrl}/checkout?success=true&payment_type=laundry_deposit&service_id=laundry-rescue&session_id={CHECKOUT_SESSION_ID}`,
@@ -271,7 +271,7 @@ async function createLaundryDepositCheckoutFromBreakdown(params: {
           customerBreakdownText,
           referralCreditAlreadyDeductedNote,
           manualSalesTax.enabled ? `Manual sales tax of ${manualSalesTax.rate}% is added in Stripe checkout.` : "No sales tax is added unless NestHelper manually enables it before sending.",
-          "During Stripe checkout, the customer chooses either auto-charge for any additional weight/add-ons after dry weigh-in or invoice-before-delivery. Laundry is not released until any final balance is fully paid.",
+          "During Stripe checkout, the customer chooses either auto-charge for any additional weight/add-ons after final dry weight is confirmed or invoice-before-delivery. Laundry is not released until any final balance is fully paid.",
         ].filter(Boolean).join("\n\n"),
         servicePeriodLabel,
         replyToEmail: emailAliases.laundry,

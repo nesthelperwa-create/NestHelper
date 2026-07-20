@@ -181,7 +181,7 @@ export async function sendPaymentLinkEmail({
           <ol style="margin:0 0 18px 20px;padding:0;">
             <li style="margin:0 0 8px 0;">Stripe confirms payment securely.</li>
             <li style="margin:0 0 8px 0;">NestHelper confirms timing and any final prep notes.</li>
-            <li style="margin:0 0 8px 0;">For Laundry Rescue, dry weight and add-ons are confirmed before any final balance.</li>
+            <li style="margin:0 0 8px 0;">For Laundry Rescue, final dry weight and add-ons are confirmed before any final balance.</li>
           </ol>
           <p style="margin:0 0 18px 0;">Questions or changes? Reply to this email or contact us at ${escapeHtml(customerSupportEmail)}.</p>
           <p style="margin:22px 0 0 0;"><a href="${escapeHtml(siteUrl)}" style="display:inline-block;background:#f4ecdc;color:#075c58;text-decoration:none;padding:12px 18px;border-radius:999px;font-weight:700;max-width:100%;box-sizing:border-box;white-space:normal;text-align:center;">Visit NestHelper</a></p>
@@ -207,7 +207,7 @@ ${servicePrice ? `Price / deposit: ${servicePrice}
 
 Open secure checkout: ${paymentUrl}
 
-After payment, NestHelper will confirm timing and prep notes. For Laundry Rescue, dry weight and add-ons are confirmed before any final balance.
+After payment, NestHelper will confirm timing and prep notes. For Laundry Rescue, final dry weight and add-ons are confirmed before any final balance.
 
 Questions or changes? Reply to this email or contact us at ${customerSupportEmail}.
 

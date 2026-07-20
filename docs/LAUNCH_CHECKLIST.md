@@ -31,7 +31,7 @@
 - Internal request review checklist
 - Customer approval message template
 - Checkout/payment message template
-- Laundry dry weigh-in checklist
+- Laundry final dry weight checklist
 - Completion/follow-up message template
 - Damage/incident reporting process
 - Helper onboarding flow

@@ -193,7 +193,7 @@ const FAMILY_PRESETS = [
   {
     id: "laundry-deposit-standard",
     label: "Laundry Rescue intro minimum — $59",
-    description: "Laundry Rescue intro minimum. The $59 minimum includes pickup, wash, dry, fold, return, and up to about 26.2 lbs. Additional weight, add-ons, bulky items, or approved changes are reviewed after dry weigh-in.",
+    description: "Laundry Rescue intro minimum. The $59 minimum includes pickup, wash, dry, fold, return, and up to about 26.2 lbs. Additional weight, add-ons, bulky items, or approved changes are reviewed after final dry weight is confirmed.",
     unit: "flat",
     rate: "59",
     amount: "59",
@@ -201,7 +201,7 @@ const FAMILY_PRESETS = [
   {
     id: "laundry-additional-weight",
     label: "Laundry additional weight — $2.25/lb",
-    description: "Final-balance line for additional dry weight above the included 26.2 lbs, not for pounds already included in the $59 minimum.",
+    description: "Final-balance line for additional final dry weight above the included 26.2 lbs, not for pounds already included in the $59 minimum.",
     unit: "lb",
     rate: "2.25",
     amount: "0",

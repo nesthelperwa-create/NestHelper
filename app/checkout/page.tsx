@@ -108,7 +108,7 @@ const baseSuccessContent: Record<PaymentType, SuccessContent> = {
       "Your clean laundry return or completion details are confirmed based on the service plan.",
       "Reusable NestHelper bags or totes should be returned using the approved return method.",
     ],
-    note: "This payment usually covers the balance after dry weight, deposit credit, and approved add-ons were applied. If new extra work or changes are approved after this payment, NestHelper may send a separate additional invoice/payment link.",
+    note: "This payment usually covers the balance after final dry weight, deposit credit, and approved add-ons were applied. If new extra work or changes are approved after this payment, NestHelper may send a separate additional invoice/payment link.",
     closing: "You can close this tab. NestHelper will follow up with return or completion details if anything else is needed.",
   },
   additional_payment: {

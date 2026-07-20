@@ -1,0 +1,499 @@
+--- before/app/api/admin/create-family-invoice/route.ts
++++ after/app/api/admin/create-family-invoice/route.ts
+@@ -40,7 +40,7 @@
+       optional: false,
+       dropdown: {
+         options: [
+-          { label: "Auto-charge saved card after weigh-in", value: "autocharge" },
++          { label: "Auto-charge saved card after final dry weight is confirmed", value: "autocharge" },
+           { label: "Email final invoice before delivery", value: "invoicebeforedelivery" },
+         ],
+       },
+@@ -202,7 +202,7 @@
+             tax_code: laundryProductTaxCode,
+             name: "Laundry Rescue non-refundable intro minimum",
+             description: [
+-              customerBreakdownText || getString(breakdown.customerNote) || "Non-refundable Laundry Rescue intro minimum includes pickup, wash, dry, fold, return, and up to about 26.2 lbs. Additional weight/add-ons are reviewed after dry weigh-in.",
++              customerBreakdownText || getString(breakdown.customerNote) || "Non-refundable Laundry Rescue intro minimum includes pickup, wash, dry, fold, return, and up to about 26.2 lbs. Additional weight/add-ons are reviewed after final dry weight is confirmed.",
+               referralCreditAlreadyDeductedNote,
+               servicePeriodLabel ? `Service period: ${servicePeriodLabel}` : "",
+             ].filter(Boolean).join("\n").slice(0, 1000),
+@@ -221,7 +221,7 @@
+     custom_text: {
+       submit: {
+         message:
+-          "Laundry Rescue intro minimum is non-refundable and includes pickup, wash, dry, fold, return, and up to about 26.2 lbs. If you choose auto-charge, NestHelper may charge your saved payment method for any additional laundry, approved add-ons, or bulky items after dry weight is confirmed. If you choose invoice-before-delivery, laundry is held until any final invoice is fully paid.",
++          "Laundry Rescue intro minimum is non-refundable and includes pickup, wash, dry, fold, return, and up to about 26.2 lbs of final dry-weight laundry. If you choose auto-charge, NestHelper may charge your saved payment method for any additional laundry, approved add-ons, or bulky items after dry weight is confirmed. If you choose invoice-before-delivery, laundry is held until any final invoice is fully paid.",
+       },
+     },
+     success_url: `${siteUrl}/checkout?success=true&payment_type=laundry_deposit&service_id=laundry-rescue&session_id={CHECKOUT_SESSION_ID}`,
+@@ -271,7 +271,7 @@
+           customerBreakdownText,
+           referralCreditAlreadyDeductedNote,
+           manualSalesTax.enabled ? `Manual sales tax of ${manualSalesTax.rate}% is added in Stripe checkout.` : "No sales tax is added unless NestHelper manually enables it before sending.",
+-          "During Stripe checkout, the customer chooses either auto-charge for any additional weight/add-ons after dry weigh-in or invoice-before-delivery. Laundry is not released until any final balance is fully paid.",
++          "During Stripe checkout, the customer chooses either auto-charge for any additional weight/add-ons after final dry weight is confirmed or invoice-before-delivery. Laundry is not released until any final balance is fully paid.",
+         ].filter(Boolean).join("\n\n"),
+         servicePeriodLabel,
+         replyToEmail: emailAliases.laundry,
+
+--- before/app/api/admin/create-laundry-final-balance/route.ts
++++ after/app/api/admin/create-laundry-final-balance/route.ts
+@@ -196,7 +196,7 @@
+     const manualSalesTax = resolveManualSalesTaxConfig({ enabled: body?.manualSalesTax, rate: body?.manualSalesTaxRate });
+ 
+     if (!requestId) return NextResponse.json({ ok: false, error: "Missing request ID." }, { status: 400 });
+-    if (dryWeightLbs <= 0) return NextResponse.json({ ok: false, error: "Enter the dry weight before creating a final balance invoice." }, { status: 400 });
++    if (dryWeightLbs <= 0) return NextResponse.json({ ok: false, error: "Enter the final dry weight before creating a final balance invoice." }, { status: 400 });
+     if (ratePerLb <= 0) return NextResponse.json({ ok: false, error: "Enter a valid per-pound rate." }, { status: 400 });
+ 
+     const db = getFirebaseAdminDb();
+@@ -320,7 +320,7 @@
+       // Keep the customer-facing invoice fields under the limit and store the
+       // rest in metadata below so the dashboard/audit details are preserved.
+       custom_fields: [
+-        { name: "Dry weight", value: `${formatNumber(dryWeightLbs)} lb` },
++        { name: "Final dry weight", value: `${formatNumber(dryWeightLbs)} lb` },
+         { name: "Included weight", value: `About ${formatNumber(laundryDisplayIncludedLbs)} lb` },
+         { name: "Additional weight", value: `${formatNumber(additionalWeightLbs)} lb` },
+         { name: "Final collection", value: autoCharge ? "Auto-charge" : "Invoice before delivery" },
+@@ -436,7 +436,7 @@
+         {
+           ok: false,
+           error:
+-            "Stripe finalized the laundry final balance invoice at $0.00. The invoice was not emailed or auto-charged. Review the dry weight, included weight, add-ons, and final-balance calculation and try again.",
++            "Stripe finalized the laundry final balance invoice at $0.00. The invoice was not emailed or auto-charged. Review the final dry weight, included weight, add-ons, and final-balance calculation and try again.",
+         },
+         { status: 500 }
+       );
+
+--- before/app/api/admin/create-payment-link/route.ts
++++ after/app/api/admin/create-payment-link/route.ts
+@@ -157,7 +157,7 @@
+       optional: false,
+       dropdown: {
+         options: [
+-          { label: "Auto-charge saved card after weigh-in", value: "autocharge" },
++          { label: "Auto-charge saved card after final dry weight is confirmed", value: "autocharge" },
+           { label: "Email final invoice before delivery", value: "invoicebeforedelivery" },
+         ],
+       },
+@@ -385,7 +385,7 @@
+                 description: [
+                   customNote || "Non-refundable Laundry Rescue intro minimum. The $59 minimum includes pickup, wash, dry, fold, return, and up to about 26.2 lbs. Additional laundry, add-ons, bulky items, or approved changes are reviewed separately.",
+                   referralCreditAlreadyDeductedNote,
+-                  "Final balance is handled after dry weigh-in. The customer chooses auto-charge or invoice-before-delivery during checkout.",
++                  "Final balance is handled after final dry weight is confirmed. The customer chooses auto-charge or invoice-before-delivery during checkout.",
+                 ].filter(Boolean).join("\n"),
+               },
+             },
+@@ -470,7 +470,7 @@
+       checkoutParams.custom_text = {
+         submit: {
+           message:
+-            "Laundry Rescue intro minimum is non-refundable and includes pickup, wash, dry, fold, return, and up to about 26.2 lbs. If you choose auto-charge, NestHelper may charge your saved payment method for any additional laundry, approved add-ons, or bulky items after dry weight is confirmed. If you choose invoice-before-delivery, laundry is held until any final invoice is fully paid.",
++            "Laundry Rescue intro minimum is non-refundable and includes pickup, wash, dry, fold, return, and up to about 26.2 lbs of final dry-weight laundry. If you choose auto-charge, NestHelper may charge your saved payment method for any additional laundry, approved add-ons, or bulky items after dry weight is confirmed. If you choose invoice-before-delivery, laundry is held until any final invoice is fully paid.",
+         },
+       };
+     }
+@@ -505,7 +505,7 @@
+           quoteBreakdownText: isLaundryRescue
+             ? [
+                 referralCreditAlreadyDeductedNote,
+-                "This intro minimum is non-refundable and includes pickup, wash, dry, fold, return, and up to about 26.2 lbs. During Stripe checkout, the customer chooses either auto-charge for any additional weight/add-ons after dry weigh-in or invoice-before-delivery. Laundry is not released until any final balance is fully paid."
++                "This intro minimum is non-refundable and includes pickup, wash, dry, fold, return, and up to about 26.2 lbs of final dry-weight laundry. During Stripe checkout, the customer chooses either auto-charge for any additional weight/add-ons after final dry weight is confirmed or invoice-before-delivery. Laundry is not released until any final balance is fully paid."
+               ].filter(Boolean).join("\n\n")
+             : isCommercialReset && useCustomInitial && shouldIncludeQuoteBreakdown
+               ? savedCommercialBreakdownText
+
+--- before/app/api/stripe/webhook/route.ts
++++ after/app/api/stripe/webhook/route.ts
+@@ -90,7 +90,7 @@
+ }
+ 
+ function getLaundryFinalPreferenceLabel(preference: string) {
+-  if (preference === "auto_charge") return "Auto-charge saved card after dry weigh-in";
++  if (preference === "auto_charge") return "Auto-charge saved card after final dry weight is confirmed";
+   if (preference === "invoice_before_delivery") return "Send final invoice link before delivery";
+   return "Send final invoice link before delivery";
+ }
+@@ -249,7 +249,7 @@
+                   Customer: customerName,
+                   Email: email,
+                   "Amount paid": formatMoney(invoice.amount_paid, invoice.currency),
+-                  "Dry weight": getString(existingData.laundryDryWeightLbs) ? `${getString(existingData.laundryDryWeightLbs)} lb` : "",
++                  "Final dry weight": getString(existingData.laundryDryWeightLbs) ? `${getString(existingData.laundryDryWeightLbs)} lb` : "",
+                   "Minimum already paid": existingData.laundryDepositCredit ? `$${existingData.laundryDepositCredit}` : "",
+                   Address: buildAddress(existingData),
+                   "Stripe invoice": invoice.id,
+
+--- before/app/checkout/page.tsx
++++ after/app/checkout/page.tsx
+@@ -108,7 +108,7 @@
+       "Your clean laundry return or completion details are confirmed based on the service plan.",
+       "Reusable NestHelper bags or totes should be returned using the approved return method.",
+     ],
+-    note: "This payment usually covers the balance after dry weight, deposit credit, and approved add-ons were applied. If new extra work or changes are approved after this payment, NestHelper may send a separate additional invoice/payment link.",
++    note: "This payment usually covers the balance after final dry weight, deposit credit, and approved add-ons were applied. If new extra work or changes are approved after this payment, NestHelper may send a separate additional invoice/payment link.",
+     closing: "You can close this tab. NestHelper will follow up with return or completion details if anything else is needed.",
+   },
+   additional_payment: {
+
+--- before/app/faq/page.tsx
++++ after/app/faq/page.tsx
+@@ -31,7 +31,7 @@
+   ["Why does NestHelper cost more than hiring someone from a local group?", "NestHelper is not trying to be the cheapest option or an open marketplace. Pricing reflects a managed service: request review, helper fit, clear scope, scheduling coordination, insured local service, secure payment, and follow-up after service."],
+   ["Do recurring resets bill automatically?", "Not by default. Whole Home Cleaning can include weekly, bi-weekly, or monthly maintenance requests after review, while Specific Area(s) Reset uses repeat area support for selected rooms only. NestHelper still reviews each recurring or repeat-support payment before sending it so families are not auto-charged for a visit that has not been confirmed."],
+   ["Why is availability limited?", "NestHelper is growing carefully and accepts a limited number of family requests at a time. That helps us protect service quality, avoid overbooking, and make sure each request has the right scope, timing, area, and helper fit before payment."],
+-  ["How does laundry pricing work?", "Laundry Rescue intro launch pricing is $59 minimum. That minimum includes pickup, wash, dry, fold, return, and up to about 26.2 lbs of laundry. Additional laundry above the included weight is $2.25/lb. Eco-friendly detergent is available. Laundry is dry-weighed at pickup, add-ons are reviewed, and any final balance is handled by the option selected during checkout: auto-charge after review or final invoice before delivery."],
++  ["How does laundry pricing work?", "Laundry Rescue intro launch pricing is $59 minimum. That minimum includes pickup, wash, dry, fold, return, and up to about 26.2 lbs of final dry-weight laundry. After laundry is washed, dried, and folded, final pricing is based on final dry weight. Additional laundry above the included amount is $2.25/lb. Eco-friendly detergent is available. Any final balance is handled by the option selected during checkout: auto-charge after review or final invoice before delivery."],
+   ["Do I return the laundry bags?", "Yes. If NestHelper returns clean laundry in reusable NestHelper bags or totes, please empty and return them at your next Laundry Rescue pickup, scheduled drop-off, or another approved return method. Missing or damaged reusable bags may be billed a reasonable replacement fee."],
+   ["Will I see the total before I pay?", "Yes. Any approved payment link or invoice will show the amount due before you submit payment. If tax or approved add-ons apply, they will be shown before checkout is completed."],
+   ["Can I use a promo code?", "Yes. If NestHelper gave you a promo or referral code, enter it on the request form. We will review the code before sending your checkout link."],
+
+--- before/app/pay/[token]/route.ts
++++ after/app/pay/[token]/route.ts
+@@ -112,7 +112,7 @@
+       optional: false,
+       dropdown: {
+         options: [
+-          { label: "Auto-charge saved card after weigh-in", value: "autocharge" },
++          { label: "Auto-charge saved card after final dry weight is confirmed", value: "autocharge" },
+           { label: "Email final invoice before delivery", value: "invoicebeforedelivery" },
+         ],
+       },
+@@ -406,7 +406,7 @@
+               name: customTitle || "Laundry Rescue non-refundable intro minimum",
+               description: [
+                 customNote || "Non-refundable Laundry Rescue intro minimum. The $59 minimum includes pickup, wash, dry, fold, return, and up to about 26.2 lbs. Additional laundry, add-ons, bulky items, or approved changes are reviewed separately.",
+-                "Final balance is handled after dry weigh-in. The customer chooses auto-charge or invoice-before-delivery during checkout.",
++                "Final balance is handled after final dry weight is confirmed. The customer chooses auto-charge or invoice-before-delivery during checkout.",
+               ].filter(Boolean).join("\n").slice(0, 1000),
+             },
+           },
+@@ -488,7 +488,7 @@
+     checkoutParams.custom_text = {
+       submit: {
+         message:
+-          "Laundry Rescue intro minimum is non-refundable and includes pickup, wash, dry, fold, return, and up to about 26.2 lbs. If you choose auto-charge, NestHelper may charge your saved payment method for any additional laundry, approved add-ons, or bulky items after dry weight is confirmed. If you choose invoice-before-delivery, laundry is held until any final invoice is fully paid.",
++          "Laundry Rescue intro minimum is non-refundable and includes pickup, wash, dry, fold, return, and up to about 26.2 lbs of final dry-weight laundry. If you choose auto-charge, NestHelper may charge your saved payment method for any additional laundry, approved add-ons, or bulky items after dry weight is confirmed. If you choose invoice-before-delivery, laundry is held until any final invoice is fully paid.",
+       },
+     };
+   }
+
+--- before/components/admin/AdminTable.tsx
++++ after/components/admin/AdminTable.tsx
+@@ -1858,7 +1858,7 @@
+     makeExportEntry("dryPreference", item.dryPreference, "Dry preference"),
+     makeExportEntry("laundryAddOns", item.laundryAddOns, "Add-ons"),
+     makeExportEntry("reusableBagAck", item.reusableBagAck, "Reusable bag agreement"),
+-    makeExportEntry("laundryDryWeightLbs", item.laundryDryWeightLbs, "Dry weight"),
++    makeExportEntry("laundryDryWeightLbs", item.laundryDryWeightLbs, "Final dry weight"),
+     makeExportEntry("laundryRatePerLb", item.laundryRatePerLb, "Additional lb rate"),
+   ].filter((entry): entry is AdminExportEntry => Boolean(entry));
+   return { title: "Laundry details", entries };
+@@ -2481,8 +2481,8 @@
+     "- $59 minimum includes pickup, wash, dry, fold, return, and up to about 26 lbs.",
+     "- Anything over the included weight is $2.25/lb.",
+     "- After the customer confirms pickup, send the secure payment link for the $59 minimum.",
+-    "- The payment link can allow optional auto-pay for final balance if laundry weighs over the included amount.",
+-    "- If auto-pay is not selected, send the final payment link after weighing.",
++    "- The payment link can allow optional auto-pay for the final balance if final dry weight is over the included amount.",
++    "- If auto-pay is not selected, send the final payment link after final dry weight is confirmed.",
+     "- If customer-provided detergent was selected, ask them to leave it with the laundry. If it is not there, use NestHelper eco-friendly standard detergent.",
+     "- Acknowledge porch, garage, remote access, pickup, and return notes.",
+     "",
+@@ -3124,7 +3124,7 @@
+     "Customer",
+     "Pickup date",
+     "Minimum paid",
+-    "Dry weight lbs",
++    "Final dry weight lbs",
+     "Additional lb rate",
+     "Add-ons amount",
+     "Laundry subtotal",
+@@ -5077,7 +5077,7 @@
+                     onClick={() => downloadTextFile(getBookkeepingExportFilename(title, "laundry-payments"), getLaundryPaymentsCsv(filtered), "text/csv;charset=utf-8")}
+                     disabled={!filtered.some((item) => getServiceKey(item) === "laundry-rescue")}
+                     className={getAdminActionClass("quiet")}
+-                    title="Laundry-specific deposit, dry-weight, add-on, balance, and payment summary."
++                    title="Laundry-specific deposit, final dry-weight, add-on, balance, and payment summary."
+                   >
+                     Laundry payments CSV
+                   </button>
+@@ -6081,7 +6081,7 @@
+                     </button>
+                   )}
+                   <p className="text-xs font-semibold text-slate-600">
+-                    The new request starts unpaid with dry weight, bag tracking, payment links, and final invoice fields blank.
++                    The new request starts unpaid with final dry weight, bag tracking, payment links, and final invoice fields blank.
+                   </p>
+                 </div>
+               </AdminCollapsibleSection>
+@@ -6277,7 +6277,7 @@
+                     </p>
+                     {selected.service === "laundry-rescue" && (
+                       <p className="mt-2 rounded-2xl bg-white px-4 py-3 text-sm font-bold text-[#075c58]">
+-                        For Laundry Rescue, both the saved payment summary amount and quick checkout create a deposit checkout so Stripe can ask the customer to choose auto-charge or invoice-before-delivery. After dry weigh-in, use the final balance section below.
++                        For Laundry Rescue, both the saved payment summary amount and quick checkout create a deposit checkout so Stripe can ask the customer to choose auto-charge or invoice-before-delivery. After final dry weight is confirmed, use the final balance section below.
+                       </p>
+                     )}
+                   </div>
+@@ -6408,8 +6408,8 @@
+                       </h5>
+                       <p className="mt-1 text-sm font-semibold leading-6 text-slate-700">
+                         {isCustomCheckoutMode
+-                          ? "Use this only when Leo/Gen intentionally approved a different Laundry Rescue deposit amount. The final balance is still handled after dry weigh-in."
+-                          : "This is the normal Laundry Rescue flow: collect the standard intro minimum now, then handle any final balance after dry weigh-in."}
++                          ? "Use this only when Leo/Gen intentionally approved a different Laundry Rescue deposit amount. The final balance is still handled after final dry weight is confirmed."
++                          : "This is the normal Laundry Rescue flow: collect the standard intro minimum now, then handle any final balance after final dry weight is confirmed."}
+                       </p>
+                       <div className="mt-3 flex flex-wrap gap-2">
+                         {isCustomCheckoutMode ? (
+@@ -6446,7 +6446,7 @@
+                           {selectedIsCommercial
+                             ? "Use this only when you want a simple checkout link instead of a formal invoice. It should match the approved first-payment amount."
+                             : selected.service === "laundry-rescue"
+-                              ? "Advanced only: use this if you intentionally approved a Laundry Rescue deposit other than the standard $59 intro minimum. Final balance still happens after dry weigh-in."
++                              ? "Advanced only: use this if you intentionally approved a Laundry Rescue deposit other than the standard $59 intro minimum. Final balance still happens after final dry weight is confirmed."
+                               : selectedRequiresReviewedCheckoutAmount
+                                 ? "This service depends on the property, condition, scope, photos, pets, and add-ons, so smart checkout uses a reviewed/custom amount instead of a standard package price."
+                                 : "Use this when the first smart checkout should not match the standard package price, such as a custom approved scope, special deposit, extra starting time, or service-area adjustment."}
+@@ -6712,8 +6712,8 @@
+                     </h4>
+                     <p className="mt-2 text-sm leading-6 text-slate-700">
+                       {laundryAutoChargeAuthorized
+-                        ? "The customer chose auto-charge during intro-minimum checkout. Enter the dry weight, additional lb rate, add-ons, and minimum already paid; NestHelper creates an itemized Stripe invoice for additional weight/add-ons and charges the saved payment method instead of showing a manual sender section."
+-                        : "The customer chose invoice-before-delivery, or no auto-charge authorization is saved. Enter the dry weight, additional lb rate, add-ons, and minimum already paid; NestHelper creates a Stripe invoice with line-item details for additional weight/add-ons only."}
++                        ? "The customer chose auto-charge during intro-minimum checkout. Enter the final dry weight, additional lb rate, add-ons, and minimum already paid; NestHelper creates an itemized Stripe invoice for additional weight/add-ons and charges the saved payment method instead of showing a manual sender section."
++                        : "The customer chose invoice-before-delivery, or no auto-charge authorization is saved. Enter the final dry weight, additional lb rate, add-ons, and minimum already paid; NestHelper creates a Stripe invoice with line-item details for additional weight/add-ons only."}
+                     </p>
+                   </div>
+                   <StatusBadge status={String(selected.laundryPaymentStatus || selected.paymentStatus || selected.status || "New")} />
+@@ -6754,7 +6754,7 @@
+ 
+                 <div className="mt-4 grid gap-3 md:grid-cols-4">
+                   <label className="grid gap-2 text-sm font-bold text-slate-700">
+-                    Dry weight lbs
++                    Final dry weight lbs
+                     <input
+                       value={laundryDryWeightLbs}
+                       onChange={(e) => setLaundryDryWeightLbs(e.target.value)}
+@@ -6832,7 +6832,7 @@
+                   <textarea
+                     value={laundryFinalNote}
+                     onChange={(e) => setLaundryFinalNote(e.target.value)}
+-                    placeholder="Example: 32 lbs dry weight, fragrance-free detergent, low heat dry. $59 minimum already includes up to about 26.2 lbs."
++                    placeholder="Example: 32 lbs final dry weight, fragrance-free detergent, low heat dry. $59 minimum already includes up to about 26.2 lbs."
+                     rows={3}
+                     className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
+                   />
+
+--- before/components/admin/FamilyPaymentBreakdownBuilder.tsx
++++ after/components/admin/FamilyPaymentBreakdownBuilder.tsx
+@@ -193,7 +193,7 @@
+   {
+     id: "laundry-deposit-standard",
+     label: "Laundry Rescue intro minimum — $59",
+-    description: "Laundry Rescue intro minimum. The $59 minimum includes pickup, wash, dry, fold, return, and up to about 26.2 lbs. Additional weight, add-ons, bulky items, or approved changes are reviewed after dry weigh-in.",
++    description: "Laundry Rescue intro minimum. The $59 minimum includes pickup, wash, dry, fold, return, and up to about 26.2 lbs. Additional weight, add-ons, bulky items, or approved changes are reviewed after final dry weight is confirmed.",
+     unit: "flat",
+     rate: "59",
+     amount: "59",
+@@ -201,7 +201,7 @@
+   {
+     id: "laundry-additional-weight",
+     label: "Laundry additional weight — $2.25/lb",
+-    description: "Final-balance line for additional dry weight above the included 26.2 lbs, not for pounds already included in the $59 minimum.",
++    description: "Final-balance line for additional final dry weight above the included 26.2 lbs, not for pounds already included in the $59 minimum.",
+     unit: "lb",
+     rate: "2.25",
+     amount: "0",
+
+--- before/components/ServiceCard.tsx
++++ after/components/ServiceCard.tsx
+@@ -158,7 +158,7 @@
+   "laundry-rescue": {
+     bestFor: "Laundry catch-up when the baskets are taking over and you want pickup, wash/fold coordination, and clean return delivery handled for you.",
+     extraDetails: [
+-      "Laundry is dry-weighed at pickup so pricing is clear before final balance",
++      "Laundry is weighed after washing, drying, and folding so final dry-weight pricing is clear before any balance",
+       "Clean clothes may be returned in reusable NestHelper bags or totes",
+       "Add-ons can cover fragrance-free detergent, sensitive skin detergent, low heat, hang dry, or rush return when available",
+     ],
+
+--- before/docs/CUSTOMER_MESSAGES.md
++++ after/docs/CUSTOMER_MESSAGES.md
+@@ -20,12 +20,12 @@
+ Please pay the {{DepositAmount}} deposit here:
+ {{StripeDepositLink}}
+ 
+-This deposit applies toward your final total. Final price is based on dry weight at pickup, selected add-ons, and applicable WA sales tax.
++This deposit applies toward your final total. Final price is based on final dry weight after washing, drying, and folding, selected add-ons, and applicable WA sales tax.
+ – NestHelper
+ 
+ ## Laundry final balance
+ 
+-Hi {{FirstName}}, your laundry dry weight is {{Weight}} lbs.
++Hi {{FirstName}}, your laundry final dry weight is {{Weight}} lbs.
+ 
+ Laundry Rescue: {{Weight}} × {{Rate}} = {{LaundrySubtotal}}
+ Add-ons: {{AddOns}}
+
+--- before/docs/LAUNCH_CHECKLIST.md
++++ after/docs/LAUNCH_CHECKLIST.md
+@@ -31,7 +31,7 @@
+ - Internal request review checklist
+ - Customer approval message template
+ - Checkout/payment message template
+-- Laundry dry weigh-in checklist
++- Laundry final dry weight checklist
+ - Completion/follow-up message template
+ - Damage/incident reporting process
+ - Helper onboarding flow
+
+--- before/docs/LAUNDRY_FINAL_BALANCE.md
++++ after/docs/LAUNDRY_FINAL_BALANCE.md
+@@ -91,6 +91,6 @@
+ 
+ ## Laundry Rescue tax and final-balance choice note
+ 
+-Laundry Rescue deposits created from either Quick Checkout or the saved Family Payment Breakdown are Checkout Sessions, not normal Stripe invoices, so Stripe can collect the customer’s required final-balance choice: auto-charge saved card after weigh-in, or email final invoice before delivery. The final balance after dry weight remains a Stripe invoice with line-item details.
++Laundry Rescue deposits created from either Quick Checkout or the saved Family Payment Breakdown are Checkout Sessions, not normal Stripe invoices, so Stripe can collect the customer’s required final-balance choice: auto-charge saved card after final dry weight is confirmed, or email final invoice before delivery. The final balance after dry weight remains a Stripe invoice with line-item details.
+ 
+ Laundry Rescue tax is no longer forced on through Stripe automatic tax. Admin can add manual Washington sales tax to the deposit checkout or final balance invoice only when needed and after verifying the correct rate.
+
+--- before/docs/PAYMENT_APPROVAL_FLOW.md
++++ after/docs/PAYMENT_APPROVAL_FLOW.md
+@@ -79,12 +79,12 @@
+ 1. Admin reviews the Laundry Rescue request.
+ 2. Admin sends the normal quick checkout link. For Laundry Rescue, this is the non-refundable intro minimum only; manual sales tax is added only if checked.
+ 3. During deposit checkout, Stripe asks the customer to choose one final-balance option:
+-   - Auto-charge my saved card after dry weight is confirmed
++   - Auto-charge my saved card after final dry weight is confirmed
+    - Send me the final invoice link before delivery
+ 4. When the deposit checkout succeeds, the webhook marks the request as `Deposit Paid - Final Pending` instead of fully `Paid`.
+-5. After pickup, admin dry-weighs the laundry.
++5. After washing, drying, and folding, admin confirms the final dry weight.
+ 6. In the admin request detail view, use the **Laundry final balance** section:
+-   - Dry weight lbs
++   - Final dry weight lbs
+    - Additional lb rate
+    - Add-ons / bulky items
+    - Minimum already paid / included weight
+@@ -111,6 +111,6 @@
+ 
+ ## Laundry Rescue tax and final-balance choice note
+ 
+-Laundry Rescue deposits created from either Quick Checkout or the saved Family Payment Breakdown are Checkout Sessions, not normal Stripe invoices, so Stripe can collect the customer’s required final-balance choice: auto-charge saved card after weigh-in, or email final invoice before delivery. The final balance after dry weight remains a Stripe invoice with line-item details.
++Laundry Rescue deposits created from either Quick Checkout or the saved Family Payment Breakdown are Checkout Sessions, not normal Stripe invoices, so Stripe can collect the customer’s required final-balance choice: auto-charge saved card after final dry weight is confirmed, or email final invoice before delivery. The final balance after dry weight remains a Stripe invoice with line-item details.
+ 
+ Laundry Rescue tax is not forced through Stripe automatic tax. Admin can add manual Washington sales tax to deposit checkout and final balance invoices only when needed and after verifying the rate.
+
+--- before/docs/STRIPE_SETUP.md
++++ after/docs/STRIPE_SETUP.md
+@@ -15,7 +15,7 @@
+ 1. Customer submits Laundry Rescue request.
+ 2. NestHelper approves pickup and sends a non-refundable deposit link. Manual sales tax is added only when intentionally checked by admin.
+ 3. Stripe checkout asks the customer to choose auto-charge for the final balance or invoice-before-delivery.
+-4. Laundry is dry-weighed at pickup.
++4. Laundry is weighed after washing, drying, and folding as final dry weight.
+ 5. Add-ons are confirmed.
+ 6. Final balance is created as a Stripe Invoice with line-item breakdown.
+ 7. If auto-charge was authorized and a saved payment method is available, the invoice is charged automatically. Otherwise, the final invoice is emailed before delivery and laundry is held until paid.
+@@ -132,7 +132,7 @@
+ 
+ ## Laundry Rescue tax and final-balance choice note
+ 
+-Laundry Rescue deposits created from either Quick Checkout or the saved Family Payment Breakdown are Checkout Sessions, not normal Stripe invoices, so Stripe can collect the customer’s required final-balance choice: auto-charge saved card after weigh-in, or email final invoice before delivery. The final balance after dry weight remains a Stripe invoice with line-item details.
++Laundry Rescue deposits created from either Quick Checkout or the saved Family Payment Breakdown are Checkout Sessions, not normal Stripe invoices, so Stripe can collect the customer’s required final-balance choice: auto-charge saved card after final dry weight is confirmed, or email final invoice before delivery. The final balance after dry weight remains a Stripe invoice with line-item details.
+ 
+ Laundry Rescue tax is no longer forced on through Stripe automatic tax. Admin can add manual Washington sales tax to deposit Checkout and final balance invoices only when needed and after verifying the correct rate.
+ 
+
+--- before/lib/policies.ts
++++ after/lib/policies.ts
+@@ -147,7 +147,7 @@
+   {
+     slug: "laundry-policy",
+     title: "Laundry Policy",
+-    intro: "Laundry Rescue is priced by dry weight and handled with clear preferences and documentation.",
++    intro: "Laundry Rescue is priced by final dry weight and handled with clear preferences and documentation.",
+     sections: [
+       {
+         heading: "Dry weight billing",
+
+--- before/lib/sendLaundryFinalBalanceEmail.ts
++++ after/lib/sendLaundryFinalBalanceEmail.ts
+@@ -84,7 +84,7 @@
+     "Request ID": requestId,
+     "Invoice number": invoiceNumber,
+     Service: "Laundry Rescue final balance",
+-    "Dry weight": `${formatNumber(dryWeightLbs)} lb`,
++    "Final dry weight": `${formatNumber(dryWeightLbs)} lb`,
+     "Included in $59 minimum": `Up to about ${formatNumber(displayIncludedWeightLbs)} lb`,
+     "Additional laundry": `${formatNumber(displayAdditionalWeightLbs)} lb at ${formatMoney(ratePerLb)}/lb`,
+     "Add-ons / bulky items": addOnsAmount > 0 ? formatMoney(addOnsAmount) : "None",
+@@ -108,7 +108,7 @@
+         </div>
+         <div style="padding:22px 18px;color:#233;line-height:1.6;box-sizing:border-box;overflow-wrap:anywhere;word-break:break-word;">
+           <p style="margin:0 0 16px 0;">${escapeHtml(greeting)}</p>
+-          <p style="margin:0 0 18px 0;">Your laundry was dry-weighed. Your $59 intro minimum already includes pickup, wash, dry, fold, return, and up to about 26.2 lbs. The remaining balance covers any additional laundry above the included weight plus approved add-ons or bulky items.</p>
++          <p style="margin:0 0 18px 0;">Your laundry has been washed, dried, folded, and calculated by final dry weight. Your $59 intro minimum already includes pickup, wash, dry, fold, return, and up to about 26.2 lbs. The remaining balance covers any additional laundry above the included final dry weight plus approved add-ons or bulky items.</p>
+           ${noteHtml}
+           ${summaryRows ? `<div style="width:100%;box-sizing:border-box;border:1px solid #eee;border-radius:14px;overflow:hidden;margin:0 0 22px 0;">${summaryRows}</div>` : ""}
+           <p style="margin:22px 0;"><a href="${escapeHtml(invoiceUrl)}" style="display:inline-block;background:#075c58;color:#fff;text-decoration:none;padding:13px 20px;border-radius:999px;font-weight:800;max-width:100%;box-sizing:border-box;white-space:normal;text-align:center;">View and pay final invoice</a></p>
+@@ -127,7 +127,7 @@
+       </div>
+     </div>`;
+ 
+-  const text = `${greeting}\n\nYour laundry was dry-weighed. Your $59 intro minimum already includes pickup, wash, dry, fold, return, and up to about 26.2 lbs. The remaining balance covers any additional laundry above the included weight plus approved add-ons or bulky items.\n\nRequest ID: ${requestId}\nDry weight: ${formatNumber(dryWeightLbs)} lb\nIncluded in $59 minimum: up to about ${formatNumber(displayIncludedWeightLbs)} lb\nAdditional laundry: ${formatNumber(displayAdditionalWeightLbs)} lb at ${formatMoney(ratePerLb)}/lb\nAdd-ons / bulky items: ${addOnsAmount > 0 ? formatMoney(addOnsAmount) : "None"}\nMinimum already paid: ${formatMoney(depositCredit)}\nFinal balance due: ${formatMoney(balanceDue)}${note?.trim() ? `\n\nNote from NestHelper:\n${note.trim()}` : ""}\n\nPay securely: ${invoiceUrl}\n\nQuestions or changes? Reply to this email or contact us at ${customerSupportEmail}.\n\nNestHelper: ${siteUrl}`;
++  const text = `${greeting}\n\nYour laundry has been washed, dried, folded, and calculated by final dry weight. Your $59 intro minimum already includes pickup, wash, dry, fold, return, and up to about 26.2 lbs. The remaining balance covers any additional laundry above the included final dry weight plus approved add-ons or bulky items.\n\nRequest ID: ${requestId}\nDry weight: ${formatNumber(dryWeightLbs)} lb\nIncluded in $59 minimum: up to about ${formatNumber(displayIncludedWeightLbs)} lb\nAdditional laundry: ${formatNumber(displayAdditionalWeightLbs)} lb at ${formatMoney(ratePerLb)}/lb\nAdd-ons / bulky items: ${addOnsAmount > 0 ? formatMoney(addOnsAmount) : "None"}\nMinimum already paid: ${formatMoney(depositCredit)}\nFinal balance due: ${formatMoney(balanceDue)}${note?.trim() ? `\n\nNote from NestHelper:\n${note.trim()}` : ""}\n\nPay securely: ${invoiceUrl}\n\nQuestions or changes? Reply to this email or contact us at ${customerSupportEmail}.\n\nNestHelper: ${siteUrl}`;
+ 
+   const resend = new Resend(apiKey);
+   return resend.emails.send({ from, to, subject: "Laundry Rescue final invoice is ready", html, text, replyTo: customerSupportEmail });
+
+--- before/lib/sendPaymentLinkEmail.ts
++++ after/lib/sendPaymentLinkEmail.ts
+@@ -181,7 +181,7 @@
+           <ol style="margin:0 0 18px 20px;padding:0;">
+             <li style="margin:0 0 8px 0;">Stripe confirms payment securely.</li>
+             <li style="margin:0 0 8px 0;">NestHelper confirms timing and any final prep notes.</li>
+-            <li style="margin:0 0 8px 0;">For Laundry Rescue, dry weight and add-ons are confirmed before any final balance.</li>
++            <li style="margin:0 0 8px 0;">For Laundry Rescue, final dry weight and add-ons are confirmed before any final balance.</li>
+           </ol>
+           <p style="margin:0 0 18px 0;">Questions or changes? Reply to this email or contact us at ${escapeHtml(customerSupportEmail)}.</p>
+           <p style="margin:22px 0 0 0;"><a href="${escapeHtml(siteUrl)}" style="display:inline-block;background:#f4ecdc;color:#075c58;text-decoration:none;padding:12px 18px;border-radius:999px;font-weight:700;max-width:100%;box-sizing:border-box;white-space:normal;text-align:center;">Visit NestHelper</a></p>
+@@ -207,7 +207,7 @@
+ 
+ Open secure checkout: ${paymentUrl}
+ 
+-After payment, NestHelper will confirm timing and prep notes. For Laundry Rescue, dry weight and add-ons are confirmed before any final balance.
++After payment, NestHelper will confirm timing and prep notes. For Laundry Rescue, final dry weight and add-ons are confirmed before any final balance.
+ 
+ Questions or changes? Reply to this email or contact us at ${customerSupportEmail}.
+ 
+
+--- before/lib/sendPaymentReceivedEmail.ts
++++ after/lib/sendPaymentReceivedEmail.ts
+@@ -43,7 +43,7 @@
+       intro: "Thank you — we received your non-refundable Laundry Rescue intro minimum. This $59 minimum includes pickup, wash, dry, fold, return, and up to about 26.2 lbs of laundry.",
+       nextSteps: [
+         "NestHelper will confirm pickup/return details and any prep notes.",
+-        "Your laundry will be dry-weighed at pickup.",
++        "Your laundry will be washed, dried, folded, and calculated by final dry weight.",
+         "Any additional laundry above the included weight, approved add-ons, bulky items, or approved changes are handled based on the option selected during checkout: auto-charge the saved card or send an invoice link before delivery.",
+       ],
+     };
+
+--- before/lib/services.ts
++++ after/lib/services.ts
+@@ -193,7 +193,7 @@
+       "$59 minimum includes pickup, wash, dry, fold, return, and up to about 26.2 lbs",
+       "Additional laundry is $2.25/lb",
+       "Eco-friendly detergent available",
+-      "Auto-charge or invoice after weigh-in"
++      "Auto-charge or invoice after final dry weight"
+     ],
+     standardPrice: "$59 minimum",
+     priceNote: "Includes up to 26.2 lbs",

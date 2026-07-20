@@ -1858,7 +1858,7 @@ function getCleanLaundrySection(item: AdminDoc): AdminExportSection {
     makeExportEntry("dryPreference", item.dryPreference, "Dry preference"),
     makeExportEntry("laundryAddOns", item.laundryAddOns, "Add-ons"),
     makeExportEntry("reusableBagAck", item.reusableBagAck, "Reusable bag agreement"),
-    makeExportEntry("laundryDryWeightLbs", item.laundryDryWeightLbs, "Dry weight"),
+    makeExportEntry("laundryDryWeightLbs", item.laundryDryWeightLbs, "Final dry weight"),
     makeExportEntry("laundryRatePerLb", item.laundryRatePerLb, "Additional lb rate"),
   ].filter((entry): entry is AdminExportEntry => Boolean(entry));
   return { title: "Laundry details", entries };
@@ -2481,8 +2481,8 @@ function getLaundryRescuePromptProcess(item: AdminDoc) {
     "- $59 minimum includes pickup, wash, dry, fold, return, and up to about 26 lbs.",
     "- Anything over the included weight is $2.25/lb.",
     "- After the customer confirms pickup, send the secure payment link for the $59 minimum.",
-    "- The payment link can allow optional auto-pay for final balance if laundry weighs over the included amount.",
-    "- If auto-pay is not selected, send the final payment link after weighing.",
+    "- The payment link can allow optional auto-pay for the final balance if final dry weight is over the included amount.",
+    "- If auto-pay is not selected, send the final payment link after final dry weight is confirmed.",
     "- If customer-provided detergent was selected, ask them to leave it with the laundry. If it is not there, use NestHelper eco-friendly standard detergent.",
     "- Acknowledge porch, garage, remote access, pickup, and return notes.",
     "",
@@ -3124,7 +3124,7 @@ function getLaundryPaymentsCsv(records: AdminDoc[]) {
     "Customer",
     "Pickup date",
     "Minimum paid",
-    "Dry weight lbs",
+    "Final dry weight lbs",
     "Additional lb rate",
     "Add-ons amount",
     "Laundry subtotal",
@@ -5077,7 +5077,7 @@ export default function AdminTable({
                     onClick={() => downloadTextFile(getBookkeepingExportFilename(title, "laundry-payments"), getLaundryPaymentsCsv(filtered), "text/csv;charset=utf-8")}
                     disabled={!filtered.some((item) => getServiceKey(item) === "laundry-rescue")}
                     className={getAdminActionClass("quiet")}
-                    title="Laundry-specific deposit, dry-weight, add-on, balance, and payment summary."
+                    title="Laundry-specific deposit, final dry-weight, add-on, balance, and payment summary."
                   >
                     Laundry payments CSV
                   </button>
@@ -6081,7 +6081,7 @@ export default function AdminTable({
                     </button>
                   )}
                   <p className="text-xs font-semibold text-slate-600">
-                    The new request starts unpaid with dry weight, bag tracking, payment links, and final invoice fields blank.
+                    The new request starts unpaid with final dry weight, bag tracking, payment links, and final invoice fields blank.
                   </p>
                 </div>
               </AdminCollapsibleSection>
@@ -6277,7 +6277,7 @@ export default function AdminTable({
                     </p>
                     {selected.service === "laundry-rescue" && (
                       <p className="mt-2 rounded-2xl bg-white px-4 py-3 text-sm font-bold text-[#075c58]">
-                        For Laundry Rescue, both the saved payment summary amount and quick checkout create a deposit checkout so Stripe can ask the customer to choose auto-charge or invoice-before-delivery. After dry weigh-in, use the final balance section below.
+                        For Laundry Rescue, both the saved payment summary amount and quick checkout create a deposit checkout so Stripe can ask the customer to choose auto-charge or invoice-before-delivery. After final dry weight is confirmed, use the final balance section below.
                       </p>
                     )}
                   </div>
@@ -6408,8 +6408,8 @@ export default function AdminTable({
                       </h5>
                       <p className="mt-1 text-sm font-semibold leading-6 text-slate-700">
                         {isCustomCheckoutMode
-                          ? "Use this only when Leo/Gen intentionally approved a different Laundry Rescue deposit amount. The final balance is still handled after dry weigh-in."
-                          : "This is the normal Laundry Rescue flow: collect the standard intro minimum now, then handle any final balance after dry weigh-in."}
+                          ? "Use this only when Leo/Gen intentionally approved a different Laundry Rescue deposit amount. The final balance is still handled after final dry weight is confirmed."
+                          : "This is the normal Laundry Rescue flow: collect the standard intro minimum now, then handle any final balance after final dry weight is confirmed."}
                       </p>
                       <div className="mt-3 flex flex-wrap gap-2">
                         {isCustomCheckoutMode ? (
@@ -6446,7 +6446,7 @@ export default function AdminTable({
                           {selectedIsCommercial
                             ? "Use this only when you want a simple checkout link instead of a formal invoice. It should match the approved first-payment amount."
                             : selected.service === "laundry-rescue"
-                              ? "Advanced only: use this if you intentionally approved a Laundry Rescue deposit other than the standard $59 intro minimum. Final balance still happens after dry weigh-in."
+                              ? "Advanced only: use this if you intentionally approved a Laundry Rescue deposit other than the standard $59 intro minimum. Final balance still happens after final dry weight is confirmed."
                               : selectedRequiresReviewedCheckoutAmount
                                 ? "This service depends on the property, condition, scope, photos, pets, and add-ons, so smart checkout uses a reviewed/custom amount instead of a standard package price."
                                 : "Use this when the first smart checkout should not match the standard package price, such as a custom approved scope, special deposit, extra starting time, or service-area adjustment."}
@@ -6712,8 +6712,8 @@ export default function AdminTable({
                     </h4>
                     <p className="mt-2 text-sm leading-6 text-slate-700">
                       {laundryAutoChargeAuthorized
-                        ? "The customer chose auto-charge during intro-minimum checkout. Enter the dry weight, additional lb rate, add-ons, and minimum already paid; NestHelper creates an itemized Stripe invoice for additional weight/add-ons and charges the saved payment method instead of showing a manual sender section."
-                        : "The customer chose invoice-before-delivery, or no auto-charge authorization is saved. Enter the dry weight, additional lb rate, add-ons, and minimum already paid; NestHelper creates a Stripe invoice with line-item details for additional weight/add-ons only."}
+                        ? "The customer chose auto-charge during intro-minimum checkout. Enter the final dry weight, additional lb rate, add-ons, and minimum already paid; NestHelper creates an itemized Stripe invoice for additional weight/add-ons and charges the saved payment method instead of showing a manual sender section."
+                        : "The customer chose invoice-before-delivery, or no auto-charge authorization is saved. Enter the final dry weight, additional lb rate, add-ons, and minimum already paid; NestHelper creates a Stripe invoice with line-item details for additional weight/add-ons only."}
                     </p>
                   </div>
                   <StatusBadge status={String(selected.laundryPaymentStatus || selected.paymentStatus || selected.status || "New")} />
@@ -6754,7 +6754,7 @@ export default function AdminTable({
 
                 <div className="mt-4 grid gap-3 md:grid-cols-4">
                   <label className="grid gap-2 text-sm font-bold text-slate-700">
-                    Dry weight lbs
+                    Final dry weight lbs
                     <input
                       value={laundryDryWeightLbs}
                       onChange={(e) => setLaundryDryWeightLbs(e.target.value)}
@@ -6832,7 +6832,7 @@ export default function AdminTable({
                   <textarea
                     value={laundryFinalNote}
                     onChange={(e) => setLaundryFinalNote(e.target.value)}
-                    placeholder="Example: 32 lbs dry weight, fragrance-free detergent, low heat dry. $59 minimum already includes up to about 26.2 lbs."
+                    placeholder="Example: 32 lbs final dry weight, fragrance-free detergent, low heat dry. $59 minimum already includes up to about 26.2 lbs."
                     rows={3}
                     className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-normal text-slate-800 outline-none focus:border-[#075c58]"
                   />
