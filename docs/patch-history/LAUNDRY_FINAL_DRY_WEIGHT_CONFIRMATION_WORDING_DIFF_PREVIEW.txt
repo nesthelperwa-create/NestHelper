@@ -1,0 +1,24 @@
+--- before/app/checkout/page.tsx
++++ after/app/checkout/page.tsx
+@@ -92,10 +92,10 @@
+     status: "Deposit paid ✓",
+     steps: [
+       "NestHelper confirms the pickup window, pickup spot, and laundry notes.",
+-      "Laundry is dry-weighed at pickup. Additional laundry above about 26.2 lbs is $2.25/lb.",
++      "After your laundry is washed, dried, and folded, NestHelper calculates the final dry weight. Additional laundry above about 26.2 lbs is $2.25/lb.",
+       "If you selected auto-charge, NestHelper may charge the saved payment method after additional weight, tax, and approved add-ons are confirmed. If you selected invoice-before-delivery, a final invoice link is sent before delivery.",
+     ],
+-    note: "This minimum includes pickup, wash, dry, fold, return, and up to about 26.2 lbs of laundry. Additional laundry, add-ons, bulky items, rush options, or extra work can change the final balance. Laundry is not released until the final balance is fully paid.",
++    note: "This minimum includes pickup, wash, dry, fold, return, and up to about 26.2 lbs of final dry-weight laundry. Additional laundry, add-ons, bulky items, rush options, or extra work can change the final balance. Laundry is not released until the final balance is fully paid.",
+     closing: "You can close this tab. Watch for Laundry Rescue pickup details from NestHelper.",
+   },
+   laundry_final_balance: {
+@@ -415,7 +415,7 @@
+               "Customer submits laundry request",
+               "NestHelper approves pickup and sends deposit link",
+               "Customer pays the minimum deposit",
+-              "Laundry is dry-weighed at pickup",
++              "Laundry is weighed after washing, drying, and folding as final dry weight",
+               "Add-ons are confirmed",
+               "Final balance is sent by Stripe invoice/payment link before completion or delivery",
+             ]}
