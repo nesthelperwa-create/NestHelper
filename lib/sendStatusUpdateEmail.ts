@@ -27,6 +27,23 @@ function clean(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
 }
 
+function formatMultilineHtml(value: string) {
+  const normalized = value.replace(/\r\n/g, "\n").replace(/\r/g, "\n").trim();
+  if (!normalized) return "";
+
+  return normalized
+    .split(/\n{2,}/)
+    .map((paragraph) => {
+      const lines = paragraph
+        .split("\n")
+        .map((line) => escapeHtml(line))
+        .join("<br />");
+
+      return `<p style="margin:0 0 12px 0;color:#233;line-height:1.65;overflow-wrap:anywhere;word-break:break-word;">${lines}</p>`;
+    })
+    .join("");
+}
+
 function getStatusContent(status: string) {
   const normalized = status.toLowerCase().trim();
 
@@ -200,7 +217,7 @@ export async function sendStatusUpdateEmail({
   const nextStepsHtml = content.nextSteps.map((step) => `<li style="margin:0 0 8px 0;">${escapeHtml(step)}</li>`).join("");
 
   const noteHtml = safeNote
-    ? `<div style="margin:0 0 20px 0;padding:14px 14px;border-radius:14px;background:#fbf6ea;border:1px solid #eadfc8;box-sizing:border-box;overflow-wrap:anywhere;word-break:break-word;"><div style="font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#b98a2f;font-weight:700;margin-bottom:6px;">Note from NestHelper</div><div style="white-space:pre-wrap;color:#233;line-height:1.6;overflow-wrap:anywhere;word-break:break-word;">${escapeHtml(safeNote)}</div></div>`
+    ? `<div style="margin:0 0 20px 0;padding:14px 14px 6px 14px;border-radius:14px;background:#fbf6ea;border:1px solid #eadfc8;box-sizing:border-box;overflow-wrap:anywhere;word-break:break-word;"><div style="font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#b98a2f;font-weight:700;margin-bottom:8px;">Note from NestHelper</div><div style="margin:0;padding:0;color:#233;line-height:1.65;overflow-wrap:anywhere;word-break:break-word;">${formatMultilineHtml(safeNote)}</div></div>`
     : "";
 
   const html = `
