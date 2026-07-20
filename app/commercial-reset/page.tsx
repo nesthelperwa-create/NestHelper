@@ -20,14 +20,14 @@ import { CommercialAddOnPricingSelector } from "./CommercialAddOnPricingSelector
 import { siteConfig } from "@/lib/siteConfig";
 
 export const metadata: Metadata = {
-  title: "Commercial Reset | NestHelper",
-  description: "Quote-first Commercial Reset cleaning for small offices, churches, salons, and local businesses in Eastside, Northshore, select Snohomish County, and Pierce County.",
+  title: "Commercial Reset | Small Business Cleaning Support",
+  description: "NestHelper Commercial Reset helps small offices, studios, churches, salons, clinics, and local spaces with cleaning and reset support.",
   alternates: {
     canonical: `${siteConfig.url}/commercial-reset`,
   },
   openGraph: {
-    title: "Commercial Reset | NestHelper",
-    description: "Quote-first Commercial Reset cleaning for small offices, churches, salons, and local businesses in Eastside, Northshore, select Snohomish County, and Pierce County.",
+    title: "Commercial Reset by NestHelper",
+    description: "Cleaning and reset support for small offices, studios, churches, salons, clinics, and local commercial spaces.",
     url: `${siteConfig.url}/commercial-reset`,
     images: [siteConfig.assets.og],
   },

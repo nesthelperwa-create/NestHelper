@@ -8,16 +8,16 @@ import { services, laundryAddOns } from "@/lib/services";
 import { siteConfig } from "@/lib/siteConfig";
 
 export const metadata: Metadata = {
-  title: "Home Cleaning & Parent Reset Services | NestHelper",
+  title: "NestHelper Services | Home Help, Cleaning & Laundry",
   description:
-    "NestHelper offers whole-home cleaning, parent reset help, simple in-home meal prep support, area resets, Move Prep & Home Reset, move-in/move-out cleaning, laundry rescue, and errands for Bothell and Eastside families.",
+    "NestHelper offers home resets, cleaning, laundry help, errands, and move support for Bothell, Eastside, and select Snohomish County families.",
   alternates: {
     canonical: `${siteConfig.url}/services`,
   },
   openGraph: {
-    title: "Home Cleaning & Parent Reset Services | NestHelper",
+    title: "NestHelper Services",
     description:
-      "Compare NestHelper services for whole-home cleaning, parent resets, simple in-home meal prep support, area resets, Move Prep & Home Reset, move-in/move-out cleaning, laundry rescue, and errands.",
+      "Home resets, cleaning, laundry help, errands, and move support for Bothell, Eastside, and select Snohomish County families.",
     url: `${siteConfig.url}/services`,
     images: [siteConfig.assets.og],
   },

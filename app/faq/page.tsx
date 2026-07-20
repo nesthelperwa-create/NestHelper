@@ -3,16 +3,16 @@ import { PageHero } from "@/components/PageHero";
 import { siteConfig } from "@/lib/siteConfig";
 
 export const metadata: Metadata = {
-  title: "Household Help FAQ: Home Reset, Laundry & Errands",
+  title: "NestHelper FAQ | Home Help Questions",
   description:
-    "Answers about NestHelper household help, home resets, simple in-home meal prep support, kitchen and bath resets, garage and area resets, Move Prep & Home Reset, move-in / move-out cleaning, laundry, errands, organizing, pricing, safety, and no-childcare service boundaries.",
+    "Answers about NestHelper pricing, laundry help, home resets, service areas, payments, helpers, safety, and booking in Bothell and nearby areas.",
   alternates: {
     canonical: `${siteConfig.url}/faq`,
   },
   openGraph: {
-    title: "Household Help FAQ | NestHelper",
+    title: "NestHelper FAQ",
     description:
-      "Learn how NestHelper household support, home reset help, simple in-home meal prep support, kitchen and bath resets, Move Prep & Home Reset, move-in / move-out cleaning, laundry help, organizing, and errands work for busy families.",
+      "Answers about NestHelper pricing, laundry help, home resets, service areas, payments, helpers, safety, and booking.",
     url: `${siteConfig.url}/faq`,
     images: [siteConfig.assets.og],
   },

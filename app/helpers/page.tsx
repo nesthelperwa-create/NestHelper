@@ -5,16 +5,16 @@ import { ApplicationFormChooser } from "@/components/forms/ApplicationForms";
 import { siteConfig } from "@/lib/siteConfig";
 
 export const metadata: Metadata = {
-  title: "Cleaning Helper Jobs & Partner Applications | NestHelper",
+  title: "Become a NestHelper Helper",
   description:
-    "Apply to work with NestHelper as a deep cleaner, regular cleaner, move-out cleaner, household helper, or local partner supporting home resets, laundry, errands, and organizing.",
+    "Apply to help local families with home resets, laundry support, errands, organizing, cleaning, and move-related support through NestHelper.",
   alternates: {
     canonical: `${siteConfig.url}/helpers`,
   },
   openGraph: {
-    title: "Cleaning Helper Jobs & Partner Applications | NestHelper",
+    title: "Become a NestHelper Helper",
     description:
-      "Apply to support NestHelper families as a cleaner, checked household helper, or local partner provider.",
+      "Apply to help local families with home resets, laundry support, errands, organizing, cleaning, and move-related support.",
     url: `${siteConfig.url}/helpers`,
     images: [siteConfig.assets.og],
   },

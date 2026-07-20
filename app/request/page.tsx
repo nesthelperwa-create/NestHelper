@@ -6,16 +6,16 @@ import { RequestForm } from "@/components/forms/RequestForm";
 import { siteConfig } from "@/lib/siteConfig";
 
 export const metadata: Metadata = {
-  title: "Request NestHelper Service | Bothell, Eastside & Snohomish County",
+  title: "Request NestHelper Service | Bothell & Nearby Areas",
   description:
-    "Request NestHelper help for whole-home cleaning, parent resets, simple in-home meal prep support, area resets, Move Prep & Home Reset, move-in/move-out cleaning, laundry rescue, and local errands.",
+    "Request NestHelper home resets, cleaning, laundry help, errands, or move support in Bothell, the Eastside, and select Snohomish County areas.",
   alternates: {
     canonical: `${siteConfig.url}/request`,
   },
   openGraph: {
-    title: "Request NestHelper Service | Bothell, Eastside & Snohomish County",
+    title: "Request NestHelper Service",
     description:
-      "Send a NestHelper request for home cleaning, parent reset help, simple in-home meal prep support, area resets, Move Prep & Home Reset, move-in/move-out cleaning, laundry rescue, or local errands.",
+      "Request NestHelper home resets, cleaning, laundry help, errands, or move support in Bothell, the Eastside, and select Snohomish County areas.",
     url: `${siteConfig.url}/request`,
     images: [siteConfig.assets.og],
   },

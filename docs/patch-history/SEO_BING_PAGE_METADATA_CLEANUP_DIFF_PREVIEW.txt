@@ -1,0 +1,117 @@
+--- before/app/services/page.tsx
++++ after/app/services/page.tsx
+@@ -8,16 +8,16 @@
+ import { siteConfig } from "@/lib/siteConfig";
+ 
+ export const metadata: Metadata = {
+-  title: "Home Cleaning & Parent Reset Services | NestHelper",
++  title: "NestHelper Services | Home Help, Cleaning & Laundry",
+   description:
+-    "NestHelper offers whole-home cleaning, parent reset help, simple in-home meal prep support, area resets, Move Prep & Home Reset, move-in/move-out cleaning, laundry rescue, and errands for Bothell and Eastside families.",
++    "NestHelper offers home resets, cleaning, laundry help, errands, and move support for Bothell, Eastside, and select Snohomish County families.",
+   alternates: {
+     canonical: `${siteConfig.url}/services`,
+   },
+   openGraph: {
+-    title: "Home Cleaning & Parent Reset Services | NestHelper",
++    title: "NestHelper Services",
+     description:
+-      "Compare NestHelper services for whole-home cleaning, parent resets, simple in-home meal prep support, area resets, Move Prep & Home Reset, move-in/move-out cleaning, laundry rescue, and errands.",
++      "Home resets, cleaning, laundry help, errands, and move support for Bothell, Eastside, and select Snohomish County families.",
+     url: `${siteConfig.url}/services`,
+     images: [siteConfig.assets.og],
+   },
+
+--- before/app/faq/page.tsx
++++ after/app/faq/page.tsx
+@@ -3,16 +3,16 @@
+ import { siteConfig } from "@/lib/siteConfig";
+ 
+ export const metadata: Metadata = {
+-  title: "Household Help FAQ: Home Reset, Laundry & Errands",
++  title: "NestHelper FAQ | Home Help Questions",
+   description:
+-    "Answers about NestHelper household help, home resets, simple in-home meal prep support, kitchen and bath resets, garage and area resets, Move Prep & Home Reset, move-in / move-out cleaning, laundry, errands, organizing, pricing, safety, and no-childcare service boundaries.",
++    "Answers about NestHelper pricing, laundry help, home resets, service areas, payments, helpers, safety, and booking in Bothell and nearby areas.",
+   alternates: {
+     canonical: `${siteConfig.url}/faq`,
+   },
+   openGraph: {
+-    title: "Household Help FAQ | NestHelper",
++    title: "NestHelper FAQ",
+     description:
+-      "Learn how NestHelper household support, home reset help, simple in-home meal prep support, kitchen and bath resets, Move Prep & Home Reset, move-in / move-out cleaning, laundry help, organizing, and errands work for busy families.",
++      "Answers about NestHelper pricing, laundry help, home resets, service areas, payments, helpers, safety, and booking.",
+     url: `${siteConfig.url}/faq`,
+     images: [siteConfig.assets.og],
+   },
+
+--- before/app/request/page.tsx
++++ after/app/request/page.tsx
+@@ -6,16 +6,16 @@
+ import { siteConfig } from "@/lib/siteConfig";
+ 
+ export const metadata: Metadata = {
+-  title: "Request NestHelper Service | Bothell, Eastside & Snohomish County",
++  title: "Request NestHelper Service | Bothell & Nearby Areas",
+   description:
+-    "Request NestHelper help for whole-home cleaning, parent resets, simple in-home meal prep support, area resets, Move Prep & Home Reset, move-in/move-out cleaning, laundry rescue, and local errands.",
++    "Request NestHelper home resets, cleaning, laundry help, errands, or move support in Bothell, the Eastside, and select Snohomish County areas.",
+   alternates: {
+     canonical: `${siteConfig.url}/request`,
+   },
+   openGraph: {
+-    title: "Request NestHelper Service | Bothell, Eastside & Snohomish County",
++    title: "Request NestHelper Service",
+     description:
+-      "Send a NestHelper request for home cleaning, parent reset help, simple in-home meal prep support, area resets, Move Prep & Home Reset, move-in/move-out cleaning, laundry rescue, or local errands.",
++      "Request NestHelper home resets, cleaning, laundry help, errands, or move support in Bothell, the Eastside, and select Snohomish County areas.",
+     url: `${siteConfig.url}/request`,
+     images: [siteConfig.assets.og],
+   },
+
+--- before/app/helpers/page.tsx
++++ after/app/helpers/page.tsx
+@@ -5,16 +5,16 @@
+ import { siteConfig } from "@/lib/siteConfig";
+ 
+ export const metadata: Metadata = {
+-  title: "Cleaning Helper Jobs & Partner Applications | NestHelper",
++  title: "Become a NestHelper Helper",
+   description:
+-    "Apply to work with NestHelper as a deep cleaner, regular cleaner, move-out cleaner, household helper, or local partner supporting home resets, laundry, errands, and organizing.",
++    "Apply to help local families with home resets, laundry support, errands, organizing, cleaning, and move-related support through NestHelper.",
+   alternates: {
+     canonical: `${siteConfig.url}/helpers`,
+   },
+   openGraph: {
+-    title: "Cleaning Helper Jobs & Partner Applications | NestHelper",
++    title: "Become a NestHelper Helper",
+     description:
+-      "Apply to support NestHelper families as a cleaner, checked household helper, or local partner provider.",
++      "Apply to help local families with home resets, laundry support, errands, organizing, cleaning, and move-related support.",
+     url: `${siteConfig.url}/helpers`,
+     images: [siteConfig.assets.og],
+   },
+
+--- before/app/commercial-reset/page.tsx
++++ after/app/commercial-reset/page.tsx
+@@ -20,14 +20,14 @@
+ import { siteConfig } from "@/lib/siteConfig";
+ 
+ export const metadata: Metadata = {
+-  title: "Commercial Reset | NestHelper",
+-  description: "Quote-first Commercial Reset cleaning for small offices, churches, salons, and local businesses in Eastside, Northshore, select Snohomish County, and Pierce County.",
++  title: "Commercial Reset | Small Business Cleaning Support",
++  description: "NestHelper Commercial Reset helps small offices, studios, churches, salons, clinics, and local spaces with cleaning and reset support.",
+   alternates: {
+     canonical: `${siteConfig.url}/commercial-reset`,
+   },
+   openGraph: {
+-    title: "Commercial Reset | NestHelper",
+-    description: "Quote-first Commercial Reset cleaning for small offices, churches, salons, and local businesses in Eastside, Northshore, select Snohomish County, and Pierce County.",
++    title: "Commercial Reset by NestHelper",
++    description: "Cleaning and reset support for small offices, studios, churches, salons, clinics, and local commercial spaces.",
+     url: `${siteConfig.url}/commercial-reset`,
+     images: [siteConfig.assets.og],
+   },
