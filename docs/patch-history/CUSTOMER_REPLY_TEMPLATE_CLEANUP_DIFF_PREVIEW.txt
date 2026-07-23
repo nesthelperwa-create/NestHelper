@@ -1,0 +1,97 @@
+--- before/lib/sendAdminEmail.ts
++++ after/lib/sendAdminEmail.ts
+@@ -103,11 +103,29 @@
+   return "";
+ }
+ 
+-function buildCustomerDetailsText(rows: Record<string, unknown>) {
+-  return Object.entries(rows)
+-    .filter(([key, value]) => !isInternalAdminField(key) && !isPhotoDataField(key) && formatValue(value).trim().length > 0)
+-    .map(([key, value]) => `${key}: ${formatValue(value)}`)
+-    .join("\n");
++function getCustomerReplySummary(adminTitle: string, rows: Record<string, unknown>) {
++  const kind = detectReplyTemplateKind(adminTitle, rows);
++  const photoCount = getRowValue(rows, ["photoUploadCount", "Photo upload count"]);
++  const hasPhotos = photoCount && photoCount !== "0";
++  const photoText = hasPhotos ? " and photos" : "";
++
++  if (kind === "helper") {
++    return "I have your application details on my end, so no need to resend everything here. If anything changed, just reply to this email and let me know.";
++  }
++
++  if (kind === "partner") {
++    return "I have your partner details on my end, so no need to resend everything here. If anything changed, just reply to this email and let me know.";
++  }
++
++  if (kind === "contact") {
++    return "I have your message on my end. If you want to add anything or correct any details, just reply to this email.";
++  }
++
++  if (kind === "payment") {
++    return "I have the request and payment details on my end. If anything looks different from what you expected, just reply to this email.";
++  }
++
++  return `I have your request details${photoText} on my end, so no need to resend everything here. If anything changed, just reply to this email and let me know.`;
+ }
+ 
+ type ReplyTemplateKind = "contact" | "helper" | "partner" | "payment" | "laundry" | "errand" | "service" | "general";
+@@ -251,20 +269,6 @@
+   return buildGenericReplyIntro();
+ }
+ 
+-function getCustomerDetailsHeading(adminTitle: string, rows: Record<string, unknown>) {
+-  const kind = detectReplyTemplateKind(adminTitle, rows);
+-
+-  if (kind === "contact") return "--- Your original message to NestHelper ---";
+-  if (kind === "helper") return "--- Your helper application details ---";
+-  if (kind === "partner") return "--- Your partner / contractor application details ---";
+-  if (kind === "payment") return "--- Payment/request details we have on file ---";
+-  if (kind === "laundry") return "--- Your Laundry Rescue request details ---";
+-  if (kind === "errand") return "--- Your Errand Helper request details ---";
+-  if (kind === "service") return "--- Your NestHelper request details ---";
+-
+-  return "--- Details you sent us ---";
+-}
+-
+ function getComposeButtonLabel(adminTitle: string, rows: Record<string, unknown>) {
+   const kind = detectReplyTemplateKind(adminTitle, rows);
+ 
+@@ -282,33 +286,20 @@
+ function buildCustomerComposeBody(adminTitle: string, rows: Record<string, unknown>, publicReplyEmail: string) {
+   const firstName = getFirstName(rows);
+   const greeting = firstName ? `Hi ${firstName},` : "Hi,";
+-  const customerDetails = buildCustomerDetailsText(rows);
+   const introLines = buildReplyIntro(adminTitle, rows);
+-  const detailsHeading = getCustomerDetailsHeading(adminTitle, rows);
+-
+-  const body = [
++  const summaryLine = getCustomerReplySummary(adminTitle, rows);
++
++  return [
+     greeting,
+     "",
+     ...introLines,
+     "",
+-    customerDetails ? "For reference, here is what we received:" : "",
+-    customerDetails ? detailsHeading : "",
+-    customerDetails,
++    summaryLine,
+     "",
+     "Best,",
+     "NestHelper",
+     publicReplyEmail,
+-  ]
+-    .filter((line, index, lines) => {
+-      // Keep intentional blank lines, but avoid empty double gaps when no details exist.
+-      if (customerDetails) return true;
+-      return !(line === "" && lines[index - 1] === "" && lines[index + 1] === "");
+-    })
+-    .join("\n");
+-
+-  // Mailto URLs can get too long in some email apps. Keep the customer context,
+-  // but trim very large form payloads so the compose button still opens reliably.
+-  return body.length > 4500 ? `${body.slice(0, 4500)}\n\n[Customer details truncated. Open the admin dashboard to review the full submission.]` : body;
++  ].join("\n");
+ }
+ 
+ function getCustomerReplySubject(adminTitle: string, rows: Record<string, unknown>) {
