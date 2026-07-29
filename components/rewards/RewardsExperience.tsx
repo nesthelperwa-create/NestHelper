@@ -104,12 +104,12 @@ const segmentColors = [
 
 const wheelLabelLines: Record<string, string[]> = {
   "laundry-10": ["$10 OFF", "LAUNDRY"],
-  "parent-reset-15": ["$15 OFF", "PARENT RESET"],
-  "nesthelper-credit-25": ["$25", "NESTHELPER", "CREDIT"],
+  "parent-reset-15": ["$15 OFF", "RESET"],
+  "nesthelper-credit-25": ["$25", "CREDIT"],
   "family-service-25": ["$25 OFF", "FAMILY HELP"],
-  "smart-label-starter": ["FREE", "SMART LABELS"],
-  "organizing-add-on": ["FREE", "ORGANIZING", "ADD-ON"],
-  "parent-reset-grand": ["FREE", "3-HOUR", "PARENT RESET"],
+  "smart-label-starter": ["FREE", "SMART", "LABELS"],
+  "organizing-add-on": ["FREE", "ORG", "ADD-ON"],
+  "parent-reset-grand": ["FREE", "3-HR", "RESET"],
 };
 
 function toE164(value: string) {
@@ -205,26 +205,27 @@ function PrizeWheel({
           {launchRewardPrizes.map((prize, index) => {
             const angle = (360 / launchRewardPrizes.length) * (index + 0.5);
             const radians = (angle * Math.PI) / 180;
-            const x = 50 + Math.sin(radians) * 33;
-            const y = 50 - Math.cos(radians) * 33;
+            const radius = index === 1 ? 35 : index === 5 ? 31 : 33;
+            const x = 50 + Math.sin(radians) * radius;
+            const y = 50 - Math.cos(radians) * radius;
             const lightSegment = [1, 3, 5, 6].includes(index);
             const lines = wheelLabelLines[prize.id] || [prize.shortLabel];
 
             return (
               <div
                 key={prize.id}
-                className="absolute z-10 flex w-[25%] -translate-x-1/2 -translate-y-1/2 items-center justify-center text-center"
+                className="absolute z-10 flex w-[22%] sm:w-[23%] md:w-[22%] -translate-x-1/2 -translate-y-1/2 items-center justify-center text-center"
                 style={{ left: `${x}%`, top: `${y}%` }}
               >
                 <div
-                  className={`flex min-h-[3.2rem] w-full flex-col items-center justify-center rounded-xl border px-1.5 py-1.5 text-[0.55rem] font-black uppercase leading-[1.02] tracking-[-0.015em] shadow-sm sm:min-h-[4.2rem] sm:rounded-2xl sm:px-2 sm:py-2 sm:text-xs md:text-[0.82rem] ${
+                  className={`flex min-h-[2.7rem] w-full max-w-full flex-col items-center justify-center rounded-xl border px-1 py-1 text-[0.45rem] font-black uppercase leading-[1.03] tracking-[-0.01em] shadow-sm sm:min-h-[3.45rem] sm:rounded-2xl sm:px-1.5 sm:py-1.5 sm:text-[0.64rem] md:min-h-[3.8rem] md:text-[0.72rem] ${
                     lightSegment
-                      ? "border-nest-teal/18 bg-white/88 text-nest-teal"
-                      : "border-white/30 bg-nest-teal/82 text-white"
+                      ? "border-nest-teal/18 bg-white/90 text-nest-teal"
+                      : "border-white/30 bg-nest-teal/84 text-white"
                   }`}
                 >
                   {lines.map((line) => (
-                    <span key={line} className="block whitespace-nowrap">
+                    <span key={line} className="block px-0.5 text-center">
                       {line}
                     </span>
                   ))}
