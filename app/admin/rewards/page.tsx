@@ -17,7 +17,7 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import AdminShell from "@/components/admin/AdminShell";
 import { firebaseAuth, firestoreDb } from "@/lib/firebaseClient";
-import { launchRewardPrizes } from "@/lib/launchRewards";
+import { launchRewardPrizes, type LaunchRewardPrizeId } from "@/lib/launchRewards";
 
 type RewardRecord = {
   id: string;
@@ -46,10 +46,14 @@ type GrandMonthRecord = {
 
 type TestModeState = {
   enabled: boolean;
-  prizeId: string;
+  prizeId: LaunchRewardPrizeId;
   prizeTitle: string;
   expiresAt: string | null;
 };
+
+function isLaunchRewardPrizeId(value: unknown): value is LaunchRewardPrizeId {
+  return typeof value === "string" && launchRewardPrizes.some((prize) => prize.id === value);
+}
 
 function formatDate(value?: { toDate?: () => Date } | string) {
   const date = typeof value === "string" ? new Date(value) : value?.toDate?.();
@@ -68,7 +72,7 @@ export default function AdminRewardsPage() {
     prizeTitle: launchRewardPrizes[0].title,
     expiresAt: null,
   });
-  const [selectedTestPrizeId, setSelectedTestPrizeId] = useState(launchRewardPrizes[0].id);
+  const [selectedTestPrizeId, setSelectedTestPrizeId] = useState<LaunchRewardPrizeId>(launchRewardPrizes[0].id);
   const [testBusy, setTestBusy] = useState(false);
 
   useEffect(() => {
@@ -99,14 +103,17 @@ export default function AdminRewardsPage() {
         });
         const result = await response.json().catch(() => null);
         if (!response.ok || !result?.ok) return;
-        const next = {
+        const resultPrizeId = isLaunchRewardPrizeId(result.prizeId)
+          ? result.prizeId
+          : launchRewardPrizes[0].id;
+        const next: TestModeState = {
           enabled: result.enabled === true,
-          prizeId: String(result.prizeId || launchRewardPrizes[0].id),
+          prizeId: resultPrizeId,
           prizeTitle: String(result.prizeTitle || launchRewardPrizes[0].title),
           expiresAt: result.expiresAt ? String(result.expiresAt) : null,
         };
         setTestMode(next);
-        setSelectedTestPrizeId(next.prizeId);
+        setSelectedTestPrizeId(resultPrizeId);
       } catch (error) {
         console.error("Unable to load Launch Rewards test mode", error);
       }
@@ -134,13 +141,17 @@ export default function AdminRewardsPage() {
       });
       const result = await response.json().catch(() => null);
       if (!response.ok || !result?.ok) throw new Error(result?.error || "Unable to update test mode.");
-      const next = {
+      const resultPrizeId = isLaunchRewardPrizeId(result.prizeId)
+        ? result.prizeId
+        : selectedTestPrizeId;
+      const next: TestModeState = {
         enabled: result.enabled === true,
-        prizeId: String(result.prizeId || selectedTestPrizeId),
-        prizeTitle: String(result.prizeTitle || launchRewardPrizes.find((prize) => prize.id === selectedTestPrizeId)?.title || "Test prize"),
+        prizeId: resultPrizeId,
+        prizeTitle: String(result.prizeTitle || launchRewardPrizes.find((prize) => prize.id === resultPrizeId)?.title || "Test prize"),
         expiresAt: result.expiresAt ? String(result.expiresAt) : null,
       };
       setTestMode(next);
+      setSelectedTestPrizeId(resultPrizeId);
       setMessage(action === "disable"
         ? "Prelaunch test mode is off for this browser."
         : `Prelaunch test mode is on. The wheel will land on: ${next.prizeTitle}.`);
@@ -203,7 +214,11 @@ export default function AdminRewardsPage() {
               Prize the test wheel should land on
               <select
                 value={selectedTestPrizeId}
-                onChange={(event) => setSelectedTestPrizeId(event.target.value)}
+                onChange={(event) => {
+                  if (isLaunchRewardPrizeId(event.target.value)) {
+                    setSelectedTestPrizeId(event.target.value);
+                  }
+                }}
                 className="mt-2 w-full rounded-xl border border-amber-300 bg-white px-3 py-3 text-base font-semibold text-slate-900"
               >
                 {launchRewardPrizes.map((prize) => <option key={prize.id} value={prize.id}>{prize.title}</option>)}
