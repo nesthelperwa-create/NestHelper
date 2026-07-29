@@ -111,12 +111,12 @@ const segmentColors = [
 
 const wheelLabelLines: Record<string, string[]> = {
   "laundry-10": ["$10 OFF", "LAUNDRY"],
-  "parent-reset-15": ["$15 OFF", "RESET"],
-  "nesthelper-credit-25": ["$25", "CREDIT"],
-  "family-service-25": ["$25 OFF", "FAMILY HELP"],
+  "parent-reset-15": ["$15 OFF", "PARENT", "RESET"],
+  "nesthelper-credit-25": ["$25", "NESTHELPER", "CREDIT"],
+  "family-service-25": ["$25 OFF", "FAMILY", "SERVICE"],
   "smart-label-starter": ["FREE", "SMART", "LABELS"],
-  "organizing-add-on": ["FREE", "ORG", "ADD-ON"],
-  "parent-reset-grand": ["FREE", "3-HR", "RESET"],
+  "organizing-add-on": ["FREE", "ORGANIZING", "ADD-ON"],
+  "parent-reset-grand": ["FREE", "3-HOUR", "PARENT RESET"],
 };
 
 function toE164(value: string) {
@@ -187,6 +187,7 @@ function PrizeWheel({
   spinning: boolean;
   onAnimationComplete: () => void;
 }) {
+  const segmentAngle = 360 / launchRewardPrizes.length;
   const gradient = launchRewardPrizes
     .map((_, index) => {
       const start = (index / launchRewardPrizes.length) * 100;
@@ -194,9 +195,14 @@ function PrizeWheel({
       return `${segmentColors[index]} ${start}% ${end}%`;
     })
     .join(", ");
+  const separatorGradient = `repeating-conic-gradient(from -90deg, transparent 0deg ${segmentAngle - 0.55}deg, rgba(255,255,255,0.7) ${segmentAngle - 0.55}deg ${segmentAngle}deg)`;
 
   return (
-    <div className="relative mx-auto aspect-square w-full max-w-[31rem] select-none" aria-label="NestHelper Launch Rewards wheel">
+    <div
+      className="relative mx-auto aspect-square w-full max-w-[31rem] select-none"
+      style={{ containerType: "inline-size" }}
+      aria-label="NestHelper Launch Rewards wheel"
+    >
       <div className="absolute left-1/2 top-0 z-30 -translate-x-1/2 -translate-y-1 drop-shadow-lg" aria-hidden="true">
         <div className="h-0 w-0 border-x-[18px] border-t-[34px] border-x-transparent border-t-nest-gold2 sm:border-x-[22px] sm:border-t-[42px]" />
       </div>
@@ -209,38 +215,44 @@ function PrizeWheel({
           transition={spinning ? { duration: 5.6, ease: [0.08, 0.62, 0.16, 1] } : { duration: 0 }}
           onAnimationComplete={onAnimationComplete}
         >
+          <div
+            className="pointer-events-none absolute inset-0 z-[1] rounded-full"
+            style={{ background: separatorGradient }}
+            aria-hidden="true"
+          />
           {launchRewardPrizes.map((prize, index) => {
-            const angle = (360 / launchRewardPrizes.length) * (index + 0.5);
+            const angle = segmentAngle * (index + 0.5);
             const radians = (angle * Math.PI) / 180;
-            const radius = index === 1 ? 35 : index === 5 ? 31 : 33;
+            const radius = 34;
             const x = 50 + Math.sin(radians) * radius;
             const y = 50 - Math.cos(radians) * radius;
-            const lightSegment = [1, 3, 5, 6].includes(index);
             const lines = wheelLabelLines[prize.id] || [prize.shortLabel];
-            const labelRotation = [-22, 24, 2, 18, -14, -24, -4][index];
-            const labelWidth = [22, 20, 19, 20, 20, 21, 19][index];
+            const labelRotation = angle > 270 ? angle - 360 : angle > 90 ? angle - 180 : angle;
 
             return (
               <div
                 key={prize.id}
-                className="absolute z-10 flex -translate-x-1/2 -translate-y-1/2 items-center justify-center text-center"
+                className="absolute z-10 flex items-center justify-center text-center"
                 style={{
                   left: `${x}%`,
                   top: `${y}%`,
-                  width: `${labelWidth}%`,
+                  width: "23%",
+                  aspectRatio: "1.82 / 1",
                   transform: `translate(-50%, -50%) rotate(${labelRotation}deg)`,
                   transformOrigin: "center center",
                 }}
               >
                 <div
-                  className={`flex min-h-[2.55rem] w-full max-w-full flex-col items-center justify-center rounded-xl border px-1 py-[0.22rem] text-[0.43rem] font-black uppercase leading-[1.02] tracking-[-0.01em] shadow-sm sm:min-h-[3.2rem] sm:rounded-2xl sm:px-1.5 sm:py-[0.35rem] sm:text-[0.61rem] md:min-h-[3.55rem] md:text-[0.69rem] ${
-                    lightSegment
-                      ? "border-nest-teal/18 bg-white/90 text-nest-teal"
-                      : "border-white/30 bg-nest-teal/84 text-white"
-                  }`}
+                  className="flex h-full w-full flex-col items-center justify-center rounded-xl border border-nest-gold/35 bg-[#fffaf0]/95 font-black uppercase text-nest-teal shadow-[0_3px_12px_rgba(0,63,59,0.14)]"
+                  style={{
+                    padding: "4% 5%",
+                    fontSize: "clamp(0.42rem, 2.6cqw, 0.72rem)",
+                    lineHeight: 0.98,
+                    letterSpacing: "-0.02em",
+                  }}
                 >
                   {lines.map((line) => (
-                    <span key={line} className="block px-0.5 text-center">
+                    <span key={line} className="block whitespace-nowrap text-center">
                       {line}
                     </span>
                   ))}
