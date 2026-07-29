@@ -210,15 +210,23 @@ function PrizeWheel({
             const y = 50 - Math.cos(radians) * radius;
             const lightSegment = [1, 3, 5, 6].includes(index);
             const lines = wheelLabelLines[prize.id] || [prize.shortLabel];
+            const labelRotation = [-22, 24, 2, 18, -14, -24, -4][index];
+            const labelWidth = [22, 20, 19, 20, 20, 21, 19][index];
 
             return (
               <div
                 key={prize.id}
-                className="absolute z-10 flex w-[22%] sm:w-[23%] md:w-[22%] -translate-x-1/2 -translate-y-1/2 items-center justify-center text-center"
-                style={{ left: `${x}%`, top: `${y}%` }}
+                className="absolute z-10 flex -translate-x-1/2 -translate-y-1/2 items-center justify-center text-center"
+                style={{
+                  left: `${x}%`,
+                  top: `${y}%`,
+                  width: `${labelWidth}%`,
+                  transform: `translate(-50%, -50%) rotate(${labelRotation}deg)`,
+                  transformOrigin: "center center",
+                }}
               >
                 <div
-                  className={`flex min-h-[2.7rem] w-full max-w-full flex-col items-center justify-center rounded-xl border px-1 py-1 text-[0.45rem] font-black uppercase leading-[1.03] tracking-[-0.01em] shadow-sm sm:min-h-[3.45rem] sm:rounded-2xl sm:px-1.5 sm:py-1.5 sm:text-[0.64rem] md:min-h-[3.8rem] md:text-[0.72rem] ${
+                  className={`flex min-h-[2.55rem] w-full max-w-full flex-col items-center justify-center rounded-xl border px-1 py-[0.22rem] text-[0.43rem] font-black uppercase leading-[1.02] tracking-[-0.01em] shadow-sm sm:min-h-[3.2rem] sm:rounded-2xl sm:px-1.5 sm:py-[0.35rem] sm:text-[0.61rem] md:min-h-[3.55rem] md:text-[0.69rem] ${
                     lightSegment
                       ? "border-nest-teal/18 bg-white/90 text-nest-teal"
                       : "border-white/30 bg-nest-teal/84 text-white"
