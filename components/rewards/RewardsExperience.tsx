@@ -102,6 +102,16 @@ const segmentColors = [
   "#c18f37",
 ];
 
+const wheelLabelLines: Record<string, string[]> = {
+  "laundry-10": ["$10 OFF", "LAUNDRY"],
+  "parent-reset-15": ["$15 OFF", "PARENT RESET"],
+  "nesthelper-credit-25": ["$25", "NESTHELPER", "CREDIT"],
+  "family-service-25": ["$25 OFF", "FAMILY HELP"],
+  "smart-label-starter": ["FREE", "SMART LABELS"],
+  "organizing-add-on": ["FREE", "ORGANIZING", "ADD-ON"],
+  "parent-reset-grand": ["FREE", "3-HOUR", "PARENT RESET"],
+};
+
 function toE164(value: string) {
   const digits = value.replace(/\D/g, "");
   const ten = digits.length === 11 && digits.startsWith("1") ? digits.slice(1) : digits;
@@ -194,18 +204,30 @@ function PrizeWheel({
         >
           {launchRewardPrizes.map((prize, index) => {
             const angle = (360 / launchRewardPrizes.length) * (index + 0.5);
-            const light = [1, 3, 5].includes(index);
+            const radians = (angle * Math.PI) / 180;
+            const x = 50 + Math.sin(radians) * 33;
+            const y = 50 - Math.cos(radians) * 33;
+            const lightSegment = [1, 3, 5, 6].includes(index);
+            const lines = wheelLabelLines[prize.id] || [prize.shortLabel];
+
             return (
               <div
                 key={prize.id}
-                className="absolute left-1/2 top-1/2 h-1/2 w-[28%] origin-bottom -translate-x-1/2 -translate-y-full text-center"
-                style={{ transform: `translateX(-50%) translateY(-100%) rotate(${angle}deg)` }}
+                className="absolute z-10 flex w-[25%] -translate-x-1/2 -translate-y-1/2 items-center justify-center text-center"
+                style={{ left: `${x}%`, top: `${y}%` }}
               >
                 <div
-                  className={`mx-auto mt-[17%] max-w-[7.2rem] text-[0.48rem] font-black uppercase leading-[1.05] tracking-tight sm:mt-[15%] sm:text-[0.70rem] md:text-xs ${light ? "text-nest-teal" : "text-white"}`}
-                  style={{ transform: "rotate(90deg)" }}
+                  className={`flex min-h-[3.2rem] w-full flex-col items-center justify-center rounded-xl border px-1.5 py-1.5 text-[0.55rem] font-black uppercase leading-[1.02] tracking-[-0.015em] shadow-sm sm:min-h-[4.2rem] sm:rounded-2xl sm:px-2 sm:py-2 sm:text-xs md:text-[0.82rem] ${
+                    lightSegment
+                      ? "border-nest-teal/18 bg-white/88 text-nest-teal"
+                      : "border-white/30 bg-nest-teal/82 text-white"
+                  }`}
                 >
-                  {prize.shortLabel}
+                  {lines.map((line) => (
+                    <span key={line} className="block whitespace-nowrap">
+                      {line}
+                    </span>
+                  ))}
                 </div>
               </div>
             );
