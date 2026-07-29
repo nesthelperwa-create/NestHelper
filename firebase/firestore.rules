@@ -51,6 +51,52 @@ service cloud.firestore {
       allow read, update, delete: if isAdmin();
     }
 
+    // Launch Rewards are created and enforced only through trusted Next.js server routes.
+    // Admin users may review and update records, but public clients cannot read or write them directly.
+    match /launchRewardParticipants/{docId} {
+      allow create, delete: if false;
+      allow read, update: if isAdmin();
+    }
+
+    match /launchRewardIdentityLocks/{docId} {
+      allow create, delete: if false;
+      allow read, update: if isAdmin();
+    }
+
+    match /launchRewardEmailVerifications/{docId} {
+      allow create, delete: if false;
+      allow read, update: if isAdmin();
+    }
+
+    match /launchRewardRateLimits/{docId} {
+      allow create, delete: if false;
+      allow read, update: if isAdmin();
+    }
+
+    match /launchRewardSpins/{docId} {
+      allow create, delete: if false;
+      allow read, update: if isAdmin();
+    }
+
+    match /launchRewardSpinRequests/{docId} {
+      allow create, delete: if false;
+      allow read, update: if isAdmin();
+    }
+
+    match /launchRewardParticipantMonths/{docId} {
+      allow create, delete: if false;
+      allow read, update: if isAdmin();
+    }
+
+    match /launchRewardGrandPrizeMonths/{docId} {
+      allow create, delete: if false;
+      allow read, update: if isAdmin();
+    }
+
+    match /launchRewards/{docId} {
+      allow create, delete: if false;
+      allow read, update: if isAdmin();
+    }
 
     match /smartLabelBatches/{docId} {
       allow create: if false; // generated through admin API route only

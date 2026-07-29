@@ -25,6 +25,7 @@ const defaultState = {
   alternateDate: "",
   urgency: "Flexible around my preferred date",
   promoCode: "",
+  launchRewardToken: "",
   howFoundUs: "",
   howFoundUsDetails: "",
   campaignSource: "",
@@ -620,6 +621,7 @@ function cleanForSelectedService(form: RequestFormState) {
     alternateDate: form.alternateDate,
     urgency: form.urgency,
     promoCode: form.promoCode,
+    ...(form.launchRewardToken ? { launchRewardToken: form.launchRewardToken } : {}),
     ...(form.incomingReferralCode ? {
       incomingReferralCode: form.incomingReferralCode,
       incomingReferralProgram: form.incomingReferralProgram || "family-to-family",
@@ -844,16 +846,28 @@ export function RequestForm() {
   const params = useSearchParams();
   const requestedService = normalizeServiceParam(params.get("service") || "");
   const requestedReferralCode = normalizeReferralInput(params.get("ref") || params.get("referral") || params.get("referralCode") || "");
+  const requestedLaunchRewardToken = (params.get("reward") || "").trim();
   const [form, setForm] = useState({
     ...defaultState,
     service: requestedService,
     supplyPreference: getServiceCategory(requestedService) === "movePrep" ? "Not sure yet" : defaultState.supplyPreference,
-    incomingReferralCode: requestedReferralCode,
-    incomingReferralProgram: requestedReferralCode ? "family-to-family" : "",
-    incomingReferralLandingPage: requestedReferralCode ? "/referrals" : "",
+    launchRewardToken: requestedLaunchRewardToken,
+    incomingReferralCode: requestedLaunchRewardToken ? "" : requestedReferralCode,
+    incomingReferralProgram: requestedLaunchRewardToken ? "" : requestedReferralCode ? "family-to-family" : "",
+    incomingReferralLandingPage: requestedLaunchRewardToken ? "" : requestedReferralCode ? "/referrals" : "",
   });
   const [status, setStatus] = useState<Status>("idle");
   const [message, setMessage] = useState("");
+  const [launchReward, setLaunchReward] = useState<null | {
+    title: string;
+    description: string;
+    referenceCode: string;
+    status: string;
+    expired: boolean;
+    eligibleServiceIds: string[];
+    requiresManualVerification: boolean;
+  }>(null);
+  const [launchRewardMessage, setLaunchRewardMessage] = useState(requestedLaunchRewardToken ? "Checking your saved Launch Reward…" : "");
 
   const publicRequestServices = useMemo(() => services.filter((service) => !["parent-reset-2hr", "helper-block-4hr"].includes(service.id)), []);
   const selectedService = useMemo(() => services.find((service) => service.id === form.service), [form.service]);
@@ -878,6 +892,8 @@ export function RequestForm() {
   const petDetailsRequired = (isHomeReset || isAreaReset || isMoveOut || isMovePrep) && form.pets !== "No pets" && form.pets !== "No pets now, but pets lived here before";
   const referralApplies = Boolean(form.incomingReferralCode && isReferralEligibleService(form.service));
   const referralNeedsEligiblePackage = Boolean(form.incomingReferralCode && form.service && !isReferralEligibleService(form.service));
+  const launchRewardApplies = Boolean(launchReward && form.service && launchReward.eligibleServiceIds.includes(form.service));
+  const launchRewardNeedsEligibleService = Boolean(launchReward && form.service && !launchReward.eligibleServiceIds.includes(form.service));
   const showHowFoundUsDetails = shouldShowHowFoundUsDetails(form.howFoundUs);
 
   useEffect(() => {
@@ -889,6 +905,32 @@ export function RequestForm() {
       }
     });
   }, []);
+
+  useEffect(() => {
+    if (!requestedLaunchRewardToken) return;
+    let active = true;
+
+    fetch(`/api/rewards/reward?token=${encodeURIComponent(requestedLaunchRewardToken)}`, { cache: "no-store" })
+      .then(async (response) => {
+        const result = await response.json().catch(() => null);
+        if (!response.ok || !result?.ok) throw new Error(result?.error || "This reward could not be loaded.");
+        return result.reward;
+      })
+      .then((reward) => {
+        if (!active) return;
+        setLaunchReward(reward);
+        setLaunchRewardMessage("");
+      })
+      .catch((error) => {
+        if (!active) return;
+        setLaunchReward(null);
+        setLaunchRewardMessage(error instanceof Error ? error.message : "This reward could not be loaded.");
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [requestedLaunchRewardToken]);
 
   function update(name: keyof RequestFormState, value: unknown) {
     setForm((prev) => ({ ...prev, [name]: value }) as RequestFormState);
@@ -1085,6 +1127,29 @@ export function RequestForm() {
       }
     }
 
+    if (form.launchRewardToken) {
+      if (!launchReward) {
+        setStatus("error");
+        setMessage(launchRewardMessage || "Return to the Launch Rewards page and verify your account before using this reward.");
+        return;
+      }
+      if (launchReward.expired || ["expired", "voided", "redeemed"].includes(launchReward.status)) {
+        setStatus("error");
+        setMessage("This Launch Reward is no longer available.");
+        return;
+      }
+      if (!launchReward.eligibleServiceIds.includes(form.service)) {
+        setStatus("error");
+        setMessage("Please choose a service that is eligible for your attached Launch Reward.");
+        return;
+      }
+      if (form.promoCode || form.incomingReferralCode) {
+        setStatus("error");
+        setMessage("Launch Rewards cannot be combined with a promo code or referral credit.");
+        return;
+      }
+    }
+
     setStatus("loading");
     setMessage("");
 
@@ -1098,9 +1163,11 @@ export function RequestForm() {
       if (!response.ok || !result?.ok) throw new Error(result?.error || "Request submission failed");
 
       setStatus("success");
-      setMessage(form.incomingReferralCode
-        ? "Request received with the family referral link. We’ll review the request and keep the referral pending until the eligible reset is completed."
-        : "Request received. We’ll review your service area, timing, scope, safety notes, and pricing before sending a secure checkout link. A confirmation email is on its way.");
+      setMessage(form.launchRewardToken
+        ? "Request received with your Launch Reward attached. We’ll review the service fit, reward eligibility, scope, and availability before confirming anything."
+        : form.incomingReferralCode
+          ? "Request received with the family referral link. We’ll review the request and keep the referral pending until the eligible reset is completed."
+          : "Request received. We’ll review your service area, timing, scope, safety notes, and pricing before sending a secure checkout link. A confirmation email is on its way.");
 
       router.push("/request/thank-you");
     } catch (err) {
@@ -1133,6 +1200,41 @@ export function RequestForm() {
         </div>
       </div>
 
+      {form.launchRewardToken && (
+        <div className={`rounded-[1.75rem] border p-5 shadow-sm ${launchRewardNeedsEligibleService ? "border-amber-200 bg-amber-50 text-amber-900" : "border-nest-gold/25 bg-gradient-to-br from-nest-mint/35 via-white to-nest-cream text-nest-ink/82"}`}>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
+            <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-nest-teal shadow-sm">
+              <Gift className="h-5 w-5" />
+            </span>
+            <div className="min-w-0">
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-nest-gold">Launch Reward attached</p>
+              {launchReward ? (
+                <>
+                  <h3 className="mt-1 text-xl font-black text-nest-teal">{launchReward.title}</h3>
+                  <p className="mt-2 text-sm font-semibold leading-6">{launchReward.description}</p>
+                  <p className="mt-2 text-xs font-black uppercase tracking-[0.12em] text-nest-teal/70">Reward {launchReward.referenceCode}</p>
+                  <p className="mt-2 text-sm font-semibold leading-6">
+                    {launchRewardNeedsEligibleService
+                      ? "The service currently selected is not eligible for this reward. Choose one of the eligible services before submitting."
+                      : launchRewardApplies
+                        ? launchReward.requiresManualVerification
+                          ? "Your rare Parent Reset claim will stay pending until NestHelper verifies eligibility, service area, and standard scope."
+                          : "The reward will be reserved after NestHelper receives and validates this request. It is not combined with another promotion."
+                        : "Choose an eligible service below to use this reward."}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <h3 className="mt-1 text-xl font-black text-nest-teal">Checking your saved reward</h3>
+                  <p className="mt-2 text-sm font-semibold leading-6">{launchRewardMessage}</p>
+                  <a href="/rewards" className="mt-3 inline-flex font-black text-nest-teal underline">Return to Launch Rewards</a>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {form.incomingReferralCode && (
         <div className={`rounded-[1.75rem] border p-5 shadow-sm ${referralNeedsEligiblePackage ? "border-amber-200 bg-amber-50 text-amber-900" : "border-nest-gold/20 bg-nest-mint/25 text-nest-ink/82"}`}>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
@@ -1159,7 +1261,9 @@ export function RequestForm() {
           <Field label="Full name" required><input className="input" required autoComplete="name" value={form.fullName} onChange={(e) => update("fullName", e.target.value)} /></Field>
           <Field label="Phone" required><input className="input" required autoComplete="tel" inputMode="tel" value={form.phone} onChange={(e) => update("phone", formatPhoneNumber(e.target.value))} /></Field>
           <Field label="Email" required><input type="email" className="input" required autoComplete="email" value={form.email} onChange={(e) => update("email", e.target.value)} /></Field>
-          <Field label="Promo/referral code (optional)"><input className="input" placeholder="Optional code" value={form.promoCode} onChange={(e) => update("promoCode", e.target.value.toUpperCase())} /></Field>
+          {!form.launchRewardToken && (
+            <Field label="Promo/referral code (optional)"><input className="input" placeholder="Optional code" value={form.promoCode} onChange={(e) => update("promoCode", e.target.value.toUpperCase())} /></Field>
+          )}
           <Field label="How did you hear about NestHelper?">
             <select className="input" value={form.howFoundUs} onChange={(e) => update("howFoundUs", e.target.value)}>
               <option value="">Choose one</option>

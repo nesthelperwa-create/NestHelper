@@ -180,3 +180,27 @@ a { text-underline-offset: 4px; }
     line-height: 1.35;
   }
 }
+
+@keyframes launch-rewards-marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+.launch-rewards-marquee {
+  animation: launch-rewards-marquee 34s linear infinite;
+}
+
+.launch-rewards-marquee:hover {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .launch-rewards-marquee {
+    animation: none !important;
+    width: 100%;
+    justify-content: center;
+  }
+  .launch-rewards-marquee > :nth-child(2) {
+    display: none;
+  }
+}

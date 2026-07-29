@@ -49,7 +49,9 @@ function getConfirmationContent(collection: SubmissionCollection, payload: Recor
       title: isCommercial ? "Thanks — we received your Commercial Reset quote request." : "Thanks — we received your NestHelper request.",
       intro: isCommercial
         ? "We’ll review the business address, square footage, bathrooms, frequency, access notes, product preferences, and service fit before anything is confirmed. No payment is due yet."
-        : "We’ll review your service area, timing, scope, access notes, and safety details before anything is confirmed. No payment is due yet.",
+        : payload.launchRewardTitle
+          ? "We received your request with a Launch Reward attached. We’ll verify the reward, service fit, service area, timing, scope, and safety details before anything is confirmed. No payment is due yet."
+          : "We’ll review your service area, timing, scope, access notes, and safety details before anything is confirmed. No payment is due yet.",
       nextSteps: isCommercial
         ? [
             "NestHelper will review the commercial request details.",
@@ -60,6 +62,9 @@ function getConfirmationContent(collection: SubmissionCollection, payload: Recor
       summary: {
         "Request ID": submissionId,
         Service: service,
+        "Launch Reward": formatValue(payload.launchRewardTitle),
+        "Launch Reward reference": formatValue(payload.launchRewardReferenceCode),
+        "Launch Reward status": formatValue(payload.launchRewardStatus),
         "Rooms / areas": formatValue(payload.areaResetRoomSummary || payload.roomsAreas),
         "Simple meal prep": formatValue(payload.mealPrepRequested ? "Requested — simple in-home prep only" : ""),
         "Meal prep tasks": formatValue(payload.mealPrepTaskSummary),

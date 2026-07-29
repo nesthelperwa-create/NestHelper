@@ -80,6 +80,10 @@ export const policies: Policy[] = [
       {
         heading: "Service providers",
         body: "NestHelper may use providers such as Stripe, Firebase, email/text tools, payroll systems, and background-check providers to operate the business."
+      },
+      {
+        heading: "Launch Rewards verification and fraud prevention",
+        body: "Launch Rewards may collect verified phone and email information, ZIP code, reward history, server timestamps, and limited device or network security signals. This information is used to confirm eligibility, enforce spin and household limits, prevent duplicate or automated entries, investigate suspected misuse, contact potential winners, and attach rewards to eligible service requests. Marketing consent is optional and is not required to enter."
       }
     ]
   },

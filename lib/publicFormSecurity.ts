@@ -74,6 +74,7 @@ const serviceRequestAllowedFields = [
   "alternateDate",
   "urgency",
   "promoCode",
+  "launchRewardToken",
   "incomingReferralCode",
   "incomingReferralProgram",
   "incomingReferralLandingPage",

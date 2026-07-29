@@ -16,6 +16,7 @@ import {
   Star,
 } from "lucide-react";
 import { AnimatedSection } from "@/components/AnimatedSection";
+import { LaunchRewardsTicker } from "@/components/LaunchRewardsTicker";
 import { ButtonLink } from "@/components/ui/ButtonLink";
 import { ServiceCard } from "@/components/ServiceCard";
 import { services } from "@/lib/services";
@@ -43,6 +44,7 @@ export default function HomePage() {
 
   return (
     <>
+      <LaunchRewardsTicker />
       <section className="relative isolate overflow-hidden px-4 pb-10 pt-7 sm:px-6 sm:py-12 lg:px-8 lg:py-16">
         <div className="absolute inset-0 -z-10 bg-[url('/assets/backgrounds/warm-mint-gradient.png')] bg-cover opacity-80" />
         <div className="absolute inset-0 -z-10 bg-white/44" />

@@ -53,6 +53,7 @@ export function Footer() {
           links={[
             { href: "/", label: "Home" },
             { href: "/services", label: "Services & Pricing" },
+            { href: "/rewards", label: "Launch Rewards" },
             { href: "/commercial-reset", label: "Commercial Reset" },
             { href: "/trust", label: "Trust & Safety" },
             { href: "/helpers", label: "Helpers & Partners" },
@@ -68,6 +69,7 @@ export function Footer() {
             { href: "/#how-it-works", label: "How It Works" },
             { href: "/giving-back", label: "Giving Back" },
             { href: "/referrals", label: "Family Referrals" },
+            { href: "/rewards/rules", label: "Launch Rewards Rules" },
             { href: "/service-area/snohomish-county", label: "Service Area" },
           ]}
         />
