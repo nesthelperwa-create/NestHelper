@@ -52,6 +52,7 @@ type RewardSummary = {
   eligibleServiceIds: string[];
   requiresManualVerification: boolean;
   useHref: string;
+  testOnly?: boolean;
 };
 
 type StatusData = {
@@ -61,6 +62,11 @@ type StatusData = {
   endAt: string;
   verified: boolean;
   grandPrizeAvailable: boolean;
+  testMode?: boolean;
+  actualPhase?: "prelaunch" | "live" | "ended";
+  testModeExpiresAt?: string;
+  testPrizeId?: string;
+  testPrizeTitle?: string;
   monthKey?: string;
   participant?: {
     firstName: string;
@@ -90,6 +96,7 @@ type SpinResult = {
   claimDeadline: string;
   requiresManualVerification: boolean;
   useHref: string;
+  testOnly?: boolean;
 };
 
 const segmentColors = [
@@ -440,7 +447,7 @@ export function RewardsExperience() {
     try {
       const idempotencyKey = crypto.randomUUID().replaceAll("-", "");
       const appCheckHeader = await getRewardsAppCheckHeader({ limitedUse: true });
-      const response = await fetch("/api/rewards/spin", {
+      const response = await fetch(status.testMode ? "/api/rewards/test-spin" : "/api/rewards/spin", {
         method: "POST",
         headers: { "Content-Type": "application/json", ...appCheckHeader },
         body: JSON.stringify({ idempotencyKey }),
@@ -455,11 +462,11 @@ export function RewardsExperience() {
       setRotation((current) => current + 360 * 7 + stopAt + (360 - (current % 360)));
       setStatus((current) => current ? {
         ...current,
-        canSpin: false,
+        canSpin: current.testMode ? true : false,
         grandPrizeAvailable: result.grandPrizeAvailable,
-        nextEligibleSpinAt: result.nextEligibleSpinAt,
-        spinsThisMonth: result.spinsThisMonth,
-        spinsRemainingThisMonth: result.spinsRemainingThisMonth,
+        nextEligibleSpinAt: current.testMode ? null : result.nextEligibleSpinAt,
+        spinsThisMonth: current.testMode ? 0 : result.spinsThisMonth,
+        spinsRemainingThisMonth: current.testMode ? 99 : result.spinsRemainingThisMonth,
       } : current);
     } catch (spinError) {
       setError(spinError instanceof Error ? spinError.message : "The spin could not be completed.");
@@ -536,13 +543,36 @@ export function RewardsExperience() {
 
           {phase === "live" && (
             <div className="mx-auto mt-7 flex max-w-2xl flex-wrap justify-center gap-3 text-sm font-black">
-              <span className="rounded-full border border-white/20 bg-white/10 px-4 py-2"><ShieldCheck className="mr-2 inline h-4 w-4 text-nest-gold2" />Phone + email verified</span>
-              <span className="rounded-full border border-white/20 bg-white/10 px-4 py-2"><Clock3 className="mr-2 inline h-4 w-4 text-nest-gold2" />One spin every 7 days</span>
-              <span className="rounded-full border border-white/20 bg-white/10 px-4 py-2"><Gift className="mr-2 inline h-4 w-4 text-nest-gold2" />Up to 4 spins monthly</span>
+              {status?.testMode ? (
+                <>
+                  <span className="rounded-full border border-white/20 bg-white/10 px-4 py-2"><ShieldCheck className="mr-2 inline h-4 w-4 text-nest-gold2" />Admin-only test</span>
+                  <span className="rounded-full border border-white/20 bg-white/10 px-4 py-2"><RotateCw className="mr-2 inline h-4 w-4 text-nest-gold2" />Repeatable test spins</span>
+                  <span className="rounded-full border border-white/20 bg-white/10 px-4 py-2"><Gift className="mr-2 inline h-4 w-4 text-nest-gold2" />No redeemable reward</span>
+                </>
+              ) : (
+                <>
+                  <span className="rounded-full border border-white/20 bg-white/10 px-4 py-2"><ShieldCheck className="mr-2 inline h-4 w-4 text-nest-gold2" />Phone + email verified</span>
+                  <span className="rounded-full border border-white/20 bg-white/10 px-4 py-2"><Clock3 className="mr-2 inline h-4 w-4 text-nest-gold2" />One spin every 7 days</span>
+                  <span className="rounded-full border border-white/20 bg-white/10 px-4 py-2"><Gift className="mr-2 inline h-4 w-4 text-nest-gold2" />Up to 4 spins monthly</span>
+                </>
+              )}
             </div>
           )}
         </div>
       </section>
+
+      {status?.testMode && (
+        <section className="rounded-[2rem] border-2 border-amber-400 bg-amber-50 p-5 text-amber-950 shadow-soft sm:p-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-amber-700">Admin-only prelaunch test</p>
+              <h2 className="mt-1 text-2xl font-black text-nest-teal">No real reward will be issued.</h2>
+              <p className="mt-2 text-sm font-bold leading-6">The secure test endpoint is set to land on <strong>{status.testPrizeTitle || "the selected prize"}</strong>. Test spins are stored separately, cannot be redeemed, and do not affect the monthly winner limit.</p>
+            </div>
+            <Link href="/admin/rewards" className="focus-ring inline-flex shrink-0 items-center justify-center rounded-full bg-amber-600 px-5 py-3 font-black text-white">Back to Rewards Admin</Link>
+          </div>
+        </section>
+      )}
 
       {error && <div role="alert" className="rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 font-bold text-rose-800">{error}</div>}
       {notice && <div role="status" aria-live="polite" className="rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 font-bold text-emerald-900">{notice}</div>}
@@ -551,7 +581,9 @@ export function RewardsExperience() {
         <div className="rounded-[2.5rem] border border-nest-gold/18 bg-white/88 p-4 shadow-soft backdrop-blur sm:p-7">
           <PrizeWheel rotation={rotation} spinning={spinning} onAnimationComplete={finishWheelAnimation} />
           <p className="mx-auto mt-4 max-w-xl text-center text-xs font-semibold leading-5 text-nest-ink/55">
-            The animated segment sizes are decorative. The secure server chooses and permanently records the result using the odds disclosed below before the wheel moves.
+            {status?.testMode
+              ? "Test mode uses the secure server-selected prize chosen in Admin. It creates no customer reward and does not affect live odds or limits."
+              : "The animated segment sizes are decorative. The secure server chooses and permanently records the result using the odds disclosed below before the wheel moves."}
           </p>
         </div>
 
@@ -633,21 +665,24 @@ export function RewardsExperience() {
             <div className="rounded-[2rem] border border-nest-gold/20 bg-white p-5 shadow-soft sm:p-7">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <p className="text-xs font-black uppercase tracking-[0.16em] text-nest-gold">Verified participant</p>
-                  <h2 className="mt-1 text-2xl font-black text-nest-teal">Welcome, {status.participant?.firstName || "friend"}.</h2>
-                  <p className="mt-2 text-sm font-semibold text-nest-ink/62">{status.participant?.maskedEmail} · {status.participant?.maskedPhone}</p>
+                  <p className="text-xs font-black uppercase tracking-[0.16em] text-nest-gold">{status.testMode ? "Admin test session" : "Verified participant"}</p>
+                  <h2 className="mt-1 text-2xl font-black text-nest-teal">{status.testMode ? "Test the wheel before launch." : `Welcome, ${status.participant?.firstName || "friend"}.`}</h2>
+                  <p className="mt-2 text-sm font-semibold text-nest-ink/62">{status.testMode ? `Forced result: ${status.testPrizeTitle || "selected prize"}` : `${status.participant?.maskedEmail} · ${status.participant?.maskedPhone}`}</p>
                 </div>
-                <button type="button" onClick={signOutRewards} disabled={busy} className="text-sm font-black text-nest-teal underline">Sign out</button>
+                {status.testMode
+                  ? <Link href="/admin/rewards" className="text-sm font-black text-nest-teal underline">Test settings</Link>
+                  : <button type="button" onClick={signOutRewards} disabled={busy} className="text-sm font-black text-nest-teal underline">Sign out</button>}
+
               </div>
 
               <div className="mt-5 grid grid-cols-2 gap-3">
-                <div className="rounded-2xl bg-nest-mint/30 p-4"><p className="text-xs font-black uppercase tracking-[0.12em] text-nest-teal/65">Monthly spins</p><p className="mt-1 text-2xl font-black text-nest-teal">{status.spinsThisMonth || 0} / {status.maxSpinsPerMonth || LAUNCH_REWARDS_MAX_SPINS_PER_MONTH}</p></div>
-                <div className="rounded-2xl bg-nest-cream p-4"><p className="text-xs font-black uppercase tracking-[0.12em] text-nest-gold">Rare prize</p><p className="mt-1 text-sm font-black text-nest-teal">{status.grandPrizeAvailable ? "Available this month" : "Claimed this month"}</p></div>
+                <div className="rounded-2xl bg-nest-mint/30 p-4"><p className="text-xs font-black uppercase tracking-[0.12em] text-nest-teal/65">{status.testMode ? "Test spins" : "Monthly spins"}</p><p className="mt-1 text-2xl font-black text-nest-teal">{status.testMode ? "Unlimited preview" : `${status.spinsThisMonth || 0} / ${status.maxSpinsPerMonth || LAUNCH_REWARDS_MAX_SPINS_PER_MONTH}`}</p></div>
+                <div className="rounded-2xl bg-nest-cream p-4"><p className="text-xs font-black uppercase tracking-[0.12em] text-nest-gold">{status.testMode ? "Reward status" : "Rare prize"}</p><p className="mt-1 text-sm font-black text-nest-teal">{status.testMode ? "Test only — not redeemable" : status.grandPrizeAvailable ? "Available this month" : "Claimed this month"}</p></div>
               </div>
 
               {status.canSpin ? (
                 <button type="button" onClick={spinWheel} disabled={busy || spinning} className="focus-ring mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full bg-nest-teal px-6 py-4 text-lg font-black text-white shadow-soft transition hover:-translate-y-0.5 hover:bg-nest-teal2 disabled:cursor-not-allowed disabled:opacity-60">
-                  {busy ? <LoaderCircle className="animate-spin" size={21} /> : spinning ? <RotateCw className="animate-spin" size={21} /> : <Sparkles size={21} />} {spinning ? "Wheel spinning…" : "Spin my reward"}
+                  {busy ? <LoaderCircle className="animate-spin" size={21} /> : spinning ? <RotateCw className="animate-spin" size={21} /> : <Sparkles size={21} />} {spinning ? "Wheel spinning…" : status.testMode ? "Run test spin" : "Spin my reward"}
                 </button>
               ) : (
                 <div className="mt-5 rounded-2xl border border-nest-gold/18 bg-nest-cream p-4 text-center">
@@ -669,17 +704,26 @@ export function RewardsExperience() {
           </div>
           <div className="relative mx-auto max-w-2xl">
             <span className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-nest-teal text-white shadow-soft"><Gift size={30} /></span>
-            <p className="mt-5 text-sm font-black uppercase tracking-[0.2em] text-nest-gold">Your Launch Reward</p>
+            <p className="mt-5 text-sm font-black uppercase tracking-[0.2em] text-nest-gold">{revealedResult.testOnly ? "Test Result — Not a Real Reward" : "Your Launch Reward"}</p>
             <h2 className="mt-2 text-3xl font-black text-nest-teal sm:text-5xl">{revealedResult.title}</h2>
             <p className="mt-4 text-lg font-black text-nest-ink/80">{revealedResult.customerMessage}</p>
             <p className="mx-auto mt-3 max-w-xl font-semibold leading-7 text-nest-ink/68">{revealedResult.description}</p>
-            <div className="mx-auto mt-5 inline-flex rounded-full border border-nest-gold/20 bg-white px-4 py-2 text-sm font-black text-nest-teal">Reward {revealedResult.referenceCode}</div>
+            <div className="mx-auto mt-5 inline-flex rounded-full border border-nest-gold/20 bg-white px-4 py-2 text-sm font-black text-nest-teal">{revealedResult.testOnly ? `Test reference ${revealedResult.referenceCode}` : `Reward ${revealedResult.referenceCode}`}</div>
             {revealedResult.requiresManualVerification && <p className="mx-auto mt-4 max-w-xl rounded-2xl bg-amber-50 p-4 text-sm font-bold leading-6 text-amber-900">This rare prize is pending eligibility, service-area, identity, and standard-scope verification. Submit the claim within 72 hours.</p>}
             <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
-              <Link href={revealedResult.useHref} className="focus-ring inline-flex items-center justify-center gap-2 rounded-full bg-nest-teal px-6 py-3.5 font-black text-white shadow-soft">
-                {revealedResult.requiresManualVerification ? "Submit prize claim" : "Use my reward"} <ArrowRight size={18} />
-              </Link>
-              <button type="button" onClick={shareRewards} className="focus-ring inline-flex items-center justify-center gap-2 rounded-full border border-nest-teal/20 bg-white px-6 py-3.5 font-black text-nest-teal"><Share2 size={18} /> Share Launch Rewards</button>
+              {revealedResult.testOnly ? (
+                <>
+                  <button type="button" onClick={spinWheel} disabled={busy || spinning} className="focus-ring inline-flex items-center justify-center gap-2 rounded-full bg-nest-teal px-6 py-3.5 font-black text-white shadow-soft"><RotateCw size={18} /> Run this test again</button>
+                  <Link href="/admin/rewards" className="focus-ring inline-flex items-center justify-center gap-2 rounded-full border border-nest-teal/20 bg-white px-6 py-3.5 font-black text-nest-teal">Choose another prize <ArrowRight size={18} /></Link>
+                </>
+              ) : (
+                <>
+                  <Link href={revealedResult.useHref} className="focus-ring inline-flex items-center justify-center gap-2 rounded-full bg-nest-teal px-6 py-3.5 font-black text-white shadow-soft">
+                    {revealedResult.requiresManualVerification ? "Submit prize claim" : "Use my reward"} <ArrowRight size={18} />
+                  </Link>
+                  <button type="button" onClick={shareRewards} className="focus-ring inline-flex items-center justify-center gap-2 rounded-full border border-nest-teal/20 bg-white px-6 py-3.5 font-black text-nest-teal"><Share2 size={18} /> Share Launch Rewards</button>
+                </>
+              )}
             </div>
           </div>
         </motion.section>

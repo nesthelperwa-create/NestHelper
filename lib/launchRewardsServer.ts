@@ -9,12 +9,15 @@ import {
   LAUNCH_REWARDS_CAMPAIGN_ID,
   LAUNCH_REWARDS_GRAND_CLAIM_HOURS,
   LAUNCH_REWARDS_STANDARD_EXPIRATION_DAYS,
+  getLaunchRewardPrize,
   type LaunchRewardPrize,
 } from "@/lib/launchRewards";
 
 export const REWARDS_SESSION_COOKIE = "nh_rewards_session";
 export const REWARDS_DEVICE_COOKIE = "nh_rewards_device";
+export const REWARDS_TEST_MODE_COOKIE = "nh_rewards_admin_test";
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 30;
+const TEST_MODE_MAX_AGE_SECONDS = 60 * 60 * 2;
 
 export class LaunchRewardsError extends Error {
   status: number;
@@ -33,6 +36,15 @@ export type RewardsSession = {
   participantId: string;
   deviceId: string;
   sessionVersion: number;
+  expiresAt: number;
+};
+
+export type RewardsTestMode = {
+  version: 1;
+  adminEmail: string;
+  deviceId: string;
+  prizeId: string;
+  sessionId: string;
   expiresAt: number;
 };
 
@@ -169,6 +181,35 @@ export function clearRewardsSession(response: NextResponse) {
     path: "/",
     maxAge: 0,
   });
+}
+
+export function setRewardsTestMode(response: NextResponse, mode: RewardsTestMode) {
+  response.cookies.set(REWARDS_TEST_MODE_COOKIE, signPayload(mode), {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: TEST_MODE_MAX_AGE_SECONDS,
+  });
+}
+
+export function clearRewardsTestMode(response: NextResponse) {
+  response.cookies.set(REWARDS_TEST_MODE_COOKIE, "", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: 0,
+  });
+}
+
+export function readRewardsTestMode(request: NextRequest): RewardsTestMode | null {
+  const mode = verifySignedPayload<RewardsTestMode>(request.cookies.get(REWARDS_TEST_MODE_COOKIE)?.value);
+  const deviceId = parseDeviceCookie(request.cookies.get(REWARDS_DEVICE_COOKIE)?.value);
+  if (!mode || mode.version !== 1 || mode.expiresAt <= Date.now()) return null;
+  if (!deviceId || mode.deviceId !== deviceId) return null;
+  if (!mode.adminEmail || !mode.sessionId || !getLaunchRewardPrize(mode.prizeId)) return null;
+  return mode;
 }
 
 export function readRewardsSession(request: NextRequest): RewardsSession | null {

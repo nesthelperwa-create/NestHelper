@@ -1,10 +1,23 @@
 "use client";
 
+import Link from "next/link";
+import { onAuthStateChanged } from "firebase/auth";
 import { collection, limit, onSnapshot, orderBy, query } from "firebase/firestore";
-import { CheckCircle2, Gift, LoaderCircle, RotateCcw, ShieldAlert, TicketCheck, XCircle } from "lucide-react";
+import {
+  CheckCircle2,
+  ExternalLink,
+  FlaskConical,
+  Gift,
+  LoaderCircle,
+  RotateCcw,
+  ShieldAlert,
+  TicketCheck,
+  XCircle,
+} from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import AdminShell from "@/components/admin/AdminShell";
 import { firebaseAuth, firestoreDb } from "@/lib/firebaseClient";
+import { launchRewardPrizes } from "@/lib/launchRewards";
 
 type RewardRecord = {
   id: string;
@@ -31,6 +44,13 @@ type GrandMonthRecord = {
   winnerParticipantId?: string;
 };
 
+type TestModeState = {
+  enabled: boolean;
+  prizeId: string;
+  prizeTitle: string;
+  expiresAt: string | null;
+};
+
 function formatDate(value?: { toDate?: () => Date } | string) {
   const date = typeof value === "string" ? new Date(value) : value?.toDate?.();
   return date && Number.isFinite(date.getTime()) ? date.toLocaleString() : "—";
@@ -42,6 +62,14 @@ export default function AdminRewardsPage() {
   const [loading, setLoading] = useState(true);
   const [workingId, setWorkingId] = useState("");
   const [message, setMessage] = useState("");
+  const [testMode, setTestMode] = useState<TestModeState>({
+    enabled: false,
+    prizeId: launchRewardPrizes[0].id,
+    prizeTitle: launchRewardPrizes[0].title,
+    expiresAt: null,
+  });
+  const [selectedTestPrizeId, setSelectedTestPrizeId] = useState(launchRewardPrizes[0].id);
+  const [testBusy, setTestBusy] = useState(false);
 
   useEffect(() => {
     const rewardsQuery = query(collection(firestoreDb, "launchRewards"), orderBy("createdAt", "desc"), limit(100));
@@ -60,12 +88,68 @@ export default function AdminRewardsPage() {
     return () => { unsubRewards(); unsubMonths(); };
   }, []);
 
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(firebaseAuth, async (user) => {
+      if (!user) return;
+      try {
+        const token = await user.getIdToken();
+        const response = await fetch("/api/admin/rewards-test-mode", {
+          headers: { Authorization: `Bearer ${token}` },
+          cache: "no-store",
+        });
+        const result = await response.json().catch(() => null);
+        if (!response.ok || !result?.ok) return;
+        const next = {
+          enabled: result.enabled === true,
+          prizeId: String(result.prizeId || launchRewardPrizes[0].id),
+          prizeTitle: String(result.prizeTitle || launchRewardPrizes[0].title),
+          expiresAt: result.expiresAt ? String(result.expiresAt) : null,
+        };
+        setTestMode(next);
+        setSelectedTestPrizeId(next.prizeId);
+      } catch (error) {
+        console.error("Unable to load Launch Rewards test mode", error);
+      }
+    });
+    return unsubscribe;
+  }, []);
+
   const stats = useMemo(() => ({
     total: rewards.length,
     issued: rewards.filter((reward) => ["issued", "approved"].includes(reward.status || "")).length,
     pending: rewards.filter((reward) => ["pending_verification", "claim_submitted", "reserved"].includes(reward.status || "")).length,
     redeemed: rewards.filter((reward) => reward.status === "redeemed").length,
   }), [rewards]);
+
+  async function updateTestMode(action: "enable" | "update" | "reset" | "disable") {
+    setTestBusy(true);
+    setMessage("");
+    try {
+      const token = await firebaseAuth.currentUser?.getIdToken(true);
+      if (!token) throw new Error("Sign in to Admin again.");
+      const response = await fetch("/api/admin/rewards-test-mode", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ action, prizeId: selectedTestPrizeId }),
+      });
+      const result = await response.json().catch(() => null);
+      if (!response.ok || !result?.ok) throw new Error(result?.error || "Unable to update test mode.");
+      const next = {
+        enabled: result.enabled === true,
+        prizeId: String(result.prizeId || selectedTestPrizeId),
+        prizeTitle: String(result.prizeTitle || launchRewardPrizes.find((prize) => prize.id === selectedTestPrizeId)?.title || "Test prize"),
+        expiresAt: result.expiresAt ? String(result.expiresAt) : null,
+      };
+      setTestMode(next);
+      setMessage(action === "disable"
+        ? "Prelaunch test mode is off for this browser."
+        : `Prelaunch test mode is on. The wheel will land on: ${next.prizeTitle}.`);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Unable to update test mode.");
+    } finally {
+      setTestBusy(false);
+    }
+  }
 
   async function updateReward(reward: RewardRecord, action: "approve" | "redeem" | "void" | "release") {
     const reason = ["void", "release"].includes(action)
@@ -99,9 +183,55 @@ export default function AdminRewardsPage() {
         <section className="rounded-[2rem] border border-[#eadfc8] bg-white p-5 shadow-sm sm:p-7">
           <div className="flex items-start gap-3"><Gift className="mt-1 text-[#b98a2f]" /><div><p className="text-xs font-bold uppercase tracking-[0.2em] text-[#b98a2f]">Promotion control</p><h2 className="text-3xl font-bold text-[#075c58]">Launch Rewards</h2><p className="mt-2 text-sm text-slate-600">Review winners, reservations, redemptions, and monthly grand-prize status. Nothing here sends a customer message automatically.</p></div></div>
           <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {[['Total', stats.total], ['Available', stats.issued], ['Pending', stats.pending], ['Redeemed', stats.redeemed]].map(([label, value]) => <div key={String(label)} className="rounded-2xl bg-[#f6f1e7] p-4"><p className="text-xs font-bold uppercase tracking-wider text-slate-500">{label}</p><p className="mt-1 text-2xl font-bold text-[#075c58]">{value}</p></div>)}
+            {[["Total", stats.total], ["Available", stats.issued], ["Pending", stats.pending], ["Redeemed", stats.redeemed]].map(([label, value]) => <div key={String(label)} className="rounded-2xl bg-[#f6f1e7] p-4"><p className="text-xs font-bold uppercase tracking-wider text-slate-500">{label}</p><p className="mt-1 text-2xl font-bold text-[#075c58]">{value}</p></div>)}
           </div>
           {message && <div className="mt-5 rounded-2xl bg-[#e9f4f1] p-4 font-semibold text-[#075c58]">{message}</div>}
+        </section>
+
+        <section className="rounded-[2rem] border border-amber-300 bg-amber-50 p-5 shadow-sm sm:p-7">
+          <div className="flex items-start gap-3">
+            <FlaskConical className="mt-1 shrink-0 text-amber-700" />
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-amber-700">Admin-only preview</p>
+              <h3 className="mt-1 text-2xl font-bold text-[#075c58]">Prelaunch wheel test</h3>
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-amber-950/75">This enables the live wheel only in this browser for two hours. Test results are stored separately, cannot be redeemed, and never count toward the monthly Parent Reset limit.</p>
+            </div>
+          </div>
+
+          <div className="mt-5 grid gap-4 lg:grid-cols-[1fr_auto] lg:items-end">
+            <label className="text-sm font-bold text-[#075c58]">
+              Prize the test wheel should land on
+              <select
+                value={selectedTestPrizeId}
+                onChange={(event) => setSelectedTestPrizeId(event.target.value)}
+                className="mt-2 w-full rounded-xl border border-amber-300 bg-white px-3 py-3 text-base font-semibold text-slate-900"
+              >
+                {launchRewardPrizes.map((prize) => <option key={prize.id} value={prize.id}>{prize.title}</option>)}
+              </select>
+            </label>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                disabled={testBusy}
+                onClick={() => updateTestMode(testMode.enabled ? "update" : "enable")}
+                className="rounded-full bg-[#075c58] px-5 py-3 text-sm font-bold text-white disabled:opacity-60"
+              >
+                {testBusy ? "Saving…" : testMode.enabled ? "Update test prize" : "Enable test mode"}
+              </button>
+              {testMode.enabled && <button type="button" disabled={testBusy} onClick={() => updateTestMode("reset")} className="rounded-full border border-[#075c58]/25 bg-white px-5 py-3 text-sm font-bold text-[#075c58] disabled:opacity-60">Start fresh test session</button>}
+            </div>
+          </div>
+
+          <div className="mt-5 flex flex-col gap-3 rounded-2xl border border-amber-200 bg-white/80 p-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="font-bold text-[#075c58]">Status: {testMode.enabled ? "Enabled for this browser" : "Off"}</p>
+              {testMode.enabled && <p className="mt-1 text-sm text-slate-600">Selected result: {testMode.prizeTitle}{testMode.expiresAt ? ` · Expires ${formatDate(testMode.expiresAt)}` : ""}</p>}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {testMode.enabled && <Link href="/rewards" target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-full bg-amber-600 px-5 py-3 text-sm font-bold text-white"><ExternalLink size={16} /> Open test wheel</Link>}
+              {testMode.enabled && <button type="button" disabled={testBusy} onClick={() => updateTestMode("disable")} className="rounded-full border border-rose-300 bg-white px-5 py-3 text-sm font-bold text-rose-700 disabled:opacity-60">Turn off test mode</button>}
+            </div>
+          </div>
         </section>
 
         <section className="rounded-[2rem] border border-[#eadfc8] bg-white p-5 shadow-sm sm:p-7">

@@ -14,6 +14,7 @@ import {
   ensureRewardsDevice,
   getTimestampMillis,
   readRewardsSession,
+  readRewardsTestMode,
 } from "@/lib/launchRewardsServer";
 
 export const runtime = "nodejs";
@@ -33,7 +34,42 @@ function maskPhone(value: string) {
 export async function GET(request: NextRequest) {
   try {
     const now = Date.now();
-    const phase = getLaunchRewardsPhase(now);
+    const actualPhase = getLaunchRewardsPhase(now);
+    const testMode = readRewardsTestMode(request);
+
+    if (testMode) {
+      const testPrize = getLaunchRewardPrize(testMode.prizeId);
+      const response = NextResponse.json({
+        ok: true,
+        phase: "live",
+        actualPhase,
+        launchAt: LAUNCH_REWARDS_LAUNCH_AT,
+        endAt: LAUNCH_REWARDS_END_AT,
+        verified: true,
+        testMode: true,
+        testModeExpiresAt: new Date(testMode.expiresAt).toISOString(),
+        testPrizeId: testPrize?.id || testMode.prizeId,
+        testPrizeTitle: testPrize?.title || "Selected test prize",
+        participant: {
+          firstName: "Admin test",
+          maskedEmail: maskEmail(testMode.adminEmail),
+          maskedPhone: "Test mode",
+          zip: "—",
+        },
+        grandPrizeAvailable: true,
+        monthKey: getPacificMonthKey(new Date(now)),
+        spinsThisMonth: 0,
+        spinsRemainingThisMonth: 99,
+        maxSpinsPerMonth: 99,
+        nextEligibleSpinAt: null,
+        canSpin: true,
+        rewards: [],
+      });
+      ensureRewardsDevice(request, response, testMode.deviceId);
+      return response;
+    }
+
+    const phase = actualPhase;
     const monthKey = getPacificMonthKey(new Date(now));
     const db = getFirebaseAdminDb();
     const grandSnapshot = await db.collection("launchRewardGrandPrizeMonths").doc(monthKey).get();
