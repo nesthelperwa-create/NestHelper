@@ -111,12 +111,29 @@ const segmentColors = [
 
 const wheelLabelLines: Record<string, string[]> = {
   "laundry-10": ["$10 OFF", "LAUNDRY"],
-  "parent-reset-15": ["$15 OFF", "PARENT", "RESET"],
-  "nesthelper-credit-25": ["$25", "NESTHELPER", "CREDIT"],
+  "parent-reset-15": ["$15 OFF", "RESET"],
+  "nesthelper-credit-25": ["$25", "CREDIT"],
   "family-service-25": ["$25 OFF", "FAMILY", "SERVICE"],
   "smart-label-starter": ["FREE", "SMART", "LABELS"],
-  "organizing-add-on": ["FREE", "ORGANIZING", "ADD-ON"],
-  "parent-reset-grand": ["FREE", "3-HOUR", "PARENT RESET"],
+  "organizing-add-on": ["FREE", "ORG", "ADD-ON"],
+  "parent-reset-grand": ["FREE", "3-HR", "RESET"],
+};
+
+type WheelLabelConfig = {
+  left: number;
+  top: number;
+  rotation: number;
+  width: number;
+};
+
+const wheelLabelConfigs: Record<string, WheelLabelConfig> = {
+  "parent-reset-grand": { left: 34, top: 24, rotation: -28, width: 18 },
+  "laundry-10": { left: 53, top: 23, rotation: 24, width: 18 },
+  "parent-reset-15": { left: 71, top: 39, rotation: 18, width: 18 },
+  "nesthelper-credit-25": { left: 64, top: 63, rotation: 0, width: 18 },
+  "family-service-25": { left: 50, top: 76, rotation: 18, width: 18 },
+  "smart-label-starter": { left: 28, top: 62, rotation: -24, width: 18 },
+  "organizing-add-on": { left: 23, top: 40, rotation: -30, width: 18 },
 };
 
 function toE164(value: string) {
@@ -576,7 +593,7 @@ export function RewardsExperience() {
               <h2 className="mt-1 text-2xl font-black text-nest-teal">No real reward will be issued.</h2>
               <p className="mt-2 text-sm font-bold leading-6">The secure test endpoint is set to land on <strong>{status.testPrizeTitle || "the selected prize"}</strong>. Test spins are stored separately, cannot be redeemed, and do not affect the monthly winner limit.</p>
             </div>
-            <Link href="/admin/rewards" className="focus-ring inline-flex shrink-0 items-center justify-center rounded-full bg-amber-600 px-5 py-3 font-black text-white">Back to Rewards Admin</Link>
+            <a href="/admin/rewards" className="focus-ring inline-flex shrink-0 items-center justify-center rounded-full bg-amber-600 px-5 py-3 font-black text-white">Back to Rewards Admin</a>
           </div>
         </section>
       )}
@@ -677,7 +694,7 @@ export function RewardsExperience() {
                   <p className="mt-2 text-sm font-semibold text-nest-ink/62">{status.testMode ? `Forced result: ${status.testPrizeTitle || "selected prize"}` : `${status.participant?.maskedEmail} · ${status.participant?.maskedPhone}`}</p>
                 </div>
                 {status.testMode
-                  ? <Link href="/admin/rewards" className="text-sm font-black text-nest-teal underline">Test settings</Link>
+                  ? <a href="/admin/rewards" className="text-sm font-black text-nest-teal underline">Test settings</a>
                   : <button type="button" onClick={signOutRewards} disabled={busy} className="text-sm font-black text-nest-teal underline">Sign out</button>}
 
               </div>
@@ -721,7 +738,7 @@ export function RewardsExperience() {
               {revealedResult.testOnly ? (
                 <>
                   <button type="button" onClick={spinWheel} disabled={busy || spinning} className="focus-ring inline-flex items-center justify-center gap-2 rounded-full bg-nest-teal px-6 py-3.5 font-black text-white shadow-soft"><RotateCw size={18} /> Run this test again</button>
-                  <Link href="/admin/rewards" className="focus-ring inline-flex items-center justify-center gap-2 rounded-full border border-nest-teal/20 bg-white px-6 py-3.5 font-black text-nest-teal">Choose another prize <ArrowRight size={18} /></Link>
+                  <a href="/admin/rewards" className="focus-ring inline-flex items-center justify-center gap-2 rounded-full border border-nest-teal/20 bg-white px-6 py-3.5 font-black text-nest-teal">Choose another prize <ArrowRight size={18} /></a>
                 </>
               ) : (
                 <>
