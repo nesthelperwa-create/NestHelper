@@ -10,6 +10,7 @@ import {
   ensureRewardsDevice,
   readRewardsTestMode,
   setRewardsTestMode,
+  type RewardsTestModeType,
 } from "@/lib/launchRewardsServer";
 
 export const runtime = "nodejs";
@@ -26,11 +27,14 @@ async function requireAdmin(request: NextRequest) {
 
 function modePayload(mode: ReturnType<typeof readRewardsTestMode>) {
   const prize = mode ? getLaunchRewardPrize(mode.prizeId) : null;
+  const testType: RewardsTestModeType = mode?.testType === "full" ? "full" : "quick";
   return {
     ok: true,
     enabled: Boolean(mode),
     prizeId: prize?.id || launchRewardPrizes[0].id,
     prizeTitle: prize?.title || launchRewardPrizes[0].title,
+    testType,
+    fullVerified: testType === "full" && mode?.fullVerified === true,
     expiresAt: mode ? new Date(mode.expiresAt).toISOString() : null,
   };
 }
@@ -52,7 +56,7 @@ export async function POST(request: NextRequest) {
     const action = String(body.action || "enable").trim();
 
     if (action === "disable") {
-      const response = NextResponse.json({ ok: true, enabled: false });
+      const response = NextResponse.json({ ok: true, enabled: false, testType: "quick", fullVerified: false });
       clearRewardsTestMode(response);
       return response;
     }
@@ -65,22 +69,33 @@ export async function POST(request: NextRequest) {
     const prize = getLaunchRewardPrize(prizeId);
     if (!prize) return NextResponse.json({ ok: false, error: "Choose a valid test prize." }, { status: 400 });
 
+    const requestedTestType: RewardsTestModeType = body.testType === "full" ? "full" : "quick";
     const existing = readRewardsTestMode(request);
+    const typeChanged = Boolean(existing && existing.testType !== requestedTestType);
+    const startFresh = action === "reset" || !existing || typeChanged;
+    const expiresAt = Date.now() + 2 * 60 * 60 * 1000;
+
     const response = NextResponse.json({
       ok: true,
       enabled: true,
       prizeId: prize.id,
       prizeTitle: prize.title,
-      expiresAt: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
+      testType: requestedTestType,
+      fullVerified: startFresh ? false : existing?.fullVerified === true,
+      expiresAt: new Date(expiresAt).toISOString(),
     });
+
     const deviceId = ensureRewardsDevice(request, response, existing?.deviceId);
     setRewardsTestMode(response, {
       version: 1,
       adminEmail,
       deviceId,
       prizeId: prize.id,
-      sessionId: action === "reset" || !existing ? createOpaqueToken(18) : existing.sessionId,
-      expiresAt: Date.now() + 2 * 60 * 60 * 1000,
+      sessionId: startFresh ? createOpaqueToken(18) : existing!.sessionId,
+      expiresAt,
+      testType: requestedTestType,
+      fullVerified: startFresh ? false : existing?.fullVerified === true,
+      testIdentity: startFresh ? undefined : existing?.testIdentity,
     });
     return response;
   } catch (error) {

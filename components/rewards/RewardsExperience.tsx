@@ -64,6 +64,7 @@ type StatusData = {
   verified: boolean;
   grandPrizeAvailable: boolean;
   testMode?: boolean;
+  testModeType?: "quick" | "full";
   actualPhase?: "prelaunch" | "live" | "ended";
   testModeExpiresAt?: string;
   testPrizeId?: string;
@@ -536,8 +537,10 @@ export function RewardsExperience() {
       });
       const result = await response.json().catch(() => null);
       if (!response.ok || !result?.ok) throw new Error(result?.error || "Verification could not be completed.");
-      await loadStatus();
-      setNotice("Phone and email verified. Your spin limits are now securely attached to your account.");
+      const refreshedStatus = await loadStatus();
+      setNotice(refreshedStatus.testMode && refreshedStatus.testModeType === "full"
+        ? "Full verification test complete. The test wheel is unlocked, and no real participant or reward was created."
+        : "Phone and email verified. Your spin limits are now securely attached to your account.");
       setVerificationStep("details");
       setSmsCode("");
       setEmailCode("");
@@ -657,11 +660,19 @@ export function RewardsExperience() {
           {phase === "live" && (
             <div className="mx-auto mt-7 flex max-w-2xl flex-wrap justify-center gap-3 text-sm font-black">
               {status?.testMode ? (
-                <>
-                  <span className="rounded-full border border-white/20 bg-white/10 px-4 py-2"><ShieldCheck className="mr-2 inline h-4 w-4 text-nest-gold2" />Admin-only test</span>
-                  <span className="rounded-full border border-white/20 bg-white/10 px-4 py-2"><RotateCw className="mr-2 inline h-4 w-4 text-nest-gold2" />Repeatable test spins</span>
-                  <span className="rounded-full border border-white/20 bg-white/10 px-4 py-2"><Gift className="mr-2 inline h-4 w-4 text-nest-gold2" />No redeemable reward</span>
-                </>
+                status.testModeType === "full" ? (
+                  <>
+                    <span className="rounded-full border border-white/20 bg-white/10 px-4 py-2"><ShieldCheck className="mr-2 inline h-4 w-4 text-nest-gold2" />Full verification test</span>
+                    <span className="rounded-full border border-white/20 bg-white/10 px-4 py-2"><Phone className="mr-2 inline h-4 w-4 text-nest-gold2" />Real SMS + email codes</span>
+                    <span className="rounded-full border border-white/20 bg-white/10 px-4 py-2"><Gift className="mr-2 inline h-4 w-4 text-nest-gold2" />No real reward</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="rounded-full border border-white/20 bg-white/10 px-4 py-2"><ShieldCheck className="mr-2 inline h-4 w-4 text-nest-gold2" />Quick admin preview</span>
+                    <span className="rounded-full border border-white/20 bg-white/10 px-4 py-2"><RotateCw className="mr-2 inline h-4 w-4 text-nest-gold2" />Repeatable test spins</span>
+                    <span className="rounded-full border border-white/20 bg-white/10 px-4 py-2"><Gift className="mr-2 inline h-4 w-4 text-nest-gold2" />No redeemable reward</span>
+                  </>
+                )
               ) : (
                 <>
                   <span className="rounded-full border border-white/20 bg-white/10 px-4 py-2"><ShieldCheck className="mr-2 inline h-4 w-4 text-nest-gold2" />Phone + email verified</span>
@@ -680,7 +691,11 @@ export function RewardsExperience() {
             <div>
               <p className="text-xs font-black uppercase tracking-[0.18em] text-amber-700">Admin-only prelaunch test</p>
               <h2 className="mt-1 text-2xl font-black text-nest-teal">No real reward will be issued.</h2>
-              <p className="mt-2 text-sm font-bold leading-6">The secure test endpoint is set to land on <strong>{status.testPrizeTitle || "the selected prize"}</strong>. Test spins are stored separately, cannot be redeemed, and do not affect the monthly winner limit.</p>
+              <p className="mt-2 text-sm font-bold leading-6">
+                {status.testModeType === "full"
+                  ? <>This full test uses a real SMS code, a real NestHelper email code, and invisible App Check before unlocking the wheel. It does not create a live participant, identity lock, spin limit, or redeemable reward. The wheel is set to land on <strong>{status.testPrizeTitle || "the selected prize"}</strong>.</>
+                  : <>The secure test endpoint is set to land on <strong>{status.testPrizeTitle || "the selected prize"}</strong>. Test spins are stored separately, cannot be redeemed, and do not affect the monthly winner limit.</>}
+              </p>
             </div>
             <a href="/admin/rewards" className="focus-ring inline-flex shrink-0 items-center justify-center rounded-full bg-amber-600 px-5 py-3 font-black text-white">Back to Rewards Admin</a>
           </div>
@@ -739,8 +754,14 @@ export function RewardsExperience() {
             <div id="rewards-entry" className="scroll-mt-28 rounded-[2rem] border border-nest-gold/20 bg-white p-5 shadow-soft sm:p-7">
               <div className="flex items-start gap-3">
                 <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-nest-mint/45 text-nest-teal"><LockKeyhole size={23} /></span>
-                <div><p className="text-xs font-black uppercase tracking-[0.16em] text-nest-gold">Secure entry</p><h2 className="mt-1 text-2xl font-black text-nest-teal">Verify once, then spin.</h2></div>
+                <div><p className="text-xs font-black uppercase tracking-[0.16em] text-nest-gold">Secure entry</p><h2 className="mt-1 text-2xl font-black text-nest-teal">{status?.testModeType === "full" ? "Test phone and email verification." : "Verify once, then spin."}</h2></div>
               </div>
+
+              {status?.testModeType === "full" && (
+                <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm font-bold leading-6 text-amber-900">
+                  Use a phone number and email you can access. Firebase will send a real SMS code and NestHelper will send a real email code. The invisible security check runs in the background. No real rewards account, marketing opt-in, or redeemable prize will be created.
+                </div>
+              )}
 
               {verificationStep === "details" && (
                 <div className="mt-6 grid gap-4">
@@ -753,10 +774,12 @@ export function RewardsExperience() {
                     <input type="checkbox" className="mt-1 h-4 w-4" checked={form.rulesAccepted} onChange={(event) => setForm((current) => ({ ...current, rulesAccepted: event.target.checked }))} />
                     <span>I am at least 18, live in the eligible service area, and agree to the <Link href="/rewards/rules" className="font-black text-nest-teal underline">Official Rules</Link>.</span>
                   </label>
-                  <label className="flex items-start gap-3 rounded-2xl border border-nest-gold/12 bg-white p-4 text-sm font-semibold leading-6 text-nest-ink/70">
-                    <input type="checkbox" className="mt-1 h-4 w-4" checked={form.marketingOptIn} onChange={(event) => setForm((current) => ({ ...current, marketingOptIn: event.target.checked }))} />
-                    <span>Optional: send me occasional NestHelper offers and family home-help updates. This is not required to enter.</span>
-                  </label>
+                  {status?.testModeType !== "full" && (
+                    <label className="flex items-start gap-3 rounded-2xl border border-nest-gold/12 bg-white p-4 text-sm font-semibold leading-6 text-nest-ink/70">
+                      <input type="checkbox" className="mt-1 h-4 w-4" checked={form.marketingOptIn} onChange={(event) => setForm((current) => ({ ...current, marketingOptIn: event.target.checked }))} />
+                      <span>Optional: send me occasional NestHelper offers and family home-help updates. This is not required to enter.</span>
+                    </label>
+                  )}
                   <button type="button" disabled={busy} onClick={sendPhoneCode} className="focus-ring inline-flex items-center justify-center gap-2 rounded-full bg-nest-teal px-5 py-3.5 font-black text-white shadow-soft transition hover:bg-nest-teal2 disabled:cursor-not-allowed disabled:opacity-60">
                     {busy ? <LoaderCircle className="animate-spin" size={18} /> : <Phone size={18} />} Text my verification code
                   </button>

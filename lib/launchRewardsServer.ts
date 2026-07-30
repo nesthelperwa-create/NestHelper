@@ -39,6 +39,15 @@ export type RewardsSession = {
   expiresAt: number;
 };
 
+export type RewardsTestModeType = "quick" | "full";
+
+export type RewardsTestIdentity = {
+  firstName: string;
+  email: string;
+  phone: string;
+  zip: string;
+};
+
 export type RewardsTestMode = {
   version: 1;
   adminEmail: string;
@@ -46,6 +55,9 @@ export type RewardsTestMode = {
   prizeId: string;
   sessionId: string;
   expiresAt: number;
+  testType?: RewardsTestModeType;
+  fullVerified?: boolean;
+  testIdentity?: RewardsTestIdentity;
 };
 
 function getRewardsSecret() {
@@ -146,7 +158,7 @@ export function readRewardsDeviceId(request: NextRequest) {
   return parseDeviceCookie(request.cookies.get(REWARDS_DEVICE_COOKIE)?.value);
 }
 
-export function ensureRewardsDevice(request: NextRequest, response: NextResponse, preferredDeviceId?: string) {
+export function ensureRewardsDevice(request: NextRequest, response: NextResponse, preferredDeviceId?: string): string {
   let deviceId = parseDeviceCookie(request.cookies.get(REWARDS_DEVICE_COOKIE)?.value);
   if (!deviceId) {
     deviceId = preferredDeviceId && /^[A-Za-z0-9_-]{24,80}$/.test(preferredDeviceId)
@@ -160,7 +172,7 @@ export function ensureRewardsDevice(request: NextRequest, response: NextResponse
       maxAge: SESSION_MAX_AGE_SECONDS * 6,
     });
   }
-  return deviceId;
+  return deviceId as string;
 }
 
 export function setRewardsSession(response: NextResponse, session: RewardsSession) {
@@ -209,7 +221,23 @@ export function readRewardsTestMode(request: NextRequest): RewardsTestMode | nul
   if (!mode || mode.version !== 1 || mode.expiresAt <= Date.now()) return null;
   if (!deviceId || mode.deviceId !== deviceId) return null;
   if (!mode.adminEmail || !mode.sessionId || !getLaunchRewardPrize(mode.prizeId)) return null;
-  return mode;
+
+  const testType: RewardsTestModeType = mode.testType === "full" ? "full" : "quick";
+  const testIdentity = mode.testIdentity && typeof mode.testIdentity === "object"
+    ? {
+        firstName: String(mode.testIdentity.firstName || "").slice(0, 60),
+        email: String(mode.testIdentity.email || "").slice(0, 254),
+        phone: String(mode.testIdentity.phone || "").slice(0, 20),
+        zip: String(mode.testIdentity.zip || "").slice(0, 10),
+      }
+    : undefined;
+
+  return {
+    ...mode,
+    testType,
+    fullVerified: testType === "full" && mode.fullVerified === true,
+    testIdentity,
+  };
 }
 
 export function readRewardsSession(request: NextRequest): RewardsSession | null {

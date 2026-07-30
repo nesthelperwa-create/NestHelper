@@ -39,30 +39,43 @@ export async function GET(request: NextRequest) {
 
     if (testMode) {
       const testPrize = getLaunchRewardPrize(testMode.prizeId);
+      const fullTest = testMode.testType === "full";
+      const fullVerified = fullTest && testMode.fullVerified === true;
+      const identity = testMode.testIdentity;
       const response = NextResponse.json({
         ok: true,
         phase: "live",
         actualPhase,
         launchAt: LAUNCH_REWARDS_LAUNCH_AT,
         endAt: LAUNCH_REWARDS_END_AT,
-        verified: true,
+        verified: fullTest ? fullVerified : true,
         testMode: true,
+        testModeType: fullTest ? "full" : "quick",
         testModeExpiresAt: new Date(testMode.expiresAt).toISOString(),
         testPrizeId: testPrize?.id || testMode.prizeId,
         testPrizeTitle: testPrize?.title || "Selected test prize",
-        participant: {
-          firstName: "Admin test",
-          maskedEmail: maskEmail(testMode.adminEmail),
-          maskedPhone: "Test mode",
-          zip: "—",
-        },
+        participant: fullVerified && identity
+          ? {
+              firstName: identity.firstName,
+              maskedEmail: maskEmail(identity.email),
+              maskedPhone: maskPhone(identity.phone),
+              zip: identity.zip,
+            }
+          : fullTest
+            ? undefined
+            : {
+                firstName: "Admin test",
+                maskedEmail: maskEmail(testMode.adminEmail),
+                maskedPhone: "Test mode",
+                zip: "—",
+              },
         grandPrizeAvailable: true,
         monthKey: getPacificMonthKey(new Date(now)),
         spinsThisMonth: 0,
         spinsRemainingThisMonth: 99,
         maxSpinsPerMonth: 99,
         nextEligibleSpinAt: null,
-        canSpin: true,
+        canSpin: fullTest ? fullVerified : true,
         rewards: [],
       });
       ensureRewardsDevice(request, response, testMode.deviceId);

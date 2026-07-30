@@ -42,6 +42,9 @@ export async function POST(request: NextRequest) {
     if (!mode) {
       throw new LaunchRewardsError("Admin test mode is not enabled for this browser.", 403, "test_mode_required");
     }
+    if (mode.testType === "full" && mode.fullVerified !== true) {
+      throw new LaunchRewardsError("Complete the phone and email verification test before spinning.", 401, "full_test_verification_required");
+    }
 
     await requireRewardsAppCheck(request, { consume: true });
     const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;

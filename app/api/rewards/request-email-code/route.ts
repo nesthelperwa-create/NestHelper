@@ -14,6 +14,7 @@ import {
   normalizeEmailAddress,
   normalizeFirstName,
   normalizeZip,
+  readRewardsTestMode,
   secureHash,
   verifyFirebasePhoneToken,
 } from "@/lib/launchRewardsServer";
@@ -28,11 +29,14 @@ function maskedEmail(email: string) {
 }
 
 export async function POST(request: NextRequest) {
-  const response = NextResponse.json({ ok: false }, { status: 500 });
-  const deviceId = ensureRewardsDevice(request, response);
+  const placeholderResponse = NextResponse.json({ ok: false }, { status: 500 });
+  const deviceId = ensureRewardsDevice(request, placeholderResponse);
 
   try {
-    if (getLaunchRewardsPhase() !== "live") {
+    const testMode = readRewardsTestMode(request);
+    const fullVerificationTest = testMode?.testType === "full";
+
+    if (getLaunchRewardsPhase() !== "live" && !fullVerificationTest) {
       throw new LaunchRewardsError("Launch Rewards is not open for spins yet.", 403, "promotion_not_live");
     }
 
@@ -40,7 +44,9 @@ export async function POST(request: NextRequest) {
 
     const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
     if (String(body.website || "").trim()) {
-      return NextResponse.json({ ok: true, verificationId: "pending", email: "your email" });
+      const honeypotResponse = NextResponse.json({ ok: true, verificationId: "pending", maskedEmail: "your email" });
+      ensureRewardsDevice(request, honeypotResponse, deviceId);
+      return honeypotResponse;
     }
     if (body.rulesAccepted !== true) {
       throw new LaunchRewardsError("Please agree to the Official Rules before continuing.", 400, "rules_required");
@@ -55,26 +61,27 @@ export async function POST(request: NextRequest) {
     const phoneHash = secureHash(phoneIdentity.phone, "phone");
     const ipHash = getClientIpHash(request);
     const deviceHash = secureHash(deviceId, "device");
+    const ratePrefix = fullVerificationTest ? "full-test-" : "";
 
     await Promise.all([
       enforcePersistentRateLimit({
-        scope: "request-email-code-ip",
-        key: ipHash,
-        limit: 6,
+        scope: `${ratePrefix}request-email-code-ip`,
+        key: fullVerificationTest ? `${testMode!.sessionId}:${ipHash}` : ipHash,
+        limit: fullVerificationTest ? 12 : 6,
         windowMs: 60 * 60 * 1000,
         message: "Too many code requests were made from this connection. Please try again later.",
       }),
       enforcePersistentRateLimit({
-        scope: "request-email-code-email",
-        key: emailHash,
-        limit: 4,
+        scope: `${ratePrefix}request-email-code-email`,
+        key: fullVerificationTest ? `${testMode!.sessionId}:${emailHash}` : emailHash,
+        limit: fullVerificationTest ? 8 : 4,
         windowMs: 60 * 60 * 1000,
         message: "Too many codes were requested for this email. Please wait before requesting another.",
       }),
       enforcePersistentRateLimit({
-        scope: "request-email-code-phone",
-        key: phoneHash,
-        limit: 4,
+        scope: `${ratePrefix}request-email-code-phone`,
+        key: fullVerificationTest ? `${testMode!.sessionId}:${phoneHash}` : phoneHash,
+        limit: fullVerificationTest ? 8 : 4,
         windowMs: 60 * 60 * 1000,
         message: "Too many codes were requested for this phone number. Please wait before requesting another.",
       }),
@@ -83,10 +90,16 @@ export async function POST(request: NextRequest) {
     const verificationId = createOpaqueToken(18);
     const code = createSecureEmailVerificationCode();
     const expiresAtMs = Date.now() + 10 * 60 * 1000;
-    const verificationRef = getFirebaseAdminDb().collection("launchRewardEmailVerifications").doc(verificationId);
+    const collectionName = fullVerificationTest
+      ? "launchRewardTestEmailVerifications"
+      : "launchRewardEmailVerifications";
+    const verificationRef = getFirebaseAdminDb().collection(collectionName).doc(verificationId);
 
     await verificationRef.set({
       campaignId: LAUNCH_REWARDS_CAMPAIGN_ID,
+      testOnly: fullVerificationTest,
+      testSessionId: fullVerificationTest ? testMode!.sessionId : null,
+      adminEmail: fullVerificationTest ? testMode!.adminEmail : null,
       firstName,
       email,
       emailHash,
@@ -98,7 +111,7 @@ export async function POST(request: NextRequest) {
       attempts: 0,
       status: "pending",
       rulesAcceptedAt: FieldValue.serverTimestamp(),
-      marketingOptIn: body.marketingOptIn === true,
+      marketingOptIn: fullVerificationTest ? false : body.marketingOptIn === true,
       deviceHash,
       ipHash,
       createdAt: FieldValue.serverTimestamp(),
@@ -107,7 +120,7 @@ export async function POST(request: NextRequest) {
     });
 
     try {
-      await sendLaunchRewardCodeEmail({ email, firstName, code });
+      await sendLaunchRewardCodeEmail({ email, firstName, code, testOnly: fullVerificationTest });
       await verificationRef.update({ emailDelivery: "sent", emailSentAt: FieldValue.serverTimestamp() });
     } catch (error) {
       await verificationRef.delete().catch(() => undefined);
@@ -119,6 +132,7 @@ export async function POST(request: NextRequest) {
       verificationId,
       maskedEmail: maskedEmail(email),
       expiresAt: new Date(expiresAtMs).toISOString(),
+      testOnly: fullVerificationTest,
     });
     ensureRewardsDevice(request, success, deviceId);
     return success;

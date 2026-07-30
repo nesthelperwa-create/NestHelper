@@ -44,10 +44,14 @@ type GrandMonthRecord = {
   winnerParticipantId?: string;
 };
 
+type TestModeType = "quick" | "full";
+
 type TestModeState = {
   enabled: boolean;
   prizeId: LaunchRewardPrizeId;
   prizeTitle: string;
+  testType: TestModeType;
+  fullVerified: boolean;
   expiresAt: string | null;
 };
 
@@ -70,9 +74,12 @@ export default function AdminRewardsPage() {
     enabled: false,
     prizeId: launchRewardPrizes[0].id,
     prizeTitle: launchRewardPrizes[0].title,
+    testType: "quick",
+    fullVerified: false,
     expiresAt: null,
   });
   const [selectedTestPrizeId, setSelectedTestPrizeId] = useState<LaunchRewardPrizeId>(launchRewardPrizes[0].id);
+  const [selectedTestType, setSelectedTestType] = useState<TestModeType>("quick");
   const [testBusy, setTestBusy] = useState(false);
 
   useEffect(() => {
@@ -110,10 +117,13 @@ export default function AdminRewardsPage() {
           enabled: result.enabled === true,
           prizeId: resultPrizeId,
           prizeTitle: String(result.prizeTitle || launchRewardPrizes[0].title),
+          testType: result.testType === "full" ? "full" : "quick",
+          fullVerified: result.fullVerified === true,
           expiresAt: result.expiresAt ? String(result.expiresAt) : null,
         };
         setTestMode(next);
         setSelectedTestPrizeId(resultPrizeId);
+        setSelectedTestType(next.testType);
       } catch (error) {
         console.error("Unable to load Launch Rewards test mode", error);
       }
@@ -137,7 +147,7 @@ export default function AdminRewardsPage() {
       const response = await fetch("/api/admin/rewards-test-mode", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ action, prizeId: selectedTestPrizeId }),
+        body: JSON.stringify({ action, prizeId: selectedTestPrizeId, testType: selectedTestType }),
       });
       const result = await response.json().catch(() => null);
       if (!response.ok || !result?.ok) throw new Error(result?.error || "Unable to update test mode.");
@@ -148,13 +158,18 @@ export default function AdminRewardsPage() {
         enabled: result.enabled === true,
         prizeId: resultPrizeId,
         prizeTitle: String(result.prizeTitle || launchRewardPrizes.find((prize) => prize.id === resultPrizeId)?.title || "Test prize"),
+        testType: result.testType === "full" ? "full" : "quick",
+        fullVerified: result.fullVerified === true,
         expiresAt: result.expiresAt ? String(result.expiresAt) : null,
       };
       setTestMode(next);
       setSelectedTestPrizeId(resultPrizeId);
+      setSelectedTestType(next.testType);
       setMessage(action === "disable"
         ? "Prelaunch test mode is off for this browser."
-        : `Prelaunch test mode is on. The wheel will land on: ${next.prizeTitle}.`);
+        : next.testType === "full"
+          ? `Full verification test is on. Complete the real SMS and email-code steps, then the test wheel will land on: ${next.prizeTitle}.`
+          : `Quick wheel preview is on. The wheel will land on: ${next.prizeTitle}.`);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Unable to update test mode.");
     } finally {
@@ -209,7 +224,24 @@ export default function AdminRewardsPage() {
             </div>
           </div>
 
-          <div className="mt-5 grid gap-4 lg:grid-cols-[1fr_auto] lg:items-end">
+          <div className="mt-5 grid gap-4 lg:grid-cols-2">
+            <label className="text-sm font-bold text-[#075c58]">
+              Test experience
+              <select
+                value={selectedTestType}
+                onChange={(event) => setSelectedTestType(event.target.value === "full" ? "full" : "quick")}
+                className="mt-2 w-full rounded-xl border border-amber-300 bg-white px-3 py-3 text-base font-semibold text-slate-900"
+              >
+                <option value="quick">Quick wheel preview — skip verification</option>
+                <option value="full">Full verification test — real SMS + email codes</option>
+              </select>
+              <span className="mt-2 block text-xs font-medium leading-5 text-amber-950/65">
+                {selectedTestType === "full"
+                  ? "Uses your real phone and email to test Firebase phone verification, the invisible security check, the NestHelper email code, and the test spin. No real participant or reward is created."
+                  : "Jumps straight to the wheel so you can repeatedly preview every prize animation."}
+              </span>
+            </label>
+
             <label className="text-sm font-bold text-[#075c58]">
               Prize the test wheel should land on
               <select
@@ -224,23 +256,31 @@ export default function AdminRewardsPage() {
                 {launchRewardPrizes.map((prize) => <option key={prize.id} value={prize.id}>{prize.title}</option>)}
               </select>
             </label>
-            <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                disabled={testBusy}
-                onClick={() => updateTestMode(testMode.enabled ? "update" : "enable")}
-                className="rounded-full bg-[#075c58] px-5 py-3 text-sm font-bold text-white disabled:opacity-60"
-              >
-                {testBusy ? "Saving…" : testMode.enabled ? "Update test prize" : "Enable test mode"}
-              </button>
-              {testMode.enabled && <button type="button" disabled={testBusy} onClick={() => updateTestMode("reset")} className="rounded-full border border-[#075c58]/25 bg-white px-5 py-3 text-sm font-bold text-[#075c58] disabled:opacity-60">Start fresh test session</button>}
-            </div>
+          </div>
+
+          <div className="mt-4 flex flex-wrap gap-2">
+            <button
+              type="button"
+              disabled={testBusy}
+              onClick={() => updateTestMode(testMode.enabled ? "update" : "enable")}
+              className="cursor-pointer rounded-full bg-[#075c58] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#064c49] disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {testBusy ? "Saving…" : testMode.enabled ? "Update test settings" : "Enable test mode"}
+            </button>
+            {testMode.enabled && <button type="button" disabled={testBusy} onClick={() => updateTestMode("reset")} className="cursor-pointer rounded-full border border-[#075c58]/25 bg-white px-5 py-3 text-sm font-bold text-[#075c58] transition hover:bg-[#eef7f5] disabled:cursor-not-allowed disabled:opacity-60">Start fresh test session</button>}
           </div>
 
           <div className="mt-5 flex flex-col gap-3 rounded-2xl border border-amber-200 bg-white/80 p-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="font-bold text-[#075c58]">Status: {testMode.enabled ? "Enabled for this browser" : "Off"}</p>
-              {testMode.enabled && <p className="mt-1 text-sm text-slate-600">Selected result: {testMode.prizeTitle}{testMode.expiresAt ? ` · Expires ${formatDate(testMode.expiresAt)}` : ""}</p>}
+              {testMode.enabled && (
+                <p className="mt-1 text-sm text-slate-600">
+                  Mode: {testMode.testType === "full" ? "Full verification test" : "Quick wheel preview"}
+                  {testMode.testType === "full" ? ` · Verification ${testMode.fullVerified ? "complete" : "not completed yet"}` : ""}
+                  {` · Selected result: ${testMode.prizeTitle}`}
+                  {testMode.expiresAt ? ` · Expires ${formatDate(testMode.expiresAt)}` : ""}
+                </p>
+              )}
             </div>
             <div className="flex flex-wrap gap-2">
               {testMode.enabled && <Link href="/rewards" target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-full bg-amber-600 px-5 py-3 text-sm font-bold text-white"><ExternalLink size={16} /> Open test wheel</Link>}

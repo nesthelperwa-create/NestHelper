@@ -10,9 +10,11 @@ import {
   LaunchRewardsError,
   requireRewardsAppCheck,
   readRewardsDeviceId,
+  readRewardsTestMode,
   secureHash,
   secureValueMatches,
   setRewardsSession,
+  setRewardsTestMode,
   verifyFirebasePhoneToken,
 } from "@/lib/launchRewardsServer";
 
@@ -27,6 +29,8 @@ export async function POST(request: NextRequest) {
     const code = String(body.code || "").replace(/\D/g, "").slice(0, 6);
     const phoneAuthToken = String(body.phoneAuthToken || "");
     const deviceId = readRewardsDeviceId(request);
+    const testMode = readRewardsTestMode(request);
+    const fullVerificationTest = testMode?.testType === "full";
 
     if (!/^[A-Za-z0-9_-]{16,80}$/.test(verificationId) || code.length !== 6) {
       throw new LaunchRewardsError("Enter the 6-digit code from your email.", 400, "invalid_email_code");
@@ -41,23 +45,25 @@ export async function POST(request: NextRequest) {
 
     await Promise.all([
       enforcePersistentRateLimit({
-        scope: "verify-email-code-ip",
-        key: ipHash,
-        limit: 20,
+        scope: fullVerificationTest ? "full-test-verify-email-code-ip" : "verify-email-code-ip",
+        key: fullVerificationTest ? `${testMode!.sessionId}:${ipHash}` : ipHash,
+        limit: fullVerificationTest ? 30 : 20,
         windowMs: 15 * 60 * 1000,
         message: "Too many verification attempts were made from this connection. Please wait and try again.",
       }),
       enforcePersistentRateLimit({
-        scope: "verify-email-code-record",
+        scope: fullVerificationTest ? "full-test-verify-email-code-record" : "verify-email-code-record",
         key: verificationId,
-        limit: 8,
+        limit: fullVerificationTest ? 12 : 8,
         windowMs: 15 * 60 * 1000,
         message: "Too many incorrect code attempts. Request a new code.",
       }),
     ]);
 
     const db = getFirebaseAdminDb();
-    const verificationRef = db.collection("launchRewardEmailVerifications").doc(verificationId);
+    const verificationRef = db
+      .collection(fullVerificationTest ? "launchRewardTestEmailVerifications" : "launchRewardEmailVerifications")
+      .doc(verificationId);
     const verificationPreflightSnapshot = await verificationRef.get();
     if (!verificationPreflightSnapshot.exists) {
       throw new LaunchRewardsError("This code is no longer available. Request a new code.", 400, "verification_not_found");
@@ -87,6 +93,60 @@ export async function POST(request: NextRequest) {
         updatedAt: FieldValue.serverTimestamp(),
       });
       throw new LaunchRewardsError("That email code is not correct.", 400, "incorrect_email_code");
+    }
+
+    if (fullVerificationTest) {
+      if (!testMode || verificationPreflight.testOnly !== true || verificationPreflight.testSessionId !== testMode.sessionId) {
+        throw new LaunchRewardsError("This test verification does not match the active admin test session.", 401, "test_session_mismatch");
+      }
+
+      await db.runTransaction(async (transaction) => {
+        const verificationSnapshot = await transaction.get(verificationRef);
+        if (!verificationSnapshot.exists) {
+          throw new LaunchRewardsError("This code is no longer available. Request a new code.", 400, "verification_not_found");
+        }
+        const verification = verificationSnapshot.data() || {};
+        const expiresAt = verification.expiresAt instanceof Timestamp ? verification.expiresAt.toMillis() : 0;
+        if (verification.status !== "pending" || !expiresAt || expiresAt <= Date.now()) {
+          throw new LaunchRewardsError("This code expired or has already been used. Request a new code.", 400, "verification_unavailable");
+        }
+        if (verification.testOnly !== true || verification.testSessionId !== testMode.sessionId) {
+          throw new LaunchRewardsError("This test verification does not match the active admin test session.", 401, "test_session_mismatch");
+        }
+        if (verification.phone !== phoneIdentity.phone || verification.phoneAuthUid !== phoneIdentity.uid) {
+          throw new LaunchRewardsError("Phone verification does not match this email code.", 401, "phone_mismatch");
+        }
+        if (verification.deviceHash !== deviceHash) {
+          throw new LaunchRewardsError("This code must be completed on the same device that requested it.", 401, "device_mismatch");
+        }
+        const expectedCodeHash = hashEmailVerificationCode({
+          emailHash: String(verification.emailHash || ""),
+          verificationId,
+          code,
+        });
+        if (!secureValueMatches(String(verification.codeHash || ""), expectedCodeHash)) {
+          throw new LaunchRewardsError("That email code is not correct.", 400, "incorrect_email_code");
+        }
+        transaction.update(verificationRef, {
+          status: "consumed",
+          consumedAt: FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp(),
+        });
+      });
+
+      const response = NextResponse.json({ ok: true, verified: true, testOnly: true });
+      setRewardsTestMode(response, {
+        ...testMode,
+        testType: "full",
+        fullVerified: true,
+        testIdentity: {
+          firstName: String(verificationPreflight.firstName || "Admin"),
+          email: String(verificationPreflight.email || ""),
+          phone: String(verificationPreflight.phone || ""),
+          zip: String(verificationPreflight.zip || ""),
+        },
+      });
+      return response;
     }
 
     const participantId = await db.runTransaction(async (transaction) => {
