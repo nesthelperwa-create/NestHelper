@@ -846,7 +846,7 @@ export function RewardsExperience() {
               <button
                 type="button"
                 onClick={() => setRevealedResult(null)}
-                className="focus-ring absolute right-4 top-4 grid h-10 w-10 place-items-center rounded-full border border-nest-teal/15 bg-white/90 text-nest-teal shadow-sm"
+                className="focus-ring absolute right-4 top-4 grid h-10 w-10 cursor-pointer place-items-center rounded-full border border-nest-teal/15 bg-white/90 text-nest-teal shadow-sm transition-all duration-200 hover:scale-105 hover:border-nest-teal/30 hover:bg-nest-cream hover:shadow-md active:scale-95"
                 aria-label="Close reward result"
               >
                 <X size={19} />
@@ -899,23 +899,23 @@ export function RewardsExperience() {
                           window.setTimeout(() => { void spinWheel(); }, 0);
                         }}
                         disabled={busy || spinning}
-                        className="focus-ring inline-flex items-center justify-center gap-2 rounded-full bg-nest-teal px-6 py-3.5 font-black text-white shadow-soft disabled:opacity-60"
+                        className="focus-ring inline-flex cursor-pointer items-center justify-center gap-2 rounded-full bg-nest-teal px-6 py-3.5 font-black text-white shadow-soft transition-all duration-200 hover:-translate-y-0.5 hover:bg-nest-teal2 hover:shadow-[0_12px_28px_rgba(0,93,86,0.28)] active:translate-y-0 active:scale-[0.98] disabled:cursor-not-allowed disabled:translate-y-0 disabled:opacity-60"
                       >
                         <RotateCw size={18} /> Run this test again
                       </button>
-                      <a href="/admin/rewards" className="focus-ring inline-flex items-center justify-center gap-2 rounded-full border border-nest-teal/20 bg-white px-6 py-3.5 font-black text-nest-teal">
+                      <a href="/admin/rewards" className="focus-ring inline-flex cursor-pointer items-center justify-center gap-2 rounded-full border border-nest-teal/25 bg-white px-6 py-3.5 font-black text-nest-teal shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-nest-teal/45 hover:bg-nest-mint/30 hover:shadow-md active:translate-y-0 active:scale-[0.98]">
                         Choose another prize <ArrowRight size={18} />
                       </a>
                     </>
                   ) : (
                     <>
-                      <Link href={revealedResult.useHref} className="focus-ring inline-flex items-center justify-center gap-2 rounded-full bg-nest-teal px-6 py-3.5 font-black text-white shadow-soft">
+                      <Link href={revealedResult.useHref} className="focus-ring inline-flex cursor-pointer items-center justify-center gap-2 rounded-full bg-nest-teal px-6 py-3.5 font-black text-white shadow-soft transition-all duration-200 hover:-translate-y-0.5 hover:bg-nest-teal2 hover:shadow-[0_12px_28px_rgba(0,93,86,0.28)] active:translate-y-0 active:scale-[0.98]">
                         {revealedResult.requiresManualVerification ? "Submit prize claim" : "Use my reward"} <ArrowRight size={18} />
                       </Link>
                       <button
                         type="button"
                         onClick={() => setRevealedResult(null)}
-                        className="focus-ring inline-flex items-center justify-center rounded-full border border-nest-teal/20 bg-white px-6 py-3.5 font-black text-nest-teal"
+                        className="focus-ring inline-flex cursor-pointer items-center justify-center rounded-full border border-nest-teal/25 bg-white px-6 py-3.5 font-black text-nest-teal shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-nest-teal/45 hover:bg-nest-mint/30 hover:shadow-md active:translate-y-0 active:scale-[0.98]"
                       >
                         Save for later
                       </button>
@@ -924,7 +924,7 @@ export function RewardsExperience() {
                 </div>
 
                 {!revealedResult.testOnly && (
-                  <button type="button" onClick={shareRewards} className="mt-5 inline-flex items-center gap-2 text-sm font-black text-nest-teal underline">
+                  <button type="button" onClick={shareRewards} className="focus-ring mt-5 inline-flex cursor-pointer items-center gap-2 rounded-full px-4 py-2 text-sm font-black text-nest-teal underline decoration-2 underline-offset-4 transition-all duration-200 hover:bg-white/70 hover:text-nest-teal2 active:scale-[0.98]">
                     <Share2 size={16} /> Share Launch Rewards
                   </button>
                 )}
