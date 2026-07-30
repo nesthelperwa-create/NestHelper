@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ConfirmationResult, RecaptchaVerifier, signInWithPhoneNumber, signOut } from "firebase/auth";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   ArrowRight,
   CalendarClock,
@@ -21,6 +21,7 @@ import {
   Sparkles,
   Star,
   TicketCheck,
+  X,
 } from "lucide-react";
 import {
   formatLaunchDate,
@@ -111,30 +112,33 @@ const segmentColors = [
 
 const wheelLabelLines: Record<string, string[]> = {
   "laundry-10": ["$10 OFF", "LAUNDRY"],
-  "parent-reset-15": ["$15 OFF", "RESET"],
-  "nesthelper-credit-25": ["$25", "CREDIT"],
-  "family-service-25": ["$25 OFF", "FAMILY", "SERVICE"],
-  "smart-label-starter": ["FREE", "SMART", "LABELS"],
-  "organizing-add-on": ["FREE", "ORG", "ADD-ON"],
-  "parent-reset-grand": ["FREE", "3-HR", "RESET"],
+  "parent-reset-15": ["$15 OFF", "PARENT RESET"],
+  "nesthelper-credit-25": ["$25", "NESTHELPER CREDIT"],
+  "family-service-25": ["$25 OFF", "FAMILY SERVICE"],
+  "smart-label-starter": ["FREE", "SMART LABELS"],
+  "organizing-add-on": ["FREE", "ORGANIZING", "ADD-ON"],
+  "parent-reset-grand": ["FREE 3-HOUR", "PARENT RESET"],
 };
 
-type WheelLabelConfig = {
-  left: number;
-  top: number;
-  rotation: number;
-  width: number;
-};
+const wheelLabelRotations = [18, 7, -18, 0, 18, -7, -18];
+const WHEEL_CENTER = 500;
+const WHEEL_RADIUS = 466;
+const WHEEL_LABEL_RADIUS = 326;
 
-const wheelLabelConfigs: Record<string, WheelLabelConfig> = {
-  "parent-reset-grand": { left: 34, top: 24, rotation: -28, width: 18 },
-  "laundry-10": { left: 53, top: 23, rotation: 24, width: 18 },
-  "parent-reset-15": { left: 71, top: 39, rotation: 18, width: 18 },
-  "nesthelper-credit-25": { left: 64, top: 63, rotation: 0, width: 18 },
-  "family-service-25": { left: 50, top: 76, rotation: 18, width: 18 },
-  "smart-label-starter": { left: 28, top: 62, rotation: -24, width: 18 },
-  "organizing-add-on": { left: 23, top: 40, rotation: -30, width: 18 },
-};
+function wheelPoint(angleDegrees: number, radius: number) {
+  const radians = (angleDegrees * Math.PI) / 180;
+  return {
+    x: WHEEL_CENTER + Math.sin(radians) * radius,
+    y: WHEEL_CENTER - Math.cos(radians) * radius,
+  };
+}
+
+function wheelSegmentPath(index: number, total: number) {
+  const segmentAngle = 360 / total;
+  const start = wheelPoint(index * segmentAngle, WHEEL_RADIUS);
+  const end = wheelPoint((index + 1) * segmentAngle, WHEEL_RADIUS);
+  return `M ${WHEEL_CENTER} ${WHEEL_CENTER} L ${start.x} ${start.y} A ${WHEEL_RADIUS} ${WHEEL_RADIUS} 0 0 1 ${end.x} ${end.y} Z`;
+}
 
 function toE164(value: string) {
   const digits = value.replace(/\D/g, "");
@@ -198,88 +202,164 @@ function Countdown({ targetMs, compact = false }: { targetMs: number; compact?: 
 function PrizeWheel({
   rotation,
   spinning,
+  busy,
+  phase,
+  verified,
+  canSpin,
+  testMode,
+  nextSpinMs,
+  monthlyLimitReached,
+  onSpin,
+  onVerify,
   onAnimationComplete,
 }: {
   rotation: number;
   spinning: boolean;
+  busy: boolean;
+  phase: StatusData["phase"];
+  verified: boolean;
+  canSpin: boolean;
+  testMode: boolean;
+  nextSpinMs: number;
+  monthlyLimitReached: boolean;
+  onSpin: () => void;
+  onVerify: () => void;
   onAnimationComplete: () => void;
 }) {
-  const segmentAngle = 360 / launchRewardPrizes.length;
-  const gradient = launchRewardPrizes
-    .map((_, index) => {
-      const start = (index / launchRewardPrizes.length) * 100;
-      const end = ((index + 1) / launchRewardPrizes.length) * 100;
-      return `${segmentColors[index]} ${start}% ${end}%`;
-    })
-    .join(", ");
-  const separatorGradient = `repeating-conic-gradient(from -90deg, transparent 0deg ${segmentAngle - 0.55}deg, rgba(255,255,255,0.7) ${segmentAngle - 0.55}deg ${segmentAngle}deg)`;
+  const centerActionable = phase === "live" && (verified ? canSpin : true) && !busy && !spinning;
 
   return (
-    <div
-      className="relative mx-auto aspect-square w-full max-w-[31rem] select-none"
-      style={{ containerType: "inline-size" }}
-      aria-label="NestHelper Launch Rewards wheel"
-    >
+    <div className="relative mx-auto aspect-square w-full max-w-[31rem] select-none" aria-label="NestHelper Launch Rewards wheel">
       <div className="absolute left-1/2 top-0 z-30 -translate-x-1/2 -translate-y-1 drop-shadow-lg" aria-hidden="true">
         <div className="h-0 w-0 border-x-[18px] border-t-[34px] border-x-transparent border-t-nest-gold2 sm:border-x-[22px] sm:border-t-[42px]" />
       </div>
       <div className={`absolute inset-0 rounded-full bg-nest-gold/25 blur-2xl transition-opacity ${spinning ? "opacity-90" : "opacity-45"}`} />
       <div className="absolute inset-[1.5%] rounded-full border-[7px] border-nest-gold bg-[#f9df91] p-[2.6%] shadow-[0_22px_70px_rgba(0,63,59,0.28),inset_0_0_0_3px_rgba(255,255,255,0.7)] sm:border-[10px]">
         <motion.div
-          className="relative h-full w-full overflow-hidden rounded-full border-4 border-white/70 shadow-inner"
-          style={{ background: `conic-gradient(from -90deg, ${gradient})` }}
+          className="relative h-full w-full overflow-hidden rounded-full border-4 border-white/75 bg-nest-teal shadow-inner"
           animate={{ rotate: rotation }}
           transition={spinning ? { duration: 5.6, ease: [0.08, 0.62, 0.16, 1] } : { duration: 0 }}
           onAnimationComplete={onAnimationComplete}
         >
-          <div
-            className="pointer-events-none absolute inset-0 z-[1] rounded-full"
-            style={{ background: separatorGradient }}
-            aria-hidden="true"
-          />
-          {launchRewardPrizes.map((prize) => {
-            const lines = wheelLabelLines[prize.id] || [prize.shortLabel];
-            const config = wheelLabelConfigs[prize.id] || { left: 50, top: 50, rotation: 0, width: 18 };
+          <svg viewBox="0 0 1000 1000" className="h-full w-full" role="img" aria-label="Seven-segment NestHelper prize wheel">
+            <defs>
+              <filter id="wheelTextShadow" x="-40%" y="-40%" width="180%" height="180%">
+                <feDropShadow dx="0" dy="3" stdDeviation="3" floodColor="#003f3b" floodOpacity="0.34" />
+              </filter>
+              <radialGradient id="wheelSheen" cx="35%" cy="24%" r="76%">
+                <stop offset="0%" stopColor="#ffffff" stopOpacity="0.18" />
+                <stop offset="55%" stopColor="#ffffff" stopOpacity="0" />
+                <stop offset="100%" stopColor="#003f3b" stopOpacity="0.12" />
+              </radialGradient>
+            </defs>
 
-            return (
-              <div
-                key={prize.id}
-                className="absolute z-10 flex items-center justify-center text-center"
-                style={{
-                  left: `${config.left}%`,
-                  top: `${config.top}%`,
-                  width: `${config.width}%`,
-                  aspectRatio: "1.76 / 1",
-                  transform: `translate(-50%, -50%) rotate(${config.rotation}deg)`,
-                  transformOrigin: "center center",
-                }}
-              >
-                <div
-                  className="flex h-full w-full flex-col items-center justify-center rounded-[0.85rem] border border-nest-gold/35 bg-[#fffaf0]/97 font-black uppercase text-nest-teal shadow-[0_3px_12px_rgba(0,63,59,0.14)]"
-                  style={{
-                    padding: "5% 5%",
-                    fontSize: "clamp(0.41rem, 2.35cqw, 0.67rem)",
-                    lineHeight: 1.0,
-                    letterSpacing: "-0.02em",
-                  }}
-                >
-                  {lines.map((line) => (
-                    <span key={line} className="block text-center">
-                      {line}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            );
-          })}
-          <div className="absolute left-1/2 top-1/2 grid h-[28%] w-[28%] -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-[5px] border-nest-gold bg-white shadow-[0_12px_32px_rgba(0,63,59,0.28)] sm:border-[7px]">
-            <div className="text-center">
-              <Sparkles className="mx-auto h-6 w-6 text-nest-gold sm:h-8 sm:w-8" />
-              <div className="mt-1 text-xs font-black text-nest-teal sm:text-base">NestHelper</div>
-              <div className="text-[0.44rem] font-black uppercase tracking-[0.14em] text-nest-gold sm:text-[0.58rem]">Launch Rewards</div>
-            </div>
-          </div>
+            {launchRewardPrizes.map((prize, index) => {
+              const segmentAngle = 360 / launchRewardPrizes.length;
+              const centerAngle = segmentAngle * (index + 0.5);
+              const labelPoint = wheelPoint(centerAngle, WHEEL_LABEL_RADIUS);
+              const lines = wheelLabelLines[prize.id] || [prize.shortLabel];
+              const lineSpacing = lines.length === 3 ? 31 : 36;
+              const startY = -((lines.length - 1) * lineSpacing) / 2;
+              const lightSegment = [1, 3, 5].includes(index);
+              const textColor = lightSegment ? "#004f49" : "#fffaf0";
+
+              return (
+                <g key={prize.id}>
+                  <path
+                    d={wheelSegmentPath(index, launchRewardPrizes.length)}
+                    fill={segmentColors[index]}
+                    stroke="rgba(255,255,255,0.78)"
+                    strokeWidth="5"
+                    strokeLinejoin="round"
+                  />
+                  <g transform={`translate(${labelPoint.x} ${labelPoint.y}) rotate(${wheelLabelRotations[index]})`}>
+                    <text
+                      textAnchor="middle"
+                      fill={textColor}
+                      fontFamily="Arial, Helvetica, sans-serif"
+                      fontWeight="900"
+                      letterSpacing="-0.6"
+                      filter="url(#wheelTextShadow)"
+                    >
+                      {lines.map((line, lineIndex) => (
+                        <tspan
+                          key={line}
+                          x="0"
+                          y={startY + lineIndex * lineSpacing}
+                          fontSize={lineIndex === 0 ? (lines.length === 3 ? 29 : 33) : 27}
+                        >
+                          {line}
+                        </tspan>
+                      ))}
+                    </text>
+                  </g>
+                </g>
+              );
+            })}
+
+            <circle cx="500" cy="500" r="466" fill="url(#wheelSheen)" pointerEvents="none" />
+            <circle cx="500" cy="500" r="151" fill="#fffaf0" stroke="#d4a33f" strokeWidth="14" />
+            <circle cx="500" cy="500" r="137" fill="none" stroke="#ffffff" strokeOpacity="0.8" strokeWidth="4" />
+          </svg>
         </motion.div>
+
+        <button
+          type="button"
+          onClick={verified ? onSpin : onVerify}
+          disabled={!centerActionable}
+          className={`focus-ring absolute left-1/2 top-1/2 z-20 flex h-[29%] w-[29%] -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center rounded-full border-[5px] border-nest-gold bg-white px-2 text-center text-nest-teal shadow-[0_12px_32px_rgba(0,63,59,0.3)] transition sm:border-[7px] ${centerActionable ? "cursor-pointer hover:scale-[1.035] hover:bg-nest-cream active:scale-[0.98]" : "cursor-default"}`}
+          aria-label={verified && canSpin ? (testMode ? "Run test spin" : "Spin the prize wheel") : undefined}
+        >
+          {spinning ? (
+            <>
+              <RotateCw className="h-5 w-5 animate-spin text-nest-gold sm:h-7 sm:w-7" />
+              <span className="mt-1 text-[0.58rem] font-black uppercase tracking-[0.08em] sm:text-xs">Spinning</span>
+            </>
+          ) : busy ? (
+            <>
+              <LoaderCircle className="h-5 w-5 animate-spin text-nest-gold sm:h-7 sm:w-7" />
+              <span className="mt-1 text-[0.5rem] font-black uppercase tracking-[0.06em] sm:text-[0.68rem]">Preparing</span>
+            </>
+          ) : phase === "prelaunch" ? (
+            <>
+              <CalendarClock className="h-5 w-5 text-nest-gold sm:h-7 sm:w-7" />
+              <span className="mt-1 text-[0.55rem] font-black uppercase tracking-[0.08em] sm:text-xs">Opens</span>
+              <span className="text-[0.58rem] font-black uppercase text-nest-gold sm:text-xs">Aug 5</span>
+            </>
+          ) : phase === "ended" ? (
+            <>
+              <Gift className="h-5 w-5 text-nest-gold sm:h-7 sm:w-7" />
+              <span className="mt-1 text-[0.55rem] font-black uppercase tracking-[0.08em] sm:text-xs">Promotion</span>
+              <span className="text-[0.58rem] font-black uppercase text-nest-gold sm:text-xs">Ended</span>
+            </>
+          ) : !verified ? (
+            <>
+              <LockKeyhole className="h-5 w-5 text-nest-gold sm:h-7 sm:w-7" />
+              <span className="mt-1 text-[0.62rem] font-black uppercase tracking-[0.08em] sm:text-sm">Verify</span>
+              <span className="text-[0.52rem] font-black uppercase text-nest-gold sm:text-[0.68rem]">To spin</span>
+            </>
+          ) : canSpin ? (
+            <>
+              <Sparkles className="h-5 w-5 text-nest-gold sm:h-7 sm:w-7" />
+              <span className="mt-1 text-[0.68rem] font-black uppercase tracking-[0.08em] sm:text-base">{testMode ? "Test spin" : "Spin"}</span>
+              <span className="text-[0.45rem] font-black uppercase tracking-[0.08em] text-nest-gold sm:text-[0.6rem]">Tap here</span>
+            </>
+          ) : monthlyLimitReached ? (
+            <>
+              <CheckCircle2 className="h-5 w-5 text-nest-gold sm:h-7 sm:w-7" />
+              <span className="mt-1 text-[0.5rem] font-black uppercase tracking-[0.06em] sm:text-[0.68rem]">Monthly</span>
+              <span className="text-[0.55rem] font-black uppercase text-nest-gold sm:text-xs">Limit</span>
+            </>
+          ) : (
+            <>
+              <Clock3 className="h-5 w-5 text-nest-gold sm:h-7 sm:w-7" />
+              <span className="mt-1 text-[0.5rem] font-black uppercase tracking-[0.06em] sm:text-[0.68rem]">Next spin</span>
+              <span className="text-[0.48rem] font-black text-nest-gold sm:text-[0.62rem]">
+                {nextSpinMs > Date.now() ? <Countdown targetMs={nextSpinMs} compact /> : "Locked"}
+              </span>
+            </>
+          )}
+        </button>
       </div>
     </div>
   );
@@ -360,6 +440,15 @@ export function RewardsExperience() {
       .finally(() => setLoading(false));
     return () => recaptchaRef.current?.clear();
   }, [loadStatus]);
+
+  useEffect(() => {
+    if (!revealedResult) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setRevealedResult(null);
+    };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [revealedResult]);
 
   async function sendPhoneCode() {
     setError("");
@@ -603,7 +692,20 @@ export function RewardsExperience() {
 
       <section className="grid items-start gap-8 lg:grid-cols-[1.05fr_0.95fr]">
         <div className="rounded-[2.5rem] border border-nest-gold/18 bg-white/88 p-4 shadow-soft backdrop-blur sm:p-7">
-          <PrizeWheel rotation={rotation} spinning={spinning} onAnimationComplete={finishWheelAnimation} />
+          <PrizeWheel
+            rotation={rotation}
+            spinning={spinning}
+            busy={busy}
+            phase={phase}
+            verified={Boolean(status?.verified)}
+            canSpin={Boolean(status?.canSpin)}
+            testMode={Boolean(status?.testMode)}
+            nextSpinMs={nextSpinMs}
+            monthlyLimitReached={(status?.spinsThisMonth || 0) >= (status?.maxSpinsPerMonth || LAUNCH_REWARDS_MAX_SPINS_PER_MONTH)}
+            onSpin={() => { void spinWheel(); }}
+            onVerify={() => document.getElementById("rewards-entry")?.scrollIntoView({ behavior: "smooth", block: "center" })}
+            onAnimationComplete={finishWheelAnimation}
+          />
           <p className="mx-auto mt-4 max-w-xl text-center text-xs font-semibold leading-5 text-nest-ink/55">
             {status?.testMode
               ? "Test mode uses the secure server-selected prize chosen in Admin. It creates no customer reward and does not affect live odds or limits."
@@ -634,7 +736,7 @@ export function RewardsExperience() {
           )}
 
           {phase === "live" && !status?.verified && (
-            <div className="rounded-[2rem] border border-nest-gold/20 bg-white p-5 shadow-soft sm:p-7">
+            <div id="rewards-entry" className="scroll-mt-28 rounded-[2rem] border border-nest-gold/20 bg-white p-5 shadow-soft sm:p-7">
               <div className="flex items-start gap-3">
                 <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-nest-mint/45 text-nest-teal"><LockKeyhole size={23} /></span>
                 <div><p className="text-xs font-black uppercase tracking-[0.16em] text-nest-gold">Secure entry</p><h2 className="mt-1 text-2xl font-black text-nest-teal">Verify once, then spin.</h2></div>
@@ -694,7 +796,7 @@ export function RewardsExperience() {
                   <p className="mt-2 text-sm font-semibold text-nest-ink/62">{status.testMode ? `Forced result: ${status.testPrizeTitle || "selected prize"}` : `${status.participant?.maskedEmail} · ${status.participant?.maskedPhone}`}</p>
                 </div>
                 {status.testMode
-                  ? <a href="/admin/rewards" className="text-sm font-black text-nest-teal underline">Test settings</a>
+                  ? <a href="/admin/rewards" className="text-sm font-black text-nest-teal underline">Back to Rewards Admin</a>
                   : <button type="button" onClick={signOutRewards} disabled={busy} className="text-sm font-black text-nest-teal underline">Sign out</button>}
 
               </div>
@@ -705,9 +807,11 @@ export function RewardsExperience() {
               </div>
 
               {status.canSpin ? (
-                <button type="button" onClick={spinWheel} disabled={busy || spinning} className="focus-ring mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full bg-nest-teal px-6 py-4 text-lg font-black text-white shadow-soft transition hover:-translate-y-0.5 hover:bg-nest-teal2 disabled:cursor-not-allowed disabled:opacity-60">
-                  {busy ? <LoaderCircle className="animate-spin" size={21} /> : spinning ? <RotateCw className="animate-spin" size={21} /> : <Sparkles size={21} />} {spinning ? "Wheel spinning…" : status.testMode ? "Run test spin" : "Spin my reward"}
-                </button>
+                <div className="mt-5 rounded-2xl border border-nest-gold/18 bg-nest-mint/25 p-4 text-center">
+                  <Sparkles className="mx-auto text-nest-gold" size={20} />
+                  <p className="mt-2 font-black text-nest-teal">Tap the center of the wheel to {status.testMode ? "run a test spin" : "spin your reward"}.</p>
+                  <p className="mt-1 text-sm font-semibold text-nest-ink/60">Your result is selected and recorded securely before the animation begins.</p>
+                </div>
               ) : (
                 <div className="mt-5 rounded-2xl border border-nest-gold/18 bg-nest-cream p-4 text-center">
                   <p className="font-black text-nest-teal">{(status.spinsThisMonth || 0) >= (status.maxSpinsPerMonth || 4) ? "You used all four spins for this month." : "Your next spin is locked for now."}</p>
@@ -719,39 +823,116 @@ export function RewardsExperience() {
         </div>
       </section>
 
-      {revealedResult && (
-        <motion.section initial={{ opacity: 0, y: 22, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }} className="relative overflow-hidden rounded-[2.5rem] border border-nest-gold/30 bg-gradient-to-br from-white via-nest-cream to-nest-mint/35 p-6 text-center shadow-glow sm:p-10" aria-live="polite">
-          <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
-            {Array.from({ length: 16 }).map((_, index) => (
-              <Star key={index} className="absolute animate-float text-nest-gold/35" size={12 + (index % 4) * 4} style={{ left: `${5 + (index * 17) % 90}%`, top: `${8 + (index * 23) % 78}%`, animationDelay: `${(index % 6) * 0.35}s` }} />
-            ))}
-          </div>
-          <div className="relative mx-auto max-w-2xl">
-            <span className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-nest-teal text-white shadow-soft"><Gift size={30} /></span>
-            <p className="mt-5 text-sm font-black uppercase tracking-[0.2em] text-nest-gold">{revealedResult.testOnly ? "Test Result — Not a Real Reward" : "Your Launch Reward"}</p>
-            <h2 className="mt-2 text-3xl font-black text-nest-teal sm:text-5xl">{revealedResult.title}</h2>
-            <p className="mt-4 text-lg font-black text-nest-ink/80">{revealedResult.customerMessage}</p>
-            <p className="mx-auto mt-3 max-w-xl font-semibold leading-7 text-nest-ink/68">{revealedResult.description}</p>
-            <div className="mx-auto mt-5 inline-flex rounded-full border border-nest-gold/20 bg-white px-4 py-2 text-sm font-black text-nest-teal">{revealedResult.testOnly ? `Test reference ${revealedResult.referenceCode}` : `Reward ${revealedResult.referenceCode}`}</div>
-            {revealedResult.requiresManualVerification && <p className="mx-auto mt-4 max-w-xl rounded-2xl bg-amber-50 p-4 text-sm font-bold leading-6 text-amber-900">This rare prize is pending eligibility, service-area, identity, and standard-scope verification. Submit the claim within 72 hours.</p>}
-            <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
-              {revealedResult.testOnly ? (
-                <>
-                  <button type="button" onClick={spinWheel} disabled={busy || spinning} className="focus-ring inline-flex items-center justify-center gap-2 rounded-full bg-nest-teal px-6 py-3.5 font-black text-white shadow-soft"><RotateCw size={18} /> Run this test again</button>
-                  <a href="/admin/rewards" className="focus-ring inline-flex items-center justify-center gap-2 rounded-full border border-nest-teal/20 bg-white px-6 py-3.5 font-black text-nest-teal">Choose another prize <ArrowRight size={18} /></a>
-                </>
-              ) : (
-                <>
-                  <Link href={revealedResult.useHref} className="focus-ring inline-flex items-center justify-center gap-2 rounded-full bg-nest-teal px-6 py-3.5 font-black text-white shadow-soft">
-                    {revealedResult.requiresManualVerification ? "Submit prize claim" : "Use my reward"} <ArrowRight size={18} />
-                  </Link>
-                  <button type="button" onClick={shareRewards} className="focus-ring inline-flex items-center justify-center gap-2 rounded-full border border-nest-teal/20 bg-white px-6 py-3.5 font-black text-nest-teal"><Share2 size={18} /> Share Launch Rewards</button>
-                </>
-              )}
-            </div>
-          </div>
-        </motion.section>
-      )}
+      <AnimatePresence>
+        {revealedResult && (
+          <motion.div
+            className="fixed inset-0 z-[120] grid place-items-center bg-nest-teal/72 p-4 backdrop-blur-sm"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setRevealedResult(null)}
+          >
+            <motion.div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="launch-reward-result-title"
+              className="relative max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-[2.25rem] border border-nest-gold/35 bg-gradient-to-br from-white via-nest-cream to-nest-mint/40 p-6 text-center shadow-[0_28px_90px_rgba(0,43,40,0.45)] sm:p-9"
+              initial={{ opacity: 0, y: 28, scale: 0.94 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 18, scale: 0.96 }}
+              transition={{ type: "spring", stiffness: 230, damping: 22 }}
+              onClick={(event) => event.stopPropagation()}
+            >
+              <button
+                type="button"
+                onClick={() => setRevealedResult(null)}
+                className="focus-ring absolute right-4 top-4 grid h-10 w-10 place-items-center rounded-full border border-nest-teal/15 bg-white/90 text-nest-teal shadow-sm"
+                aria-label="Close reward result"
+              >
+                <X size={19} />
+              </button>
+
+              <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-[2.25rem]" aria-hidden="true">
+                {Array.from({ length: 18 }).map((_, index) => (
+                  <Star
+                    key={index}
+                    className="absolute animate-float text-nest-gold/35"
+                    size={11 + (index % 4) * 4}
+                    style={{
+                      left: `${4 + (index * 17) % 92}%`,
+                      top: `${5 + (index * 23) % 85}%`,
+                      animationDelay: `${(index % 6) * 0.3}s`,
+                    }}
+                  />
+                ))}
+              </div>
+
+              <div className="relative mx-auto max-w-xl">
+                <span className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-nest-teal text-white shadow-soft sm:h-20 sm:w-20">
+                  <Gift size={32} />
+                </span>
+                <p className="mt-5 text-xs font-black uppercase tracking-[0.2em] text-nest-gold sm:text-sm">
+                  {revealedResult.testOnly ? "Test Result — No Real Reward" : "Your Launch Reward"}
+                </p>
+                <h2 id="launch-reward-result-title" className="mt-2 text-3xl font-black text-nest-teal sm:text-5xl">
+                  {revealedResult.title}
+                </h2>
+                <p className="mt-4 text-lg font-black text-nest-ink/80">{revealedResult.customerMessage}</p>
+                <p className="mx-auto mt-3 max-w-lg font-semibold leading-7 text-nest-ink/68">{revealedResult.description}</p>
+                <div className="mx-auto mt-5 inline-flex rounded-full border border-nest-gold/20 bg-white px-4 py-2 text-sm font-black text-nest-teal shadow-sm">
+                  {revealedResult.testOnly ? `Test reference ${revealedResult.referenceCode}` : `Reward ${revealedResult.referenceCode}`}
+                </div>
+
+                {revealedResult.requiresManualVerification && (
+                  <p className="mx-auto mt-4 max-w-lg rounded-2xl bg-amber-50 p-4 text-sm font-bold leading-6 text-amber-900">
+                    This rare prize is pending eligibility, service-area, identity, and standard-scope verification. Submit the claim within 72 hours.
+                  </p>
+                )}
+
+                <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row">
+                  {revealedResult.testOnly ? (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setRevealedResult(null);
+                          window.setTimeout(() => { void spinWheel(); }, 0);
+                        }}
+                        disabled={busy || spinning}
+                        className="focus-ring inline-flex items-center justify-center gap-2 rounded-full bg-nest-teal px-6 py-3.5 font-black text-white shadow-soft disabled:opacity-60"
+                      >
+                        <RotateCw size={18} /> Run this test again
+                      </button>
+                      <a href="/admin/rewards" className="focus-ring inline-flex items-center justify-center gap-2 rounded-full border border-nest-teal/20 bg-white px-6 py-3.5 font-black text-nest-teal">
+                        Choose another prize <ArrowRight size={18} />
+                      </a>
+                    </>
+                  ) : (
+                    <>
+                      <Link href={revealedResult.useHref} className="focus-ring inline-flex items-center justify-center gap-2 rounded-full bg-nest-teal px-6 py-3.5 font-black text-white shadow-soft">
+                        {revealedResult.requiresManualVerification ? "Submit prize claim" : "Use my reward"} <ArrowRight size={18} />
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={() => setRevealedResult(null)}
+                        className="focus-ring inline-flex items-center justify-center rounded-full border border-nest-teal/20 bg-white px-6 py-3.5 font-black text-nest-teal"
+                      >
+                        Save for later
+                      </button>
+                    </>
+                  )}
+                </div>
+
+                {!revealedResult.testOnly && (
+                  <button type="button" onClick={shareRewards} className="mt-5 inline-flex items-center gap-2 text-sm font-black text-nest-teal underline">
+                    <Share2 size={16} /> Share Launch Rewards
+                  </button>
+                )}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {status?.verified && (status.rewards?.length || 0) > 0 && (
         <section className="rounded-[2.5rem] border border-nest-gold/18 bg-white/75 p-5 shadow-soft sm:p-8">
