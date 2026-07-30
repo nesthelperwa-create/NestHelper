@@ -476,7 +476,7 @@ export function RewardsExperience() {
       const confirmation = await signInWithPhoneNumber(rewardsFirebaseAuth, phone, recaptchaRef.current);
       setConfirmationResult(confirmation);
       setVerificationStep("sms");
-      setNotice(`We texted a verification code to the mobile number ending in ${phone.slice(-4)}.`);
+      setNotice(`We texted a verification code to the mobile number ending in ${phone.slice(-4)}. Your code may take up to 2 minutes to arrive. Please wait before requesting another code.`);
     } catch (sendError) {
       setError(humanFirebaseError(sendError));
       recaptchaRef.current?.clear();
@@ -724,7 +724,7 @@ export function RewardsExperience() {
           <p className="mx-auto mt-4 max-w-xl text-center text-xs font-semibold leading-5 text-nest-ink/55">
             {status?.testMode
               ? "Test mode uses the secure server-selected prize chosen in Admin. It creates no customer reward and does not affect live odds or limits."
-              : "The animated segment sizes are decorative. The secure server chooses and permanently records the result using the odds disclosed below before the wheel moves."}
+              : "Wheel sections do not represent prize odds. Results are securely selected and recorded before the wheel animation. See prize odds below."}
           </p>
         </div>
 
