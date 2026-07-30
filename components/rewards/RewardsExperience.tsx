@@ -972,12 +972,30 @@ export function RewardsExperience() {
           <div className="mt-5 rounded-2xl bg-nest-mint/30 p-4 text-sm font-bold leading-6 text-nest-teal"><LockKeyhole className="mr-2 inline h-4 w-4" />Refreshing, clearing cookies, opening another browser, or replaying a request does not create another eligible spin.</div>
         </div>
         <div className="grid gap-2">
-          {launchRewardPrizes.map((prize) => (
-            <div key={prize.id} className="flex items-center justify-between gap-4 rounded-2xl border border-nest-gold/14 bg-nest-cream/55 px-4 py-3">
-              <div><p className="font-black text-nest-teal">{prize.title}</p><p className="mt-1 text-xs font-semibold leading-5 text-nest-ink/58">{prize.description}</p></div>
-              <span className="shrink-0 rounded-full bg-white px-3 py-1.5 text-xs font-black text-nest-gold shadow-sm">{prize.approximateOdds}</span>
-            </div>
-          ))}
+          {launchRewardPrizes.map((prize) => {
+            const isGrandPrize = prize.id === "parent-reset-grand";
+
+            return (
+              <div
+                key={prize.id}
+                className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-3 gap-y-2 rounded-2xl border border-nest-gold/14 bg-nest-cream/55 px-4 py-3"
+              >
+                <div className="min-w-0">
+                  <p className="font-black text-nest-teal">{prize.title}</p>
+                  <p className="mt-1 text-xs font-semibold leading-5 text-nest-ink/58">{prize.description}</p>
+                </div>
+                <span
+                  className={`rounded-full bg-white px-3 py-1.5 text-center text-xs font-black leading-5 text-nest-gold shadow-sm ${
+                    isGrandPrize
+                      ? "col-span-2 max-w-full justify-self-start whitespace-normal"
+                      : "shrink-0 whitespace-nowrap"
+                  }`}
+                >
+                  {prize.approximateOdds}
+                </span>
+              </div>
+            );
+          })}
         </div>
       </section>
 
