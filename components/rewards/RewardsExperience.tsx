@@ -978,21 +978,24 @@ export function RewardsExperience() {
             return (
               <div
                 key={prize.id}
-                className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-3 gap-y-2 rounded-2xl border border-nest-gold/14 bg-nest-cream/55 px-4 py-3"
+                className={`rounded-2xl border border-nest-gold/14 bg-nest-cream/55 px-4 py-3 ${
+                  isGrandPrize ? "" : "grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-3"
+                }`}
               >
                 <div className="min-w-0">
                   <p className="font-black text-nest-teal">{prize.title}</p>
                   <p className="mt-1 text-xs font-semibold leading-5 text-nest-ink/58">{prize.description}</p>
+                  {isGrandPrize && (
+                    <p className="mt-3 border-t border-nest-gold/16 pt-3 text-xs font-black leading-5 text-nest-gold">
+                      Odds: 0.2% — approximately 1 in 500 eligible spins while available.
+                    </p>
+                  )}
                 </div>
-                <span
-                  className={`rounded-full bg-white px-3 py-1.5 text-center text-xs font-black leading-5 text-nest-gold shadow-sm ${
-                    isGrandPrize
-                      ? "col-span-2 max-w-full justify-self-start whitespace-normal"
-                      : "shrink-0 whitespace-nowrap"
-                  }`}
-                >
-                  {prize.approximateOdds}
-                </span>
+                {!isGrandPrize && (
+                  <span className="shrink-0 whitespace-nowrap rounded-full bg-white px-3 py-1.5 text-center text-xs font-black leading-5 text-nest-gold shadow-sm">
+                    {prize.approximateOdds}
+                  </span>
+                )}
               </div>
             );
           })}
