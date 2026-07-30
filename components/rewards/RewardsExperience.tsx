@@ -220,39 +220,34 @@ function PrizeWheel({
             style={{ background: separatorGradient }}
             aria-hidden="true"
           />
-          {launchRewardPrizes.map((prize, index) => {
-            const angle = segmentAngle * (index + 0.5);
-            const radians = (angle * Math.PI) / 180;
-            const radius = 34;
-            const x = 50 + Math.sin(radians) * radius;
-            const y = 50 - Math.cos(radians) * radius;
+          {launchRewardPrizes.map((prize) => {
             const lines = wheelLabelLines[prize.id] || [prize.shortLabel];
-            const labelRotation = angle > 270 ? angle - 360 : angle > 90 ? angle - 180 : angle;
+            const config = wheelLabelConfigs[prize.id] || { left: 50, top: 50, rotation: 0, width: 18 };
 
             return (
               <div
                 key={prize.id}
                 className="absolute z-10 flex items-center justify-center text-center"
                 style={{
-                  left: `${x}%`,
-                  top: `${y}%`,
-                  width: "23%",
-                  aspectRatio: "1.82 / 1",
-                  transform: `translate(-50%, -50%) rotate(${labelRotation}deg)`,
+                  left: `${config.left}%`,
+                  top: `${config.top}%`,
+                  width: `${config.width}%`,
+                  aspectRatio: "1.76 / 1",
+                  transform: `translate(-50%, -50%) rotate(${config.rotation}deg)`,
                   transformOrigin: "center center",
                 }}
               >
                 <div
-                  className="flex h-full w-full flex-col items-center justify-center rounded-xl border border-nest-gold/35 bg-[#fffaf0]/95 font-black uppercase text-nest-teal shadow-[0_3px_12px_rgba(0,63,59,0.14)]"
+                  className="flex h-full w-full flex-col items-center justify-center rounded-[0.85rem] border border-nest-gold/35 bg-[#fffaf0]/97 font-black uppercase text-nest-teal shadow-[0_3px_12px_rgba(0,63,59,0.14)]"
                   style={{
-                    padding: "4% 5%",
-                    fontSize: "clamp(0.42rem, 2.6cqw, 0.72rem)",
-                    lineHeight: 0.98,
+                    padding: "5% 5%",
+                    fontSize: "clamp(0.41rem, 2.35cqw, 0.67rem)",
+                    lineHeight: 1.0,
                     letterSpacing: "-0.02em",
                   }}
                 >
                   {lines.map((line) => (
-                    <span key={line} className="block whitespace-nowrap text-center">
+                    <span key={line} className="block text-center">
                       {line}
                     </span>
                   ))}
