@@ -16,6 +16,10 @@ service cloud.firestore {
       return signedIn() && request.auth.token.email in adminEmails();
     }
 
+    function isOwner(ownerUid) {
+      return signedIn() && ownerUid is string && request.auth.uid == ownerUid;
+    }
+
     match /serviceRequests/{docId} {
       allow create: if false; // public submissions should go through Next.js API route
       allow read, update, delete: if isAdmin();
@@ -51,8 +55,6 @@ service cloud.firestore {
       allow read, update, delete: if isAdmin();
     }
 
-    // Launch Rewards are created and enforced only through trusted Next.js server routes.
-    // Admin users may review and update records, but public clients cannot read or write them directly.
     match /launchRewardParticipants/{docId} {
       allow create, delete: if false;
       allow read, update: if isAdmin();
@@ -103,8 +105,42 @@ service cloud.firestore {
       allow read, update, delete: if isAdmin();
     }
 
-    match /smartLabels/{docId} {
+    match /smartLabelReservations/{docId} {
+      allow create, delete: if false;
+      allow read, update: if isAdmin();
+    }
+
+    match /smartLabelPacks/{docId} {
       allow create: if false; // generated through admin API route only
+      allow read: if isAdmin() || isOwner(resource.data.ownerUid);
+      allow update, delete: if isAdmin();
+    }
+
+    match /smartLabelCollections/{docId} {
+      allow create: if false; // created through trusted API route only
+      allow read: if isAdmin() || isOwner(resource.data.ownerUid);
+      allow update: if isAdmin() || (
+        isOwner(resource.data.ownerUid) &&
+        request.resource.data.ownerUid == resource.data.ownerUid &&
+        request.resource.data.ownerEmail == resource.data.ownerEmail
+      );
+      allow delete: if isAdmin() || isOwner(resource.data.ownerUid);
+    }
+
+    match /smartLabels/{docId} {
+      allow create: if false; // generated through trusted API route only
+      allow read: if isAdmin() || isOwner(resource.data.ownerUid);
+      allow update: if isAdmin() || (
+        isOwner(resource.data.ownerUid) &&
+        request.resource.data.ownerUid == resource.data.ownerUid &&
+        request.resource.data.ownerEmail == resource.data.ownerEmail &&
+        request.resource.data.claimedFromPackId == resource.data.claimedFromPackId
+      );
+      allow delete: if isAdmin();
+    }
+
+    match /smartLabelFinderMessages/{docId} {
+      allow create: if false;
       allow read, update, delete: if isAdmin();
     }
 

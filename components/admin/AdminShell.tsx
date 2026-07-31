@@ -15,6 +15,7 @@ const links = [
   { href: "/admin/marketing", label: "Marketing" },
   { href: "/admin/rewards", label: "Rewards" },
   { href: "/admin/smart-labels", label: "Smart Labels" },
+  { href: "/admin/smart-label-packs", label: "Label Packs" },
   { href: "/admin/giving-back", label: "Giving Back" },
   { href: "/admin/contact", label: "Contact" },
 ];

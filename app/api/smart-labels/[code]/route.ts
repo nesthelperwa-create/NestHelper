@@ -8,6 +8,7 @@ import {
   normalizeSmartLabelCode,
   serializeSmartLabel,
 } from "@/lib/smartLabels";
+import { getPublicScanState } from "@/lib/smartLabelAccountServer";
 import { hashSmartLabelPin, verifySmartLabelPin } from "@/lib/smartLabelsServer";
 
 export const runtime = "nodejs";
@@ -31,63 +32,8 @@ async function getCodeFromContext(context: RouteContext) {
 async function getLabel(code: string) {
   const db = getFirebaseAdminDb();
   const snap = await db.collection("smartLabels").doc(code).get();
-  if (!snap.exists) return activateReservedLabel(code);
-  return { ref: snap.ref, data: snap.data() || {} };
-}
-
-async function activateReservedLabel(code: string) {
-  const db = getFirebaseAdminDb();
-  const labelRef = db.collection("smartLabels").doc(code);
-  const reservationRef = db.collection("smartLabelReservations").doc(code);
-
-  const labelData = await db.runTransaction(async (transaction) => {
-    const existingLabel = await transaction.get(labelRef);
-    if (existingLabel.exists) return existingLabel.data() || {};
-
-    const reservation = await transaction.get(reservationRef);
-    if (!reservation.exists) return null;
-
-    const reservationData = reservation.data() || {};
-    const now = FieldValue.serverTimestamp();
-    const labelUrl = typeof reservationData.labelUrl === "string" && reservationData.labelUrl ? reservationData.labelUrl : getSmartLabelUrl(code);
-    const newLabelData = {
-      code,
-      batchId: reservationData.batchId || "",
-      batchName: reservationData.batchName || "Sticker Order Labels",
-      customerName: "",
-      customerEmail: "",
-      labelUrl,
-      publicUrl: typeof reservationData.publicUrl === "string" && reservationData.publicUrl ? reservationData.publicUrl : labelUrl,
-      sequence: reservationData.sequence || 0,
-      labelIndex: reservationData.labelIndex || 0,
-      status: "Ready",
-      ownerMode: "customer-owned",
-      pinEnabled: false,
-      pinHash: "",
-      labelName: "",
-      locationName: "",
-      itemsInside: "",
-      notes: "",
-      photos: [],
-      activatedFromReservation: true,
-      lastEditedBy: "first-scan-activation",
-      createdAt: now,
-      createdAtIso: new Date().toISOString(),
-      updatedAt: now,
-    };
-
-    transaction.set(labelRef, newLabelData);
-    transaction.update(reservationRef, {
-      status: "Activated",
-      activatedAt: now,
-      updatedAt: now,
-    });
-
-    return newLabelData;
-  });
-
-  if (!labelData) return null;
-  return { ref: labelRef, data: labelData };
+  if (!snap.exists) return null;
+  return { ref: snap.ref, data: (snap.data() || {}) as Record<string, unknown> };
 }
 
 export async function GET(_request: Request, context: RouteContext) {
@@ -95,11 +41,19 @@ export async function GET(_request: Request, context: RouteContext) {
     const code = await getCodeFromContext(context);
     if (!code) return NextResponse.json({ ok: false, error: "Missing label code." }, { status: 400 });
 
-    const label = await getLabel(code);
-    if (!label) return NextResponse.json({ ok: false, error: "Label not found." }, { status: 404 });
+    const publicState = await getPublicScanState(code);
+    if (!publicState) return NextResponse.json({ ok: false, error: "Label not found." }, { status: 404 });
 
-    const pinEnabled = Boolean(label.data.pinEnabled);
-    return NextResponse.json({ ok: true, label: serializeSmartLabel(label.data, !pinEnabled) });
+    let legacyLabel = null;
+    if (publicState.state === "legacy") {
+      const label = await getLabel(code);
+      if (label) {
+        const pinEnabled = Boolean(label.data.pinEnabled);
+        legacyLabel = serializeSmartLabel(label.data, !pinEnabled);
+      }
+    }
+
+    return NextResponse.json({ ok: true, publicState, legacyLabel });
   } catch (error) {
     console.error("Smart label load failed", error);
     return NextResponse.json({ ok: false, error: "Unable to load this label." }, { status: 500 });
@@ -116,6 +70,9 @@ export async function POST(request: Request, context: RouteContext) {
 
     const label = await getLabel(code);
     if (!label) return NextResponse.json({ ok: false, error: "Label not found." }, { status: 404 });
+    if (label.data.ownerUid) {
+      return NextResponse.json({ ok: false, error: "This claimed label must be opened from the owner dashboard." }, { status: 403 });
+    }
     if (!label.data.pinEnabled) return NextResponse.json({ ok: true, label: serializeSmartLabel(label.data, true) });
 
     if (!verifySmartLabelPin(code, body.currentPin, label.data.pinHash)) {
@@ -137,6 +94,9 @@ export async function PATCH(request: Request, context: RouteContext) {
     const body = (await request.json().catch(() => ({}))) as UpdateBody;
     const label = await getLabel(code);
     if (!label) return NextResponse.json({ ok: false, error: "Label not found." }, { status: 404 });
+    if (label.data.ownerUid) {
+      return NextResponse.json({ ok: false, error: "This claimed label must be edited from the owner dashboard." }, { status: 403 });
+    }
 
     const pinEnabled = Boolean(label.data.pinEnabled);
     if (pinEnabled && !verifySmartLabelPin(code, body.currentPin, label.data.pinHash)) {
@@ -146,8 +106,9 @@ export async function PATCH(request: Request, context: RouteContext) {
     const updates: Record<string, unknown> = {
       ...cleanSmartLabelFields(body),
       status: "In use",
-      lastEditedBy: "customer-scan",
+      lastEditedBy: "customer-scan-legacy",
       updatedAt: FieldValue.serverTimestamp(),
+      labelUrl: typeof label.data.labelUrl === "string" && label.data.labelUrl ? label.data.labelUrl : getSmartLabelUrl(code),
     };
 
     if (body.removePin === true) {
@@ -166,7 +127,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       updates.pinUpdatedAt = FieldValue.serverTimestamp();
     }
 
-    await label.ref.update(updates);
+    await label.ref.set(updates, { merge: true });
     const updated = await label.ref.get();
     return NextResponse.json({ ok: true, label: serializeSmartLabel(updated.data() || {}, true) });
   } catch (error) {
