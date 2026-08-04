@@ -9,6 +9,7 @@ import { services } from "@/lib/services";
 import { emailAliases } from "@/lib/emailRouting";
 import { sendFamilyInvoiceEmail } from "@/lib/sendFamilyInvoiceEmail";
 import { REFERRAL_PROGRAM, getAvailableCustomerReferralCreditsForEmail, getTotalCustomerCreditAmount, reserveAppliedCustomerReferralCreditsForPayment } from "@/lib/referrals";
+import { buildFamilyDiscountAppliedNote, getFamilyDiscountLabel, inferFamilyDiscountKind, type FamilyDiscountKind } from "@/lib/familyDiscounts";
 import { createManualDiscountCoupon, getManualSalesTaxFirestoreFields, getManualSalesTaxMetadata, getOrCreateManualSalesTaxRate, manualTaxRatesParam, resolveManualSalesTaxConfig, type ManualSalesTaxConfig } from "@/lib/stripeManualTax";
 
 export const runtime = "nodejs";
@@ -154,8 +155,9 @@ async function createLaundryDepositCheckoutFromBreakdown(params: {
   shouldSendEmail: boolean;
   adminEmail: string;
   manualSalesTax: ManualSalesTaxConfig;
+  discountKind: FamilyDiscountKind;
 }) {
-  const { stripe, requestRef, requestId, data, breakdown, amountDueNowCents, shouldSendEmail, adminEmail, manualSalesTax } = params;
+  const { stripe, requestRef, requestId, data, breakdown, amountDueNowCents, shouldSendEmail, adminEmail, manualSalesTax, discountKind } = params;
   const email = getString(data.email);
   const fullName = getString(data.fullName) || getString(data.contactName) || "NestHelper customer";
   const serviceTitle = getServiceTitle(data) || "Laundry Rescue";
@@ -164,9 +166,13 @@ async function createLaundryDepositCheckoutFromBreakdown(params: {
   const servicePeriodLabel = getString(breakdown.servicePeriodLabel) || formatServicePeriodLabel(breakdown.servicePeriodStart, breakdown.servicePeriodEnd);
   const depositAmount = amountDueNowCents / 100;
   const discountCredit = cleanNumber(breakdown.discountCredit);
-  const referralCreditAlreadyDeductedNote = discountCredit > 0
-    ? `Referral/customer credit of ${formatMoney(discountCredit)} has already been deducted from this intro minimum. The amount shown is the remaining amount due.`
-    : "";
+  const discountAlreadyAppliedNote = buildFamilyDiscountAppliedNote({
+    kind: discountKind,
+    discountAmount: discountCredit,
+    amountDueNow: depositAmount,
+    existingText: [customerBreakdownText, getString(breakdown.customerNote)].filter(Boolean).join(" "),
+    formatMoney,
+  });
 
   const address = getAddress(data);
   const manualSalesTaxRateId = await getOrCreateManualSalesTaxRate(stripe, manualSalesTax, { requestId, serviceId: "laundry-rescue", paymentType: "laundry_deposit_checkout" });
@@ -203,7 +209,7 @@ async function createLaundryDepositCheckoutFromBreakdown(params: {
             name: "Laundry Rescue non-refundable intro minimum",
             description: [
               customerBreakdownText || getString(breakdown.customerNote) || "Non-refundable Laundry Rescue intro minimum includes pickup, wash, dry, fold, return, and up to about 26.2 lbs. Additional weight/add-ons are reviewed after final dry weight is confirmed.",
-              referralCreditAlreadyDeductedNote,
+              discountAlreadyAppliedNote,
               servicePeriodLabel ? `Service period: ${servicePeriodLabel}` : "",
             ].filter(Boolean).join("\n").slice(0, 1000),
           },
@@ -241,7 +247,10 @@ async function createLaundryDepositCheckoutFromBreakdown(params: {
       customerName: fullName,
       customerEmail: email,
       customerPhone: getString(data.phone),
-      referralCreditDeductedAmount: referralCreditAlreadyDeductedNote ? String(Number(discountCredit.toFixed(2))) : "",
+      discountAppliedAmount: discountCredit > 0 ? String(Number(discountCredit.toFixed(2))) : "",
+      discountType: discountCredit > 0 ? discountKind : "none",
+      discountLabel: discountCredit > 0 ? getFamilyDiscountLabel(discountKind) : "",
+      referralCreditDeductedAmount: discountKind === "referral_customer_credit" && discountCredit > 0 ? String(Number(discountCredit.toFixed(2))) : "",
       taxHandling: manualSalesTax.enabled ? "manual_sales_tax" : "no_sales_tax",
       ...getManualSalesTaxMetadata(manualSalesTax, manualSalesTaxRateId),
     },
@@ -269,7 +278,7 @@ async function createLaundryDepositCheckoutFromBreakdown(params: {
         quoteTitle: "Laundry Rescue intro minimum and final-balance choice",
         quoteBreakdownText: [
           customerBreakdownText,
-          referralCreditAlreadyDeductedNote,
+          discountAlreadyAppliedNote,
           manualSalesTax.enabled ? `Manual sales tax of ${manualSalesTax.rate}% is added in Stripe checkout.` : "No sales tax is added unless NestHelper manually enables it before sending.",
           "During Stripe checkout, the customer chooses either auto-charge for any additional weight/add-ons after final dry weight is confirmed or invoice-before-delivery. Laundry is not released until any final balance is fully paid.",
         ].filter(Boolean).join("\n\n"),
@@ -396,9 +405,20 @@ export async function POST(request: Request) {
     const availableCustomerCreditAmount = getTotalCustomerCreditAmount(availableCustomerCredits);
     const totalRequiredCredit = expectedReferralCredit + availableCustomerCreditAmount;
     const savedDiscountCredit = cleanNumber(breakdown.discountCredit);
-    const referralCreditAlreadyDeductedNote = savedDiscountCredit > 0
-      ? `Referral/customer credit of ${formatMoney(savedDiscountCredit)} has already been deducted from this invoice. The amount shown is the remaining amount due.`
-      : "";
+    const savedDiscountKind = inferFamilyDiscountKind({
+      breakdown,
+      requestData: data,
+      requiredReferralCreditAmount: totalRequiredCredit,
+    });
+    const savedDiscountLabel = getFamilyDiscountLabel(savedDiscountKind);
+    const discountAlreadyAppliedNote = buildFamilyDiscountAppliedNote({
+      kind: savedDiscountKind,
+      discountAmount: savedDiscountCredit,
+      amountDueNow: amountDueNowCents / 100,
+      existingText: [getString(breakdown.customerBreakdownText), getString(breakdown.customerNote)].filter(Boolean).join(" "),
+      formatMoney,
+    });
+    const verifiedReferralCreditApplied = totalRequiredCredit > 0 && savedDiscountCredit > 0;
 
     if (totalRequiredCredit > 0 && savedDiscountCredit < totalRequiredCredit) {
       return NextResponse.json(
@@ -428,6 +448,7 @@ export async function POST(request: Request) {
         shouldSendEmail,
         adminEmail: decoded.email || "admin",
         manualSalesTax,
+        discountKind: savedDiscountKind,
       });
       return NextResponse.json(laundryCheckout);
     }
@@ -450,12 +471,13 @@ export async function POST(request: Request) {
     const preTaxDiscountCents = Math.min(discountCreditCents, positiveLineSubtotalCents);
     const preTaxDiscountCouponId = await createManualDiscountCoupon(stripe, {
       amountCents: preTaxDiscountCents,
-      name: `Referral/customer credit ${formatMoney(preTaxDiscountCents / 100)}`,
+      name: `${savedDiscountLabel} ${formatMoney(preTaxDiscountCents / 100)}`,
       metadata: {
         requestId,
         serviceId: getString(data.service) || "family-service",
         paymentType: "family_invoice",
-        creditType: "referral_customer_credit",
+        discountType: savedDiscountKind,
+        creditType: verifiedReferralCreditApplied ? "referral_customer_credit" : "none",
       },
     });
 
@@ -478,9 +500,14 @@ export async function POST(request: Request) {
         servicePeriodEnd: getString(breakdown.servicePeriodEnd),
         servicePeriodLabel,
         siteUrl,
-        referralCreditDeductedAmount: preTaxDiscountCents > 0 ? String(Number((preTaxDiscountCents / 100).toFixed(2))) : "",
-        referralCreditDiscountMethod: preTaxDiscountCents > 0 ? "stripe_coupon_before_manual_tax" : "none",
-        referralCreditDiscountCouponId: preTaxDiscountCouponId,
+        discountAppliedAmount: preTaxDiscountCents > 0 ? String(Number((preTaxDiscountCents / 100).toFixed(2))) : "",
+        discountType: preTaxDiscountCents > 0 ? savedDiscountKind : "none",
+        discountLabel: preTaxDiscountCents > 0 ? savedDiscountLabel : "",
+        discountMethod: preTaxDiscountCents > 0 ? "stripe_coupon_before_manual_tax" : "none",
+        discountCouponId: preTaxDiscountCouponId,
+        referralCreditDeductedAmount: verifiedReferralCreditApplied && preTaxDiscountCents > 0 ? String(Number((preTaxDiscountCents / 100).toFixed(2))) : "",
+        referralCreditDiscountMethod: verifiedReferralCreditApplied && preTaxDiscountCents > 0 ? "stripe_coupon_before_manual_tax" : "none",
+        referralCreditDiscountCouponId: verifiedReferralCreditApplied ? preTaxDiscountCouponId : "",
         taxHandling: manualSalesTax.enabled ? "manual_sales_tax_after_discount" : "no_sales_tax",
         ...getManualSalesTaxMetadata(manualSalesTax, manualSalesTaxRateId),
       },
@@ -559,7 +586,7 @@ export async function POST(request: Request) {
           dueDate: finalized.due_date,
           serviceTitle,
           quoteTitle: getString(breakdown.quoteTitle) || `${serviceTitle} payment breakdown`,
-          quoteBreakdownText: [getString(breakdown.customerBreakdownText), referralCreditAlreadyDeductedNote].filter(Boolean).join("\n\n"),
+          quoteBreakdownText: [getString(breakdown.customerBreakdownText), discountAlreadyAppliedNote].filter(Boolean).join("\n\n"),
           servicePeriodLabel,
           replyToEmail: emailAliases.billing,
         })) as any;
@@ -602,6 +629,8 @@ export async function POST(request: Request) {
       familyInvoiceDiscountCouponId: preTaxDiscountCouponId,
       familyInvoiceDiscountCents: preTaxDiscountCents,
       familyInvoiceDiscountAmount: Number((preTaxDiscountCents / 100).toFixed(2)),
+      familyInvoiceDiscountType: preTaxDiscountCents > 0 ? savedDiscountKind : "none",
+      familyInvoiceDiscountLabel: preTaxDiscountCents > 0 ? savedDiscountLabel : "",
       ...getManualSalesTaxFirestoreFields(manualSalesTax, manualSalesTaxRateId),
       updatedAt: FieldValue.serverTimestamp(),
       updatedBy: decoded.email || "admin",

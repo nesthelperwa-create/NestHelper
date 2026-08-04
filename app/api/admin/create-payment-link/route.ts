@@ -11,6 +11,7 @@ import { services } from "@/lib/services";
 import { getStripePriceId } from "@/lib/stripePriceMap";
 import { sendPaymentLinkEmail } from "@/lib/sendPaymentLinkEmail";
 import { getAvailableCustomerReferralCreditsForEmail, getTotalCustomerCreditAmount, reserveAppliedCustomerReferralCreditsForPayment } from "@/lib/referrals";
+import { buildFamilyDiscountAppliedNote, getFamilyDiscountLabel, inferFamilyDiscountKind } from "@/lib/familyDiscounts";
 import { getManualSalesTaxFirestoreFields, getManualSalesTaxMetadata, getOrCreateManualSalesTaxRate, manualTaxRatesParam, resolveManualSalesTaxConfig } from "@/lib/stripeManualTax";
 
 export const runtime = "nodejs";
@@ -348,14 +349,36 @@ export async function POST(request: Request) {
     const availableCustomerCreditAmount = getTotalCustomerCreditAmount(availableCustomerCredits);
     const totalRequiredCredit = expectedReferralCredit + availableCustomerCreditAmount;
     const savedDiscountCredit = cleanNumber(savedFamilyBreakdown.discountCredit);
-    const referralCreditAlreadyDeductedNote = !isCommercialReset && savedDiscountCredit > 0
-      ? `Referral/customer credit of ${formatMoney(savedDiscountCredit)} has already been deducted from this amount. The amount shown is the remaining amount due.`
+    const savedDiscountKind = inferFamilyDiscountKind({
+      breakdown: savedFamilyBreakdown,
+      requestData: data,
+      requiredReferralCreditAmount: totalRequiredCredit,
+    });
+    const savedDiscountLabel = getFamilyDiscountLabel(savedDiscountKind);
+    const discountAlreadyAppliedNote = !isCommercialReset
+      ? buildFamilyDiscountAppliedNote({
+          kind: savedDiscountKind,
+          discountAmount: savedDiscountCredit,
+          amountDueNow: useCustomInitial ? customAmount : cleanNumber(savedFamilyBreakdown.amountDueNow),
+          existingText: [customNote, customerSafeFamilyBreakdownText].filter(Boolean).join(" "),
+          formatMoney,
+        })
       : "";
+    const verifiedReferralCreditApplied = totalRequiredCredit > 0 && savedDiscountCredit > 0;
     if (totalRequiredCredit > 0 && (!useCustomInitial || savedDiscountCredit < totalRequiredCredit)) {
       return NextResponse.json(
         {
           ok: false,
           error: `This request has a referral/customer credit. Open the Family Payment Breakdown, apply/save the $${totalRequiredCredit} credit, then use Fill checkout with credit price or create a family invoice.`,
+        },
+        { status: 400 }
+      );
+    }
+    if (!isCommercialReset && !isLaundryRescue && savedDiscountCredit > 0 && !useCustomInitial) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error: `The saved payment summary includes a ${savedDiscountLabel.toLowerCase()} of ${formatMoney(savedDiscountCredit)}. Use Fill checkout amount from the Family Payment Breakdown so the checkout charge matches the saved amount due.`,
         },
         { status: 400 }
       );
@@ -384,7 +407,7 @@ export async function POST(request: Request) {
                 name: useCustomInitial ? customTitle : "Laundry Rescue non-refundable intro minimum",
                 description: [
                   customNote || "Non-refundable Laundry Rescue intro minimum. The $59 minimum includes pickup, wash, dry, fold, return, and up to about 26.2 lbs. Additional laundry, add-ons, bulky items, or approved changes are reviewed separately.",
-                  referralCreditAlreadyDeductedNote,
+                  discountAlreadyAppliedNote,
                   "Final balance is handled after final dry weight is confirmed. The customer chooses auto-charge or invoice-before-delivery during checkout.",
                 ].filter(Boolean).join("\n"),
               },
@@ -402,7 +425,7 @@ export async function POST(request: Request) {
                 product_data: {
                   tax_code: isCommercialReset && commercialBreakdownHasTaxableLines(savedCommercialBreakdown) ? commercialCleaningTaxCode : nontaxableProductTaxCode,
                   name: customTitle,
-                  description: [customNote || `${serviceTitle} — ${formatMoney(customAmount)}`, referralCreditAlreadyDeductedNote, servicePeriodLabel ? `Service period: ${servicePeriodLabel}` : ""].filter(Boolean).join("\n"),
+                  description: [customNote || `${serviceTitle} — ${formatMoney(customAmount)}`, discountAlreadyAppliedNote, servicePeriodLabel ? `Service period: ${servicePeriodLabel}` : ""].filter(Boolean).join("\n"),
                 },
               },
               quantity: 1,
@@ -450,7 +473,10 @@ export async function POST(request: Request) {
         customerName: fullName,
         customerEmail: email,
         customerPhone: phone,
-        referralCreditDeductedAmount: referralCreditAlreadyDeductedNote ? String(Number(savedDiscountCredit.toFixed(2))) : "",
+        discountAppliedAmount: savedDiscountCredit > 0 ? String(Number(savedDiscountCredit.toFixed(2))) : "",
+        discountType: savedDiscountCredit > 0 ? savedDiscountKind : "none",
+        discountLabel: savedDiscountCredit > 0 ? savedDiscountLabel : "",
+        referralCreditDeductedAmount: verifiedReferralCreditApplied ? String(Number(savedDiscountCredit.toFixed(2))) : "",
       },
     };
 
@@ -483,7 +509,9 @@ export async function POST(request: Request) {
       ? `${formatMoney(laundryDepositAmount)} non-refundable intro minimum + tax; includes pickup, wash, dry, fold, return, and up to about 26.2 lbs`
       : useCustomInitial
         ? savedDiscountCredit > 0
-          ? `${formatMoney(customAmount)} custom checkout after ${formatMoney(savedDiscountCredit)} referral/customer credit`
+          ? savedDiscountKind === "launch_pricing"
+            ? `${formatMoney(customAmount)} launch pricing`
+            : `${formatMoney(customAmount)} custom checkout after ${formatMoney(savedDiscountCredit)} ${savedDiscountLabel.toLowerCase()}`
           : `${formatMoney(customAmount)} custom initial checkout`
         : getServicePriceLabel(serviceId);
     let emailSent = false;
@@ -504,13 +532,13 @@ export async function POST(request: Request) {
           replyToEmail,
           quoteBreakdownText: isLaundryRescue
             ? [
-                referralCreditAlreadyDeductedNote,
+                discountAlreadyAppliedNote,
                 "This intro minimum is non-refundable and includes pickup, wash, dry, fold, return, and up to about 26.2 lbs of final dry-weight laundry. During Stripe checkout, the customer chooses either auto-charge for any additional weight/add-ons after final dry weight is confirmed or invoice-before-delivery. Laundry is not released until any final balance is fully paid."
               ].filter(Boolean).join("\n\n")
             : isCommercialReset && useCustomInitial && shouldIncludeQuoteBreakdown
               ? savedCommercialBreakdownText
               : !isCommercialReset && shouldIncludeFamilyBreakdown
-                ? [customerSafeFamilyBreakdownText, referralCreditAlreadyDeductedNote].filter(Boolean).join("\n\n")
+                ? [customerSafeFamilyBreakdownText, discountAlreadyAppliedNote].filter(Boolean).join("\n\n")
                 : "",
           quoteBreakdownTitle: isLaundryRescue
             ? "Laundry Rescue deposit and final-balance choice"
@@ -555,6 +583,9 @@ export async function POST(request: Request) {
       checkoutServicePeriodEnd: isCommercialReset ? getString(savedCommercialBreakdown.servicePeriodEnd) : getString(savedFamilyBreakdown.servicePeriodEnd),
       checkoutCreatedBy: decoded.email || "admin",
       checkoutTaxMode: manualSalesTax.enabled ? "Manual sales tax" : "No sales tax",
+      checkoutDiscountAmount: savedDiscountCredit > 0 ? Number(savedDiscountCredit.toFixed(2)) : 0,
+      checkoutDiscountType: savedDiscountCredit > 0 ? savedDiscountKind : "none",
+      checkoutDiscountLabel: savedDiscountCredit > 0 ? savedDiscountLabel : "",
       ...getManualSalesTaxFirestoreFields(manualSalesTax, manualSalesTaxRateId),
       updatedAt: FieldValue.serverTimestamp(),
       updatedBy: decoded.email || "admin",

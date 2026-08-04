@@ -2,6 +2,12 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { firebaseAuth } from "@/lib/firebaseClient";
+import {
+  FAMILY_DISCOUNT_KIND_OPTIONS,
+  getFamilyDiscountLabel,
+  inferFamilyDiscountKind,
+  type FamilyDiscountKind,
+} from "@/lib/familyDiscounts";
 
 type AdminDoc = { id: string; [key: string]: any };
 type CustomerCredit = { id: string; status?: string; amount?: number; remainingAmount?: number; creditCode?: string; customerEmail?: string; sourceReferredName?: string; [key: string]: any };
@@ -457,6 +463,15 @@ function getInitialDiscountCredit(item: AdminDoc, saved: Record<string, any>, av
   return suggestedCredit > 0 ? String(suggestedCredit) : "0";
 }
 
+function getInitialDiscountKind(item: AdminDoc, saved: Record<string, any>, availableCustomerCredits: CustomerCredit[] = []) {
+  const requiredReferralCreditAmount = getReferralCreditAmount(item) + getAvailableCustomerCreditAmount(availableCustomerCredits);
+  return inferFamilyDiscountKind({
+    breakdown: saved,
+    requestData: item,
+    requiredReferralCreditAmount,
+  });
+}
+
 function buildDefaultCustomerNote(item: AdminDoc, availableCustomerCredits: CustomerCredit[] = []) {
   const referralCredit = getReferralCreditAmount(item);
   const availableCustomerCredit = getAvailableCustomerCreditAmount(availableCustomerCredits);
@@ -601,6 +616,7 @@ function buildCustomerBreakdownText({
   lineItems,
   subtotal,
   discountCredit,
+  discountLabel,
   amountDueNow,
   laterAmount,
   customerNote,
@@ -614,6 +630,7 @@ function buildCustomerBreakdownText({
   lineItems: FamilyLineItem[];
   subtotal: number;
   discountCredit: number;
+  discountLabel: string;
   amountDueNow: number;
   laterAmount: number;
   customerNote: string;
@@ -644,7 +661,7 @@ function buildCustomerBreakdownText({
 
   const amountLines = [
     `Subtotal: ${formatMoney(subtotal)}`,
-    discountCredit > 0 ? `Discount / credit: -${formatMoney(discountCredit)}` : "",
+    discountCredit > 0 ? `${discountLabel}: -${formatMoney(discountCredit)}` : "",
     `Amount due now: ${formatMoney(amountDueNow)}`,
     laterAmount > 0 ? `Possible later/add-on amount: ${formatMoney(laterAmount)}` : "Possible later/add-on amount: None listed right now",
   ].filter(Boolean);
@@ -706,6 +723,7 @@ export default function FamilyPaymentBreakdownBuilder({
   const totalSuggestedCreditAmount = referralCreditAmount + availableCustomerCreditAmount;
   const totalSuggestedCreditLabel = [referralCreditLabel, availableCustomerCreditLabel].filter(Boolean).join(" + ");
   const [discountCredit, setDiscountCredit] = useState(getInitialDiscountCredit(item, saved, availableCustomerCredits));
+  const [discountKind, setDiscountKind] = useState<FamilyDiscountKind>(getInitialDiscountKind(item, saved, availableCustomerCredits));
   const [laterAmount, setLaterAmount] = useState(getString(saved.laterAmount) || "0");
   const [customerNote, setCustomerNote] = useState(getString(saved.customerNote) || buildDefaultCustomerNote(item, availableCustomerCredits));
   const [internalNotes, setInternalNotes] = useState(getString(saved.internalNotes));
@@ -738,6 +756,7 @@ export default function FamilyPaymentBreakdownBuilder({
     setSelectedPreset(getSuggestedPresetId(item));
     setLineItems(Array.isArray(nextSaved.lineItems) && nextSaved.lineItems.length ? nextSaved.lineItems.map(lineFromSaved) : createDefaultLinesFromRequest(item));
     setDiscountCredit(getInitialDiscountCredit(item, nextSaved, availableCustomerCredits));
+    setDiscountKind(getInitialDiscountKind(item, nextSaved, availableCustomerCredits));
     setLaterAmount(getString(nextSaved.laterAmount) || "0");
     setCustomerNote(getString(nextSaved.customerNote) || buildDefaultCustomerNote(item, availableCustomerCredits));
     setInternalNotes(getString(nextSaved.internalNotes));
@@ -764,6 +783,7 @@ export default function FamilyPaymentBreakdownBuilder({
 
   const subtotal = useMemo(() => lineItems.reduce((sum, line) => sum + calculateLineAmount(line), 0), [lineItems]);
   const discount = Math.max(0, cleanNumber(discountCredit));
+  const discountLabel = getFamilyDiscountLabel(discountKind);
   const amountDueNow = Math.max(0, subtotal - discount);
   const referralCreditApplied = totalSuggestedCreditAmount > 0 && discount >= totalSuggestedCreditAmount;
   const referralCreditNeedsAttention = totalSuggestedCreditAmount > 0 && discount < totalSuggestedCreditAmount;
@@ -797,6 +817,7 @@ export default function FamilyPaymentBreakdownBuilder({
         lineItems,
         subtotal,
         discountCredit: discount,
+        discountLabel,
         amountDueNow,
         laterAmount: possibleLaterAmount,
         customerNote,
@@ -804,7 +825,7 @@ export default function FamilyPaymentBreakdownBuilder({
         recurringTracking,
         formatMoney,
       }),
-    [quoteTitle, serviceLabel, paymentPlan, lineItems, subtotal, discount, amountDueNow, possibleLaterAmount, customerNote, servicePeriodLabel, recurringStatus, recurringCadence, recurringRateValue, nextVisitDate, recurringCompletedVisitCount, recurringMinimumVisitCount, recurringFirstVisitCompleted, recurringCardOnFile, recurringAutoReady, recurringNotes, formatMoney]
+    [quoteTitle, serviceLabel, paymentPlan, lineItems, subtotal, discount, discountLabel, amountDueNow, possibleLaterAmount, customerNote, servicePeriodLabel, recurringStatus, recurringCadence, recurringRateValue, nextVisitDate, recurringCompletedVisitCount, recurringMinimumVisitCount, recurringFirstVisitCompleted, recurringCardOnFile, recurringAutoReady, recurringNotes, formatMoney]
   );
 
   function markDirty() {
@@ -829,6 +850,7 @@ export default function FamilyPaymentBreakdownBuilder({
     if (!totalSuggestedCreditAmount) return;
     markDirty();
     setDiscountCredit(String(Number(totalSuggestedCreditAmount.toFixed(2))));
+    setDiscountKind("referral_customer_credit");
     setInternalNotes((prev) => {
       const note = `${totalSuggestedCreditLabel || "Referral/customer credit"} applied before sending payment.`;
       return prev && prev.includes(note) ? prev : [prev, note].filter(Boolean).join("\n");
@@ -865,6 +887,7 @@ export default function FamilyPaymentBreakdownBuilder({
     setQuoteTitle(`${serviceLabel} recurring reset visit`);
     setLineItems([createLineFromPreset(presetId, { amount: String(rate), rate: String(rate), note: "Recurring rate applied after first completed standard-price reset." })]);
     setDiscountCredit("0");
+    setDiscountKind("none");
     setServicePeriodStart(nextVisitDate || servicePeriodStart);
     setCustomerNote("Recurring reset visit. Recurring pricing is reserved for consistent scope, schedule, service area, and helper availability. Schedule changes, added scope, or early cancellation may return future visits to standard pricing.");
     setMessage("Future recurring rate applied to this builder draft. Review, save, then create/send the next payment link or invoice.");
@@ -904,6 +927,7 @@ export default function FamilyPaymentBreakdownBuilder({
     setServicePeriodStart("");
     setServicePeriodEnd("");
     setDiscountCredit(getInitialDiscountCredit(item, {}, availableCustomerCredits));
+    setDiscountKind(getInitialDiscountKind(item, {}, availableCustomerCredits));
     setCustomerNote(buildDefaultCustomerNote(item, availableCustomerCredits));
   }
 
@@ -971,6 +995,8 @@ export default function FamilyPaymentBreakdownBuilder({
             lineItems,
             subtotal: Number(subtotal.toFixed(2)),
             discountCredit: Number(discount.toFixed(2)),
+            discountKind,
+            discountLabel,
             incomingReferralCreditAmount: Number(referralCreditAmount.toFixed(2)),
             appliedCustomerCreditIds: availableCustomerCreditIds,
             appliedCustomerCreditAmount: Number(availableCustomerCreditAmount.toFixed(2)),
@@ -1004,6 +1030,8 @@ export default function FamilyPaymentBreakdownBuilder({
           lineItems,
           subtotal: Number(subtotal.toFixed(2)),
           discountCredit: Number(discount.toFixed(2)),
+          discountKind,
+          discountLabel,
           incomingReferralCreditAmount: Number(referralCreditAmount.toFixed(2)),
           appliedCustomerCreditIds: availableCustomerCreditIds,
           appliedCustomerCreditAmount: Number(availableCustomerCreditAmount.toFixed(2)),
@@ -1317,15 +1345,45 @@ export default function FamilyPaymentBreakdownBuilder({
                   </div>
                 </div>
 
-                <div className="grid gap-3 md:grid-cols-2">
+                <div className="grid gap-3 md:grid-cols-3">
                   <label className={`grid gap-2 rounded-3xl border p-4 text-sm font-bold text-slate-700 ${referralCreditNeedsAttention ? "border-amber-300 bg-amber-50" : "border-[#eadfc8] bg-white"}`}>
                     Discount / credit
-                    <input value={discountCredit} onChange={(e) => { markDirty(); setDiscountCredit(e.target.value); }} inputMode="decimal" className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]" />
+                    <input
+                      value={discountCredit}
+                      onChange={(e) => {
+                        markDirty();
+                        const nextValue = e.target.value;
+                        setDiscountCredit(nextValue);
+                        const nextAmount = cleanNumber(nextValue);
+                        if (nextAmount <= 0) setDiscountKind("none");
+                        else if (discountKind === "none") setDiscountKind("manual_adjustment");
+                      }}
+                      inputMode="decimal"
+                      className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm outline-none focus:border-[#075c58]"
+                    />
                     {totalSuggestedCreditAmount > 0 && (
                       <span className={`text-xs font-black leading-5 ${referralCreditApplied ? "text-emerald-700" : "text-amber-800"}`}>
                         Referral/customer credit expected: -{formatMoney(totalSuggestedCreditAmount)}. {referralCreditApplied ? "Included." : "Apply before sending payment."}
                       </span>
                     )}
+                  </label>
+                  <label className="grid gap-2 rounded-3xl border border-[#eadfc8] bg-white p-4 text-sm font-bold text-slate-700">
+                    Discount / credit type
+                    <select
+                      value={discountKind}
+                      onChange={(e) => {
+                        markDirty();
+                        const nextKind = e.target.value as FamilyDiscountKind;
+                        setDiscountKind(nextKind);
+                        if (nextKind === "none") setDiscountCredit("0");
+                      }}
+                      className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-bold text-[#075c58] outline-none focus:border-[#075c58]"
+                    >
+                      {FAMILY_DISCOUNT_KIND_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>{option.label}</option>
+                      ))}
+                    </select>
+                    <span className="text-xs font-semibold leading-5 text-slate-500">Choose the real reason so Stripe and customer emails use accurate wording.</span>
                   </label>
                   <label className="grid gap-2 rounded-3xl border border-[#eadfc8] bg-white p-4 text-sm font-bold text-slate-700">
                     Possible later/add-on amount
