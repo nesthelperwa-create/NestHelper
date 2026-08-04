@@ -295,8 +295,16 @@ export async function POST(request: Request) {
     }
 
     const data = requestSnap.data() || {};
-    const serviceId = getString(data.service);
-    const serviceTitle = getString(data.selectedServiceTitle) || services.find((item) => item.id === serviceId)?.title || serviceId || "NestHelper service";
+    const requestedServiceId = getString(data.service);
+    const requestedServiceTitle = getString(data.selectedServiceTitle) || services.find((item) => item.id === requestedServiceId)?.title || requestedServiceId || "NestHelper service";
+    const savedFamilyBreakdown = (data.familyPaymentBreakdown || {}) as Record<string, unknown>;
+    const checkoutServiceOverrideId = getString(savedFamilyBreakdown.checkoutServiceId);
+    const checkoutServiceOverrideTitle = getString(savedFamilyBreakdown.checkoutServiceLabel || savedFamilyBreakdown.serviceLabel);
+    const hasFamilyServiceOverride = requestedServiceId !== "commercial-reset" && Boolean(checkoutServiceOverrideId);
+    const serviceId = hasFamilyServiceOverride ? checkoutServiceOverrideId : requestedServiceId;
+    const serviceTitle = hasFamilyServiceOverride
+      ? checkoutServiceOverrideTitle || services.find((item) => item.id === serviceId)?.title || serviceId || "NestHelper service"
+      : requestedServiceTitle;
 
     if (requestLooksAlreadyPaid(data)) {
       return NextResponse.json(
@@ -313,10 +321,9 @@ export async function POST(request: Request) {
     }
 
     const isLaundryRescue = serviceId === "laundry-rescue";
-    const isCommercialReset = serviceId === "commercial-reset";
+    const isCommercialReset = requestedServiceId === "commercial-reset";
     const savedCommercialBreakdown = (data.commercialQuoteBreakdown || {}) as Record<string, unknown>;
     const savedCommercialBreakdownText = isCommercialReset ? getString(savedCommercialBreakdown.customerBreakdownText) : "";
-    const savedFamilyBreakdown = (data.familyPaymentBreakdown || {}) as Record<string, unknown>;
     const savedFamilyBreakdownText = !isCommercialReset ? getString(savedFamilyBreakdown.customerBreakdownText) : "";
     const customerSafeFamilyBreakdownText = makeCustomerSafePaymentSummaryText(savedFamilyBreakdownText);
     const servicePeriodLabel = isCommercialReset
@@ -453,6 +460,9 @@ export async function POST(request: Request) {
         requestId,
         serviceId,
         serviceTitle,
+        requestedServiceId,
+        requestedServiceTitle,
+        serviceOverrideApplied: hasFamilyServiceOverride ? "true" : "false",
         paymentMode: useCustomInitial ? "custom" : mode,
         paymentType: isLaundryRescue ? "laundry_deposit" : "service_payment",
         customInitialPayment: useCustomInitial ? "true" : "false",
@@ -581,6 +591,11 @@ export async function POST(request: Request) {
       checkoutServicePeriodLabel: servicePeriodLabel,
       checkoutServicePeriodStart: isCommercialReset ? getString(savedCommercialBreakdown.servicePeriodStart) : getString(savedFamilyBreakdown.servicePeriodStart),
       checkoutServicePeriodEnd: isCommercialReset ? getString(savedCommercialBreakdown.servicePeriodEnd) : getString(savedFamilyBreakdown.servicePeriodEnd),
+      checkoutServiceId: serviceId,
+      checkoutServiceTitle: serviceTitle,
+      checkoutRequestedServiceId: requestedServiceId,
+      checkoutRequestedServiceTitle: requestedServiceTitle,
+      checkoutServiceOverrideApplied: hasFamilyServiceOverride,
       checkoutCreatedBy: decoded.email || "admin",
       checkoutTaxMode: manualSalesTax.enabled ? "Manual sales tax" : "No sales tax",
       checkoutDiscountAmount: savedDiscountCredit > 0 ? Number(savedDiscountCredit.toFixed(2)) : 0,

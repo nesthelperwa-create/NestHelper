@@ -93,6 +93,23 @@ function getServiceTitle(data: Record<string, unknown>) {
   return getString(data.selectedServiceTitle) || services.find((item) => item.id === serviceId)?.title || serviceId || "NestHelper family service";
 }
 
+function getFamilyCheckoutService(data: Record<string, unknown>, breakdown: Record<string, unknown>) {
+  const requestedServiceId = getString(data.service);
+  const requestedServiceTitle = getServiceTitle(data);
+  const checkoutServiceId = getString(breakdown.checkoutServiceId) || requestedServiceId || "family-service";
+  const checkoutServiceTitle =
+    getString(breakdown.checkoutServiceLabel || breakdown.serviceLabel) ||
+    services.find((item) => item.id === checkoutServiceId)?.title ||
+    requestedServiceTitle;
+  return {
+    requestedServiceId,
+    requestedServiceTitle,
+    checkoutServiceId,
+    checkoutServiceTitle,
+    serviceOverrideApplied: Boolean(getString(breakdown.checkoutServiceId)) && checkoutServiceId !== requestedServiceId,
+  };
+}
+
 function getAddress(data: Record<string, unknown>): Stripe.AddressParam | undefined {
   const line1 = getString(data.address) || getString(data.serviceAddress) || getString(data.streetAddress);
   const city = getString(data.city);
@@ -397,6 +414,7 @@ export async function POST(request: Request) {
     if (!email) return NextResponse.json({ ok: false, error: "Customer email is missing." }, { status: 400 });
 
     const breakdown = (data.familyPaymentBreakdown || {}) as Record<string, unknown>;
+    const familyCheckoutService = getFamilyCheckoutService(data, breakdown);
     const lineItems = Array.isArray(breakdown.lineItems) ? (breakdown.lineItems as Record<string, unknown>[]) : [];
     const amountDueNowCents = moneyToCents(breakdown.amountDueNow);
     const servicePeriodLabel = getString(breakdown.servicePeriodLabel) || formatServicePeriodLabel(breakdown.servicePeriodStart, breakdown.servicePeriodEnd);
@@ -437,7 +455,7 @@ export async function POST(request: Request) {
       );
     }
 
-    if (getString(data.service) === "laundry-rescue") {
+    if (familyCheckoutService.checkoutServiceId === "laundry-rescue") {
       const laundryCheckout = await createLaundryDepositCheckoutFromBreakdown({
         stripe,
         requestRef,
@@ -454,15 +472,16 @@ export async function POST(request: Request) {
     }
 
     const customerName = getString(data.fullName) || getString(data.contactName) || "NestHelper customer";
-    const serviceTitle = getServiceTitle(data);
+    const serviceTitle = familyCheckoutService.checkoutServiceTitle;
+    const serviceId = familyCheckoutService.checkoutServiceId;
     const address = getAddress(data);
-    const manualSalesTaxRateId = await getOrCreateManualSalesTaxRate(stripe, manualSalesTax, { requestId, serviceId: getString(data.service) || "family-service", paymentType: "family_invoice" });
+    const manualSalesTaxRateId = await getOrCreateManualSalesTaxRate(stripe, manualSalesTax, { requestId, serviceId, paymentType: "family_invoice" });
     const customer = await stripe.customers.create({
       email,
       name: customerName,
       phone: getString(data.phone) || undefined,
       address,
-      metadata: { requestId, serviceId: getString(data.service) || "family-service" },
+      metadata: { requestId, serviceId, requestedServiceId: familyCheckoutService.requestedServiceId, serviceOverrideApplied: familyCheckoutService.serviceOverrideApplied ? "true" : "false" },
     });
 
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
@@ -474,7 +493,8 @@ export async function POST(request: Request) {
       name: `${savedDiscountLabel} ${formatMoney(preTaxDiscountCents / 100)}`,
       metadata: {
         requestId,
-        serviceId: getString(data.service) || "family-service",
+        serviceId,
+        requestedServiceId: familyCheckoutService.requestedServiceId,
         paymentType: "family_invoice",
         discountType: savedDiscountKind,
         creditType: verifiedReferralCreditApplied ? "referral_customer_credit" : "none",
@@ -494,7 +514,11 @@ export async function POST(request: Request) {
         "Final service is based on approved scope, timing, access, and reviewed add-ons. Additional approved work may be invoiced separately.",
       metadata: {
         requestId,
-        serviceId: getString(data.service) || "family-service",
+        serviceId,
+        serviceTitle,
+        requestedServiceId: familyCheckoutService.requestedServiceId,
+        requestedServiceTitle: familyCheckoutService.requestedServiceTitle,
+        serviceOverrideApplied: familyCheckoutService.serviceOverrideApplied ? "true" : "false",
         paymentType: "family_invoice",
         servicePeriodStart: getString(breakdown.servicePeriodStart),
         servicePeriodEnd: getString(breakdown.servicePeriodEnd),
@@ -617,6 +641,11 @@ export async function POST(request: Request) {
       familyInvoiceServicePeriodStart: getString(breakdown.servicePeriodStart),
       familyInvoiceServicePeriodEnd: getString(breakdown.servicePeriodEnd),
       familyInvoiceServicePeriodLabel: servicePeriodLabel,
+      familyInvoiceServiceId: serviceId,
+      familyInvoiceServiceTitle: serviceTitle,
+      familyInvoiceRequestedServiceId: familyCheckoutService.requestedServiceId,
+      familyInvoiceRequestedServiceTitle: familyCheckoutService.requestedServiceTitle,
+      familyInvoiceServiceOverrideApplied: familyCheckoutService.serviceOverrideApplied,
       familyInvoiceCustomerId: customer.id,
       familyInvoiceDeliveryMethod: shouldSendEmail ? "nesthelper_email" : "manual",
       familyInvoiceEmailSent: emailSent,
@@ -640,7 +669,7 @@ export async function POST(request: Request) {
       db,
       requestId,
       requestData: data,
-      paymentKind: getString(data.service) === "laundry-rescue" ? "laundry_deposit_checkout" : "family_invoice",
+      paymentKind: serviceId === "laundry-rescue" ? "laundry_deposit_checkout" : "family_invoice",
       paymentId: finalized.id,
       adminEmail: decoded.email || "admin",
     });

@@ -35,7 +35,33 @@ type FamilyBreakdownBuilderProps = {
 
 type ButtonVariant = "primary" | "secondary" | "quiet" | "danger";
 
+type CheckoutServiceOption = {
+  id: string;
+  label: string;
+  helper: string;
+};
+
+const CHECKOUT_SERVICE_OPTIONS: CheckoutServiceOption[] = [
+  { id: "parent-reset-2hr", label: "2-Hour Parent Reset", helper: "Focused 2-hour home reset" },
+  { id: "family-reset-3hr", label: "Parent Reset Plan", helper: "3-hour Parent Reset Plan" },
+  { id: "helper-block-4hr", label: "4-Hour Helper Block", helper: "Flexible half-day home-support block" },
+  { id: "whole-home-reset", label: "Whole Home Cleaning", helper: "Reviewed full-home cleaning amount" },
+  { id: "specific-area-reset", label: "Specific Area(s) Reset", helper: "Reviewed selected-room or focused-area amount" },
+  { id: "move-out-cleaning", label: "Move-In / Move-Out Cleaning", helper: "Reviewed move-in or move-out cleaning amount" },
+  { id: "move-prep-home-reset", label: "Move Prep & Home Reset", helper: "Move prep, unpacking, setup, or home reset" },
+  { id: "errand-helper", label: "Errand Helper", helper: "Up to 2 hours plus included driving miles" },
+  { id: "laundry-rescue", label: "Laundry Rescue", helper: "Laundry pickup, wash, dry, fold, and return" },
+];
+
 const FAMILY_PRESETS = [
+  {
+    id: "parent-reset-2hr-standard",
+    label: "2-Hour Parent Reset — $129",
+    description: "Focused 2-hour Parent Reset for daily home-support tasks, light tidying, dishes, surfaces, folding, and approved parent-relief tasks.",
+    unit: "flat",
+    rate: "129",
+    amount: "129",
+  },
   {
     id: "family-reset-standard",
     label: "Parent Reset Plan — $199",
@@ -59,6 +85,14 @@ const FAMILY_PRESETS = [
     unit: "visit",
     rate: "179",
     amount: "179",
+  },
+  {
+    id: "helper-block-4hr-standard",
+    label: "4-Hour Helper Block — $279",
+    description: "Flexible 4-hour helper block for a larger home reset, catch-up list, laundry support, organizing, or other approved family home-support tasks.",
+    unit: "flat",
+    rate: "279",
+    amount: "279",
   },
   {
     id: "whole-home-reset-reviewed",
@@ -339,8 +373,38 @@ function BuilderSpinner() {
   return <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" aria-hidden="true" />;
 }
 
+function getCheckoutServiceId(item: AdminDoc) {
+  const raw = String(item.service || item.selectedServiceTitle || item.packageType || "").toLowerCase();
+  if (raw.includes("parent-reset-2hr") || raw.includes("2-hour parent")) return "parent-reset-2hr";
+  if (raw.includes("helper-block-4hr") || raw.includes("4-hour helper")) return "helper-block-4hr";
+  if (raw.includes("laundry")) return "laundry-rescue";
+  if (raw.includes("move-prep") || raw.includes("move prep") || raw.includes("home reset")) return "move-prep-home-reset";
+  if (raw.includes("whole-home-reset") || raw.includes("whole home")) return "whole-home-reset";
+  if (raw.includes("specific-area-reset") || raw.includes("specific area") || raw.includes("area reset") || raw.includes("garage reset")) return "specific-area-reset";
+  if (raw.includes("move-out") || raw.includes("move out") || raw.includes("move-in") || raw.includes("move in")) return "move-out-cleaning";
+  if (raw.includes("errand")) return "errand-helper";
+  if (raw.includes("family") || raw.includes("parent reset plan") || raw.includes("parent")) return "family-reset-3hr";
+  return "family-reset-3hr";
+}
+
+function getCheckoutServiceOption(serviceId: string) {
+  return CHECKOUT_SERVICE_OPTIONS.find((option) => option.id === serviceId) || CHECKOUT_SERVICE_OPTIONS[0];
+}
+
+function buildCheckoutServiceItem(item: AdminDoc, serviceId: string) {
+  const option = getCheckoutServiceOption(serviceId);
+  return {
+    ...item,
+    service: option.id,
+    selectedServiceTitle: option.label,
+    packageType: option.label,
+  };
+}
+
 function getServiceLabel(item: AdminDoc) {
   const raw = String(item.service || item.selectedServiceTitle || item.packageType || "").toLowerCase();
+  if (raw.includes("parent-reset-2hr") || raw.includes("2-hour parent")) return "2-Hour Parent Reset";
+  if (raw.includes("helper-block-4hr") || raw.includes("4-hour helper")) return "4-Hour Helper Block";
   if (raw.includes("laundry")) return "Laundry Rescue";
   if (raw.includes("move-prep") || raw.includes("move prep") || raw.includes("home reset")) return "Move Prep & Home Reset";
   if (raw.includes("whole-home-reset") || raw.includes("whole home")) return "Whole Home Cleaning";
@@ -362,6 +426,8 @@ function getMovePrepPresetId(item: AdminDoc) {
 
 function getSuggestedPresetId(item: AdminDoc) {
   const raw = String(item.service || item.selectedServiceTitle || item.packageType || "").toLowerCase();
+  if (raw.includes("parent-reset-2hr") || raw.includes("2-hour parent")) return "parent-reset-2hr-standard";
+  if (raw.includes("helper-block-4hr") || raw.includes("4-hour helper")) return "helper-block-4hr-standard";
   if (raw.includes("laundry")) return "laundry-deposit-standard";
   if (raw.includes("move-prep") || raw.includes("move prep") || raw.includes("home reset")) return getMovePrepPresetId(item);
   if (raw.includes("garage reset") || raw.includes("arearesetarea: garage")) return "garage-reset-reviewed";
@@ -375,6 +441,8 @@ function getSuggestedPresetId(item: AdminDoc) {
 
 function getDefaultPaymentPlan(item: AdminDoc) {
   const raw = String(item.service || item.selectedServiceTitle || item.packageType || "").toLowerCase();
+  if (raw.includes("parent-reset-2hr") || raw.includes("2-hour parent")) return "2-Hour Parent Reset";
+  if (raw.includes("helper-block-4hr") || raw.includes("4-hour helper")) return "4-Hour Helper Block";
   if (raw.includes("laundry")) return "Laundry Rescue deposit";
   if (raw.includes("move-prep") || raw.includes("move prep") || raw.includes("home reset")) return "Move Prep & Home Reset reviewed amount";
   if (raw.includes("whole-home-reset") || raw.includes("whole home")) return "Whole Home Cleaning reviewed amount";
@@ -703,17 +771,24 @@ export default function FamilyPaymentBreakdownBuilder({
   onApplyCheckout,
   onApplyAdditionalPayment,
 }: FamilyBreakdownBuilderProps) {
-  const serviceLabel = getServiceLabel(item);
   const saved = (item.familyPaymentBreakdown || {}) as Record<string, any>;
+  const originalRequestedServiceId = getString(item.service) || getCheckoutServiceId(item);
+  const originalRequestedServiceLabel = getServiceLabel(item);
+  const initialCheckoutServiceId = getString(saved.checkoutServiceId) || getCheckoutServiceId(item);
+  const [checkoutServiceId, setCheckoutServiceId] = useState(initialCheckoutServiceId);
+  const checkoutServiceOption = getCheckoutServiceOption(checkoutServiceId);
+  const serviceLabel = checkoutServiceOption.label;
+  const checkoutServiceItem = buildCheckoutServiceItem(item, checkoutServiceId);
+  const serviceWasOverridden = checkoutServiceId !== getCheckoutServiceId(item);
   const [open, setOpen] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [quoteTitle, setQuoteTitle] = useState(getString(saved.quoteTitle) || `${serviceLabel} payment summary`);
-  const [paymentPlan, setPaymentPlan] = useState(getString(saved.paymentPlan) || getDefaultPaymentPlan(item));
+  const [paymentPlan, setPaymentPlan] = useState(getString(saved.paymentPlan) || getDefaultPaymentPlan(checkoutServiceItem));
   const [servicePeriodStart, setServicePeriodStart] = useState(getString(saved.servicePeriodStart));
   const [servicePeriodEnd, setServicePeriodEnd] = useState(getString(saved.servicePeriodEnd));
-  const [selectedPreset, setSelectedPreset] = useState(getSuggestedPresetId(item));
+  const [selectedPreset, setSelectedPreset] = useState(getSuggestedPresetId(checkoutServiceItem));
   const [lineItems, setLineItems] = useState<FamilyLineItem[]>(
-    Array.isArray(saved.lineItems) && saved.lineItems.length ? saved.lineItems.map(lineFromSaved) : createDefaultLinesFromRequest(item)
+    Array.isArray(saved.lineItems) && saved.lineItems.length ? saved.lineItems.map(lineFromSaved) : createDefaultLinesFromRequest(checkoutServiceItem)
   );
   const referralCreditAmount = getReferralCreditAmount(item);
   const referralCreditLabel = getReferralCreditLabel(item, referralCreditAmount);
@@ -734,7 +809,7 @@ export default function FamilyPaymentBreakdownBuilder({
   const savedRecurring = (item.familyRecurringPlan || saved.recurringTracking || {}) as Record<string, any>;
   const [recurringStatus, setRecurringStatus] = useState(getString(savedRecurring.status) || "Not recurring");
   const [recurringCadence, setRecurringCadence] = useState(getString(savedRecurring.cadence) || "Every 2 weeks");
-  const [recurringRate, setRecurringRate] = useState(getString(savedRecurring.rate) || String(getRecurringPresetAmount(getRecommendedRecurringPresetId(item, getString(savedRecurring.cadence) || "Every 2 weeks"))));
+  const [recurringRate, setRecurringRate] = useState(getString(savedRecurring.rate) || String(getRecurringPresetAmount(getRecommendedRecurringPresetId(checkoutServiceItem, getString(savedRecurring.cadence) || "Every 2 weeks"))));
   const [nextVisitDate, setNextVisitDate] = useState(getString(savedRecurring.nextVisitDate));
   const [recurringCompletedVisits, setRecurringCompletedVisits] = useState(getString(savedRecurring.completedVisits) || "0");
   const [recurringMinimumVisits, setRecurringMinimumVisits] = useState(getString(savedRecurring.minimumVisits) || "2");
@@ -748,13 +823,16 @@ export default function FamilyPaymentBreakdownBuilder({
 
   useEffect(() => {
     const nextSaved = (item.familyPaymentBreakdown || {}) as Record<string, any>;
-    const nextServiceLabel = getServiceLabel(item);
+    const nextCheckoutServiceId = getString(nextSaved.checkoutServiceId) || getCheckoutServiceId(item);
+    const nextCheckoutServiceItem = buildCheckoutServiceItem(item, nextCheckoutServiceId);
+    const nextServiceLabel = getCheckoutServiceOption(nextCheckoutServiceId).label;
+    setCheckoutServiceId(nextCheckoutServiceId);
     setQuoteTitle(getString(nextSaved.quoteTitle) || `${nextServiceLabel} payment summary`);
-    setPaymentPlan(getString(nextSaved.paymentPlan) || getDefaultPaymentPlan(item));
+    setPaymentPlan(getString(nextSaved.paymentPlan) || getDefaultPaymentPlan(nextCheckoutServiceItem));
     setServicePeriodStart(getString(nextSaved.servicePeriodStart));
     setServicePeriodEnd(getString(nextSaved.servicePeriodEnd));
-    setSelectedPreset(getSuggestedPresetId(item));
-    setLineItems(Array.isArray(nextSaved.lineItems) && nextSaved.lineItems.length ? nextSaved.lineItems.map(lineFromSaved) : createDefaultLinesFromRequest(item));
+    setSelectedPreset(getSuggestedPresetId(nextCheckoutServiceItem));
+    setLineItems(Array.isArray(nextSaved.lineItems) && nextSaved.lineItems.length ? nextSaved.lineItems.map(lineFromSaved) : createDefaultLinesFromRequest(nextCheckoutServiceItem));
     setDiscountCredit(getInitialDiscountCredit(item, nextSaved, availableCustomerCredits));
     setDiscountKind(getInitialDiscountKind(item, nextSaved, availableCustomerCredits));
     setLaterAmount(getString(nextSaved.laterAmount) || "0");
@@ -768,7 +846,7 @@ export default function FamilyPaymentBreakdownBuilder({
     const nextCadence = getString(nextRecurring.cadence) || "Every 2 weeks";
     setRecurringStatus(getString(nextRecurring.status) || "Not recurring");
     setRecurringCadence(nextCadence);
-    setRecurringRate(getString(nextRecurring.rate) || String(getRecurringPresetAmount(getRecommendedRecurringPresetId(item, nextCadence))));
+    setRecurringRate(getString(nextRecurring.rate) || String(getRecurringPresetAmount(getRecommendedRecurringPresetId(nextCheckoutServiceItem, nextCadence))));
     setNextVisitDate(getString(nextRecurring.nextVisitDate));
     setRecurringCompletedVisits(getString(nextRecurring.completedVisits) || "0");
     setRecurringMinimumVisits(getString(nextRecurring.minimumVisits) || "2");
@@ -846,6 +924,30 @@ export default function FamilyPaymentBreakdownBuilder({
     );
   }
 
+  function changeCheckoutService(nextServiceId: string) {
+    if (nextServiceId === checkoutServiceId) return;
+    const nextOption = getCheckoutServiceOption(nextServiceId);
+    const confirmed = window.confirm(
+      `Change the checkout service to ${nextOption.label}? This replaces the current draft line items with the default for that service. The customer's original request remains unchanged in the admin record.`
+    );
+    if (!confirmed) return;
+
+    const nextItem = buildCheckoutServiceItem(item, nextServiceId);
+    markDirty();
+    setCheckoutServiceId(nextServiceId);
+    setQuoteTitle(`${nextOption.label} payment summary`);
+    setPaymentPlan(getDefaultPaymentPlan(nextItem));
+    setSelectedPreset(getSuggestedPresetId(nextItem));
+    setLineItems(createDefaultLinesFromRequest(nextItem));
+    setServicePeriodStart("");
+    setServicePeriodEnd("");
+    setDiscountCredit(getInitialDiscountCredit(nextItem, {}, availableCustomerCredits));
+    setDiscountKind(getInitialDiscountKind(nextItem, {}, availableCustomerCredits));
+    setCustomerNote(buildDefaultCustomerNote(nextItem, availableCustomerCredits));
+    setMessage(`Checkout service changed to ${nextOption.label}. Review the amount and wording, then save the draft before sending payment.`);
+    setError("");
+  }
+
   function applyReferralCredit() {
     if (!totalSuggestedCreditAmount) return;
     markDirty();
@@ -875,7 +977,7 @@ export default function FamilyPaymentBreakdownBuilder({
       setError("Fail-safe: complete the first standard-price visit before using recurring pricing.");
       return;
     }
-    const presetId = getRecommendedRecurringPresetId(item, recurringCadence);
+    const presetId = getRecommendedRecurringPresetId(checkoutServiceItem, recurringCadence);
     const preset = FAMILY_PRESETS.find((item) => item.id === presetId);
     const rate = recurringRateValue || getRecurringPresetAmount(presetId);
     if (!preset || rate <= 0) {
@@ -918,17 +1020,18 @@ export default function FamilyPaymentBreakdownBuilder({
     setError("");
   }
 
-  function resetToCustomerSelections() {
-    if (!window.confirm("Replace current family payment lines with defaults from the customer request?")) return;
+  function resetToSelectedService() {
+    if (!window.confirm(`Replace current payment lines with the default ${serviceLabel} setup?`)) return;
     markDirty();
-    setLineItems(createDefaultLinesFromRequest(item));
-    setQuoteTitle(`${getServiceLabel(item)} payment summary`);
-    setPaymentPlan(getDefaultPaymentPlan(item));
+    setLineItems(createDefaultLinesFromRequest(checkoutServiceItem));
+    setQuoteTitle(`${serviceLabel} payment summary`);
+    setPaymentPlan(getDefaultPaymentPlan(checkoutServiceItem));
+    setSelectedPreset(getSuggestedPresetId(checkoutServiceItem));
     setServicePeriodStart("");
     setServicePeriodEnd("");
-    setDiscountCredit(getInitialDiscountCredit(item, {}, availableCustomerCredits));
-    setDiscountKind(getInitialDiscountKind(item, {}, availableCustomerCredits));
-    setCustomerNote(buildDefaultCustomerNote(item, availableCustomerCredits));
+    setDiscountCredit(getInitialDiscountCredit(checkoutServiceItem, {}, availableCustomerCredits));
+    setDiscountKind(getInitialDiscountKind(checkoutServiceItem, {}, availableCustomerCredits));
+    setCustomerNote(buildDefaultCustomerNote(checkoutServiceItem, availableCustomerCredits));
   }
 
   function removeLine(id: string) {
@@ -988,6 +1091,11 @@ export default function FamilyPaymentBreakdownBuilder({
           paymentBreakdown: {
             quoteTitle,
             serviceLabel,
+            checkoutServiceId,
+            checkoutServiceLabel: serviceLabel,
+            originalRequestedServiceId,
+            originalRequestedServiceLabel,
+            serviceWasOverridden,
             paymentPlan,
             servicePeriodStart,
             servicePeriodEnd,
@@ -1023,6 +1131,11 @@ export default function FamilyPaymentBreakdownBuilder({
         familyPaymentBreakdown: {
           quoteTitle,
           serviceLabel,
+          checkoutServiceId,
+          checkoutServiceLabel: serviceLabel,
+          originalRequestedServiceId,
+          originalRequestedServiceLabel,
+          serviceWasOverridden,
           paymentPlan,
           servicePeriodStart,
           servicePeriodEnd,
@@ -1138,6 +1251,29 @@ export default function FamilyPaymentBreakdownBuilder({
                   </div>
                 </div>
 
+                <div className="min-w-0 max-w-full overflow-hidden rounded-3xl border-2 border-[#075c58]/25 bg-[#f4fbf8] p-3 sm:p-4">
+                  <div className="grid gap-3 md:grid-cols-[1fr_auto] md:items-end">
+                    <label className="grid gap-2 text-sm font-bold text-slate-700">
+                      Checkout service
+                      <select
+                        value={checkoutServiceId}
+                        onChange={(e) => changeCheckoutService(e.target.value)}
+                        className="cursor-pointer rounded-2xl border border-[#cfe4da] bg-white px-4 py-3 text-sm font-black text-[#075c58] outline-none focus:border-[#075c58] focus:ring-4 focus:ring-[#075c58]/15"
+                      >
+                        {CHECKOUT_SERVICE_OPTIONS.map((option) => (
+                          <option key={option.id} value={option.id}>{option.label}</option>
+                        ))}
+                      </select>
+                      <span className="text-xs font-semibold leading-5 text-slate-600">{checkoutServiceOption.helper}</span>
+                    </label>
+                    <div className={`rounded-2xl px-4 py-3 text-xs font-black leading-5 ${serviceWasOverridden ? "bg-amber-100 text-amber-900" : "bg-white text-slate-700"}`}>
+                      Customer selected: {originalRequestedServiceLabel}
+                      {serviceWasOverridden && <span className="block">Checkout changed to: {serviceLabel}</span>}
+                    </div>
+                  </div>
+                  <p className="mt-3 text-xs font-semibold leading-5 text-slate-600">Changing this only affects the payment summary, checkout link, invoice, and payment records. The customer's original form selection remains saved for reference.</p>
+                </div>
+
                 <div className="min-w-0 max-w-full overflow-hidden rounded-3xl border border-[#eadfc8] bg-[#fbf6ea] p-3 sm:p-4">
                   <div className="grid min-w-0 grid-cols-1 gap-3 md:grid-cols-2">
                     <label className="grid gap-2 text-sm font-bold text-slate-700">
@@ -1148,6 +1284,14 @@ export default function FamilyPaymentBreakdownBuilder({
                       Payment type
                       <select value={paymentPlan} onChange={(e) => { markDirty(); setPaymentPlan(e.target.value); }} className="rounded-2xl border border-[#eadfc8] bg-white px-4 py-3 text-sm font-bold text-[#075c58] outline-none focus:border-[#075c58]">
                         <option>One-time family service</option>
+                        <option>2-Hour Parent Reset</option>
+                        <option>Parent Reset Plan</option>
+                        <option>4-Hour Helper Block</option>
+                        <option>One-time specific area reset</option>
+                        <option>Whole Home Cleaning reviewed amount</option>
+                        <option>One-time move-in / move-out cleaning</option>
+                        <option>Move Prep & Home Reset reviewed amount</option>
+                        <option>One-time errand helper</option>
                         <option>Recurring weekly family service</option>
                         <option>Recurring every 2 weeks</option>
                         <option>Laundry Rescue deposit</option>
@@ -1194,7 +1338,7 @@ export default function FamilyPaymentBreakdownBuilder({
                     </label>
                     <label className="grid gap-2 text-sm font-bold text-slate-700">
                       Planned cadence
-                      <select value={recurringCadence} onChange={(e) => { markDirty(); setRecurringCadence(e.target.value); const presetId = getRecommendedRecurringPresetId(item, e.target.value); setRecurringRate(String(getRecurringPresetAmount(presetId))); }} className="rounded-2xl border border-[#cfe4da] bg-white px-4 py-3 text-sm font-bold text-[#075c58] outline-none focus:border-[#075c58]">
+                      <select value={recurringCadence} onChange={(e) => { markDirty(); setRecurringCadence(e.target.value); const presetId = getRecommendedRecurringPresetId(checkoutServiceItem, e.target.value); setRecurringRate(String(getRecurringPresetAmount(presetId))); }} className="rounded-2xl border border-[#cfe4da] bg-white px-4 py-3 text-sm font-bold text-[#075c58] outline-none focus:border-[#075c58]">
                         <option>Every 2 weeks</option>
                         <option>Weekly</option>
                       </select>
@@ -1284,7 +1428,7 @@ export default function FamilyPaymentBreakdownBuilder({
                       </select>
                     </label>
                     <button type="button" onClick={addLineFromPreset} className={getButtonClass("primary")}>Add line</button>
-                    <button type="button" onClick={resetToCustomerSelections} className={getButtonClass("quiet")}>Reset from request</button>
+                    <button type="button" onClick={resetToSelectedService} className={getButtonClass("quiet")}>Reset selected service</button>
                   </div>
 
                   <div className="mt-4 space-y-3">
