@@ -320,19 +320,21 @@ function getCustomerReplySubject(adminTitle: string, rows: Record<string, unknow
   return "Re: NestHelper";
 }
 
-function getSafeCustomerComposeLink(customerEmail: string | undefined, subject: string, rows: Record<string, unknown>, publicReplyEmail: string) {
+function getSafeCustomerComposeLink(customerEmail: string | undefined, subject: string, rows: Record<string, unknown>, _publicReplyEmail: string) {
   if (!customerEmail) return "";
-  const body = buildCustomerComposeBody(subject, rows, publicReplyEmail);
   const replySubject = getCustomerReplySubject(subject, rows);
   const recipient = encodeMailtoRecipient(customerEmail);
   if (!recipient) return "";
-  return `mailto:${recipient}?subject=${encodeMailto(replySubject)}&body=${encodeURIComponent(body)}`;
+
+  // Keep the link intentionally short. Large URL-encoded mailto bodies can look
+  // suspicious to server-side spam filters and are unreliable across mail apps.
+  return `mailto:${recipient}?subject=${encodeMailto(replySubject)}`;
 }
 
 export async function sendAdminEmail({ subject, title, rows, adminPath = "/admin", intro, to: routedTo, routeLabel, routedToText }: AdminEmailInput) {
   const apiKey = process.env.RESEND_API_KEY;
   const to = routedTo || getAdminEmail();
-  const from = process.env.NOTIFICATION_FROM_EMAIL || "NestHelper <onboarding@resend.dev>";
+  const from = process.env.ADMIN_NOTIFICATION_FROM_EMAIL || process.env.NOTIFICATION_FROM_EMAIL || "NestHelper Alerts <onboarding@resend.dev>";
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
   const customerEmail = getReplyTo(rows);
   const publicReplyEmail = getPublicReplyEmail();
@@ -390,7 +392,7 @@ export async function sendAdminEmail({ subject, title, rows, adminPath = "/admin
           <div style="width:100%;box-sizing:border-box;border:1px solid #eee;border-radius:14px;overflow:hidden;">${rowsHtml}</div>
           ${composeCustomerLink ? `<p style="margin-top:22px;"><a href="${composeCustomerLink}" style="display:inline-block;background:#075c58;color:#fff;text-decoration:none;padding:12px 18px;border-radius:999px;font-weight:700;max-width:100%;box-sizing:border-box;white-space:normal;text-align:center;">${escapeHtml(composeButtonLabel)}</a></p>` : ""}
           <p style="margin-top:${composeCustomerLink ? "10px" : "22px"};"><a href="${siteUrl}${adminPath}" style="display:inline-block;background:#f4ecdc;color:#075c58;text-decoration:none;padding:12px 18px;border-radius:999px;font-weight:700;max-width:100%;box-sizing:border-box;white-space:normal;text-align:center;">Open Admin Dashboard</a></p>
-          <p style="font-size:12px;color:#667;line-height:1.5;">Sent to admin inbox: ${escapeHtml(toText)}. Customer-facing replies should come from ${escapeHtml(publicReplyEmail)}. Use the compose button to start a clean customer reply with the original customer message/details included, without quoting private admin dashboard links or internal notes.</p>
+          <p style="font-size:12px;color:#667;line-height:1.5;">Sent to admin inbox: ${escapeHtml(toText)}. Customer-facing replies should come from ${escapeHtml(publicReplyEmail)}. Use the compose button or the customer email above; do not forward private admin links or internal notes.</p>
         </div>
       </div>
     </div>`;
@@ -403,9 +405,12 @@ export async function sendAdminEmail({ subject, title, rows, adminPath = "/admin
     ? `\n\nPROMO CODE ENTERED: ${promoCode}\nCheck the requested promo/beta/founding discount before sending a checkout or invoice link.\n`
     : "";
 
-  const text = `${title}\n\n${intro || "A new public NestHelper form was submitted."}\n\n${routeText}${promoText}${textRows}${customerEmail ? `\n\nCompose customer reply: ${composeCustomerLink}` : ""}\nOpen admin dashboard: ${siteUrl}${adminPath}\n\nDo not reply directly to this admin alert when contacting a customer. Use the compose link so the reply includes the customer's original message/details without private admin dashboard links or internal notes.`;
+  const text = `${title}\n\n${intro || "A new public NestHelper form was submitted."}\n\n${routeText}${promoText}${textRows}${customerEmail ? `\n\nCustomer reply address: ${customerEmail}` : ""}\nOpen admin dashboard: ${siteUrl}${adminPath}\n\nDo not reply directly to this admin alert when contacting a customer. Start a new message to the customer so private admin links and internal notes are not included.`;
 
   const emailSubject = promoCode ? `PROMO CODE: ${promoCode} — ${subject}` : subject;
 
-  return resend.emails.send({ from, to, subject: emailSubject, html, text, replyTo: publicReplyEmail });
+  // Admin alerts are intentionally non-replyable. Omitting Reply-To avoids a
+  // same-domain self-reply pattern while customer-facing emails keep their own
+  // service-specific Reply-To addresses.
+  return resend.emails.send({ from, to, subject: emailSubject, html, text });
 }

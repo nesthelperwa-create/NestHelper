@@ -199,8 +199,11 @@ function uniqueEmails(emails: string[]) {
 }
 
 export function getPrimaryAdminNotificationRecipients() {
-  // Send website admin notifications only to the NestHelper mailbox.
-  // This prevents accidental replies from nesthelperwa@gmail.com while the subject/body
-  // still label the website route, such as Billing, Laundry, Helpers, or Partners.
-  return uniqueEmails([emailAliases.hello]);
+  const configured = splitNotificationEmails(process.env.ADMIN_NOTIFICATION_EMAIL);
+  const primary = configured.length > 0 ? configured : ["nesthelperwa@gmail.com"];
+
+  // Keep the NestHelper mailbox as the main destination, but also preserve the
+  // configured backup inbox so booking and payment alerts are not missed when
+  // one provider temporarily classifies an authenticated alert as spam.
+  return uniqueEmails([...primary, emailAliases.hello]);
 }

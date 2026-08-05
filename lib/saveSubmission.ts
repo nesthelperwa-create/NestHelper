@@ -2,7 +2,7 @@ import { FieldValue, type DocumentReference } from "firebase-admin/firestore";
 import { getFirebaseAdminDb } from "./firebaseAdmin";
 import { sendAdminEmail } from "./sendAdminEmail";
 import { sendCustomerConfirmationEmail } from "./sendCustomerConfirmationEmail";
-import { getCustomerReplyEmail, getSubmissionNotificationEmail, getSubmissionRouteLabel, getSubmissionSubjectPrefix } from "./emailRouting";
+import { getCustomerReplyEmail, getPrimaryAdminNotificationRecipients, getSubmissionNotificationEmail, getSubmissionRouteLabel, getSubmissionSubjectPrefix } from "./emailRouting";
 
 export type SaveSubmissionInput = {
   collection: "serviceRequests" | "helperApplications" | "partnerApplications" | "contactMessages";
@@ -40,6 +40,7 @@ export async function saveSubmission({ collection, payload, emailSubject, emailT
   }
 
   const routedAliasEmail = getSubmissionNotificationEmail(collection, cleaned);
+  const adminInboxRecipients = getPrimaryAdminNotificationRecipients();
   const customerReplyEmail = getCustomerReplyEmail(collection, cleaned);
   const routeLabel = getSubmissionRouteLabel(collection, cleaned);
   const subjectPrefix = getSubmissionSubjectPrefix(collection, cleaned);
@@ -50,15 +51,16 @@ export async function saveSubmission({ collection, payload, emailSubject, emailT
       title: emailTitle,
       rows: {
         "Inbox route": routeLabel,
-        "Website route / sent to": routedAliasEmail,
+        "Website route": routedAliasEmail,
+        "Admin inbox sent to": adminInboxRecipients.join(", "),
         "Customer reply-to": customerReplyEmail,
         "Dashboard ID": doc.id,
         ...cleaned,
       },
       adminPath,
-      // Send the admin notice to the routed NestHelper alias for sorting/routing.
-      // Customer confirmations use the matching customer-facing alias below.
-      to: routedAliasEmail,
+      // Send admin alerts to the primary NestHelper mailbox and the configured
+      // backup inbox. The routed alias remains visible for sorting/reference.
+      to: adminInboxRecipients,
       routeLabel,
       routedToText: routedAliasEmail,
     })) as any;
