@@ -4626,7 +4626,7 @@ export default function AdminTable({
     if (!selected) return;
     const useAutoCharge = Boolean(selected.laundryAutoChargeAuthorized && selected.laundryFinalPaymentCollectionMethod === "auto_charge");
     setLaundryFinalBusy(true);
-    setActiveAction(useAutoCharge ? "Creating itemized laundry invoice and auto-charging saved card..." : sendEmail ? "Creating and emailing laundry final invoice..." : "Creating laundry final invoice only...");
+    setActiveAction(useAutoCharge ? "Creating itemized laundry invoice and auto-charging saved card..." : sendEmail ? "Creating and emailing the stable Laundry Rescue final payment link..." : "Creating the stable Laundry Rescue final payment link...");
     setLaundryFinalMessage("");
     setLaundryFinalError("");
 
@@ -4651,14 +4651,14 @@ export default function AdminTable({
       const data = await res.json().catch(() => ({}));
 
       if (!res.ok || !data.ok) {
-        throw new Error(data.error || "Unable to create laundry final balance invoice.");
+        throw new Error(data.error || "Unable to create the Laundry Rescue final balance payment.");
       }
 
       setSelected((prev) => prev ? {
         ...prev,
-        status: data.noBalanceDue ? "Fully Paid" : (data.status || "Final Invoice Sent"),
-        paymentStatus: data.noBalanceDue ? "Final Balance Paid" : (data.paymentStatus || "Final Invoice Sent"),
-        laundryPaymentStatus: data.noBalanceDue ? "Final Balance Paid" : (data.paymentStatus || "Final Invoice Sent"),
+        status: data.noBalanceDue ? "Fully Paid" : (data.status || (useAutoCharge ? "Final Invoice Sent" : "Final Payment Link Sent")),
+        paymentStatus: data.noBalanceDue ? "Final Balance Paid" : (data.paymentStatus || (useAutoCharge ? "Final Invoice Sent" : "Final Payment Link Sent")),
+        laundryPaymentStatus: data.noBalanceDue ? "Final Balance Paid" : (data.paymentStatus || (useAutoCharge ? "Final Invoice Sent" : "Final Payment Link Sent")),
         laundryFinalInvoiceUrl: data.invoiceUrl || prev.laundryFinalInvoiceUrl,
         laundryFinalInvoicePdf: data.invoicePdf || prev.laundryFinalInvoicePdf,
         laundryFinalInvoiceId: data.invoiceId || prev.laundryFinalInvoiceId,
@@ -4668,7 +4668,7 @@ export default function AdminTable({
         laundryDepositTaxCatchUpAmount: data.depositTaxCatchUpAmount ?? prev.laundryDepositTaxCatchUpAmount,
         laundryDepositTaxCatchUpRequired: data.depositTaxCatchUpRequired ?? prev.laundryDepositTaxCatchUpRequired,
         laundryFinalCheckoutUrl: data.url || data.invoiceUrl || prev.laundryFinalCheckoutUrl,
-        laundryFinalCheckoutSessionId: data.sessionId || prev.laundryFinalCheckoutSessionId,
+        laundryFinalCheckoutSessionId: data.checkoutSessionId || data.sessionId || prev.laundryFinalCheckoutSessionId,
         laundryFinalInvoiceStatus: data.autoChargeSucceeded ? "paid" : prev.laundryFinalInvoiceStatus,
         laundryFinalInvoiceAmountDue: typeof data.balanceDue === "number" ? Math.round(data.balanceDue * 100) : prev.laundryFinalInvoiceAmountDue,
         laundryFinalInvoiceAmountPaid: typeof data.amountPaid === "number" ? Math.round(data.amountPaid * 100) : prev.laundryFinalInvoiceAmountPaid,
@@ -4679,7 +4679,7 @@ export default function AdminTable({
         laundrySubtotal,
         laundryBalanceDue,
       } : prev);
-      setStatusValue(data.noBalanceDue ? "Fully Paid" : (data.status || "Final Invoice Sent"));
+      setStatusValue(data.noBalanceDue ? "Fully Paid" : (data.status || (useAutoCharge ? "Final Invoice Sent" : "Final Payment Link Sent")));
       setLaundryFinalMessage(
         data.emailError ||
         data.message ||
@@ -4688,11 +4688,11 @@ export default function AdminTable({
           : data.autoCharge
             ? "Final balance invoice was created and sent to Stripe for auto-charge. Check the invoice status before delivery."
             : data.emailSent
-              ? "Final balance invoice created and emailed to the customer."
-              : "Final balance invoice created. Copy it and send it manually.")
+              ? "The stable NestHelper final balance link was created and emailed to the customer."
+              : "The stable NestHelper final balance link was created. Copy it and send it manually.")
       );
     } catch (error) {
-      setLaundryFinalError(error instanceof Error ? error.message : "Unable to create laundry final balance invoice.");
+      setLaundryFinalError(error instanceof Error ? error.message : "Unable to create the Laundry Rescue final balance payment.");
     } finally {
       setLaundryFinalBusy(false);
       setActiveAction("");
@@ -6701,19 +6701,19 @@ export default function AdminTable({
             )}
 
             {showLaundryFinalBalance && (
-              <AdminCollapsibleSection id="admin-section-laundry-final" eyebrow="Laundry final balance" title="Handle final laundry invoice or auto-charge">
+              <AdminCollapsibleSection id="admin-section-laundry-final" eyebrow="Laundry final balance" title="Handle final laundry payment or auto-charge">
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                   <div className="max-w-2xl">
                     <p className="text-xs font-black uppercase tracking-[0.2em] text-[#b98a2f]">
                       {laundryAutoChargeAuthorized ? "Laundry auto-charge final balance" : "Laundry final balance"}
                     </p>
                     <h4 className="mt-1 text-xl font-black text-[#075c58]">
-                      {laundryAutoChargeAuthorized ? "Create invoice + auto-charge saved card" : "Send final invoice before delivery"}
+                      {laundryAutoChargeAuthorized ? "Create invoice + auto-charge saved card" : "Send a stable final payment link before delivery"}
                     </h4>
                     <p className="mt-2 text-sm leading-6 text-slate-700">
                       {laundryAutoChargeAuthorized
                         ? "The customer chose auto-charge during intro-minimum checkout. Enter the final dry weight, additional lb rate, add-ons, and minimum already paid; NestHelper creates an itemized Stripe invoice for additional weight/add-ons and charges the saved payment method instead of showing a manual sender section."
-                        : "The customer chose invoice-before-delivery, or no auto-charge authorization is saved. Enter the final dry weight, additional lb rate, add-ons, and minimum already paid; NestHelper creates a Stripe invoice with line-item details for additional weight/add-ons only."}
+                        : "The customer chose invoice-before-delivery, or no auto-charge authorization is saved. Enter the final dry weight, additional lb rate, add-ons, and minimum already paid; NestHelper creates a stable nesthelperwa.com payment link that opens a secure itemized Stripe checkout and refreshes if the Stripe session expires."}
                     </p>
                   </div>
                   <StatusBadge status={String(selected.laundryPaymentStatus || selected.paymentStatus || selected.status || "New")} />
@@ -6724,7 +6724,7 @@ export default function AdminTable({
                     <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Customer final-payment choice</p>
                     <p className="mt-1 font-black text-[#075c58]">{selected.laundryFinalPaymentPreferenceLabel || "Not captured yet"}</p>
                     <p className="mt-1 text-xs font-semibold text-slate-600">
-                      The intro minimum is non-refundable and taxable. The final invoice charges additional laundry/add-ons. If manual tax is on and the intro minimum was not taxed, it adds a one-time tax catch-up without charging the $59 again.
+                      The intro minimum is non-refundable and taxable. The final payment charges additional laundry/add-ons. If manual tax is on and the intro minimum was not taxed, it adds a one-time tax catch-up without charging the $59 again.
                     </p>
                   </div>
                   {laundryAutoChargeAuthorized ? (
@@ -6740,15 +6740,15 @@ export default function AdminTable({
                   ) : (
                     <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900">
                       <p className="text-xs font-black uppercase tracking-[0.16em]">Hold until paid</p>
-                      <p className="mt-1 font-black">Send the final invoice before delivery</p>
-                      <p className="mt-1 text-xs font-semibold">Use the final invoice buttons below. Laundry should not be released until the invoice is fully paid.</p>
+                      <p className="mt-1 font-black">Send the stable final payment link before delivery</p>
+                      <p className="mt-1 text-xs font-semibold">Use the final payment-link buttons below. Laundry should not be released until the balance is fully paid.</p>
                     </div>
                   )}
                 </div>
 
                 {laundryFinalAlreadyPaid && (
                   <p className="mt-4 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">
-                    This request already shows the final laundry balance as paid. Do not create another final invoice or auto-charge unless you intentionally need a correction.
+                    This request already shows the final laundry balance as paid. Do not create another final payment link, invoice, or auto-charge unless you intentionally need a correction.
                   </p>
                 )}
 
@@ -6860,7 +6860,7 @@ export default function AdminTable({
                       onClick={() => createLaundryFinalBalance(true)}
                       className={getAdminActionClass("primary")}
                     >
-                      {laundryFinalBusy ? <><ActionSpinner /> Creating...</> : "Create + email final invoice"}
+                      {laundryFinalBusy ? <><ActionSpinner /> Creating...</> : "Create + email final payment link"}
                     </button>
                     <button
                       type="button"
@@ -6868,17 +6868,17 @@ export default function AdminTable({
                       onClick={() => createLaundryFinalBalance(false)}
                       className={getAdminActionClass("secondary")}
                     >
-                      Create final invoice only
+                      Create final payment link only
                     </button>
                   </div>
                 )}
 
                 {selected.laundryFinalCheckoutUrl && (
                   <div className="mt-4 rounded-2xl border border-[#eadfc8] bg-[#fbf6ea] p-4">
-                    <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Current final balance invoice / receipt link</p>
+                    <p className="text-xs font-black uppercase tracking-[0.16em] text-[#b98a2f]">Current stable final balance payment link</p>
                     <p className="mt-2 break-all text-sm text-[#075c58]">{selected.laundryFinalCheckoutUrl}</p>
                     <div className="mt-3 flex flex-wrap gap-2">
-                      <a href={selected.laundryFinalCheckoutUrl} target="_blank" rel="noreferrer" className="rounded-full bg-[#075c58] px-4 py-2 text-xs font-black text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-[#064b48]">Open final invoice</a>
+                      <a href={selected.laundryFinalCheckoutUrl} target="_blank" rel="noreferrer" className="rounded-full bg-[#075c58] px-4 py-2 text-xs font-black text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-[#064b48]">Open final payment</a>
                       <button type="button" onClick={() => copyLaundryLink(selected.laundryFinalCheckoutUrl || "")} className="rounded-full border border-[#075c58] bg-white px-4 py-2 text-xs font-black text-[#075c58] transition hover:bg-[#f4ecdc]">Copy link</button>
                       {selected.laundryFinalInvoicePdf && (
                         <a href={selected.laundryFinalInvoicePdf} target="_blank" rel="noreferrer" className="rounded-full border border-[#075c58] bg-white px-4 py-2 text-xs font-black text-[#075c58] transition hover:bg-[#f4ecdc]">Open PDF</a>

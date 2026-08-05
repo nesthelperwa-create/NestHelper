@@ -6,6 +6,7 @@ import Stripe from "stripe";
 import { isAllowedAdminEmail } from "@/lib/adminAuth";
 import { getFirebaseAdminDb } from "@/lib/firebaseAdmin";
 import { sendLaundryFinalBalanceEmail } from "@/lib/sendLaundryFinalBalanceEmail";
+import { createLaundryFinalCheckoutSession, generateLaundryFinalAccessToken, getLaundryFinalStableUrl } from "@/lib/laundryFinalCheckout";
 import { getManualSalesTaxFirestoreFields, getManualSalesTaxMetadata, getOrCreateManualSalesTaxRate, manualTaxRatesParam, resolveManualSalesTaxConfig } from "@/lib/stripeManualTax";
 
 export const runtime = "nodejs";
@@ -173,6 +174,61 @@ async function getOrCreateStripeCustomer(data: Record<string, unknown>, requestI
 }
 
 
+async function retireExistingUnpaidManualInvoice(data: Record<string, unknown>) {
+  if (!stripe) return { paid: false, retiredInvoiceId: "" };
+
+  const invoiceId = getString(data.laundryFinalInvoiceId);
+  if (!invoiceId) return { paid: false, retiredInvoiceId: "" };
+
+  try {
+    const invoice = await stripe.invoices.retrieve(invoiceId);
+
+    if (invoice.status === "paid" || (invoice.amount_paid ?? 0) > 0) {
+      return { paid: true, retiredInvoiceId: invoice.id };
+    }
+
+    if (invoice.status === "draft") {
+      await stripe.invoices.del(invoice.id);
+      return { paid: false, retiredInvoiceId: invoice.id };
+    }
+
+    if (invoice.status === "open") {
+      await stripe.invoices.voidInvoice(invoice.id);
+      return { paid: false, retiredInvoiceId: invoice.id };
+    }
+  } catch (error) {
+    console.warn("Unable to retire older unpaid Laundry Rescue final invoice before creating a smart checkout link", error);
+  }
+
+  return { paid: false, retiredInvoiceId: "" };
+}
+
+
+async function retireExistingFinalCheckoutSession(data: Record<string, unknown>) {
+  if (!stripe) return { paid: false, retiredSessionId: "" };
+
+  const sessionId = getString(data.laundryFinalCheckoutSessionId);
+  if (!sessionId) return { paid: false, retiredSessionId: "" };
+
+  try {
+    const session = await stripe.checkout.sessions.retrieve(sessionId);
+
+    if (session.payment_status === "paid" || session.status === "complete") {
+      return { paid: true, retiredSessionId: session.id };
+    }
+
+    if (session.status === "open") {
+      await stripe.checkout.sessions.expire(session.id);
+      return { paid: false, retiredSessionId: session.id };
+    }
+  } catch (error) {
+    console.warn("Unable to retire older Laundry Rescue final Checkout session before creating a new one", error);
+  }
+
+  return { paid: false, retiredSessionId: "" };
+}
+
+
 export async function POST(request: Request) {
   try {
     getFirebaseAdminDb();
@@ -304,6 +360,151 @@ export async function POST(request: Request) {
 
     const customerId = await getOrCreateStripeCustomer(data, requestId, fullName, email);
     const manualSalesTaxRateId = await getOrCreateManualSalesTaxRate(stripe, manualSalesTax, { requestId, serviceId: "laundry-rescue", paymentType: "laundry_final_balance" });
+
+    if (!autoCharge) {
+      const retired = await retireExistingUnpaidManualInvoice(data);
+      const retiredCheckout = await retireExistingFinalCheckoutSession(data);
+
+      if (retired.paid || retiredCheckout.paid) {
+        await requestRef.update({
+          ...updateBase,
+          status: "Fully Paid",
+          paymentStatus: "Final Balance Paid",
+          laundryPaymentStatus: "Final Balance Paid",
+          laundryFinalInvoiceStatus: "Paid",
+          laundryFinalBalancePaidAt: FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp(),
+          updatedBy: decoded.email || "admin",
+        });
+
+        return NextResponse.json({
+          ok: true,
+          alreadyPaid: true,
+          status: "Fully Paid",
+          paymentStatus: "Final Balance Paid",
+          message: "The existing Laundry Rescue final balance is already paid. No new payment link was created.",
+        });
+      }
+
+      const laundryFinalAccessToken = getString(data.laundryFinalAccessToken) || generateLaundryFinalAccessToken();
+      const stableFinalPaymentUrl = getLaundryFinalStableUrl(laundryFinalAccessToken);
+      const checkoutData: Record<string, unknown> = {
+        ...data,
+        ...updateBase,
+        laundryFinalAccessToken,
+        laundryFinalInvoiceCustomerId: customerId,
+        manualSalesTaxEnabled: manualSalesTax.enabled,
+        manualSalesTaxRate: manualSalesTax.rate,
+        manualSalesTaxDisplayName: manualSalesTax.displayName,
+        manualSalesTaxRateId,
+      };
+
+      const { session } = await createLaundryFinalCheckoutSession({
+        stripe,
+        requestId,
+        data: checkoutData,
+        token: laundryFinalAccessToken,
+      });
+      const checkoutAmountDue = (session.amount_total ?? balanceDueCents) / 100;
+
+      let emailSent = false;
+      let emailError = "";
+
+      if (shouldSendEmail && email) {
+        try {
+          const result = (await sendLaundryFinalBalanceEmail({
+            to: email,
+            customerName: fullName,
+            requestId,
+            paymentUrl: stableFinalPaymentUrl,
+            dryWeightLbs,
+            includedWeightLbs,
+            additionalWeightLbs,
+            ratePerLb,
+            addOnsAmount,
+            depositCredit,
+            balanceDue: checkoutAmountDue,
+            note: [
+              finalBalanceNote,
+              depositTaxCatchUp.required
+                ? `Includes ${formatMoney(depositTaxCatchUpAmount)} sales tax catch-up for the previously paid Laundry Rescue intro minimum. The $59 minimum itself is not being charged again.`
+                : "",
+            ]
+              .filter(Boolean)
+              .join("\n"),
+            preferredDate,
+            preferredWindow,
+            city,
+          })) as any;
+
+          if (result?.skipped) {
+            emailError = "The final balance payment link was created, but the NestHelper email was skipped. Copy and send the link manually.";
+          } else if (result?.error) {
+            emailError =
+              result.error?.message ||
+              "The final balance payment link was created, but the NestHelper email failed. Copy and send the link manually.";
+          } else {
+            emailSent = true;
+          }
+        } catch (error) {
+          console.error("Laundry final balance payment-link email failed", error);
+          emailError = "The final balance payment link was created, but the email failed. Copy and send the link manually.";
+        }
+      }
+
+      const nextStatus = shouldSendEmail && emailSent ? "Final Payment Link Sent" : "Final Payment Link Created";
+
+      await requestRef.update({
+        ...updateBase,
+        status: nextStatus,
+        paymentStatus: nextStatus,
+        laundryPaymentStatus: nextStatus,
+        laundryFinalAccessToken,
+        laundryFinalPaymentLinkType: "smart_checkout",
+        laundryFinalCheckoutStatus: "Open",
+        laundryFinalCheckoutUrl: stableFinalPaymentUrl,
+        laundryFinalStripeCheckoutUrl: session.url || "",
+        laundryFinalCheckoutSessionId: session.id,
+        laundryFinalCheckoutAmountDue: session.amount_total ?? balanceDueCents,
+        laundryFinalCheckoutCreatedAt: FieldValue.serverTimestamp(),
+        laundryFinalCheckoutEmailSent: emailSent,
+        laundryFinalCheckoutEmailError: emailError,
+        laundryFinalCheckoutEmailSentAt: emailSent ? FieldValue.serverTimestamp() : null,
+        laundryFinalInvoiceStatus: "Replaced by smart checkout",
+        laundryFinalInvoiceId: "",
+        laundryFinalInvoiceNumber: "",
+        laundryFinalInvoiceUrl: "",
+        laundryFinalInvoicePdf: "",
+        laundryFinalRetiredInvoiceId: retired.retiredInvoiceId,
+        laundryFinalRetiredCheckoutSessionId: retiredCheckout.retiredSessionId,
+        laundryFinalInvoiceCustomerId: customerId,
+        laundryFinalBalanceCreatedAt: FieldValue.serverTimestamp(),
+        laundryFinalBalanceCreatedBy: decoded.email || "admin",
+        laundryFinalInvoiceTaxMode: manualSalesTax.enabled ? "Manual sales tax" : "No sales tax",
+        ...getManualSalesTaxFirestoreFields(manualSalesTax, manualSalesTaxRateId),
+      });
+
+      return NextResponse.json({
+        ok: true,
+        url: stableFinalPaymentUrl,
+        paymentUrl: stableFinalPaymentUrl,
+        stripeCheckoutUrl: session.url || "",
+        checkoutSessionId: session.id,
+        emailSent,
+        emailError,
+        autoCharge: false,
+        balanceDue: checkoutAmountDue,
+        status: nextStatus,
+        paymentStatus: nextStatus,
+        manualSalesTaxEnabled: manualSalesTax.enabled,
+        manualSalesTaxRate: manualSalesTax.rate,
+        depositTaxAlreadyCollected: depositTaxCollectedCents > 0,
+        depositTaxCollectedAmount: depositTaxCollectedCents / 100,
+        depositTaxCatchUpAmount,
+        depositTaxCatchUpRequired: depositTaxCatchUp.required,
+      });
+    }
+
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
     const collectionMethod: "charge_automatically" | "send_invoice" = autoCharge ? "charge_automatically" : "send_invoice";
     const invoice = await stripe.invoices.create({
@@ -499,7 +700,7 @@ export async function POST(request: Request) {
           to: email,
           customerName: fullName,
           requestId,
-          invoiceUrl: hostedInvoiceUrl,
+          paymentUrl: hostedInvoiceUrl,
           invoicePdf,
           invoiceNumber: finalized.number || undefined,
           dryWeightLbs,

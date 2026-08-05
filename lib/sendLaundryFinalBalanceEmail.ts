@@ -5,7 +5,7 @@ type LaundryFinalBalanceEmailInput = {
   to: string;
   customerName?: string;
   requestId: string;
-  invoiceUrl: string;
+  paymentUrl: string;
   invoicePdf?: string;
   invoiceNumber?: string;
   dryWeightLbs: number;
@@ -52,7 +52,7 @@ export async function sendLaundryFinalBalanceEmail({
   to,
   customerName,
   requestId,
-  invoiceUrl,
+  paymentUrl,
   invoicePdf,
   invoiceNumber,
   dryWeightLbs,
@@ -72,8 +72,8 @@ export async function sendLaundryFinalBalanceEmail({
   const customerSupportEmail = emailAliases.laundry;
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
-  if (!apiKey || !to || !invoiceUrl) {
-    console.warn("Skipping laundry final balance email. Missing RESEND_API_KEY, customer email, or invoice URL.");
+  if (!apiKey || !to || !paymentUrl) {
+    console.warn("Skipping laundry final balance email. Missing RESEND_API_KEY, customer email, or payment URL.");
     return { skipped: true };
   }
 
@@ -111,14 +111,15 @@ export async function sendLaundryFinalBalanceEmail({
           <p style="margin:0 0 18px 0;">Your laundry has been washed, dried, folded, and calculated by final dry weight. Your $59 intro minimum already includes pickup, wash, dry, fold, return, and up to about 26.2 lbs. The remaining balance covers any additional laundry above the included final dry weight plus approved add-ons or bulky items.</p>
           ${noteHtml}
           ${summaryRows ? `<div style="width:100%;box-sizing:border-box;border:1px solid #eee;border-radius:14px;overflow:hidden;margin:0 0 22px 0;">${summaryRows}</div>` : ""}
-          <p style="margin:22px 0;"><a href="${escapeHtml(invoiceUrl)}" style="display:inline-block;background:#075c58;color:#fff;text-decoration:none;padding:13px 20px;border-radius:999px;font-weight:800;max-width:100%;box-sizing:border-box;white-space:normal;text-align:center;">View and pay final invoice</a></p>
-          <p style="margin:0 0 14px 0;font-size:14px;color:#556;">If the button does not work, copy and paste this secure invoice link into your browser:</p>
-          <p style="word-break:break-all;font-size:13px;color:#075c58;margin:0 0 18px 0;">${escapeHtml(invoiceUrl)}</p>
+          <p style="margin:22px 0;"><a href="${escapeHtml(paymentUrl)}" style="display:inline-block;background:#075c58;color:#fff;text-decoration:none;padding:13px 20px;border-radius:999px;font-weight:800;max-width:100%;box-sizing:border-box;white-space:normal;text-align:center;">View and pay final balance</a></p>
+          <p style="margin:0 0 14px 0;border-left:4px solid #f1c96b;background:#fbf6ea;padding:12px 14px;border-radius:12px;color:#233;font-size:14px;line-height:1.55;"><strong>Good to know:</strong> this NestHelper link stays the same. If the temporary Stripe checkout session expires, the NestHelper link opens a fresh secure checkout automatically.</p>
+          <p style="margin:0 0 14px 0;font-size:14px;color:#556;">If the button does not work, copy and paste this secure NestHelper payment link into your browser:</p>
+          <p style="word-break:break-all;font-size:13px;color:#075c58;margin:0 0 18px 0;">${escapeHtml(paymentUrl)}</p>
           ${invoicePdf ? `<p style="margin:0 0 18px 0;"><a href="${escapeHtml(invoicePdf)}" style="display:inline-block;background:#fff;color:#075c58;text-decoration:none;padding:11px 16px;border-radius:999px;border:1px solid #075c58;font-weight:800;max-width:100%;box-sizing:border-box;white-space:normal;text-align:center;">Download invoice PDF</a></p>` : ""}
           <h2 style="font-size:18px;margin:0 0 10px 0;color:#0f4f4a;">What happens after payment</h2>
           <ol style="margin:0 0 18px 20px;padding:0;">
-            <li style="margin:0 0 8px 0;">Stripe confirms the final invoice payment securely.</li>
-            <li style="margin:0 0 8px 0;">NestHelper marks the Laundry Rescue request fully paid after Stripe confirms the invoice payment.</li>
+            <li style="margin:0 0 8px 0;">Stripe confirms the final balance payment securely.</li>
+            <li style="margin:0 0 8px 0;">NestHelper marks the Laundry Rescue request fully paid after Stripe confirms the payment.</li>
             <li style="margin:0 0 8px 0;">Reply right away if you have questions about the weight, add-ons, or return details.</li>
           </ol>
           <p style="margin:0 0 18px 0;">Questions or changes? Reply to this email or contact us at ${escapeHtml(customerSupportEmail)}.</p>
@@ -127,8 +128,8 @@ export async function sendLaundryFinalBalanceEmail({
       </div>
     </div>`;
 
-  const text = `${greeting}\n\nYour laundry has been washed, dried, folded, and calculated by final dry weight. Your $59 intro minimum already includes pickup, wash, dry, fold, return, and up to about 26.2 lbs. The remaining balance covers any additional laundry above the included final dry weight plus approved add-ons or bulky items.\n\nRequest ID: ${requestId}\nDry weight: ${formatNumber(dryWeightLbs)} lb\nIncluded in $59 minimum: up to about ${formatNumber(displayIncludedWeightLbs)} lb\nAdditional laundry: ${formatNumber(displayAdditionalWeightLbs)} lb at ${formatMoney(ratePerLb)}/lb\nAdd-ons / bulky items: ${addOnsAmount > 0 ? formatMoney(addOnsAmount) : "None"}\nMinimum already paid: ${formatMoney(depositCredit)}\nFinal balance due: ${formatMoney(balanceDue)}${note?.trim() ? `\n\nNote from NestHelper:\n${note.trim()}` : ""}\n\nPay securely: ${invoiceUrl}\n\nQuestions or changes? Reply to this email or contact us at ${customerSupportEmail}.\n\nNestHelper: ${siteUrl}`;
+  const text = `${greeting}\n\nYour laundry has been washed, dried, folded, and calculated by final dry weight. Your $59 intro minimum already includes pickup, wash, dry, fold, return, and up to about 26.2 lbs. The remaining balance covers any additional laundry above the included final dry weight plus approved add-ons or bulky items.\n\nRequest ID: ${requestId}\nDry weight: ${formatNumber(dryWeightLbs)} lb\nIncluded in $59 minimum: up to about ${formatNumber(displayIncludedWeightLbs)} lb\nAdditional laundry: ${formatNumber(displayAdditionalWeightLbs)} lb at ${formatMoney(ratePerLb)}/lb\nAdd-ons / bulky items: ${addOnsAmount > 0 ? formatMoney(addOnsAmount) : "None"}\nMinimum already paid: ${formatMoney(depositCredit)}\nFinal balance due: ${formatMoney(balanceDue)}${note?.trim() ? `\n\nNote from NestHelper:\n${note.trim()}` : ""}\n\nPay securely: ${paymentUrl}\n\nThis NestHelper link stays the same. If the temporary Stripe checkout session expires, the NestHelper link opens a fresh secure checkout automatically.\n\nQuestions or changes? Reply to this email or contact us at ${customerSupportEmail}.\n\nNestHelper: ${siteUrl}`;
 
   const resend = new Resend(apiKey);
-  return resend.emails.send({ from, to, subject: "Laundry Rescue final invoice is ready", html, text, replyTo: customerSupportEmail });
+  return resend.emails.send({ from, to, subject: "Laundry Rescue final balance is ready", html, text, replyTo: customerSupportEmail });
 }
