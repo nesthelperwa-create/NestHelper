@@ -6,7 +6,6 @@ import {
   browserLocalPersistence,
   createUserWithEmailAndPassword,
   onAuthStateChanged,
-  sendEmailVerification,
   sendPasswordResetEmail,
   setPersistence,
   signInWithEmailAndPassword,
@@ -127,15 +126,7 @@ export function CustomerAuthCard({
       if (mode === "create") {
         const credential = await createUserWithEmailAndPassword(firebaseAuth, cleanEmail, password);
         await credential.user.getIdToken(true);
-        const verificationSent = await sendEmailVerification(credential.user)
-          .then(() => true)
-          .catch((verificationError) => {
-            console.warn("Smart Labels verification email could not be sent automatically.", verificationError);
-            return false;
-          });
-        setMessage(verificationSent
-          ? "Account created. Check your inbox to verify your email address."
-          : "Account created. You are signed in. If you need to migrate an older label, use the verification option on that label page.");
+        setMessage("Account created. You are signed in.");
         onSuccess?.();
       } else if (mode === "sign-in") {
         const credential = await signInWithEmailAndPassword(firebaseAuth, cleanEmail, password);

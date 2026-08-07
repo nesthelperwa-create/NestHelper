@@ -35,7 +35,7 @@ export const policies: Policy[] = [
       },
       {
         heading: "Smart Label accounts and ownership",
-        body: "Customers must provide accurate account information and keep account credentials and activation codes private. NestHelper may require email verification or other reasonable ownership verification before migrating, correcting, or transferring access to an older Smart Label. Creating a Smart Labels account or using Smart Label features is also subject to the Privacy Policy and Smart Label Policy."
+        body: "Customers must provide accurate account information and keep account credentials and activation codes private. NestHelper may require reasonable ownership verification before correcting or transferring access to a Smart Label account or claimed label. Creating a Smart Labels account or using Smart Label features is also subject to the Privacy Policy and Smart Label Policy."
       }
     ]
   },
@@ -86,11 +86,11 @@ export const policies: Policy[] = [
       },
       {
         heading: "Smart Label privacy",
-        body: "In Storage Mode, saved label names, contents, notes, photos, and private storage locations are not returned on the public Smart Label scan page and are available only to the authenticated owner and authorized NestHelper administrators. Lost & Found Mode may display the public item name and public message chosen by the owner. A finder may submit contact information, a message, and optional location information when the owner has enabled those features. Finder information is shared with the authenticated label owner for recovery purposes and is not intended for public display."
+        body: "For claimed customer Smart Labels in Storage Mode, saved label names, contents, notes, photos, and private storage locations are not returned on the public Smart Label scan page and are available only to the authenticated owner and authorized NestHelper administrators. Lost & Found Mode may display the public item name and public message chosen by the owner. A finder may submit contact information, a message, and optional location information when the owner has enabled those features. Finder information is shared with the authenticated label owner for recovery purposes and is not intended for public display."
       },
       {
         heading: "Account authentication",
-        body: "NestHelper uses Firebase Authentication for Smart Label account sign-in and email verification. Authentication credentials are handled through the authentication service rather than stored as ordinary Smart Label content fields. NestHelper may require a verified account email before allowing a legacy label to be migrated into an account."
+        body: "NestHelper uses Firebase Authentication for Smart Label account sign-in. Authentication credentials are handled through the authentication service rather than stored as ordinary Smart Label content fields."
       },
       {
         heading: "How information is used",
@@ -105,10 +105,6 @@ export const policies: Policy[] = [
         body: "NestHelper does not use Smart Labels as GPS trackers and does not automatically collect continuous location from a label. In Lost & Found Mode, when the owner has enabled the option, a finder may voluntarily type a location or allow a supported browser to share approximate or precise latitude/longitude coordinates. That information is used to help the owner recover the item and is shared with the authenticated owner."
       },
       {
-        heading: "Legacy Smart Labels",
-        body: "Older Smart Labels created before customer accounts may use a legacy PIN or require migration into My Labels. To reduce unintended public exposure, older labels without a PIN have their saved private details withheld from the public scan page. Automatic migration requires an authenticated, verified account email that exactly matches the valid email already saved with the legacy label; otherwise NestHelper may require additional ownership verification and admin assistance. Migration keeps the printed QR code unchanged."
-      },
-      {
         heading: "Launch Rewards verification and fraud prevention",
         body: "Launch Rewards may collect verified phone and email information, ZIP code, reward history, server timestamps, and limited device or network security signals. This information is used to confirm eligibility, enforce spin and household limits, prevent duplicate or automated entries, investigate suspected misuse, contact potential winners, and attach rewards to eligible service requests. Marketing consent is optional and is not required to enter."
       },
@@ -121,7 +117,7 @@ export const policies: Policy[] = [
   {
     slug: "smart-label-policy",
     title: "Smart Label Policy",
-    intro: "This policy explains activation, privacy, Storage Mode, Lost & Found Mode, finder messages, legacy labels, and the limits of NestHelper Smart Labels.",
+    intro: "This policy explains activation, privacy, Storage Mode, Lost & Found Mode, finder messages, and the limits of NestHelper Smart Labels.",
     lastUpdated: "August 7, 2026",
     sections: [
       {
@@ -138,7 +134,7 @@ export const policies: Policy[] = [
       },
       {
         heading: "Storage Mode",
-        body: "Storage Mode is intended for private organization. Saved label names, locations, contents, notes, photos, and search information are not displayed on the public scan page. Customers should not store passwords, financial information, security codes, medical records, government identifiers, or other highly sensitive information in Smart Label fields."
+        body: "Storage Mode is intended for private organization. For claimed customer Smart Labels, saved label names, locations, contents, notes, photos, and search information are not displayed on the public scan page. Customers should not store passwords, financial information, security codes, medical records, government identifiers, or other highly sensitive information in Smart Label fields."
       },
       {
         heading: "Lost & Found Mode",
@@ -151,10 +147,6 @@ export const policies: Policy[] = [
       {
         heading: "No GPS or recovery guarantee",
         body: "Smart Labels are passive QR labels. They do not contain GPS, cellular service, Bluetooth tracking, automatic location reporting, theft prevention, emergency monitoring, or law-enforcement tracking. Lost & Found recovery depends on a person finding the item, noticing and scanning the label, having internet access, and choosing to contact the owner."
-      },
-      {
-        heading: "Legacy labels",
-        body: "Some older NestHelper labels were created before account-based ownership. Existing PIN-protected legacy labels may continue to use their PIN. To protect privacy, a legacy label without a PIN has its saved details hidden from anonymous scans. Automatic migration requires a verified Smart Labels account whose email exactly matches the valid email already associated with the legacy label. If that information is unavailable or a PIN-protected legacy label needs account migration, NestHelper may verify ownership and complete an admin-assisted migration. Migration does not use a purchased-label allowance and does not change the printed QR code."
       },
       {
         heading: "Availability and changes",

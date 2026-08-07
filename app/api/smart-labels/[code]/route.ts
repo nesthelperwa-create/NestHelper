@@ -8,7 +8,7 @@ import {
   normalizeSmartLabelCode,
   serializeSmartLabel,
 } from "@/lib/smartLabels";
-import { getPublicScanState, migrateLegacyLabelToOwner, verifyCustomerRequest } from "@/lib/smartLabelAccountServer";
+import { getPublicScanState } from "@/lib/smartLabelAccountServer";
 import { clearSmartLabelPinAttempts, consumeSmartLabelPinAttempt, hashSmartLabelPin, verifySmartLabelPin } from "@/lib/smartLabelsServer";
 
 export const runtime = "nodejs";
@@ -45,10 +45,12 @@ export async function GET(_request: Request, context: RouteContext) {
     if (!publicState) return NextResponse.json({ ok: false, error: "Label not found." }, { status: 404 });
 
     let legacyLabel = null;
-    if (publicState.state === "legacy" && publicState.legacyPinEnabled) {
+    if (publicState.state === "legacy") {
       const label = await getLabel(code);
       if (label) {
-        legacyLabel = serializeSmartLabel(label.data, false);
+        // Legacy records are retained only for NestHelper testing/compatibility.
+        // No-PIN legacy records can open directly; PIN records stay locked.
+        legacyLabel = serializeSmartLabel(label.data, !Boolean(label.data.pinEnabled));
       }
     }
 
@@ -65,20 +67,6 @@ export async function POST(request: Request, context: RouteContext) {
     if (!code) return NextResponse.json({ ok: false, error: "Missing label code." }, { status: 400 });
 
     const body = (await request.json().catch(() => ({}))) as UpdateBody;
-
-    if (body.action === "migrate") {
-      const user = await verifyCustomerRequest(request);
-      if (!user) return NextResponse.json({ ok: false, error: "Sign in to move this older label into My Labels." }, { status: 401 });
-      try {
-        const migrated = await migrateLegacyLabelToOwner(user, code);
-        return NextResponse.json({ ok: true, label: migrated, message: "This older label is now protected in your My Labels account." });
-      } catch (error) {
-        const message = error instanceof Error ? error.message : "Unable to move this older label into My Labels.";
-        const status = message.includes("already been claimed") ? 409 : 403;
-        return NextResponse.json({ ok: false, error: message }, { status });
-      }
-    }
-
     if (body.action !== "unlock") return NextResponse.json({ ok: false, error: "Unsupported label action." }, { status: 400 });
 
     const label = await getLabel(code);
@@ -86,9 +74,7 @@ export async function POST(request: Request, context: RouteContext) {
     if (label.data.ownerUid) {
       return NextResponse.json({ ok: false, error: "This claimed label must be opened from the owner dashboard." }, { status: 403 });
     }
-    if (!label.data.pinEnabled) {
-      return NextResponse.json({ ok: false, error: "For privacy, older labels without a PIN must be connected to the original customer's account before their saved details can be viewed." }, { status: 403 });
-    }
+    if (!label.data.pinEnabled) return NextResponse.json({ ok: true, label: serializeSmartLabel(label.data, true) });
 
     const attempt = await consumeSmartLabelPinAttempt(request, code);
     if (!attempt.allowed) {
@@ -123,38 +109,33 @@ export async function PATCH(request: Request, context: RouteContext) {
     }
 
     const pinEnabled = Boolean(label.data.pinEnabled);
-    if (!pinEnabled) {
-      return NextResponse.json({ ok: false, error: "For privacy, older labels without a PIN must be connected to the original customer's account before they can be edited." }, { status: 403 });
-    }
-
-    const attempt = await consumeSmartLabelPinAttempt(request, code);
-    if (!attempt.allowed) {
-      return NextResponse.json(
-        { ok: false, error: "Too many PIN attempts. Wait a few minutes and try again." },
-        { status: 429, headers: { "Retry-After": String(attempt.retryAfterSeconds) } },
-      );
-    }
-    if (!verifySmartLabelPin(code, body.currentPin, label.data.pinHash)) {
-      return NextResponse.json({ ok: false, error: "Enter the current 4-digit PIN to save changes." }, { status: 403 });
-    }
-    await clearSmartLabelPinAttempts(request, code);
-
-    if (body.removePin === true) {
-      return NextResponse.json(
-        { ok: false, error: "For privacy, legacy PIN protection cannot be turned off on the public scan page. Contact NestHelper if you want this older label moved into My Labels." },
-        { status: 400 },
-      );
+    if (pinEnabled) {
+      const attempt = await consumeSmartLabelPinAttempt(request, code);
+      if (!attempt.allowed) {
+        return NextResponse.json(
+          { ok: false, error: "Too many PIN attempts. Wait a few minutes and try again." },
+          { status: 429, headers: { "Retry-After": String(attempt.retryAfterSeconds) } },
+        );
+      }
+      if (!verifySmartLabelPin(code, body.currentPin, label.data.pinHash)) {
+        return NextResponse.json({ ok: false, error: "Enter the current 4-digit PIN to save changes." }, { status: 403 });
+      }
+      await clearSmartLabelPinAttempts(request, code);
     }
 
     const updates: Record<string, unknown> = {
       ...cleanSmartLabelFields(body),
       status: "In use",
-      lastEditedBy: "customer-scan-legacy",
+      lastEditedBy: "customer-scan-legacy-test",
       updatedAt: FieldValue.serverTimestamp(),
       labelUrl: typeof label.data.labelUrl === "string" && label.data.labelUrl ? label.data.labelUrl : getSmartLabelUrl(code),
     };
 
-    if (body.newPin !== undefined && String(body.newPin).trim() !== "") {
+    if (body.removePin === true) {
+      updates.pinEnabled = false;
+      updates.pinHash = "";
+      updates.pinUpdatedAt = FieldValue.serverTimestamp();
+    } else if (body.newPin !== undefined && String(body.newPin).trim() !== "") {
       if (!isFourDigitPin(body.newPin)) {
         return NextResponse.json({ ok: false, error: "PIN must be exactly 4 digits." }, { status: 400 });
       }

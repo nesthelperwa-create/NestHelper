@@ -8,7 +8,6 @@ import { buildContentsPreview, buildSmartLabelSearchText, cleanCollectionName, c
 export type AuthenticatedUser = {
   uid: string;
   email: string;
-  emailVerified: boolean;
 };
 
 export type SmartLabelDashboardLabel = SmartLabelPublicFields & {
@@ -72,7 +71,6 @@ export async function verifyCustomerRequest(request: Request): Promise<Authentic
   return {
     uid: decoded.uid,
     email: cleanOptionalEmail(decoded.email) || cleanSmartLabelText(decoded.email, 200),
-    emailVerified: decoded.email_verified === true,
   };
 }
 
@@ -455,75 +453,6 @@ export async function updateOwnedLabel(user: AuthenticatedUser, rawCode: string,
 }
 
 
-export async function migrateLegacyLabelToOwner(user: AuthenticatedUser, code: string) {
-  const safeCode = normalizeSmartLabelCode(code);
-  if (!safeCode) throw new Error("Missing label code.");
-  if (!user.emailVerified) {
-    throw new Error("Verify your email address before moving this older label into My Labels.");
-  }
-  const db = getFirebaseAdminDb();
-  const labelRef = db.collection("smartLabels").doc(safeCode);
-
-  await db.runTransaction(async (transaction) => {
-    const snap = await transaction.get(labelRef);
-    if (!snap.exists) throw new Error("Label not found.");
-
-    const data = (snap.data() || {}) as Record<string, unknown>;
-    const ownerUid = cleanSmartLabelText(data.ownerUid, 200);
-
-    if (ownerUid) {
-      if (ownerUid === user.uid) return;
-      throw new Error("This label has already been claimed.");
-    }
-
-    if (!hasLegacyPrivateContent(data)) {
-      throw new Error("This label does not contain legacy data to migrate.");
-    }
-
-    if (Boolean(data.pinEnabled)) {
-      throw new Error("This older label is protected by its existing PIN. Unlock it with the PIN instead.");
-    }
-
-    const legacyEmail = cleanOptionalEmail(data.customerEmail);
-    const signedInEmail = cleanOptionalEmail(user.email);
-    if (!legacyEmail || !signedInEmail || legacyEmail !== signedInEmail) {
-      throw new Error("This older label cannot be connected to this account automatically. Contact NestHelper for help.");
-    }
-
-    const searchText = buildSmartLabelSearchText({
-      code: safeCode,
-      labelName: cleanSmartLabelText(data.labelName, 120),
-      locationName: cleanSmartLabelText(data.locationName, 120),
-      itemsInside: cleanSmartLabelText(data.itemsInside, 1200),
-      notes: cleanSmartLabelText(data.notes, 1200),
-      containerType: cleanContainerType(data.containerType),
-      collectionName: cleanCollectionName(data.collectionName),
-    });
-
-    transaction.set(labelRef, {
-      ownerUid: user.uid,
-      ownerEmail: signedInEmail,
-      claimStatus: "claimed",
-      status: "In use",
-      useMode: "storage",
-      lostStatus: "not_lost",
-      publicItemName: "",
-      publicMessage: "",
-      allowFinderContact: false,
-      allowFinderLocation: false,
-      archived: false,
-      searchText,
-      migratedFromLegacy: true,
-      legacyMigratedAt: FieldValue.serverTimestamp(),
-      updatedAt: FieldValue.serverTimestamp(),
-      lastScannedAt: FieldValue.serverTimestamp(),
-    }, { merge: true });
-  });
-
-  const updated = await labelRef.get();
-  if (!updated.exists) throw new Error("Unable to load the migrated label.");
-  return serializeOwnedLabel({ id: updated.id, data: () => updated.data() || {} });
-}
 
 export async function searchOwnedLabels(user: AuthenticatedUser, queryText: string) {
   const labels = await listCustomerLabels(user);
@@ -557,7 +486,6 @@ export async function getPublicScanState(code: string) {
       claimStatus: cleanSmartLabelText(data.claimStatus, 40) || (ownerSummary.ownerUid ? "claimed" : "unclaimed"),
       hasLegacyContent: legacy,
       legacyPinEnabled: legacy ? Boolean(data.pinEnabled) : false,
-      legacyCanSelfMigrate: legacy ? Boolean(cleanOptionalEmail(data.customerEmail)) && !Boolean(data.pinEnabled) : false,
       reservedOnly: false,
     };
   }
@@ -579,7 +507,6 @@ export async function getPublicScanState(code: string) {
       claimStatus: "unclaimed",
       hasLegacyContent: false,
       legacyPinEnabled: false,
-      legacyCanSelfMigrate: false,
       reservedOnly: true,
     };
   }

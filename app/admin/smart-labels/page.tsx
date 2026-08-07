@@ -16,7 +16,6 @@ import {
   QrCode,
   RotateCcw,
   Search,
-  ShieldCheck,
   Trash2,
   Undo2,
 } from "lucide-react";
@@ -45,7 +44,7 @@ type SmartLabelBatch = {
   updatedAt?: { toDate?: () => Date; seconds?: number };
 };
 
-type SmartLabelAction = "resetPin" | "archive" | "restore" | "activate" | "migrateLegacy";
+type SmartLabelAction = "resetPin" | "archive" | "restore" | "activate";
 
 type SmartLabelAdmin = {
   id: string;
@@ -58,9 +57,6 @@ type SmartLabelAdmin = {
   batchName?: string;
   customerName?: string;
   customerEmail?: string;
-  ownerUid?: string;
-  ownerEmail?: string;
-  migratedFromLegacy?: boolean;
   labelName?: string;
   locationName?: string;
   location?: string;
@@ -352,7 +348,7 @@ export default function AdminSmartLabelsPage() {
     await lookupSmartLabel(lookupInput);
   }
 
-  async function updateLabel(code: string, action: SmartLabelAction, ownerEmail = "") {
+  async function updateLabel(code: string, action: SmartLabelAction) {
     setError("");
     setMessage("");
     try {
@@ -365,7 +361,7 @@ export default function AdminSmartLabelsPage() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ code, action, ownerEmail }),
+        body: JSON.stringify({ code, action }),
       });
       const result = (await response.json().catch(() => null)) as { ok?: boolean; error?: string; message?: string } | null;
       if (!response.ok || !result?.ok) throw new Error(result?.error || "Unable to update this label.");
@@ -730,7 +726,7 @@ export default function AdminSmartLabelsPage() {
   );
 }
 
-function SmartLabelCard({ label, onUpdate, onMessage, lookupMode = false }: { label: SmartLabelAdmin; onUpdate: (code: string, action: SmartLabelAction, ownerEmail?: string) => void; onMessage: (value: string) => void; lookupMode?: boolean }) {
+function SmartLabelCard({ label, onUpdate, onMessage, lookupMode = false }: { label: SmartLabelAdmin; onUpdate: (code: string, action: SmartLabelAction) => void; onMessage: (value: string) => void; lookupMode?: boolean }) {
   const code = getCode(label);
   const url = getLabelUrl(label);
   const status = label.status || "Ready";
@@ -739,12 +735,6 @@ function SmartLabelCard({ label, onUpdate, onMessage, lookupMode = false }: { la
   const name = reservedOnly ? "Reserved sticker code" : label.labelName || (hasLabelContent(label) ? "Untitled label" : "Blank label");
   const location = reservedOnly ? label.batchName || "Sticker order CSV only" : label.locationName || label.location || "No location yet";
   const photoCount = Array.isArray(label.photos) ? label.photos.length : 0;
-  const legacyMigrationCandidate = !reservedOnly && !label.ownerUid && hasLabelContent(label);
-  const [legacyOwnerEmail, setLegacyOwnerEmail] = useState(label.customerEmail || "");
-
-  useEffect(() => {
-    setLegacyOwnerEmail(label.customerEmail || label.ownerEmail || "");
-  }, [label.customerEmail, label.ownerEmail, code]);
 
   return (
     <div className={`grid gap-4 rounded-3xl border p-4 sm:grid-cols-[86px_1fr] ${archived ? "border-slate-200 bg-slate-50 opacity-75" : "border-[#eadfc8] bg-white"}`}>
@@ -782,7 +772,7 @@ function SmartLabelCard({ label, onUpdate, onMessage, lookupMode = false }: { la
             </button>
           ) : (
             <>
-              {label.pinEnabled && label.ownerUid && (
+              {label.pinEnabled && (
                 <button type="button" onClick={() => onUpdate(code, "resetPin")} className="inline-flex items-center gap-1 rounded-full border border-[#075c58]/20 px-3 py-1.5 text-xs font-black text-[#075c58]">
                   <RotateCcw size={14} /> Reset PIN
                 </button>
@@ -799,32 +789,6 @@ function SmartLabelCard({ label, onUpdate, onMessage, lookupMode = false }: { la
             </>
           )}
         </div>
-        {lookupMode && legacyMigrationCandidate ? (
-          <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4">
-            <p className="text-sm font-black text-amber-900">Legacy privacy migration</p>
-            <p className="mt-1 text-xs font-semibold leading-5 text-amber-800">
-              After verifying the customer outside this tool, enter the email for their existing Smart Labels account. The account must already exist and its email must be verified. This keeps the same printed QR code and does not use a purchased-label allowance.
-            </p>
-            {label.pinEnabled ? <p className="mt-2 text-xs font-bold text-amber-900">This migration will retire the old PIN because the account becomes the access control.</p> : null}
-            <div className="mt-3 flex flex-col gap-2 sm:flex-row">
-              <input
-                type="email"
-                value={legacyOwnerEmail}
-                onChange={(event) => setLegacyOwnerEmail(event.target.value)}
-                placeholder="customer@example.com"
-                className="input min-w-0 flex-1"
-              />
-              <button
-                type="button"
-                disabled={!legacyOwnerEmail.trim()}
-                onClick={() => onUpdate(code, "migrateLegacy", legacyOwnerEmail.trim())}
-                className="inline-flex items-center justify-center gap-2 rounded-full bg-[#075c58] px-4 py-2 text-sm font-black text-white disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <ShieldCheck size={16} /> Move to My Labels
-              </button>
-            </div>
-          </div>
-        ) : null}
       </div>
     </div>
   );
