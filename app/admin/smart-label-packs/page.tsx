@@ -15,6 +15,8 @@ type SmartLabelPack = {
   etsyOrderNumber?: string;
   sheetNumbers?: string;
   trackingNumber?: string;
+  packType?: string;
+  complimentaryQuantity?: number;
   labelsPerKit?: number;
   kitQuantity?: number;
   purchasedQuantity?: number;
@@ -54,7 +56,9 @@ export default function AdminSmartLabelPacksPage() {
   const [sheetNumbers, setSheetNumbers] = useState("");
   const [trackingNumber, setTrackingNumber] = useState("");
   const [notes, setNotes] = useState("");
+  const [packType, setPackType] = useState<"retail" | "complimentary">("retail");
   const [kitQuantity, setKitQuantity] = useState("1");
+  const [complimentaryQuantity, setComplimentaryQuantity] = useState("1");
 
   useEffect(() => {
     const q = query(collection(firestoreDb, "smartLabelPacks"), orderBy("createdAt", "desc"), limit(50));
@@ -88,7 +92,7 @@ export default function AdminSmartLabelPacksPage() {
       const response = await fetch("/api/admin/smart-label-packs/create", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ buyerEmail, etsyOrderNumber, sheetNumbers, trackingNumber, notes, kitQuantity, status: "shipped_unclaimed" }),
+        body: JSON.stringify({ buyerEmail, etsyOrderNumber, sheetNumbers, trackingNumber, notes, packType, kitQuantity, complimentaryQuantity, status: "shipped_unclaimed" }),
       });
       const result = (await response.json().catch(() => null)) as CreateResponse | null;
       if (!response.ok || !result?.ok) throw new Error(result?.error || "Unable to create this label pack.");
@@ -99,7 +103,9 @@ export default function AdminSmartLabelPacksPage() {
       setSheetNumbers("");
       setTrackingNumber("");
       setNotes("");
+      setPackType("retail");
       setKitQuantity("1");
+      setComplimentaryQuantity("1");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to create this label pack.");
     } finally {
@@ -163,18 +169,23 @@ export default function AdminSmartLabelPacksPage() {
         <section className="rounded-[2rem] border border-[#eadfc8] bg-white p-6 shadow-sm">
           <p className="text-sm font-bold uppercase tracking-[0.25em] text-[#b98a2f]">Smart Label Packs</p>
           <h2 className="mt-2 text-3xl font-bold text-[#075c58]">Create activation packs</h2>
-          <p className="mt-2 text-slate-600">Create the Etsy order pack, copy the activation code, and include it with the shipped labels. One standard kit gives the customer 24 label claims.</p>
+          <p className="mt-2 text-slate-600">Create standard Etsy retail kits with 24 labels each, or issue a complimentary activation code for 1–12 free labels.</p>
 
           <form onSubmit={createPack} className="mt-6 grid gap-4">
             <label className="block"><span className="text-sm font-semibold text-slate-700">Buyer email</span><input value={buyerEmail} onChange={(event) => setBuyerEmail(event.target.value)} className="mt-1 w-full rounded-2xl border border-[#eadfc8] px-4 py-3 outline-none focus:border-[#075c58]" placeholder="optional" /></label>
             <div className="grid gap-4 sm:grid-cols-2">
-              <label className="block"><span className="text-sm font-semibold text-slate-700">Etsy order #</span><input value={etsyOrderNumber} onChange={(event) => setEtsyOrderNumber(event.target.value)} className="mt-1 w-full rounded-2xl border border-[#eadfc8] px-4 py-3 outline-none focus:border-[#075c58]" placeholder="optional" /></label>
-              <label className="block"><span className="text-sm font-semibold text-slate-700">Kit quantity</span><select value={kitQuantity} onChange={(event) => setKitQuantity(event.target.value)} className="mt-1 w-full rounded-2xl border border-[#eadfc8] px-4 py-3 outline-none focus:border-[#075c58]"><option value="1">1 kit (24 labels)</option><option value="2">2 kits (48 labels)</option><option value="3">3 kits (72 labels)</option><option value="4">4 kits (96 labels)</option></select></label>
+              <label className="block"><span className="text-sm font-semibold text-slate-700">Etsy order #</span><input value={etsyOrderNumber} onChange={(event) => setEtsyOrderNumber(event.target.value)} className="mt-1 w-full rounded-2xl border border-[#eadfc8] px-4 py-3 outline-none focus:border-[#075c58]" placeholder={packType === "complimentary" ? "optional — usually blank for freebies" : "optional"} /></label>
+              <label className="block"><span className="text-sm font-semibold text-slate-700">Activation type</span><select value={packType} onChange={(event) => setPackType(event.target.value === "complimentary" ? "complimentary" : "retail")} className="mt-1 w-full cursor-pointer rounded-2xl border border-[#eadfc8] px-4 py-3 outline-none focus:border-[#075c58]"><option value="retail">Retail kit — 24 labels each</option><option value="complimentary">Complimentary / free — 1–12 labels</option></select></label>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
+              {packType === "complimentary" ? (
+                <label className="block"><span className="text-sm font-semibold text-slate-700">Free label quantity</span><select value={complimentaryQuantity} onChange={(event) => setComplimentaryQuantity(event.target.value)} className="mt-1 w-full cursor-pointer rounded-2xl border border-[#eadfc8] px-4 py-3 outline-none focus:border-[#075c58]">{Array.from({ length: 12 }, (_, index) => index + 1).map((count) => <option key={count} value={count}>{count} free label{count === 1 ? "" : "s"}</option>)}</select><span className="mt-1 block text-xs text-slate-500">Grants exactly {complimentaryQuantity} complimentary label claim{complimentaryQuantity === "1" ? "" : "s"}. This does not change the 24-label retail kit.</span></label>
+              ) : (
+                <label className="block"><span className="text-sm font-semibold text-slate-700">Kit quantity</span><select value={kitQuantity} onChange={(event) => setKitQuantity(event.target.value)} className="mt-1 w-full cursor-pointer rounded-2xl border border-[#eadfc8] px-4 py-3 outline-none focus:border-[#075c58]"><option value="1">1 kit (24 labels)</option><option value="2">2 kits (48 labels)</option><option value="3">3 kits (72 labels)</option><option value="4">4 kits (96 labels)</option></select></label>
+              )}
               <label className="block"><span className="text-sm font-semibold text-slate-700">Sheet numbers</span><input value={sheetNumbers} onChange={(event) => setSheetNumbers(event.target.value)} className="mt-1 w-full rounded-2xl border border-[#eadfc8] px-4 py-3 outline-none focus:border-[#075c58]" placeholder="optional" /></label>
-              <label className="block"><span className="text-sm font-semibold text-slate-700">Tracking number</span><input value={trackingNumber} onChange={(event) => setTrackingNumber(event.target.value)} className="mt-1 w-full rounded-2xl border border-[#eadfc8] px-4 py-3 outline-none focus:border-[#075c58]" placeholder="optional" /></label>
             </div>
+            <label className="block"><span className="text-sm font-semibold text-slate-700">Tracking number</span><input value={trackingNumber} onChange={(event) => setTrackingNumber(event.target.value)} className="mt-1 w-full rounded-2xl border border-[#eadfc8] px-4 py-3 outline-none focus:border-[#075c58]" placeholder="optional" /></label>
             <label className="block"><span className="text-sm font-semibold text-slate-700">Notes</span><textarea value={notes} onChange={(event) => setNotes(event.target.value)} className="mt-1 min-h-24 w-full rounded-2xl border border-[#eadfc8] px-4 py-3 outline-none focus:border-[#075c58]" placeholder="optional order notes" /></label>
             <button disabled={busy} className="inline-flex cursor-pointer items-center justify-center rounded-full bg-[#075c58] px-5 py-3 font-bold text-white shadow-lg shadow-[#075c58]/20 transition-all hover:-translate-y-0.5 hover:bg-[#043f3c] hover:shadow-xl active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b98a2f]/60 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0">{busy ? <Loader2 className="animate-spin" size={18} /> : "Create activation pack"}</button>
           </form>
@@ -188,7 +199,7 @@ export default function AdminSmartLabelPacksPage() {
             <form onSubmit={runSearch} className="flex w-full max-w-md items-center gap-2 rounded-full border border-[#eadfc8] px-3 py-2"><Search size={16} className="text-[#075c58]" /><input value={queryText} onChange={(event) => setQueryText(event.target.value)} className="w-full bg-transparent text-sm outline-none" placeholder="Search pack id, Etsy order, buyer email" /></form>
           </div>
           <div className="mt-5 grid gap-3">
-            {loading ? <div className="rounded-2xl bg-[#fbf6ea] p-4 text-[#075c58]">Loading packs...</div> : displayed.length ? displayed.map((pack) => <div key={pack.id} className="rounded-[1.4rem] border border-[#eadfc8] bg-[#fbf6ea] p-4"><div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between"><div><p className="text-xs font-bold uppercase tracking-[0.2em] text-[#b98a2f]">{pack.status || "draft"}</p><h3 className="mt-1 text-xl font-bold text-[#075c58]">{pack.packId || pack.id}</h3></div><div className="flex flex-wrap gap-2"><button type="button" onClick={() => updatePackStatus(pack.id, "shipped_unclaimed")} className="cursor-pointer rounded-full border border-[#075c58]/20 bg-white px-3 py-1.5 text-xs font-semibold text-[#075c58] shadow-sm transition-all hover:-translate-y-0.5 hover:border-[#075c58]/40 hover:bg-[#e9f4f1] hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b98a2f]/50">Mark shipped</button><button type="button" onClick={() => updatePackStatus(pack.id, "support_hold")} className="cursor-pointer rounded-full border border-[#075c58]/20 bg-white px-3 py-1.5 text-xs font-semibold text-[#075c58] shadow-sm transition-all hover:-translate-y-0.5 hover:border-[#075c58]/40 hover:bg-[#e9f4f1] hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b98a2f]/50">Support hold</button></div></div><div className="mt-3 grid gap-1 text-sm text-slate-600"><p><span className="font-semibold text-slate-800">Etsy order:</span> {pack.etsyOrderNumber || "—"}</p><p><span className="font-semibold text-slate-800">Buyer:</span> {pack.buyerEmail || "—"}</p><p><span className="font-semibold text-slate-800">Owner:</span> {pack.ownerEmail || "Unclaimed"}</p><p><span className="font-semibold text-slate-800">Claimed:</span> {pack.claimedQuantity || 0} / {pack.purchasedQuantity || 0} &nbsp; <span className="font-semibold text-slate-800">Remaining:</span> {pack.remainingQuantity || 0}</p><p><span className="font-semibold text-slate-800">Activation code ending:</span> {pack.activationCodeLastFour || "—"}</p>{pack.sheetNumbers ? <p><span className="font-semibold text-slate-800">Sheet numbers:</span> {pack.sheetNumbers}</p> : null}{pack.trackingNumber ? <p><span className="font-semibold text-slate-800">Tracking:</span> {pack.trackingNumber}</p> : null}</div></div>) : <div className="rounded-2xl bg-[#fbf6ea] p-4 text-slate-600">No packs found.</div>}
+            {loading ? <div className="rounded-2xl bg-[#fbf6ea] p-4 text-[#075c58]">Loading packs...</div> : displayed.length ? displayed.map((pack) => <div key={pack.id} className="rounded-[1.4rem] border border-[#eadfc8] bg-[#fbf6ea] p-4"><div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between"><div><p className="text-xs font-bold uppercase tracking-[0.2em] text-[#b98a2f]">{pack.status || "draft"}</p><h3 className="mt-1 text-xl font-bold text-[#075c58]">{pack.packId || pack.id}</h3></div><div className="flex flex-wrap gap-2"><button type="button" onClick={() => updatePackStatus(pack.id, "shipped_unclaimed")} className="cursor-pointer rounded-full border border-[#075c58]/20 bg-white px-3 py-1.5 text-xs font-semibold text-[#075c58] shadow-sm transition-all hover:-translate-y-0.5 hover:border-[#075c58]/40 hover:bg-[#e9f4f1] hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b98a2f]/50">Mark shipped</button><button type="button" onClick={() => updatePackStatus(pack.id, "support_hold")} className="cursor-pointer rounded-full border border-[#075c58]/20 bg-white px-3 py-1.5 text-xs font-semibold text-[#075c58] shadow-sm transition-all hover:-translate-y-0.5 hover:border-[#075c58]/40 hover:bg-[#e9f4f1] hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b98a2f]/50">Support hold</button></div></div><div className="mt-3 grid gap-1 text-sm text-slate-600"><p><span className="font-semibold text-slate-800">Type:</span> {pack.packType === "complimentary" ? "Complimentary / free" : "Retail"}</p><p><span className="font-semibold text-slate-800">Etsy order:</span> {pack.etsyOrderNumber || "—"}</p><p><span className="font-semibold text-slate-800">Buyer:</span> {pack.buyerEmail || "—"}</p><p><span className="font-semibold text-slate-800">Owner:</span> {pack.ownerEmail || "Unclaimed"}</p><p><span className="font-semibold text-slate-800">Claimed:</span> {pack.claimedQuantity || 0} / {pack.purchasedQuantity || 0} &nbsp; <span className="font-semibold text-slate-800">Remaining:</span> {pack.remainingQuantity || 0}</p><p><span className="font-semibold text-slate-800">Activation code ending:</span> {pack.activationCodeLastFour || "—"}</p>{pack.sheetNumbers ? <p><span className="font-semibold text-slate-800">Sheet numbers:</span> {pack.sheetNumbers}</p> : null}{pack.trackingNumber ? <p><span className="font-semibold text-slate-800">Tracking:</span> {pack.trackingNumber}</p> : null}</div></div>) : <div className="rounded-2xl bg-[#fbf6ea] p-4 text-slate-600">No packs found.</div>}
           </div>
         </section>
       </div>

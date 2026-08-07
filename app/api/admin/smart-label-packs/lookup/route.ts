@@ -18,6 +18,8 @@ type SmartLabelPackLookupRecord = {
   activationCodeLastFour?: unknown;
   trackingNumber?: unknown;
   sheetNumbers?: unknown;
+  packType?: unknown;
+  complimentaryQuantity?: unknown;
   purchasedQuantity?: unknown;
   claimedQuantity?: unknown;
   remainingQuantity?: unknown;
@@ -54,6 +56,8 @@ export async function POST(request: Request) {
         trackingNumber: cleanSmartLabelText(pack.trackingNumber, 120),
         sheetNumbers: cleanSmartLabelText(pack.sheetNumbers, 240),
         activationCodeLastFour: cleanSmartLabelText(pack.activationCodeLastFour, 8),
+        packType: cleanSmartLabelText(pack.packType, 40) === "complimentary" ? "complimentary" : "retail",
+        complimentaryQuantity: Number(pack.complimentaryQuantity || 0),
         purchasedQuantity: Number(pack.purchasedQuantity || 0),
         claimedQuantity: Number(pack.claimedQuantity || 0),
         remainingQuantity: Number(pack.remainingQuantity || 0),
