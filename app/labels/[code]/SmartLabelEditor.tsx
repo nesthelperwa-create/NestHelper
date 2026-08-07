@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { sendEmailVerification } from "firebase/auth";
 import { ChangeEvent, useEffect, useMemo, useState } from "react";
 import { Camera, CheckCircle2, KeyRound, Loader2, LockKeyhole, MapPin, PackageOpen, PencilLine, QrCode, ScanLine, ShieldCheck, ShieldAlert, Trash2 } from "lucide-react";
 import { CustomerAuthCard, getUserToken, SignedInBadge, useCustomerAuth } from "@/components/smart-labels/SmartLabelsAuth";
@@ -29,8 +30,9 @@ type PublicState = {
   allowFinderLocation: boolean;
   archived: boolean;
   claimStatus: string;
-  batchName: string;
   hasLegacyContent: boolean;
+  legacyPinEnabled: boolean;
+  legacyCanSelfMigrate: boolean;
   reservedOnly: boolean;
 };
 
@@ -135,8 +137,8 @@ export default function SmartLabelEditor({ code }: { code: string }) {
   const [error, setError] = useState("");
   const [currentPin, setCurrentPin] = useState("");
   const [newPin, setNewPin] = useState("");
-  const [removePin, setRemovePin] = useState(false);
   const [claimBusy, setClaimBusy] = useState(false);
+  const [verificationBusy, setVerificationBusy] = useState(false);
 
   function syncLegacy(nextLabel: SmartLabelPublicPayload) {
     setLegacyLabel(nextLabel);
@@ -202,7 +204,7 @@ export default function SmartLabelEditor({ code }: { code: string }) {
     setError("");
     setMessage("");
     try {
-      const payload = { ...form, currentPin, newPin: newPin.trim(), removePin };
+      const payload = { ...form, currentPin, newPin: newPin.trim() };
       const response = await fetch(`/api/smart-labels/${encodeURIComponent(safeCode)}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -212,9 +214,7 @@ export default function SmartLabelEditor({ code }: { code: string }) {
       if (!response.ok || !result?.ok) throw new Error(getErrorMessage(result, "Unable to save this label."));
       syncLegacy(result.label);
       if (newPin.trim()) setCurrentPin(newPin.trim());
-      if (removePin) setCurrentPin("");
       setNewPin("");
-      setRemovePin(false);
       setMessage("Saved. This legacy Smart Label is updated.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to save this label.");
@@ -247,6 +247,67 @@ export default function SmartLabelEditor({ code }: { code: string }) {
 
   function removePhoto(photoId: string) {
     update("photos", form.photos.filter((photo) => photo.id !== photoId));
+  }
+
+
+  async function migrateLegacyLabel() {
+    if (!user) return;
+    setClaimBusy(true);
+    setError("");
+    setMessage("");
+    try {
+      await user.reload();
+      if (!user.emailVerified) throw new Error("Verify this account's email address before moving the older label into My Labels.");
+      const token = await user.getIdToken(true);
+      const response = await fetch(`/api/smart-labels/${encodeURIComponent(safeCode)}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ action: "migrate" }),
+      });
+      const result = await response.json().catch(() => null) as { ok?: boolean; error?: string; message?: string } | null;
+      if (!response.ok || !result?.ok) throw new Error(result?.error || "Unable to protect this older label.");
+      setMessage(result?.message || "Label moved into your account.");
+      window.location.href = `/my-labels/label/${encodeURIComponent(safeCode)}`;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to protect this older label.");
+    } finally {
+      setClaimBusy(false);
+    }
+  }
+
+  async function sendLegacyVerificationEmail() {
+    if (!user) return;
+    setVerificationBusy(true);
+    setError("");
+    setMessage("");
+    try {
+      await sendEmailVerification(user);
+      setMessage(`Verification email sent to ${user.email || "your account email"}. Open that email, then come back and choose “I've verified my email.”`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to send the verification email right now.");
+    } finally {
+      setVerificationBusy(false);
+    }
+  }
+
+  async function refreshLegacyVerification() {
+    if (!user) return;
+    setVerificationBusy(true);
+    setError("");
+    setMessage("");
+    try {
+      await user.reload();
+      await user.getIdToken(true);
+      if (!user.emailVerified) {
+        setError("This email is not verified yet. Open the verification email first, then try again.");
+        return;
+      }
+      setMessage("Email verified. You can now move this older label into My Labels.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to refresh email verification status.");
+    } finally {
+      setVerificationBusy(false);
+    }
   }
 
   async function claimLabel() {
@@ -371,6 +432,51 @@ export default function SmartLabelEditor({ code }: { code: string }) {
                 </div>
               </div>
             </section>
+          ) : publicState.state === "legacy" && !publicState.legacyPinEnabled ? (
+            <section className="grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1.05fr),minmax(0,0.95fr)]">
+              <div className="min-w-0 rounded-[1.8rem] border border-nest-gold/20 bg-white p-5 shadow-sm sm:p-6">
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-nest-mint/35 text-nest-teal"><ShieldCheck size={26} /></div>
+                <p className="mt-4 text-xs font-black uppercase tracking-[0.2em] text-nest-gold">Legacy privacy upgrade</p>
+                <h2 className="mt-2 text-2xl font-black text-nest-teal">This older label is now protected.</h2>
+                <p className="mt-2 text-sm font-semibold leading-7 text-slate-600">Older Smart Labels that were created before customer accounts and did not have a PIN no longer show saved contents publicly. The existing QR code and saved data have not been deleted.</p>
+                <div className="mt-4 rounded-2xl border border-nest-teal/12 bg-nest-mint/25 p-4 text-sm font-semibold leading-6 text-slate-700">
+                  {publicState.legacyCanSelfMigrate
+                    ? "Sign in with the email originally saved for this label, verify that email address, then move it into My Labels. This does not use one of your purchased label credits."
+                    : "This label does not have enough account information for automatic migration. Contact NestHelper and we can help verify and move it safely."}
+                </div>
+                {user?.emailVerified && publicState.legacyCanSelfMigrate ? (
+                  <button type="button" onClick={migrateLegacyLabel} disabled={claimBusy} className="btn-primary mt-5 w-full justify-center disabled:cursor-not-allowed disabled:opacity-60">
+                    {claimBusy ? <Loader2 className="animate-spin" size={18} /> : <ShieldCheck size={18} />} Move to My Labels
+                  </button>
+                ) : null}
+                {!publicState.legacyCanSelfMigrate ? (
+                  <a href={`mailto:${siteConfig.email}?subject=${encodeURIComponent(`Legacy Smart Label ${safeCode}`)}`} className="mt-5 inline-flex w-full cursor-pointer items-center justify-center rounded-full border border-nest-teal/18 bg-white px-4 py-3 text-sm font-black text-nest-teal shadow-sm transition-all hover:-translate-y-0.5 hover:bg-nest-mint/25 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-nest-gold/45">
+                    Contact NestHelper
+                  </a>
+                ) : null}
+              </div>
+              {!user && !authLoading && publicState.legacyCanSelfMigrate ? (
+                <CustomerAuthCard title="Sign in to protect this older label" subtitle="Use the email originally connected to the label. After verification, its saved details move into your private My Labels dashboard." compact />
+              ) : user && publicState.legacyCanSelfMigrate ? (
+                <div className="min-w-0 rounded-[1.8rem] border border-nest-gold/16 bg-gradient-to-br from-white via-nest-cream to-nest-mint/16 p-5 shadow-sm">
+                  <p className="text-xs font-black uppercase tracking-[0.22em] text-nest-gold">Signed in</p>
+                  <h3 className="mt-2 break-all text-xl font-black text-nest-teal">{user.email}</h3>
+                  {user.emailVerified ? (
+                    <p className="mt-2 text-sm font-semibold leading-6 text-slate-600">This account email is verified. Tap <span className="font-black">Move to My Labels</span>. NestHelper will still require it to exactly match the email already saved with the older label.</p>
+                  ) : (
+                    <div className="mt-3 grid gap-3">
+                      <p className="text-sm font-semibold leading-6 text-slate-600">Automatic migration requires a verified email address that exactly matches the email already saved with this older label.</p>
+                      <button type="button" onClick={sendLegacyVerificationEmail} disabled={verificationBusy} className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-full border border-nest-teal/18 bg-white px-4 py-3 text-sm font-black text-nest-teal shadow-sm transition-all hover:-translate-y-0.5 hover:bg-nest-mint/25 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60">
+                        {verificationBusy ? <Loader2 className="animate-spin" size={17} /> : <ShieldCheck size={17} />} Send verification email
+                      </button>
+                      <button type="button" onClick={refreshLegacyVerification} disabled={verificationBusy} className="inline-flex cursor-pointer items-center justify-center rounded-full border border-nest-gold/25 bg-nest-cream px-4 py-3 text-sm font-black text-nest-teal transition hover:bg-nest-mint/25 disabled:cursor-not-allowed disabled:opacity-60">
+                        I&apos;ve verified my email
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : null}
+            </section>
           ) : legacyLabel?.locked ? (
             <div className="rounded-[1.8rem] border border-nest-gold/20 bg-nest-cream p-5 sm:p-6">
               <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-nest-teal shadow-sm"><LockKeyhole size={26} /></div>
@@ -383,7 +489,7 @@ export default function SmartLabelEditor({ code }: { code: string }) {
             </div>
           ) : (
             <div className="grid gap-5">
-              <div className="rounded-[1.6rem] border border-amber-200 bg-amber-50 p-4 text-sm font-semibold text-amber-800"><ShieldAlert className="mr-2 inline-block" size={16} /> Legacy label compatibility mode: existing label data still works here. If you want it moved into a private dashboard account later, sign in and contact NestHelper or recreate it as a claimed label.</div>
+              <div className="rounded-[1.6rem] border border-amber-200 bg-amber-50 p-4 text-sm font-semibold text-amber-800"><ShieldAlert className="mr-2 inline-block" size={16} /> Legacy PIN compatibility mode: this older label remains available with its existing PIN. New account-based Smart Labels keep private details inside My Labels.</div>
               <SmartInput icon={<PencilLine size={18} />} label="Label name" placeholder="Winter clothes, Kids toys, Garage tools..." value={form.labelName} onChange={(value) => update("labelName", value)} />
               <SmartInput icon={<MapPin size={18} />} label="Location" placeholder="Garage — top shelf, hallway closet, pantry left side..." value={form.locationName} onChange={(value) => update("locationName", value)} />
               <SmartTextArea icon={<PackageOpen size={18} />} label="Items inside" placeholder="Coats, scarves, gloves, hats, snow pants..." value={form.itemsInside} onChange={(value) => update("itemsInside", value)} rows={5} />
@@ -404,12 +510,10 @@ export default function SmartLabelEditor({ code }: { code: string }) {
               </div>
 
               <div className="rounded-[1.5rem] border border-nest-gold/16 bg-white p-4 shadow-sm">
-                <div className="flex items-start gap-3"><div className="rounded-2xl bg-nest-mint/35 p-3 text-nest-teal"><ShieldCheck size={20} /></div><div><h2 className="text-xl font-black text-nest-teal">Optional privacy PIN</h2><p className="mt-1 text-sm font-semibold leading-6 text-nest-ink/64">Default is OFF / no PIN. Add a 4-digit PIN when the label includes private notes or photos.</p></div></div>
+                <div className="flex items-start gap-3"><div className="rounded-2xl bg-nest-mint/35 p-3 text-nest-teal"><ShieldCheck size={20} /></div><div><h2 className="text-xl font-black text-nest-teal">Legacy privacy PIN</h2><p className="mt-1 text-sm font-semibold leading-6 text-nest-ink/64">This older label keeps its existing PIN protection. You can change the PIN here, but turning protection off is no longer supported on the public scan page.</p></div></div>
                 {legacyLabel?.pinEnabled && <label className="mt-4 grid gap-2"><span className="text-sm font-black text-nest-teal">Current PIN required to save</span><input inputMode="numeric" pattern="[0-9]*" maxLength={4} className="input max-w-xs font-mono tracking-[0.25em]" placeholder="0000" value={currentPin} onChange={(event) => setCurrentPin(event.target.value.replace(/[^0-9]/g, "").slice(0, 4))} /></label>}
-                <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                  <label className="grid gap-2"><span className="text-sm font-black text-nest-teal">Add or change PIN</span><input inputMode="numeric" pattern="[0-9]*" maxLength={4} className="input font-mono tracking-[0.25em]" placeholder="Leave blank to keep current setting" value={newPin} onChange={(event) => setNewPin(event.target.value.replace(/[^0-9]/g, "").slice(0, 4))} /></label>
-                  {legacyLabel?.pinEnabled && <label className="flex items-center gap-3 rounded-2xl border border-nest-gold/14 bg-nest-cream px-4 py-3 text-sm font-black text-nest-teal"><input type="checkbox" checked={removePin} onChange={(event) => setRemovePin(event.target.checked)} className="h-5 w-5 accent-[#075c58]" /> Turn PIN off after save</label>}
-                </div>
+                <label className="mt-4 grid gap-2"><span className="text-sm font-black text-nest-teal">Change PIN</span><input inputMode="numeric" pattern="[0-9]*" maxLength={4} className="input max-w-xs font-mono tracking-[0.25em]" placeholder="Leave blank to keep current PIN" value={newPin} onChange={(event) => setNewPin(event.target.value.replace(/[^0-9]/g, "").slice(0, 4))} /></label>
+                <p className="mt-3 text-xs font-semibold leading-5 text-slate-500">Want to stop using a legacy PIN? Contact NestHelper to verify ownership and move this label into the private My Labels account system.</p>
               </div>
 
               <div className="sticky bottom-3 z-10 rounded-[1.4rem] border border-nest-gold/18 bg-white/92 p-3 shadow-xl backdrop-blur"><button type="button" onClick={saveLegacyLabel} disabled={saving} className="btn-primary w-full justify-center disabled:cursor-not-allowed disabled:opacity-60">{saving ? <Loader2 className="animate-spin" size={18} /> : <CheckCircle2 size={18} />} Save Smart Label</button></div>
@@ -419,7 +523,8 @@ export default function SmartLabelEditor({ code }: { code: string }) {
       </section>
 
       <section className="mx-auto mt-5 w-full min-w-0 max-w-4xl break-words rounded-[1.5rem] border border-nest-gold/16 bg-white/80 p-4 text-center text-xs font-bold leading-5 text-nest-ink/58 shadow-sm">
-        Need help with this label? Contact NestHelper at <a href={`mailto:${siteConfig.email}`} className="text-nest-teal underline">{siteConfig.email}</a>. Do not store emergency, medical, financial, or password information here.
+        Need help with this label? Contact NestHelper at <a href={`mailto:${siteConfig.email}`} className="text-nest-teal underline">{siteConfig.email}</a>. Do not store emergency, medical, financial, or password information here.{" "}
+        <Link href="/policies/smart-label-policy" className="text-nest-teal underline">Smart Label Policy</Link> · <Link href="/policies/privacy-policy" className="text-nest-teal underline">Privacy</Link>
       </section>
     </main>
   );

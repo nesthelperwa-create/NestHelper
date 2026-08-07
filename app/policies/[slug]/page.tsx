@@ -66,6 +66,7 @@ export default async function PolicyDetailPage({ params }: PolicyPageProps) {
           </div>
           <h1 className="mx-auto mt-5 max-w-3xl text-4xl font-black tracking-tight text-nest-teal sm:text-5xl">{policy.title}</h1>
           <p className="mx-auto mt-4 max-w-3xl text-lg leading-8 text-nest-ink/72">{policy.intro}</p>
+          {policy.lastUpdated ? <p className="mt-3 text-sm font-bold text-nest-ink/55">Last updated: {policy.lastUpdated}</p> : null}
         </div>
 
         <div className="mt-8 grid gap-5">

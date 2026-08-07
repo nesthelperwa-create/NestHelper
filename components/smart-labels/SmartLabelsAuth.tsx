@@ -1,10 +1,12 @@
 "use client";
 
+import Link from "next/link";
 import { FirebaseError } from "firebase/app";
 import {
   browserLocalPersistence,
   createUserWithEmailAndPassword,
   onAuthStateChanged,
+  sendEmailVerification,
   sendPasswordResetEmail,
   setPersistence,
   signInWithEmailAndPassword,
@@ -125,7 +127,15 @@ export function CustomerAuthCard({
       if (mode === "create") {
         const credential = await createUserWithEmailAndPassword(firebaseAuth, cleanEmail, password);
         await credential.user.getIdToken(true);
-        setMessage("Account created. You are signed in.");
+        const verificationSent = await sendEmailVerification(credential.user)
+          .then(() => true)
+          .catch((verificationError) => {
+            console.warn("Smart Labels verification email could not be sent automatically.", verificationError);
+            return false;
+          });
+        setMessage(verificationSent
+          ? "Account created. Check your inbox to verify your email address."
+          : "Account created. You are signed in. If you need to migrate an older label, use the verification option on that label page.");
         onSuccess?.();
       } else if (mode === "sign-in") {
         const credential = await signInWithEmailAndPassword(firebaseAuth, cleanEmail, password);
@@ -218,6 +228,15 @@ export function CustomerAuthCard({
           )}
           {mode === "create" ? "Create account" : mode === "reset" ? "Send reset email" : "Sign in"}
         </button>
+
+        {mode === "create" && (
+          <p className="text-xs font-semibold leading-5 text-slate-500">
+            By creating an account, you agree to the{" "}
+            <Link href="/policies/terms-of-service" className="font-black text-nest-teal underline underline-offset-2">Terms of Service</Link>,{" "}
+            <Link href="/policies/privacy-policy" className="font-black text-nest-teal underline underline-offset-2">Privacy Policy</Link>, and{" "}
+            <Link href="/policies/smart-label-policy" className="font-black text-nest-teal underline underline-offset-2">Smart Label Policy</Link>.
+          </p>
+        )}
       </div>
 
       <div className={`mt-4 flex min-w-0 ${compact ? "flex-col" : "flex-wrap"} gap-3 whitespace-normal break-words text-sm font-black text-nest-teal`}>

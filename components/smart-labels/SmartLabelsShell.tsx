@@ -53,6 +53,14 @@ export function SmartLabelsShell({ children, title, subtitle }: { children: Reac
           </nav>
 
           <div className="p-4 sm:p-6">{children}</div>
+          <div className="border-t border-nest-gold/12 px-4 py-4 text-center text-xs font-bold leading-5 text-slate-500 sm:px-6">
+            Smart Labels are QR-based organization and recovery tools, not GPS trackers.{" "}
+            <Link href="/policies/smart-label-policy" className="text-nest-teal underline underline-offset-2">Smart Label Policy</Link>
+            {" "}·{" "}
+            <Link href="/policies/privacy-policy" className="text-nest-teal underline underline-offset-2">Privacy Policy</Link>
+            {" "}·{" "}
+            <Link href="/policies/terms-of-service" className="text-nest-teal underline underline-offset-2">Terms</Link>
+          </div>
         </div>
       </div>
     </main>

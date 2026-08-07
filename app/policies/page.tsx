@@ -8,14 +8,14 @@ import { siteConfig } from "@/lib/siteConfig";
 export const metadata: Metadata = {
   title: "NestHelper Policies | Service, Safety, Privacy & Referrals",
   description:
-    "Review NestHelper policies for service scope, cancellation, laundry handling, refunds, safety, privacy, Commercial Reset, and referrals.",
+    "Review NestHelper policies for services, Smart Labels, privacy, safety, laundry handling, Commercial Reset, referrals, and customer expectations.",
   alternates: {
     canonical: `${siteConfig.url}/policies`,
   },
   openGraph: {
     title: "NestHelper Policies",
     description:
-      "Review NestHelper policies for service scope, cancellation, laundry handling, refunds, safety, privacy, Commercial Reset, and referrals.",
+      "Review NestHelper policies for services, Smart Labels, privacy, safety, laundry handling, Commercial Reset, referrals, and customer expectations.",
     url: `${siteConfig.url}/policies`,
     images: [siteConfig.assets.og],
   },
@@ -27,7 +27,7 @@ export default function PoliciesPage() {
       <PageHero
         eyebrow="Policies"
         title="Clear expectations protect families, businesses, and helpers."
-        text="Review scope, cancellation, laundry handling, referrals, commercial reset boundaries, safety, privacy, and the NestHelper Reset Promise before requesting service."
+        text="Review service scope, Smart Label terms, privacy, laundry handling, referrals, commercial reset boundaries, safety, and other customer expectations."
       />
 
       <section className="mx-auto max-w-6xl px-4 py-14 sm:px-6 lg:px-8">

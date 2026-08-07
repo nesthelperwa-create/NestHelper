@@ -169,20 +169,20 @@ function timestampToIso(value: unknown) {
 export function serializeSmartLabel(data: Record<string, unknown>, revealDetails: boolean): SmartLabelPublicPayload {
   const code = normalizeSmartLabelCode(data.code);
   const pinEnabled = Boolean(data.pinEnabled);
-  const locked = pinEnabled && !revealDetails;
+  const locked = !revealDetails;
   const emptyDetails: SmartLabelPublicFields = { labelName: "", locationName: "", itemsInside: "", notes: "", photos: [] };
   const details = locked ? emptyDetails : cleanSmartLabelFields(data);
 
   return {
     code,
     labelUrl: getSmartLabelUrl(code),
-    batchId: cleanSmartLabelText(data.batchId, 120),
-    batchName: cleanSmartLabelText(data.batchName, smartLabelLimits.maxBatchName),
-    customerName: cleanSmartLabelText(data.customerName, smartLabelLimits.maxCustomerName),
+    batchId: revealDetails ? cleanSmartLabelText(data.batchId, 120) : "",
+    batchName: revealDetails ? cleanSmartLabelText(data.batchName, smartLabelLimits.maxBatchName) : "",
+    customerName: revealDetails ? cleanSmartLabelText(data.customerName, smartLabelLimits.maxCustomerName) : "",
     pinEnabled,
     locked,
-    createdAtIso: timestampToIso(data.createdAt),
-    updatedAtIso: timestampToIso(data.updatedAt),
+    createdAtIso: revealDetails ? timestampToIso(data.createdAt) : "",
+    updatedAtIso: revealDetails ? timestampToIso(data.updatedAt) : "",
     ...details,
   };
 }
