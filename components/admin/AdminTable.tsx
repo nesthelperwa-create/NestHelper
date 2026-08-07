@@ -7,6 +7,7 @@ import StatusBadge from "./StatusBadge";
 import CommercialQuoteBreakdownBuilder from "./CommercialQuoteBreakdownBuilder";
 import FamilyPaymentBreakdownBuilder from "./FamilyPaymentBreakdownBuilder";
 import ReviewRequestPanel from "./ReviewRequestPanel";
+import { getFamilyDiscountLabel, inferFamilyDiscountKind } from "@/lib/familyDiscounts";
 
 type AdminDoc = { id: string; status?: string; createdAt?: unknown; checkoutUrl?: string; promoCode?: string; [key: string]: any };
 type CustomerCredit = { id: string; status?: string; amount?: number; remainingAmount?: number; customerEmail?: string; customerEmailKey?: string; creditCode?: string; [key: string]: any };
@@ -1533,9 +1534,17 @@ const SERVICE_REQUEST_CLEAN_KEYS = [
   "serviceZip",
   "zipCode",
   "preferredDate",
+  "preferredWindow",
   "preferredTime",
+  "alternateDate",
   "urgency",
   "roomsOrAreas",
+  "roomsAreas",
+  "homeType",
+  "pets",
+  "petDetails",
+  "parkingAccess",
+  "supplyPreference",
   "homePriorities",
   "mealPrepRequested",
   "mealPrepTaskSummary",
@@ -1555,7 +1564,25 @@ const SERVICE_REQUEST_CLEAN_KEYS = [
   "wholeHomeAddOnSummary",
   "wholeHomeAddOns",
   "wholeHomeOtherAddOn",
+  "areaResetRoomSummary",
+  "areaResetRooms",
+  "areaResetOtherRoom",
+  "areaResetCleaningType",
   "areaResetRepeatSupport",
+  "areaResetAddOnSummary",
+  "areaResetAddOns",
+  "areaResetOtherAddOn",
+  "areaResetArea",
+  "areaResetOtherArea",
+  "areaResetAdditionalAreaSummary",
+  "areaResetAdditionalAreas",
+  "areaResetOtherAdditionalArea",
+  "areaResetBathroomCount",
+  "areaResetSize",
+  "areaResetCondition",
+  "areaResetGoalSummary",
+  "areaResetGoals",
+  "areaResetHauling",
   "moveCleaningType",
   "occupancyStatus",
   "squareFootage",
@@ -1575,7 +1602,12 @@ const SERVICE_REQUEST_CLEAN_KEYS = [
   "reusableBagAck",
   "laundryBagEstimate",
   "laundryPickupSpot",
+  "laundryReturnSpot",
   "laundryTypes",
+  "errandType",
+  "errandDistance",
+  "errandStops",
+  "errandStartArea",
   "detergent",
   "dryPreference",
   "laundryAddOns",
@@ -1816,6 +1848,32 @@ function getCleanContactSection(collectionName: string, item: AdminDoc): AdminEx
   return { title: "Contact", entries: entries.filter((entry): entry is AdminExportEntry => Boolean(entry)) };
 }
 
+function getOriginalRequestedServiceLabel(item: AdminDoc) {
+  return String(getFirstPresentValue(item, ["selectedServiceTitle", "packageType", "service"]) || getServiceLook(item).label || "").trim();
+}
+
+function getApprovedServiceLabel(item: AdminDoc) {
+  const breakdown = getPaymentBreakdown(item);
+  const explicitLabel = String(breakdown.checkoutServiceLabel || breakdown.serviceLabel || "").trim();
+  if (explicitLabel) return explicitLabel;
+  if (breakdown.serviceWasOverridden) return String(item.familyPaymentPlan || breakdown.paymentPlan || "").trim();
+  return "";
+}
+
+function getFirstCleanEntry(item: AdminDoc, keys: string[], label: string): AdminExportEntry | null {
+  for (const key of keys) {
+    const value = item[key];
+    if (value === undefined || value === null || value === "" || (Array.isArray(value) && value.length === 0)) continue;
+    return makeExportEntry(key, value, label);
+  }
+  return null;
+}
+
+function smartLabelHelpWasDeclined(item: AdminDoc) {
+  const value = String(item.smartLabelSetupInterest || "").trim().toLowerCase();
+  return value === "no" || value.startsWith("no ") || value.includes("no smart label");
+}
+
 function getCleanRequestedServiceSection(collectionName: string, item: AdminDoc): AdminExportSection {
   const entries: Array<AdminExportEntry | null> = [];
   if (collectionName === "contactMessages") {
@@ -1835,24 +1893,95 @@ function getCleanRequestedServiceSection(collectionName: string, item: AdminDoc)
     return { title: "Business fit", entries: entries.filter((entry): entry is AdminExportEntry => Boolean(entry)) };
   }
 
-  entries.push(makeExportEntry("service", item.selectedServiceTitle || item.packageType || item.service, "Service"));
+  const originallyRequested = getOriginalRequestedServiceLabel(item);
+  const approvedService = getApprovedServiceLabel(item);
+  const normalizedRequested = originallyRequested.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+  const normalizedApproved = approvedService.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+  const serviceChanged = Boolean(approvedService && normalizedApproved && normalizedApproved !== normalizedRequested);
+
+  if (serviceChanged) {
+    entries.push(makeExportEntry("originalRequestedService", originallyRequested, "Originally requested"));
+    entries.push(makeExportEntry("approvedService", approvedService, "Approved service"));
+  } else {
+    entries.push(makeExportEntry("service", approvedService || originallyRequested, "Service"));
+  }
+
   entries.push(makeExportEntry("preferredDate", item.preferredDate, "Requested date"));
+  entries.push(makeExportEntry("preferredWindow", item.preferredWindow, "Preferred window"));
   entries.push(makeExportEntry("preferredTime", item.preferredTime, "Preferred time"));
+  entries.push(makeExportEntry("alternateDate", item.alternateDate, "Alternate date"));
   entries.push(makeExportEntry("urgency", item.urgency, "Scheduling preference"));
-  entries.push(makeExportEntry("roomsOrAreas", item.roomsOrAreas, "Rooms / areas"));
-  entries.push(makeExportEntry("requestDetails", item.requestDetails, "Request details"));
+
+  entries.push(getFirstCleanEntry(item, ["areaResetRoomSummary", "areaResetRooms", "areaResetArea", "roomsOrAreas", "roomsAreas"], "Rooms / areas"));
+  entries.push(makeExportEntry("areaResetOtherRoom", item.areaResetOtherRoom || item.areaResetOtherArea, "Other room / area"));
+  entries.push(makeExportEntry("homePriorities", item.homePriorities, "Home priorities"));
+  entries.push(makeExportEntry("areaResetCleaningType", item.areaResetCleaningType, "Cleaning / reset type"));
+  entries.push(makeExportEntry("areaResetRepeatSupport", item.areaResetRepeatSupport, "Repeat area support"));
+  entries.push(makeExportEntry("areaResetBathroomCount", item.areaResetBathroomCount, "Bathroom count"));
+  entries.push(makeExportEntry("areaResetSize", item.areaResetSize, "Area size / count"));
+  entries.push(makeExportEntry("areaResetCondition", item.areaResetCondition, "Condition"));
+  entries.push(getFirstCleanEntry(item, ["areaResetGoalSummary", "areaResetGoals", "areaResetAddOnSummary", "areaResetAddOns"], "Area focus / add-ons"));
+  entries.push(makeExportEntry("areaResetOtherAddOn", item.areaResetOtherAddOn, "Other add-on / focus"));
+  entries.push(makeExportEntry("areaResetHauling", item.areaResetHauling, "Trash / donation prep"));
+
+  entries.push(makeExportEntry("wholeHomeVisitType", item.wholeHomeVisitType, "Whole Home visit type"));
+  entries.push(makeExportEntry("wholeHomeRecurringCadence", item.wholeHomeRecurringCadence, "Maintenance cadence"));
+  entries.push(makeExportEntry("wholeHomeCondition", item.wholeHomeCondition, "Whole Home condition"));
+  entries.push(getFirstCleanEntry(item, ["wholeHomeAddOnSummary", "wholeHomeAddOns"], "Whole Home add-ons"));
+  entries.push(makeExportEntry("wholeHomeOtherAddOn", item.wholeHomeOtherAddOn, "Other whole-home add-on"));
+
+  entries.push(makeExportEntry("movePrepPackage", item.movePrepPackage, "Move prep package"));
+  entries.push(getFirstCleanEntry(item, ["movePrepOptionSummary", "movePrepOptions"], "Move prep options"));
+  entries.push(makeExportEntry("movePrepNotes", item.movePrepNotes, "Move prep notes"));
+  entries.push(makeExportEntry("moveCleaningType", item.moveCleaningType, "Move cleaning type"));
+  entries.push(makeExportEntry("occupancyStatus", item.occupancyStatus, "Occupancy"));
+  entries.push(makeExportEntry("squareFootage", item.squareFootage, "Square footage"));
+  entries.push(makeExportEntry("bedrooms", item.bedrooms, "Bedrooms"));
+  entries.push(makeExportEntry("bathrooms", item.bathrooms, "Bathrooms"));
+  entries.push(makeExportEntry("moveOutCondition", item.moveOutCondition, "Move-out condition"));
+  entries.push(makeExportEntry("moveOutFocusSummary", item.moveOutFocusSummary, "Move-out focus"));
+  entries.push(makeExportEntry("moveOutApplianceSummary", item.moveOutApplianceSummary, "Appliance scope"));
+
+  entries.push(makeExportEntry("mealPrepTaskSummary", item.mealPrepTaskSummary || item.mealPrepTasks, "Simple meal prep tasks"));
+  entries.push(makeExportEntry("mealPrepNotes", item.mealPrepNotes, "Meal prep notes"));
+  entries.push(makeExportEntry("errandType", item.errandType, "Errand type"));
+  entries.push(makeExportEntry("errandDistance", item.errandDistance, "Errand distance"));
+  entries.push(makeExportEntry("errandStops", item.errandStops, "Stops / route"));
+  entries.push(makeExportEntry("errandStartArea", item.errandStartArea, "Starting area"));
+  entries.push(makeExportEntry("requestDetails", item.requestDetails, "Customer priorities / request details"));
+
   entries.push(makeExportEntry("smartLabelSetupInterest", item.smartLabelSetupInterest, "Smart Label help"));
-  entries.push(makeExportEntry("smartLabelEstimatedCount", item.smartLabelEstimatedCount, "Estimated Smart Labels / spots"));
-  entries.push(makeExportEntry("smartLabelSetupNotes", item.smartLabelSetupNotes, "Smart Label notes"));
+  if (!smartLabelHelpWasDeclined(item)) {
+    entries.push(makeExportEntry("smartLabelEstimatedCount", item.smartLabelEstimatedCount, "Estimated Smart Labels / spots"));
+    entries.push(makeExportEntry("smartLabelSetupNotes", item.smartLabelSetupNotes, "Smart Label notes"));
+  }
   entries.push(makeExportEntry("notes", item.notes, "Notes"));
   entries.push(makeExportEntry("specialInstructions", item.specialInstructions, "Special instructions"));
-  return { title: "Service details", entries: entries.filter((entry): entry is AdminExportEntry => Boolean(entry)) };
+  return { title: "Job / service details", entries: entries.filter((entry): entry is AdminExportEntry => Boolean(entry)) };
+}
+
+function getCleanHomeAccessSection(item: AdminDoc): AdminExportSection {
+  const serviceKey = getServiceKey(item);
+  const title = serviceKey === "laundry-rescue"
+    ? "Pickup, return & access"
+    : serviceKey === "errand-helper"
+      ? "Pickup / access notes"
+      : "Home, pets & access";
+  const entries: Array<AdminExportEntry | null> = [
+    makeExportEntry("homeType", item.homeType, "Home type"),
+    makeExportEntry("pets", item.pets, "Pets"),
+    makeExportEntry("petDetails", item.petDetails, "Pet details"),
+    makeExportEntry("parkingAccess", item.parkingAccess, "Parking / access notes"),
+    makeExportEntry("supplyPreference", item.supplyPreference, "Supply preference"),
+  ];
+  return { title, entries: entries.filter((entry): entry is AdminExportEntry => Boolean(entry)) };
 }
 
 function getCleanLaundrySection(item: AdminDoc): AdminExportSection {
   const entries = [
     makeExportEntry("laundryBagEstimate", item.laundryBagEstimate, "Estimated bags / hampers"),
     makeExportEntry("laundryPickupSpot", item.laundryPickupSpot, "Pickup spot"),
+    makeExportEntry("laundryReturnSpot", item.laundryReturnSpot, "Return spot"),
     makeExportEntry("laundryTypes", item.laundryTypes, "Laundry types"),
     makeExportEntry("detergent", item.detergent, "Detergent"),
     makeExportEntry("dryPreference", item.dryPreference, "Dry preference"),
@@ -2576,9 +2705,10 @@ function getPaymentLineItemsText(item: AdminDoc) {
   if (!lineItems.length) return "";
   return lineItems
     .map((line, index) => {
-      const label = String(line?.label || line?.description || `Item ${index + 1}`).trim();
+      const rawLabel = String(line?.label || line?.description || `Item ${index + 1}`).trim();
       const quantity = String(line?.quantity || "1").trim();
       const amount = toNumber(line?.amount);
+      const label = rawLabel.replace(/\s+[—-]\s*\$\s*[0-9,.]+(?:\.[0-9]{1,2})?\s*$/, "").trim() || rawLabel;
       const note = String(line?.note || "").trim();
       return [`${label} — ${formatMoney(amount)}${quantity && quantity !== "1" ? ` x ${quantity}` : ""}`, note].filter(Boolean).join("\n  ");
     })
@@ -2588,15 +2718,50 @@ function getPaymentLineItemsText(item: AdminDoc) {
 function getCleanPaymentSection(item: AdminDoc): AdminExportSection {
   const breakdown = getPaymentBreakdown(item);
   const refund = item.familyRefundTracking && typeof item.familyRefundTracking === "object" ? item.familyRefundTracking as Record<string, any> : {};
+  const paymentStatus = item.laundryPaymentStatus || item.paymentStatus || item.familyPaymentStatus;
+  const isLaundry = getServiceKey(item) === "laundry-rescue";
+  const subtotal = isLaundry
+    ? item.laundrySubtotal ?? item.laundryBaseAmount ?? breakdown.subtotal
+    : breakdown.subtotal;
+  const amountDueNow = breakdown.amountDueNow ?? item.familyInitialAmount;
+  const explicitDiscountAmount = Math.max(0, toNumber(breakdown.discountCredit));
+  const subtotalNumber = Math.max(0, toNumber(subtotal));
+  const amountDueNowNumber = Math.max(0, toNumber(amountDueNow));
+  const subtotalDifference = !isLaundry && subtotalNumber > amountDueNowNumber ? subtotalNumber - amountDueNowNumber : 0;
+  const discountAmount = explicitDiscountAmount > 0 ? explicitDiscountAmount : subtotalDifference;
+  const breakdownForDiscount = discountAmount > 0 && explicitDiscountAmount <= 0
+    ? { ...breakdown, discountCredit: discountAmount }
+    : breakdown;
+  const appliedReferralCredit = Math.max(0, toNumber(breakdown.incomingReferralCreditAmount)) + Math.max(0, toNumber(breakdown.appliedCustomerCreditAmount));
+  const effectiveRequestData = {
+    ...item,
+    service: breakdown.checkoutServiceId || item.service,
+    selectedServiceTitle: breakdown.checkoutServiceLabel || breakdown.serviceLabel || item.selectedServiceTitle,
+    packageType: breakdown.checkoutServiceLabel || item.packageType,
+  };
+  const discountKind = inferFamilyDiscountKind({
+    breakdown: breakdownForDiscount,
+    requestData: effectiveRequestData,
+    requiredReferralCreditAmount: appliedReferralCredit,
+  });
+  const discountLabel = String(breakdown.discountLabel || getFamilyDiscountLabel(discountKind)).trim();
+  const refundStatus = String(refund.refundStatus || "").trim();
+  const showRefundStatus = Boolean(refundStatus && !["no refund due", "none", "no refund"].includes(refundStatus.toLowerCase()));
+
   const entries: Array<AdminExportEntry | null> = [
-    makeExportEntry("paymentStatus", item.laundryPaymentStatus || item.paymentStatus || item.familyPaymentStatus, "Payment status"),
+    makeExportEntry("paymentStatus", paymentStatus, "Payment status"),
     makeExportEntry("familyPaymentPlan", item.familyPaymentPlan || breakdown.paymentPlan, "Payment plan"),
-    makeExportEntry("amountDueNow", breakdown.amountDueNow ?? item.familyInitialAmount, "Amount requested"),
-    makeExportEntry("laundrySubtotal", item.laundrySubtotal ?? item.laundryBaseAmount ?? breakdown.subtotal, "Laundry subtotal"),
-    makeExportEntry("laundryDepositCredit", item.laundryDepositCredit, "Minimum already paid"),
-    makeExportEntry("laundryBalanceDue", item.laundryBalanceDue, "Final balance due"),
-    makeExportEntry("laundryFinalPaymentOptions", item.laundryFinalPaymentOptions, "Final payment option"),
-    makeExportEntry("refundStatus", refund.refundStatus, "Refund status"),
+    makeExportEntry(
+      isLaundry ? "laundrySubtotal" : "serviceSubtotal",
+      subtotal,
+      isLaundry ? "Laundry subtotal" : discountAmount > 0 ? "Service subtotal before adjustment" : "Service subtotal"
+    ),
+    discountAmount > 0 ? { key: "discountAdjustment", label: discountLabel, value: `-${formatMoney(discountAmount)}` } : null,
+    makeExportEntry("amountDueNow", amountDueNow, recordLooksPaid(item) ? "Amount paid" : "Amount requested"),
+    isLaundry ? makeExportEntry("laundryDepositCredit", item.laundryDepositCredit, "Minimum already paid") : null,
+    isLaundry ? makeExportEntry("laundryBalanceDue", item.laundryBalanceDue, "Final balance due") : null,
+    isLaundry ? makeExportEntry("laundryFinalPaymentOptions", item.laundryFinalPaymentOptions, "Final payment option") : null,
+    showRefundStatus ? makeExportEntry("refundStatus", refundStatus, "Refund status") : null,
     toNumber(refund.refundAmount) > 0 ? makeExportEntry("refundAmount", refund.refundAmount, "Refund amount") : null,
   ];
   const lineItemsText = getPaymentLineItemsText(item);
@@ -2641,11 +2806,28 @@ function getAdminRecordExportSections(collectionName: string, item: AdminDoc): A
     getCleanRequestedServiceSection(collectionName, item),
   ];
 
+  if (collectionName === "serviceRequests") sections.push(getCleanHomeAccessSection(item));
   if (collectionName === "serviceRequests" && getServiceKey(item) === "laundry-rescue") sections.push(getCleanLaundrySection(item));
   if (collectionName === "serviceRequests") sections.push(getCleanPaymentSection(item));
   if (collectionName === "helperApplications" || collectionName === "partnerApplications") sections.push(getCleanAdminNotesSection(item));
 
   const usedKeys = new Set(sections.flatMap((section) => section.entries.map((entry) => entry.key)));
+  if (collectionName === "serviceRequests") {
+    [
+      "service", "selectedServiceTitle", "packageType",
+      "address", "serviceAddress", "serviceAddressLine1", "serviceAddressLine2", "address2",
+      "city", "serviceCity", "state", "serviceState", "zip", "serviceZip", "zipCode",
+      "roomsOrAreas", "roomsAreas", "areaResetRoomSummary", "areaResetRooms", "areaResetArea", "areaResetOtherRoom", "areaResetOtherArea",
+      "areaResetGoalSummary", "areaResetGoals", "areaResetAddOnSummary", "areaResetAddOns",
+      "wholeHomeAddOnSummary", "wholeHomeAddOns", "movePrepOptionSummary", "movePrepOptions",
+      "mealPrepTaskSummary", "mealPrepTasks",
+      "homeType", "pets", "petDetails", "parkingAccess", "supplyPreference",
+    ].forEach((key) => usedKeys.add(key));
+    if (smartLabelHelpWasDeclined(item)) {
+      usedKeys.add("smartLabelEstimatedCount");
+      usedKeys.add("smartLabelSetupNotes");
+    }
+  }
   const additionalEntries = getAdditionalCleanEntries(collectionName, item, usedKeys);
   if (additionalEntries.length) sections.push({ title: "Additional submitted details", entries: additionalEntries });
 
@@ -2692,6 +2874,17 @@ function getAdminRecordPlainText(collectionName: string, item: AdminDoc) {
 function getAdminRecordPrintableHtml(collectionName: string, item: AdminDoc) {
   const title = `${getCollectionDisplayLabel(collectionName)} — ${getRecordDisplayName(item)}`;
   const sections = getAdminRecordExportSections(collectionName, item);
+  const isServiceRequest = collectionName === "serviceRequests";
+  const headerEyebrow = isServiceRequest ? "NestHelper job sheet" : "NestHelper clean admin export";
+  const requestedDate = isServiceRequest && item.preferredDate ? formatValue("preferredDate", item.preferredDate) : "";
+  const approvedService = isServiceRequest ? getApprovedServiceLabel(item) || getOriginalRequestedServiceLabel(item) : "";
+  const headerMetaParts = [
+    `Submitted: ${formatDate(item.createdAt)}`,
+    isServiceRequest && requestedDate ? `Requested date: ${requestedDate}` : "",
+    isServiceRequest && approvedService ? `Service: ${approvedService}` : "",
+    `Status: ${formatValue("status", item.status)}`,
+    `Printed: ${new Date().toLocaleString()}`,
+  ].filter(Boolean);
   const sectionsHtml = sections.map((section) => `
     <section>
       <h2>${escapeHtml(section.title)}</h2>
@@ -2721,23 +2914,24 @@ function getAdminRecordPrintableHtml(collectionName: string, item: AdminDoc) {
     section { break-inside: avoid; margin-top: 22px; }
     h2 { color: #075c58; font-size: 16px; margin: 0 0 10px; text-transform: uppercase; letter-spacing: .08em; }
     dl { border: 1px solid #eadfc8; border-radius: 14px; overflow: hidden; margin: 0; }
-    .row { display: grid; grid-template-columns: 190px 1fr; border-top: 1px solid #eadfc8; }
+    .row { display: grid; grid-template-columns: 180px 1fr; border-top: 1px solid #eadfc8; }
     .row:first-child { border-top: 0; }
     dt { background: #fbf6ea; color: #475569; font-size: 12px; font-weight: 800; padding: 10px 12px; text-transform: uppercase; letter-spacing: .06em; }
     dd { margin: 0; padding: 10px 12px; white-space: pre-wrap; word-break: break-word; }
     .note { margin-top: 24px; color: #64748b; font-size: 12px; }
-    @media print { body { padding: 18px; } .no-print { display: none; } }
+    @page { margin: 0.45in; }
+    @media print { body { padding: 0; font-size: 11pt; } .header { margin-bottom: 14px; padding-bottom: 10px; } section { margin-top: 14px; } h1 { font-size: 22px; } h2 { font-size: 13px; } dt { padding: 7px 9px; } dd { padding: 7px 9px; } .note { margin-top: 14px; } .no-print { display: none; } }
     @media (max-width: 720px) { body { padding: 18px; } .row { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
   <div class="header">
-    <div class="eyebrow">NestHelper clean admin export</div>
+    <div class="eyebrow">${escapeHtml(headerEyebrow)}</div>
     <h1>${escapeHtml(title)}</h1>
-    <div class="meta">Submitted: ${escapeHtml(formatDate(item.createdAt))} · Status: ${escapeHtml(formatValue("status", item.status))} · Exported: ${escapeHtml(new Date().toLocaleString())}</div>
+    <div class="meta">${headerMetaParts.map((part) => escapeHtml(part)).join(" · ")}</div>
   </div>
   ${sectionsHtml}
-  <p class="note">Clean admin export. Internal IDs, Stripe/payment links, tax codes, backend tracking fields, and raw JSON are intentionally hidden. Uploaded photos/documents are listed by metadata; open private files from the admin dashboard when needed.</p>
+  <p class="note">${isServiceRequest ? "Job-day print sheet. Review any schedule, access, pet, priority, or scope changes with the customer before starting. " : "Clean admin export. "}Internal IDs, Stripe/payment links, tax codes, backend tracking fields, and raw JSON are intentionally hidden. Uploaded photos/documents are listed by metadata; open private files from the admin dashboard when needed.</p>
 </body>
 </html>`;
 }
@@ -5375,10 +5569,10 @@ export default function AdminTable({
                 </div>
               )}
               <details className="rounded-3xl border border-[#eadfc8] bg-white p-4 shadow-sm">
-                <summary className="cursor-pointer text-sm font-black text-[#075c58]">Print / download this record</summary>
+                <summary className="cursor-pointer text-sm font-black text-[#075c58]">{collectionName === "serviceRequests" ? "Print / download job sheet" : "Print / download this record"}</summary>
                 <div className="mt-3 flex flex-col gap-2 sm:flex-row">
-                  <button type="button" onClick={() => printAdminRecord(collectionName, selected)} className={getAdminActionClass("quiet")}>Print clean summary</button>
-                  <button type="button" onClick={() => downloadAdminRecord(collectionName, selected)} className={getAdminActionClass("quiet")}>Download clean summary</button>
+                  <button type="button" onClick={() => printAdminRecord(collectionName, selected)} className={getAdminActionClass("quiet")}>{collectionName === "serviceRequests" ? "Print job sheet" : "Print clean summary"}</button>
+                  <button type="button" onClick={() => downloadAdminRecord(collectionName, selected)} className={getAdminActionClass("quiet")}>{collectionName === "serviceRequests" ? "Download job summary" : "Download clean summary"}</button>
                 </div>
               </details>
             </div>
