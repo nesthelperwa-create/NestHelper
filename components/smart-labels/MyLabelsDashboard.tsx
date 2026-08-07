@@ -168,7 +168,7 @@ export default function MyLabelsDashboard() {
             <section className="rounded-[1.8rem] border border-nest-gold/16 bg-white p-5 shadow-soft">
               <p className="text-xs font-black uppercase tracking-[0.22em] text-nest-gold">Activate a new pack</p>
               <h3 className="mt-1 text-xl font-black text-nest-teal">Enter your activation code</h3>
-              <p className="mt-2 text-sm font-semibold leading-6 text-slate-600">Bought another 24-pack or 48-pack? Redeem the code from the card included with your order.</p>
+              <p className="mt-2 text-sm font-semibold leading-6 text-slate-600">Bought another 24-label pack? Redeem the activation code included with that order. Multiple packs add to the same account.</p>
               <form onSubmit={handleActivation} className="mt-4 grid gap-3">
                 <input className="input font-mono tracking-[0.18em]" value={activationCode} onChange={(event) => setActivationCode(event.target.value.toUpperCase())} placeholder="NH-7K3P9Q" />
                 <button type="submit" disabled={busy} className="btn-primary justify-center disabled:cursor-not-allowed disabled:opacity-60">

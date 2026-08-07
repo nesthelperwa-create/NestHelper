@@ -4524,11 +4524,11 @@ export default function AdminTable({
       } : prev);
       setStatusValue(nextInvoiceStatus);
       if (isLaundryDepositCheckout && sendEmail && data.emailSent) {
-        setFamilyInvoiceMessage("Laundry Rescue deposit checkout created and sent to the customer. Stripe will collect the final-balance choice: auto-charge or invoice-before-delivery.");
+        setFamilyInvoiceMessage("Laundry Rescue deposit checkout created and sent to the customer. Stripe will collect the final-balance choice: auto-charge or a final payment link before delivery.");
       } else if (isLaundryDepositCheckout && sendEmail && data.emailWarning) {
         setFamilyInvoiceMessage(`Laundry deposit checkout created, but customer email was not sent. ${data.emailWarning} Open or copy the checkout link below.`);
       } else if (isLaundryDepositCheckout) {
-        setFamilyInvoiceMessage("Laundry Rescue deposit checkout created. Open or copy the checkout link below. Customer will choose auto-charge or invoice-before-delivery in Stripe.");
+        setFamilyInvoiceMessage("Laundry Rescue deposit checkout created. Open or copy the checkout link below. Customer will choose auto-charge or a final payment link before delivery in Stripe.");
       } else if (sendEmail && data.emailSent) {
         setFamilyInvoiceMessage("Family Stripe invoice created and sent to the customer by NestHelper email.");
       } else if (sendEmail && data.emailWarning) {
@@ -4611,7 +4611,7 @@ export default function AdminTable({
             : " Customer payment summary was not included because the checkbox was off."
         : "";
       const laundryDepositNotice = selected.service === "laundry-rescue"
-        ? laundryManualSalesTax && laundryTaxRateNumber > 0 ? ` Stripe checkout will add manual WA sales tax at ${laundryManualSalesTaxRate}% to the non-refundable intro minimum and ask the customer to choose auto-charge or invoice-before-delivery for the final laundry balance.` : " Stripe checkout will collect the non-refundable intro minimum without sales tax. If sales tax is missed here, the final-balance tool can add a one-time tax catch-up when manual tax is turned on."
+        ? laundryManualSalesTax && laundryTaxRateNumber > 0 ? ` Stripe checkout will add manual WA sales tax at ${laundryManualSalesTaxRate}% to the non-refundable intro minimum and ask the customer to choose auto-charge or a final payment link before delivery for the final laundry balance.` : " Stripe checkout will collect the non-refundable intro minimum without sales tax. If sales tax is missed here, the final-balance tool can add a one-time tax catch-up when manual tax is turned on."
         : "";
       setCheckoutMessage(data.emailError || (data.emailSent ? `Smart checkout link created and emailed to the customer.${commercialBreakdownNotice}${familyBreakdownNotice}${laundryDepositNotice}` : `Smart checkout link created. Copy it and send it manually.${commercialBreakdownNotice}${familyBreakdownNotice}${laundryDepositNotice}`));
     } catch (error) {
@@ -6277,7 +6277,7 @@ export default function AdminTable({
                     </p>
                     {selected.service === "laundry-rescue" && (
                       <p className="mt-2 rounded-2xl bg-white px-4 py-3 text-sm font-bold text-[#075c58]">
-                        For Laundry Rescue, both the saved payment summary amount and quick checkout create a deposit checkout so Stripe can ask the customer to choose auto-charge or invoice-before-delivery. After final dry weight is confirmed, use the final balance section below.
+                        For Laundry Rescue, both the saved payment summary amount and quick checkout create a deposit checkout so Stripe can ask the customer to choose auto-charge or a final payment link before delivery. After final dry weight is confirmed, use the final balance section below.
                       </p>
                     )}
                   </div>
@@ -6334,7 +6334,7 @@ export default function AdminTable({
                         <h5 className="mt-1 text-base font-black text-[#075c58]">{selected.service === "laundry-rescue" ? "Create a deposit checkout from the saved laundry payment summary" : "Create a Stripe invoice from the saved customer payment summary"}</h5>
                         <p className="mt-1 text-sm leading-6 text-slate-700">
                           {selected.service === "laundry-rescue"
-                            ? "This uses the saved payment summary amount to create a taxable, non-refundable Laundry Rescue deposit checkout. Stripe asks the customer to choose auto-charge for the final balance or invoice-before-delivery."
+                            ? "This uses the saved payment summary amount to create a taxable, non-refundable Laundry Rescue deposit checkout. Stripe asks the customer to choose auto-charge for the final balance or a final payment link before delivery."
                             : "Use this when you want a formal invoice/PDF instead of only a checkout receipt: Errand Helper, custom family quotes, recurring family help, approved add-ons, or refund/credit documentation. A confirmation popup appears before creating because Stripe invoices may cost more than quick checkout."}
                         </p>
                       </div>
@@ -6540,7 +6540,7 @@ export default function AdminTable({
                     <div className="mt-4 rounded-3xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm leading-6 text-rose-900">
                       <p className="font-black text-rose-950">Laundry deposit checkout note</p>
                       <p className="mt-1 font-semibold">
-                        This creates the non-refundable, taxable Laundry Rescue intro minimum checkout. The $59 minimum includes pickup, wash, dry, fold, return, and up to about 26.2 lbs. Stripe will ask the customer to choose auto-charge or invoice-before-delivery for any additional weight/add-ons.
+                        This creates the non-refundable, taxable Laundry Rescue intro minimum checkout. The $59 minimum includes pickup, wash, dry, fold, return, and up to about 26.2 lbs. Stripe will ask the customer to choose auto-charge or a final payment link before delivery for any additional weight/add-ons.
                       </p>
                     </div>
                   )}
@@ -6713,7 +6713,7 @@ export default function AdminTable({
                     <p className="mt-2 text-sm leading-6 text-slate-700">
                       {laundryAutoChargeAuthorized
                         ? "The customer chose auto-charge during intro-minimum checkout. Enter the final dry weight, additional lb rate, add-ons, and minimum already paid; NestHelper creates an itemized Stripe invoice for additional weight/add-ons and charges the saved payment method instead of showing a manual sender section."
-                        : "The customer chose invoice-before-delivery, or no auto-charge authorization is saved. Enter the final dry weight, additional lb rate, add-ons, and minimum already paid; NestHelper creates a stable nesthelperwa.com payment link that opens a secure itemized Stripe checkout and refreshes if the Stripe session expires."}
+                        : "The customer chose a final payment link before delivery, or no auto-charge authorization is saved. Enter the final dry weight, additional lb rate, add-ons, and minimum already paid; NestHelper creates a stable nesthelperwa.com payment link that opens a secure itemized Stripe checkout and refreshes if the Stripe session expires."}
                     </p>
                   </div>
                   <StatusBadge status={String(selected.laundryPaymentStatus || selected.paymentStatus || selected.status || "New")} />
@@ -6733,8 +6733,8 @@ export default function AdminTable({
                       <p className="mt-1 font-black">{laundryAutoChargeReady ? "Saved Stripe payment method ready" : "Auto-charge was selected, but the saved card is missing"}</p>
                       <p className="mt-1 text-xs font-semibold">
                         {laundryAutoChargeReady
-                          ? "The final action below will create the invoice and charge the saved card. Do not send a separate final invoice unless auto-charge fails."
-                          : selected.laundryAutoChargeError || "Use a manual invoice or have the customer re-authorize the laundry deposit checkout before auto-charging."}
+                          ? "The final action below will create the invoice and charge the saved card. Do not send a separate final payment request unless auto-charge fails."
+                          : selected.laundryAutoChargeError || "Use a manual final payment link or have the customer re-authorize the laundry deposit checkout before auto-charging."}
                       </p>
                     </div>
                   ) : (

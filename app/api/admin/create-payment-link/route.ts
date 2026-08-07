@@ -159,7 +159,7 @@ function buildLaundryFinalPaymentCustomFields(): LaundryFinalPaymentCustomField[
       dropdown: {
         options: [
           { label: "Auto-charge saved card after final dry weight is confirmed", value: "autocharge" },
-          { label: "Email final invoice before delivery", value: "invoicebeforedelivery" },
+          { label: "Send final payment link before delivery", value: "invoicebeforedelivery" },
         ],
       },
     },
@@ -415,7 +415,7 @@ export async function POST(request: Request) {
                 description: [
                   customNote || "Non-refundable Laundry Rescue intro minimum. The $59 minimum includes pickup, wash, dry, fold, return, and up to about 26.2 lbs. Additional laundry, add-ons, bulky items, or approved changes are reviewed separately.",
                   discountAlreadyAppliedNote,
-                  "Final balance is handled after final dry weight is confirmed. The customer chooses auto-charge or invoice-before-delivery during checkout.",
+                  "Final balance is handled after final dry weight is confirmed. The customer chooses auto-charge or a final payment link before delivery during checkout.",
                 ].filter(Boolean).join("\n"),
               },
             },
@@ -506,7 +506,7 @@ export async function POST(request: Request) {
       checkoutParams.custom_text = {
         submit: {
           message:
-            "Laundry Rescue intro minimum is non-refundable and includes pickup, wash, dry, fold, return, and up to about 26.2 lbs of final dry-weight laundry. If you choose auto-charge, NestHelper may charge your saved payment method for any additional laundry, approved add-ons, or bulky items after dry weight is confirmed. If you choose invoice-before-delivery, laundry is held until any final invoice is fully paid.",
+            "Laundry Rescue intro minimum is non-refundable and includes pickup, wash, dry, fold, return, and up to about 26.2 lbs of final dry-weight laundry. If you choose auto-charge, NestHelper may charge your saved payment method for any additional laundry, approved add-ons, or bulky items after dry weight is confirmed. If you choose the final-payment-link option, laundry is held until the final balance is fully paid.",
         },
       };
     }
@@ -543,7 +543,7 @@ export async function POST(request: Request) {
           quoteBreakdownText: isLaundryRescue
             ? [
                 discountAlreadyAppliedNote,
-                "This intro minimum is non-refundable and includes pickup, wash, dry, fold, return, and up to about 26.2 lbs of final dry-weight laundry. During Stripe checkout, the customer chooses either auto-charge for any additional weight/add-ons after final dry weight is confirmed or invoice-before-delivery. Laundry is not released until any final balance is fully paid."
+                "This intro minimum is non-refundable and includes pickup, wash, dry, fold, return, and up to about 26.2 lbs of final dry-weight laundry. During Stripe checkout, the customer chooses either auto-charge for any additional weight/add-ons after final dry weight is confirmed or a final payment link before delivery. Laundry is not released until any final balance is fully paid."
               ].filter(Boolean).join("\n\n")
             : isCommercialReset && useCustomInitial && shouldIncludeQuoteBreakdown
               ? savedCommercialBreakdownText

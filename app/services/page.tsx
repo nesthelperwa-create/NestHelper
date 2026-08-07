@@ -206,14 +206,14 @@ export default function ServicesPage() {
             <p className="pill-label mx-auto w-fit"><Scale size={15} /> Laundry Rescue</p>
             <h2 className="text-balance mx-auto mt-4 max-w-4xl text-3xl font-black leading-tight text-nest-teal sm:text-4xl">$59 minimum includes pickup, wash, dry, fold, return, and up to about 26.2 lbs.</h2>
             <p className="mx-auto mt-4 max-w-4xl text-lg font-medium leading-8 text-nest-ink/72">
-              Laundry Rescue intro launch pricing keeps the first step simple. After washing, drying, and folding, the final dry weight is used for pricing. Additional laundry above the included weight is $2.25/lb, and any final balance is handled by the option selected during checkout: auto-charge after review or invoice-before-delivery.
+              Laundry Rescue intro launch pricing keeps the first step simple. After washing, drying, and folding, the final dry weight is used for pricing. Additional laundry above the included weight is $2.25/lb, and any final balance is handled by the option selected during checkout: auto-charge after review or a final payment link before delivery.
             </p>
           </div>
 
           <div className="grid gap-5 p-7 sm:p-8 lg:grid-cols-3">
             <LaundryStep icon={<CreditCard />} title="1. Intro minimum" text="$59 non-refundable minimum includes pickup, wash, dry, fold, return, and up to about 26.2 lbs of laundry." />
             <LaundryStep icon={<Scale />} title="2. Final dry weight" text="Laundry is washed, dried, and folded first. Final pricing is based on the final dry weight, and any laundry above the included amount is $2.25/lb." />
-            <LaundryStep icon={<ClipboardCheck />} title="3. Extras if needed" text="Approved add-ons, bulky items, or additional weight are handled by the checkout option selected: auto-charge after review or invoice before delivery." />
+            <LaundryStep icon={<ClipboardCheck />} title="3. Extras if needed" text="Approved add-ons, bulky items, or additional weight are handled by the checkout option selected: auto-charge after review or a final payment link before delivery." />
           </div>
 
           <div className="border-t border-nest-gold/12 p-7 sm:p-8">

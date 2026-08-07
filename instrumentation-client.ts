@@ -8,7 +8,7 @@ Sentry.init({
   dsn: "https://a78de31466d868c54d2fe628ec398ed4@o4511611144175616.ingest.us.sentry.io/4511611158659072",
 
   // Keep performance tracing enabled. Lower later if Sentry gets noisy/expensive.
-  tracesSampleRate: 1,
+  tracesSampleRate: process.env.NODE_ENV === "production" ? 0.1 : 1,
 
   // Do not attach visitor IP/user info by default.
   sendDefaultPii: false,

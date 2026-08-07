@@ -91,8 +91,8 @@ function normalizeLaundryFinalPreference(value: string) {
 
 function getLaundryFinalPreferenceLabel(preference: string) {
   if (preference === "auto_charge") return "Auto-charge saved card after final dry weight is confirmed";
-  if (preference === "invoice_before_delivery") return "Send final invoice link before delivery";
-  return "Send final invoice link before delivery";
+  if (preference === "invoice_before_delivery") return "Send final payment link before delivery";
+  return "Send final payment link before delivery";
 }
 
 function getEmailResultError(result: unknown) {
@@ -700,7 +700,7 @@ export async function POST(request: Request) {
                 "Payment type": adminAlert.paymentLabel,
                 "Payment status": paymentStatus,
                 "Laundry final preference": isLaundryDeposit ? getLaundryFinalPreferenceLabel(laundryFinalPreference) : "",
-                "Auto-charge saved": isLaundryDeposit ? (laundryAutoChargeAuthorized ? "Yes — hide manual final invoice sender unless auto-charge fails" : "No — send final invoice before delivery") : "",
+                "Auto-charge saved": isLaundryDeposit ? (laundryAutoChargeAuthorized ? "Yes — hide manual final invoice sender unless auto-charge fails" : "No — send final payment link before delivery") : "",
                 "Tax collected": formatMoney(Math.max(0, (session.amount_total ?? 0) - (session.amount_subtotal ?? 0)), session.currency),
                 "Additional reason": getString(session.metadata?.additionalReason),
                 "Additional note": getString(session.metadata?.additionalNote),

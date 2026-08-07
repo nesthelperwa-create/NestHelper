@@ -93,7 +93,7 @@ const baseSuccessContent: Record<PaymentType, SuccessContent> = {
     steps: [
       "NestHelper confirms the pickup window, pickup spot, and laundry notes.",
       "After your laundry is washed, dried, and folded, NestHelper calculates the final dry weight. Additional laundry above about 26.2 lbs is $2.25/lb.",
-      "If you selected auto-charge, NestHelper may charge the saved payment method after additional weight, tax, and approved add-ons are confirmed. If you selected invoice-before-delivery, a final invoice link is sent before delivery.",
+      "If you selected auto-charge, NestHelper may charge the saved payment method after additional weight, tax, and approved add-ons are confirmed. If you selected the final-payment-link option, a secure NestHelper final payment link is sent before delivery.",
     ],
     note: "This minimum includes pickup, wash, dry, fold, return, and up to about 26.2 lbs of final dry-weight laundry. Additional laundry, add-ons, bulky items, rush options, or extra work can change the final balance. Laundry is not released until the final balance is fully paid.",
     closing: "You can close this tab. Watch for Laundry Rescue pickup details from NestHelper.",

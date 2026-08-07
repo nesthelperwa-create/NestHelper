@@ -6,7 +6,7 @@ import { Gift, Sparkles, Star } from "lucide-react";
 import { formatLaunchDate, getLaunchRewardsPhase } from "@/lib/launchRewards";
 
 export function LaunchRewardsTicker() {
-  const [phase, setPhase] = useState<"prelaunch" | "live" | "ended" | null>(null);
+  const [phase, setPhase] = useState<"prelaunch" | "live" | "ended">(() => getLaunchRewardsPhase());
 
   useEffect(() => {
     const update = () => setPhase(getLaunchRewardsPhase());
@@ -15,7 +15,7 @@ export function LaunchRewardsTicker() {
     return () => window.clearInterval(timer);
   }, []);
 
-  const displayPhase = phase || "prelaunch";
+  const displayPhase = phase;
 
   const tickerItems = useMemo(() => {
     if (displayPhase === "live") {

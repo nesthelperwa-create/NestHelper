@@ -346,13 +346,13 @@ export async function POST(request: Request) {
       await requestRef.update({
         ...updateBase,
         laundryAutoChargeReady: false,
-        laundryAutoChargeError: "Customer chose auto-charge, but no saved Stripe payment method is available. Send a final invoice instead or have the customer re-authorize payment.",
+        laundryAutoChargeError: "Customer chose auto-charge, but no saved Stripe payment method is available. Send a final payment link instead or have the customer re-authorize payment.",
       });
 
       return NextResponse.json(
         {
           ok: false,
-          error: "Customer chose auto-charge, but no saved Stripe payment method is available. Send a final invoice instead or have the customer re-authorize payment.",
+          error: "Customer chose auto-charge, but no saved Stripe payment method is available. Send a final payment link instead or have the customer re-authorize payment.",
         },
         { status: 400 }
       );

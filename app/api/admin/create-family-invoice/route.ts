@@ -42,7 +42,7 @@ function buildLaundryFinalPaymentCustomFields(): LaundryFinalPaymentCustomField[
       dropdown: {
         options: [
           { label: "Auto-charge saved card after final dry weight is confirmed", value: "autocharge" },
-          { label: "Email final invoice before delivery", value: "invoicebeforedelivery" },
+          { label: "Send final payment link before delivery", value: "invoicebeforedelivery" },
         ],
       },
     },
@@ -244,7 +244,7 @@ async function createLaundryDepositCheckoutFromBreakdown(params: {
     custom_text: {
       submit: {
         message:
-          "Laundry Rescue intro minimum is non-refundable and includes pickup, wash, dry, fold, return, and up to about 26.2 lbs of final dry-weight laundry. If you choose auto-charge, NestHelper may charge your saved payment method for any additional laundry, approved add-ons, or bulky items after dry weight is confirmed. If you choose invoice-before-delivery, laundry is held until any final invoice is fully paid.",
+          "Laundry Rescue intro minimum is non-refundable and includes pickup, wash, dry, fold, return, and up to about 26.2 lbs of final dry-weight laundry. If you choose auto-charge, NestHelper may charge your saved payment method for any additional laundry, approved add-ons, or bulky items after dry weight is confirmed. If you choose the final-payment-link option, laundry is held until the final balance is fully paid.",
       },
     },
     success_url: `${siteUrl}/checkout?success=true&payment_type=laundry_deposit&service_id=laundry-rescue&session_id={CHECKOUT_SESSION_ID}`,
@@ -297,7 +297,7 @@ async function createLaundryDepositCheckoutFromBreakdown(params: {
           customerBreakdownText,
           discountAlreadyAppliedNote,
           manualSalesTax.enabled ? `Manual sales tax of ${manualSalesTax.rate}% is added in Stripe checkout.` : "No sales tax is added unless NestHelper manually enables it before sending.",
-          "During Stripe checkout, the customer chooses either auto-charge for any additional weight/add-ons after final dry weight is confirmed or invoice-before-delivery. Laundry is not released until any final balance is fully paid.",
+          "During Stripe checkout, the customer chooses either auto-charge for any additional weight/add-ons after final dry weight is confirmed or a final payment link before delivery. Laundry is not released until any final balance is fully paid.",
         ].filter(Boolean).join("\n\n"),
         servicePeriodLabel,
         replyToEmail: emailAliases.laundry,

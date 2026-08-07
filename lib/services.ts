@@ -193,7 +193,7 @@ export const services: Service[] = [
       "$59 minimum includes pickup, wash, dry, fold, return, and up to about 26.2 lbs",
       "Additional laundry is $2.25/lb",
       "Eco-friendly detergent available",
-      "Auto-charge or invoice after final dry weight"
+      "Auto-charge or final payment link after final dry weight"
     ],
     standardPrice: "$59 minimum",
     priceNote: "Includes up to 26.2 lbs",
@@ -201,7 +201,7 @@ export const services: Service[] = [
     travelInfo: "Additional laundry billed only above the included weight",
     image: "/assets/services/service-laundry-rescue-refresh.png",
     stripeStandardEnv: "STRIPE_PRICE_LAUNDRY_DEPOSIT_STANDARD",
-    note: "Laundry Rescue intro launch pricing: $59 minimum includes pickup, wash, dry, fold, return, and up to about 26.2 lbs of laundry. Additional laundry is $2.25/lb. Eco-friendly detergent is available. The non-refundable minimum is paid first; any additional weight, add-ons, bulky items, or approved changes are handled through the checkout option selected: auto-charge after review or invoice before delivery."
+    note: "Laundry Rescue intro launch pricing: $59 minimum includes pickup, wash, dry, fold, return, and up to about 26.2 lbs of laundry. Additional laundry is $2.25/lb. Eco-friendly detergent is available. The non-refundable minimum is paid first; any additional weight, add-ons, bulky items, or approved changes are handled through the checkout option selected: auto-charge after review or a final payment link before delivery."
   }
 ];
 

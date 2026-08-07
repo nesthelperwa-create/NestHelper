@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   alternates: { canonical: `${siteConfig.url}/rewards` },
   openGraph: {
     title: "NestHelper Launch Rewards",
-    description: "Spin for a little breathing room. Launching August 5, 2026.",
+    description: "Launch Rewards are live. Verify and spin for family home-help rewards and a rare chance to win a 3-hour Parent Reset.",
     url: `${siteConfig.url}/rewards`,
     images: [siteConfig.assets.og],
   },
