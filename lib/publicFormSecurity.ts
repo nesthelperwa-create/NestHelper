@@ -1,4 +1,8 @@
+import { createHmac } from "crypto";
+import { isIP } from "net";
+import { FieldValue } from "firebase-admin/firestore";
 import { NextResponse } from "next/server";
+import { getFirebaseAdminDb } from "@/lib/firebaseAdmin";
 
 type SubmissionCollection = "serviceRequests" | "helperApplications" | "partnerApplications" | "contactMessages";
 
@@ -8,12 +12,6 @@ export type PublicSubmissionFile = {
   file: File;
 };
 
-type RateLimitEntry = {
-  count: number;
-  resetAt: number;
-};
-
-const rateLimitStore = new Map<string, RateLimitEntry>();
 const WINDOW_MS = 15 * 60 * 1000;
 const MAX_APPLICATION_DOCUMENTS = 5;
 const MAX_APPLICATION_DOCUMENT_BYTES = 3 * 1024 * 1024;
@@ -363,9 +361,46 @@ const honeypotFields = [
   "url",
 ];
 
+function normalizeClientIp(value: string | null) {
+  if (!value) return null;
+
+  let candidate = value.split(",")[0]?.trim() || "";
+  if (!candidate) return null;
+
+  // Some proxies represent IPv6 addresses as [address]:port.
+  if (candidate.startsWith("[") && candidate.includes("]")) {
+    candidate = candidate.slice(1, candidate.indexOf("]"));
+  } else {
+    const ipv4WithPort = candidate.match(/^(\d{1,3}(?:\.\d{1,3}){3}):\d+$/);
+    if (ipv4WithPort) candidate = ipv4WithPort[1];
+  }
+
+  return isIP(candidate) ? candidate.toLowerCase() : null;
+}
+
 function clientIp(request: Request) {
-  const forwarded = request.headers.get("x-forwarded-for") || "";
-  return forwarded.split(",")[0]?.trim() || request.headers.get("x-real-ip") || "unknown";
+  // Prefer Vercel's forwarding header when present, then standard proxy headers.
+  return (
+    normalizeClientIp(request.headers.get("x-vercel-forwarded-for")) ||
+    normalizeClientIp(request.headers.get("x-forwarded-for")) ||
+    normalizeClientIp(request.headers.get("x-real-ip"))
+  );
+}
+
+function getRateLimitPepper() {
+  return (
+    process.env.PUBLIC_FORM_RATE_LIMIT_PEPPER ||
+    process.env.SMART_LABEL_ACTIVATION_PEPPER ||
+    process.env.FIREBASE_PRIVATE_KEY ||
+    process.env.FIREBASE_PROJECT_ID ||
+    "nesthelper-public-form-rate-limit"
+  );
+}
+
+function getRateLimitDocId(collection: SubmissionCollection, ip: string) {
+  return createHmac("sha256", getRateLimitPepper())
+    .update(`${collection}:${ip}`)
+    .digest("hex");
 }
 
 function isObject(value: unknown): value is Record<string, unknown> {
@@ -570,21 +605,49 @@ function validateRequired(collection: SubmissionCollection, payload: Record<stri
   return missing;
 }
 
-function enforceRateLimit(request: Request, collection: SubmissionCollection) {
-  const now = Date.now();
-  const key = `${collection}:${clientIp(request)}`;
-  const existing = rateLimitStore.get(key);
-  const max = maxSubmissionsByCollection[collection];
+async function enforceRateLimit(request: Request, collection: SubmissionCollection) {
+  const ip = clientIp(request);
 
-  if (!existing || existing.resetAt <= now) {
-    rateLimitStore.set(key, { count: 1, resetAt: now + WINDOW_MS });
+  // Avoid placing unrelated visitors into one shared fallback bucket if an
+  // upstream proxy ever omits the client IP. All normal Vercel requests
+  // should include a usable forwarding header.
+  if (!ip) {
+    console.warn(`Public form rate limit skipped for ${collection}: no usable client IP header.`);
     return;
   }
 
-  existing.count += 1;
-  rateLimitStore.set(key, existing);
+  const db = getFirebaseAdminDb();
+  const ref = db.collection("publicFormRateLimits").doc(getRateLimitDocId(collection, ip));
+  const now = Date.now();
+  const max = maxSubmissionsByCollection[collection];
 
-  if (existing.count > max) {
+  const result = await db.runTransaction(async (transaction) => {
+    const snap = await transaction.get(ref);
+    const resetAtMs = Number(snap.get("resetAtMs") || 0);
+    const currentCount = resetAtMs > now ? Math.max(0, Number(snap.get("count") || 0)) : 0;
+    const nextResetAtMs = resetAtMs > now ? resetAtMs : now + WINDOW_MS;
+
+    if (currentCount >= max && resetAtMs > now) {
+      return {
+        allowed: false,
+        retryAfterSeconds: Math.max(1, Math.ceil((resetAtMs - now) / 1000)),
+      };
+    }
+
+    transaction.set(ref, {
+      submissionCollection: collection,
+      count: currentCount + 1,
+      resetAtMs: nextResetAtMs,
+      updatedAt: FieldValue.serverTimestamp(),
+    }, { merge: true });
+
+    return {
+      allowed: true,
+      retryAfterSeconds: Math.max(1, Math.ceil((nextResetAtMs - now) / 1000)),
+    };
+  });
+
+  if (!result.allowed) {
     throw new PublicFormError("Too many submissions. Please wait a few minutes and try again.", 429);
   }
 }
@@ -678,7 +741,7 @@ export async function preparePublicSubmission(request: Request, collection: Subm
     throw new PublicFormError("Invalid submission format.", 415);
   }
 
-  enforceRateLimit(request, collection);
+  await enforceRateLimit(request, collection);
 
   const raw = await request.text();
   const maxBytes = maxPayloadBytesByCollection[collection];
@@ -712,7 +775,7 @@ export async function preparePublicMultipartSubmission(request: Request, collect
     throw new PublicFormError("Invalid application format.", 415);
   }
 
-  enforceRateLimit(request, collection);
+  await enforceRateLimit(request, collection);
 
   const formData = await request.formData();
   const parsed = parsePayloadFromFormData(formData);
