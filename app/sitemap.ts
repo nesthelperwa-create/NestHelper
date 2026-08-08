@@ -7,6 +7,7 @@ const siteUrl = siteConfig.url.replace(/\/$/, "");
 const staticRoutes = [
   "",
   "/services",
+  "/smart-labels",
   "/request",
   "/trust",
   "/helpers",

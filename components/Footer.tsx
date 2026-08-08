@@ -66,6 +66,7 @@ export function Footer() {
           title="Explore"
           links={[
             { href: "/request", label: "Request Help" },
+            { href: "/smart-labels", label: "Smart Labels" },
             { href: "/#how-it-works", label: "How It Works" },
             { href: "/giving-back", label: "Giving Back" },
             { href: "/referrals", label: "Family Referrals" },

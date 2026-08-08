@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import { Building2, CheckCircle2, ClipboardCheck, CreditCard, Grid3X3, Home, Mail, Scale, ShieldCheck, Shirt, ShoppingBag, Sparkles, SprayCan, Tags, Truck } from "lucide-react";
+import Link from "next/link";
+import { ArrowRight, Building2, CheckCircle2, ClipboardCheck, CreditCard, Grid3X3, Home, Mail, Scale, ShieldCheck, Shirt, ShoppingBag, Sparkles, SprayCan, Tags, Truck } from "lucide-react";
 import { PageHero } from "@/components/PageHero";
 import { ServiceCard } from "@/components/ServiceCard";
 import { ButtonLink } from "@/components/ui/ButtonLink";
@@ -133,6 +134,8 @@ export default function ServicesPage() {
                 title="QR Smart Labels"
                 label="Organizing / move support"
                 text="Good for bins, shelves, closets, storage, and moving boxes. Use them yourself or ask for setup help."
+                href="/smart-labels"
+                linkLabel="See how Smart Labels work"
               />
               <SupportNoteCard
                 icon={<ClipboardCheck size={18} />}
@@ -237,13 +240,18 @@ export default function ServicesPage() {
   );
 }
 
-function SupportNoteCard({ icon, title, label, text }: { icon: ReactNode; title: string; label: string; text: string }) {
+function SupportNoteCard({ icon, title, label, text, href, linkLabel }: { icon: ReactNode; title: string; label: string; text: string; href?: string; linkLabel?: string }) {
   return (
     <div className="rounded-[1.6rem] border border-nest-gold/14 bg-nest-cream/70 p-4 shadow-sm sm:p-5">
       <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-2xl bg-white text-nest-teal shadow-sm">{icon}</div>
       <p className="text-[0.65rem] font-black uppercase tracking-[0.14em] text-nest-gold">{label}</p>
       <h3 className="mt-1 text-lg font-black leading-tight text-nest-teal">{title}</h3>
       <p className="mt-2 text-sm font-semibold leading-6 text-nest-ink/64">{text}</p>
+      {href && (
+        <Link href={href} className="focus-ring mt-4 inline-flex items-center gap-1.5 rounded-full bg-white px-3.5 py-2 text-xs font-black text-nest-teal shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+          {linkLabel || "Learn more"} <ArrowRight size={14} />
+        </Link>
+      )}
     </div>
   );
 }

@@ -26,6 +26,10 @@ export const siteConfig = {
   phoneHref: "tel:+14257901330",
   serviceArea: "Bothell, Woodinville, Kenmore, Kirkland, Redmond, Mill Creek, Lynnwood, Edmonds, Mountlake Terrace, Snohomish, Mukilteo & nearby Eastside, Northshore, and South Snohomish County communities",
   foundingCode: "FOUNDINGFAMILY",
+  smartLabels: {
+    retailPackSize: 24,
+    etsyListingUrl: "https://nesthelperlabels.etsy.com/listing/4546633761",
+  },
   social: {
     facebook: "https://www.facebook.com/NestHelperLLC",
     instagram: "https://www.instagram.com/nesthelper",

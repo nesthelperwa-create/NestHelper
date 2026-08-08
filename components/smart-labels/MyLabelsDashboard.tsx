@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowRight, Boxes, Layers3, Loader2, MessageCircle, PackagePlus, ScanLine, Search, ShieldAlert, Sparkles } from "lucide-react";
+import { ArrowRight, Boxes, ExternalLink, Layers3, Loader2, MessageCircle, PackagePlus, ScanLine, Search, ShieldAlert, ShoppingBag, Sparkles } from "lucide-react";
 import { CustomerAuthCard, getUserToken, SignedInBadge, useCustomerAuth } from "@/components/smart-labels/SmartLabelsAuth";
 import type { SmartLabelPhoto } from "@/lib/smartLabels";
 import { SmartLabelsShell } from "@/components/smart-labels/SmartLabelsShell";
+import { siteConfig } from "@/lib/siteConfig";
 
 export type DashboardLabel = {
   code: string;
@@ -168,7 +169,7 @@ export default function MyLabelsDashboard() {
             <section className="rounded-[1.8rem] border border-nest-gold/16 bg-white p-5 shadow-soft">
               <p className="text-xs font-black uppercase tracking-[0.22em] text-nest-gold">Activate a new pack</p>
               <h3 className="mt-1 text-xl font-black text-nest-teal">Enter your activation code</h3>
-              <p className="mt-2 text-sm font-semibold leading-6 text-slate-600">Bought another 24-label pack? Redeem the activation code included with that order. Multiple packs add to the same account.</p>
+              <p className="mt-2 text-sm font-semibold leading-6 text-slate-600">Bought another {siteConfig.smartLabels.retailPackSize}-label pack? Redeem the activation code included with that order. Multiple packs add to the same account.</p>
               <form onSubmit={handleActivation} className="mt-4 grid gap-3">
                 <input className="input font-mono tracking-[0.18em]" value={activationCode} onChange={(event) => setActivationCode(event.target.value.toUpperCase())} placeholder="NH-7K3P9Q" />
                 <button type="submit" disabled={busy} className="btn-primary justify-center disabled:cursor-not-allowed disabled:opacity-60">
@@ -176,6 +177,17 @@ export default function MyLabelsDashboard() {
                 </button>
               </form>
               <p className="mt-3 text-xs font-semibold leading-5 text-slate-500">After activation, scan any unclaimed NestHelper label from your package to add it to your dashboard.</p>
+              <div className="mt-4 grid gap-2 border-t border-nest-gold/12 pt-4">
+                <a
+                  href={siteConfig.smartLabels.etsyListingUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="focus-ring inline-flex cursor-pointer items-center justify-center gap-2 rounded-full border border-nest-teal/18 bg-nest-mint/24 px-4 py-3 text-sm font-black text-nest-teal shadow-sm transition hover:-translate-y-0.5 hover:border-nest-teal/35 hover:bg-nest-mint/40 hover:shadow-md"
+                >
+                  <ShoppingBag size={17} /> Buy {siteConfig.smartLabels.retailPackSize} More Labels <ExternalLink size={14} />
+                </a>
+                <Link href="/smart-labels" className="text-center text-xs font-black text-nest-teal underline decoration-nest-gold/50 underline-offset-4 hover:text-nest-teal3">Learn about Storage Mode, Lost &amp; Found, and privacy</Link>
+              </div>
             </section>
           </div>
 
